@@ -40,7 +40,9 @@ class _GameScreenState extends State<GameScreen> {
 
   List<CargoItem> get _warehouses {
     final map = <int, CargoItem>{};
-    for (final item in widget.level.items) map[item.id] = item;
+    for (final item in widget.level.items) {
+      map[item.id] = item;
+    }
     return map.values.toList();
   }
 
