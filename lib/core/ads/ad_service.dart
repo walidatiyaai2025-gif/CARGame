@@ -62,7 +62,7 @@ class AdService {
         _loadRewarded();
       },
     );
-    ad.show(onUserEarnedReward: (_, __) => onReward());
+    ad.show(onUserEarnedReward: (_, _) => onReward());
   }
 
   void showInterstitial() {
