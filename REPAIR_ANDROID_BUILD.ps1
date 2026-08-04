@@ -76,7 +76,12 @@ Remove-Item ".\android\app\build" -Recurse -Force -ErrorAction SilentlyContinue
 flutter clean
 flutter pub get
 flutter gen-l10n
-flutter analyze
+
+Write-Host "Running analyzer..." -ForegroundColor Cyan
+flutter analyze --no-fatal-infos
+if ($LASTEXITCODE -ne 0) {
+    throw "flutter analyze found warnings or errors that must be fixed."
+}
 
 Write-Host "Gradle versions:" -ForegroundColor Cyan
 Push-Location ".\android"
@@ -85,6 +90,9 @@ Pop-Location
 
 if ($BuildApk) {
     flutter build apk --release --target-platform android-arm64
+    if ($LASTEXITCODE -ne 0) {
+        throw "Flutter APK build failed."
+    }
 }
 
 Write-Host "Repair completed successfully." -ForegroundColor Green
