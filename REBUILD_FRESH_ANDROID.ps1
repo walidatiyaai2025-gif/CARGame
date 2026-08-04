@@ -30,6 +30,57 @@ function Write-Step([string]$Text) {
     Write-Host "============================================================" -ForegroundColor Cyan
 }
 
+function Repair-ProjectPermissions {
+    Write-Step "Repairing Windows and Gradle execution permissions"
+
+    $projectPath = (Resolve-Path $PSScriptRoot).Path
+    $androidPath = Join-Path $projectPath "android"
+    $gradleBat = Join-Path $androidPath "gradlew.bat"
+    $gradleShell = Join-Path $androidPath "gradlew"
+
+    if (-not (Test-Path $gradleBat)) {
+        throw "Gradle wrapper was not generated: $gradleBat"
+    }
+
+    # Remove Read-only/System/Hidden attributes that can prevent Gradle execution.
+    & attrib.exe -R -S -H "$projectPath\*" /S /D 2>$null
+
+    # Remove the Mark-of-the-Web from downloaded/generated scripts.
+    Get-ChildItem $projectPath -Recurse -File -ErrorAction SilentlyContinue |
+        Unblock-File -ErrorAction SilentlyContinue
+
+    # Grant the current Windows user Modify permission recursively.
+    $account = if ($env:USERDOMAIN) {
+        "$env:USERDOMAIN\$env:USERNAME"
+    } else {
+        $env:USERNAME
+    }
+
+    & icacls.exe $projectPath /inheritance:e /grant:r "${account}:(OI)(CI)M" /T /C /Q | Out-Null
+    if ($LASTEXITCODE -ne 0) {
+        Write-Warning "icacls could not update every file. The script will continue and test Gradle directly."
+    }
+
+    # Ensure Git does not re-interpret Windows file modes as local changes.
+    if (Test-Path (Join-Path $projectPath ".git")) {
+        & git config core.fileMode false
+    }
+
+    # Test the Windows Gradle wrapper explicitly through cmd.exe.
+    Push-Location $androidPath
+    try {
+        & cmd.exe /d /c "gradlew.bat --version"
+        if ($LASTEXITCODE -ne 0) {
+            throw "gradlew.bat cannot execute after permission repair. Exit code: $LASTEXITCODE"
+        }
+    }
+    finally {
+        Pop-Location
+    }
+
+    Write-Host "Gradle execution permission check passed." -ForegroundColor Green
+}
+
 if (-not (Test-Path ".\pubspec.yaml")) {
     throw "pubspec.yaml was not found. Run the script from the Flutter project root."
 }
@@ -142,6 +193,8 @@ if (Test-Path $manifestFile) {
     [System.IO.File]::WriteAllText((Resolve-Path $manifestFile), $manifest, [System.Text.UTF8Encoding]::new($false))
 }
 
+Repair-ProjectPermissions
+
 Write-Step "Cleaning generated caches"
 Remove-Item ".\build" -Recurse -Force -ErrorAction SilentlyContinue
 Remove-Item ".\.dart_tool" -Recurse -Force -ErrorAction SilentlyContinue
@@ -159,8 +212,12 @@ Invoke-Native flutter analyze --no-fatal-infos
 
 Write-Step "Checking generated Gradle and Java versions"
 Push-Location ".\android"
-Invoke-Native .\gradlew.bat --version
-Pop-Location
+try {
+    Invoke-Native cmd.exe /d /c "gradlew.bat --version"
+}
+finally {
+    Pop-Location
+}
 
 Write-Step "Building the ARM64 release APK"
 Invoke-Native flutter build apk --release --target-platform android-arm64 --no-pub
