@@ -6,35 +6,54 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+$PSNativeCommandUseErrorActionPreference = $false
 Set-Location $PSScriptRoot
 
-function Assert-Command([string]$Name, [string]$Message) {
-    if (-not (Get-Command $Name -ErrorAction SilentlyContinue)) {
-        throw $Message
+$adbCommand = Get-Command adb -ErrorAction SilentlyContinue
+if ($adbCommand) {
+    $Adb = $adbCommand.Source
+}
+else {
+    $sdkCandidates = @(
+        $env:ANDROID_SDK_ROOT,
+        $env:ANDROID_HOME,
+        "$env:LOCALAPPDATA\Android\Sdk"
+    ) | Where-Object { $_ } | Select-Object -Unique
+
+    $Adb = $null
+    foreach ($sdkRoot in $sdkCandidates) {
+        $candidate = Join-Path $sdkRoot "platform-tools\adb.exe"
+        if (Test-Path $candidate) {
+            $Adb = $candidate
+            break
+        }
     }
 }
 
-Assert-Command "adb" "adb was not found in PATH. Add Android SDK platform-tools to PATH."
+if (-not $Adb -or -not (Test-Path $Adb)) {
+    throw "adb.exe was not found. Install Android SDK Platform-Tools. Expected location: $env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe"
+}
 
-$devices = adb devices
+Write-Host "Using ADB: $Adb" -ForegroundColor Green
+
+$devices = & $Adb devices
 if ($LASTEXITCODE -ne 0 -or ($devices -notmatch "\tdevice")) {
     throw "No authorized Android device is connected. Enable USB debugging and accept the authorization prompt."
 }
 
 $fullOutputPath = Join-Path $PSScriptRoot $OutputFile
 $filteredOutputPath = Join-Path $PSScriptRoot $FilteredOutputFile
-
 Remove-Item $fullOutputPath, $filteredOutputPath -Force -ErrorAction SilentlyContinue
 
 Write-Host "Clearing old Logcat buffer..." -ForegroundColor Cyan
-adb logcat -c
+& $Adb logcat -c
 
 Write-Host "Starting package: $PackageName" -ForegroundColor Cyan
-adb shell am force-stop $PackageName | Out-Null
-adb shell monkey -p $PackageName -c android.intent.category.LAUNCHER 1 | Out-Null
+& $Adb shell am force-stop $PackageName | Out-Null
+& $Adb shell monkey -p $PackageName -c android.intent.category.LAUNCHER 1 | Out-Null
 Start-Sleep -Seconds 2
 
-$pidText = (adb shell pidof $PackageName 2>$null).Trim()
+$pidText = (& $Adb shell pidof $PackageName 2>$null).Trim()
 if ($pidText) {
     Write-Host "Application PID: $pidText" -ForegroundColor Green
 }
@@ -46,9 +65,9 @@ Write-Host "Collecting Android logs for $Seconds seconds..." -ForegroundColor Cy
 Write-Host "Reproduce the crash now. Do not disconnect the device." -ForegroundColor Yellow
 
 $job = Start-Job -ScriptBlock {
-    param($Path)
-    adb logcat -v threadtime 2>&1 | Out-File -FilePath $Path -Encoding utf8
-} -ArgumentList $fullOutputPath
+    param($AdbPath, $Path)
+    & $AdbPath logcat -v threadtime 2>&1 | Out-File -FilePath $Path -Encoding utf8
+} -ArgumentList $Adb, $fullOutputPath
 
 Start-Sleep -Seconds $Seconds
 Stop-Job $job -ErrorAction SilentlyContinue
@@ -76,8 +95,8 @@ $patterns = @(
 
 $regex = ($patterns | ForEach-Object { [regex]::Escape($_) }) -join "|"
 $lines = Get-Content $fullOutputPath
-
 $selectedLineNumbers = New-Object System.Collections.Generic.HashSet[int]
+
 for ($index = 0; $index -lt $lines.Count; $index++) {
     if ($lines[$index] -match $regex) {
         $start = [Math]::Max(0, $index - 12)
@@ -90,9 +109,7 @@ for ($index = 0; $index -lt $lines.Count; $index++) {
 
 if ($selectedLineNumbers.Count -gt 0) {
     $ordered = $selectedLineNumbers | Sort-Object
-    $filtered = foreach ($lineNumber in $ordered) {
-        $lines[$lineNumber]
-    }
+    $filtered = foreach ($lineNumber in $ordered) { $lines[$lineNumber] }
     $filtered | Set-Content $filteredOutputPath -Encoding UTF8
 }
 else {
@@ -102,11 +119,11 @@ else {
     ) | Set-Content $filteredOutputPath -Encoding UTF8
 }
 
-Write-Host "" 
+Write-Host ""
 Write-Host "Complete log:" -ForegroundColor Green
 Write-Host $fullOutputPath -ForegroundColor Green
-Write-Host "" 
+Write-Host ""
 Write-Host "Filtered crash log:" -ForegroundColor Green
 Write-Host $filteredOutputPath -ForegroundColor Green
-Write-Host "" 
+Write-Host ""
 Write-Host "Send android_runtime_filtered.log first. If it is incomplete, send android_runtime.log." -ForegroundColor Yellow
