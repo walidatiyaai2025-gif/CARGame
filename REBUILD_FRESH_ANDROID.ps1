@@ -19,7 +19,7 @@ function Invoke-Native {
     & $Command @Arguments
     $exitCode = $LASTEXITCODE
     if ($exitCode -ne 0) {
-        throw "Command failed with exit code $exitCode: $Command $($Arguments -join ' ')"
+        throw "Command failed with exit code ${exitCode}: $Command $($Arguments -join ' ')"
     }
 }
 
@@ -129,7 +129,7 @@ Write-Step "Configuring Android permissions and AdMob test application ID"
 if (Test-Path $manifestFile) {
     $manifest = Get-Content $manifestFile -Raw
     if ($manifest -notmatch 'android.permission.INTERNET') {
-        $manifest = $manifest -replace '<manifest xmlns:android="http://schemas.android.com/apk/res/android">', '<manifest xmlns:android="http://schemas.android.com/apk/res/android">`r`n    <uses-permission android:name="android.permission.INTERNET" />`r`n    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />'
+        $manifest = $manifest -replace '<manifest xmlns:android="http://schemas.android.com/apk/res/android">', "<manifest xmlns:android=`"http://schemas.android.com/apk/res/android`">`r`n    <uses-permission android:name=`"android.permission.INTERNET`" />`r`n    <uses-permission android:name=`"android.permission.ACCESS_NETWORK_STATE`" />"
     }
     if ($manifest -notmatch 'com.google.android.gms.ads.APPLICATION_ID') {
         $meta = @"
