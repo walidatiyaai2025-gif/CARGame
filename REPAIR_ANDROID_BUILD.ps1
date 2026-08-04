@@ -11,6 +11,7 @@ if (-not (Test-Path ".\pubspec.yaml")) {
 
 $settingsKts = ".\android\settings.gradle.kts"
 $settingsGroovy = ".\android\settings.gradle"
+$appGradleKts = ".\android\app\build.gradle.kts"
 
 if (Test-Path $settingsGroovy) {
     Write-Host "Removing stale android/settings.gradle so Flutter uses settings.gradle.kts..." -ForegroundColor Yellow
@@ -25,6 +26,32 @@ $settings = Get-Content $settingsKts -Raw
 $settings = $settings -replace 'id\("com\.android\.application"\)\s+version\s+"[^"]+"', 'id("com.android.application") version "8.11.1"'
 $settings = $settings -replace 'id\("org\.jetbrains\.kotlin\.android"\)\s+version\s+"[^"]+"', 'id("org.jetbrains.kotlin.android") version "2.3.20"'
 [System.IO.File]::WriteAllText((Resolve-Path $settingsKts), $settings, [System.Text.UTF8Encoding]::new($false))
+
+if (-not (Test-Path $appGradleKts)) {
+    throw "android/app/build.gradle.kts was not found."
+}
+
+$appGradle = Get-Content $appGradleKts -Raw
+$appGradle = [regex]::Replace($appGradle, '(?s)\s*kotlinOptions\s*\{.*?\}', '')
+
+if ($appGradle -notmatch 'import\s+org\.jetbrains\.kotlin\.gradle\.dsl\.JvmTarget') {
+    $appGradle = "import org.jetbrains.kotlin.gradle.dsl.JvmTarget`r`n`r`n" + $appGradle.TrimStart()
+}
+
+if ($appGradle -notmatch '(?s)kotlin\s*\{\s*compilerOptions') {
+    $kotlinBlock = @"
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_17)
+    }
+}
+
+"@
+    $appGradle = $appGradle -replace '(?m)^android\s*\{', ($kotlinBlock + 'android {')
+}
+
+[System.IO.File]::WriteAllText((Resolve-Path $appGradleKts), $appGradle, [System.Text.UTF8Encoding]::new($false))
 
 $wrapper = ".\android\gradle\wrapper\gradle-wrapper.properties"
 if (Test-Path $wrapper) {
