@@ -32,6 +32,8 @@ echo  13 - Open project folder
 echo  14 - Open GitHub repository
 echo  15 - Show Git status
 echo  16 - Restart ADB
+echo  17 - Start emulator, install APK, and run application
+echo  18 - Build APK, start emulator, install, and run
 echo  0  - Exit
 echo.
 set /p "choice=Choose an option: "
@@ -52,6 +54,8 @@ if "%choice%"=="13" goto openproject
 if "%choice%"=="14" goto github
 if "%choice%"=="15" goto gitstatus
 if "%choice%"=="16" goto restartadb
+if "%choice%"=="17" goto emulatorrun
+if "%choice%"=="18" goto emulatorbuildrun
 if "%choice%"=="0" exit /b 0
 
 echo Invalid choice.
@@ -131,6 +135,28 @@ call :header "RUN APPLICATION"
 call :findadb
 if errorlevel 1 goto menu
 "%ADB%" shell monkey -p %PACKAGE% -c android.intent.category.LAUNCHER 1
+call :result
+goto menu
+
+:emulatorrun
+call :header "RUN APK ON ANDROID EMULATOR"
+if not exist "%PROJECT%RUN_ON_EMULATOR.ps1" (
+  echo Missing RUN_ON_EMULATOR.ps1
+  pause
+  goto menu
+)
+%PS% -File "%PROJECT%RUN_ON_EMULATOR.ps1"
+call :result
+goto menu
+
+:emulatorbuildrun
+call :header "BUILD AND RUN APK ON ANDROID EMULATOR"
+if not exist "%PROJECT%RUN_ON_EMULATOR.ps1" (
+  echo Missing RUN_ON_EMULATOR.ps1
+  pause
+  goto menu
+)
+%PS% -File "%PROJECT%RUN_ON_EMULATOR.ps1" -BuildFirst
 call :result
 goto menu
 
