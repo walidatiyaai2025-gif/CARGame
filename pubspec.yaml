@@ -1,7 +1,7 @@
 name: cargo_sort_game
 description: Cargo Sort - a bilingual Flutter puzzle game MVP with test ads.
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.0.1+2
 
 environment:
   sdk: '>=3.10.0 <4.0.0'
@@ -18,6 +18,7 @@ dependencies:
   flame: ^1.38.0
   google_mobile_ads: ^9.0.0
   shared_preferences: ^2.5.3
+  path_provider: ^2.1.5
   cupertino_icons: ^1.0.8
 
 dev_dependencies:
