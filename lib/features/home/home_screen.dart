@@ -19,6 +19,9 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final welcomeText = isArabic ? 'مرحبًا أيها المستخدم' : 'Welcome, user';
+
     return Scaffold(
       body: SafeArea(
         child: Padding(
@@ -57,6 +60,19 @@ class HomeScreen extends StatelessWidget {
                     ],
                   ),
                 ],
+              ),
+              const SizedBox(height: 14),
+              Align(
+                alignment: isArabic
+                    ? Alignment.centerRight
+                    : Alignment.centerLeft,
+                child: Text(
+                  welcomeText,
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        color: AppTheme.navy,
+                        fontWeight: FontWeight.w800,
+                      ),
+                ),
               ),
               const Spacer(),
               Container(
@@ -99,6 +115,7 @@ class HomeScreen extends StatelessWidget {
               ),
               Text(
                 l10n.subtitle,
+                textAlign: TextAlign.center,
                 style: Theme.of(context)
                     .textTheme
                     .titleMedium
