@@ -25,7 +25,7 @@ class HomeScreen extends StatelessWidget {
     return Scaffold(
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(20),
           child: Column(
             children: [
               Row(
@@ -61,7 +61,7 @@ class HomeScreen extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 10),
               Align(
                 alignment: isArabic
                     ? Alignment.centerRight
@@ -74,17 +74,120 @@ class HomeScreen extends StatelessWidget {
                       ),
                 ),
               ),
+              const SizedBox(height: 14),
+              AnimatedBuilder(
+                animation: store,
+                builder: (context, _) {
+                  const totalLevels = 5;
+                  final unlocked = store.highestUnlockedLevel.clamp(1, totalLevels);
+                  final completed = (unlocked - 1).clamp(0, totalLevels);
+                  final progress = completed / totalLevels;
+                  final progressLabel = isArabic
+                      ? 'تم إنجاز $completed من $totalLevels مراحل'
+                      : '$completed of $totalLevels levels completed';
+
+                  return Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF162A43), Color(0xFF294D73)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x33223344),
+                          blurRadius: 18,
+                          offset: Offset(0, 10),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              width: 48,
+                              height: 48,
+                              decoration: const BoxDecoration(
+                                color: Color(0x22FFFFFF),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.route_rounded,
+                                color: AppTheme.orange,
+                                size: 28,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    isArabic
+                                        ? 'تقدمك في اللعبة'
+                                        : 'Your game progress',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium
+                                        ?.copyWith(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w800,
+                                        ),
+                                  ),
+                                  const SizedBox(height: 3),
+                                  Text(
+                                    progressLabel,
+                                    style: const TextStyle(
+                                      color: Colors.white70,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Text(
+                              '${(progress * 100).round()}%',
+                              style: const TextStyle(
+                                color: AppTheme.orange,
+                                fontSize: 20,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(20),
+                          child: LinearProgressIndicator(
+                            value: progress,
+                            minHeight: 9,
+                            backgroundColor: Colors.white24,
+                            valueColor: const AlwaysStoppedAnimation<Color>(
+                              AppTheme.orange,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
               const Spacer(),
               Container(
-                width: 180,
-                height: 180,
+                width: 152,
+                height: 152,
                 decoration: BoxDecoration(
                   color: AppTheme.navy,
-                  borderRadius: BorderRadius.circular(48),
+                  borderRadius: BorderRadius.circular(42),
                   boxShadow: const [
                     BoxShadow(
-                      blurRadius: 30,
-                      offset: Offset(0, 16),
+                      blurRadius: 26,
+                      offset: Offset(0, 14),
                       color: Color(0x33223344),
                     ),
                   ],
@@ -92,20 +195,20 @@ class HomeScreen extends StatelessWidget {
                 child: const Stack(
                   alignment: Alignment.center,
                   children: [
-                    Icon(Icons.warehouse_rounded, size: 110, color: Colors.white),
+                    Icon(Icons.warehouse_rounded, size: 94, color: Colors.white),
                     Positioned(
-                      right: 24,
-                      bottom: 24,
+                      right: 20,
+                      bottom: 20,
                       child: Icon(
                         Icons.inventory_2_rounded,
-                        size: 48,
+                        size: 42,
                         color: AppTheme.orange,
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 28),
+              const SizedBox(height: 20),
               Text(
                 l10n.appTitle,
                 style: Theme.of(context).textTheme.displaySmall?.copyWith(
@@ -122,16 +225,19 @@ class HomeScreen extends StatelessWidget {
                     ?.copyWith(color: Colors.black54),
               ),
               const Spacer(),
-              FilledButton.icon(
-                onPressed: () => Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (_) => LevelSelectScreen(store: store),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => LevelSelectScreen(store: store),
+                    ),
                   ),
+                  icon: const Icon(Icons.play_arrow_rounded),
+                  label: Text(l10n.play),
                 ),
-                icon: const Icon(Icons.play_arrow_rounded),
-                label: Text(l10n.play),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
               Text(
                 l10n.testAds,
                 style: Theme.of(context)
@@ -139,7 +245,7 @@ class HomeScreen extends StatelessWidget {
                     .labelMedium
                     ?.copyWith(color: Colors.black54),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 3),
               Text(
                 l10n.privacyNote,
                 textAlign: TextAlign.center,
