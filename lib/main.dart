@@ -14,6 +14,7 @@ import 'l10n/app_localizations.dart';
 
 const String appVersion = '1.0.1';
 const String appBuildNumber = '2';
+const String appAuthor = 'Walid Atiya Ata - PMP';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -49,24 +50,24 @@ class _BootstrapAppState extends State<BootstrapApp> {
     try {
       _setStatus('Preparing application services...');
       try {
-        await AppErrorBoundary.install().timeout(const Duration(seconds: 5));
+        await AppErrorBoundary.install().timeout(const Duration(seconds: 8));
       } catch (error, stackTrace) {
         debugPrint('Logger initialization skipped: $error\n$stackTrace');
       }
 
-      _setStatus('Configuring display...');
-      try {
-        await SystemChrome.setPreferredOrientations([
+      // Orientation configuration must never block application startup.
+      unawaited(
+        SystemChrome.setPreferredOrientations([
           DeviceOrientation.portraitUp,
           DeviceOrientation.portraitDown,
-        ]).timeout(const Duration(seconds: 3));
-      } catch (error, stackTrace) {
-        await _safeWarning('Failed to configure orientation', error, stackTrace);
-      }
+        ]).catchError((Object error, StackTrace stackTrace) {
+          debugPrint('Orientation configuration unavailable: $error\n$stackTrace');
+        }),
+      );
 
       _setStatus('Loading saved progress...');
       try {
-        await _store.load().timeout(const Duration(seconds: 5));
+        await _store.load().timeout(const Duration(seconds: 8));
       } catch (error, stackTrace) {
         await _safeWarning(
           'Progress store load failed; defaults will be used',
@@ -77,6 +78,8 @@ class _BootstrapAppState extends State<BootstrapApp> {
 
       if (!mounted) return;
       setState(() => _ready = true);
+
+      // Ads initialize after the first usable screen is visible.
       unawaited(_initializeAdsInBackground());
     } catch (error, stackTrace) {
       if (!mounted) return;
@@ -89,13 +92,20 @@ class _BootstrapAppState extends State<BootstrapApp> {
 
   Future<void> _initializeAdsInBackground() async {
     try {
-      await MobileAds.instance.initialize().timeout(const Duration(seconds: 10));
+      // Google's Flutter plugin can take up to 30 seconds to complete.
+      await MobileAds.instance.initialize().timeout(const Duration(seconds: 35));
       await AppLogger.instance.checkpoint('ADMOB_READY');
+    } on TimeoutException catch (error, stackTrace) {
+      await _safeInfo(
+        'AdMob is unavailable or Google Play services are not responding. '
+        'The application will continue without Google ads.',
+        '$error\n$stackTrace',
+      );
     } catch (error, stackTrace) {
-      await _safeWarning(
-        'Google Mobile Ads initialization failed; app will continue without ads',
-        error,
-        stackTrace,
+      await _safeInfo(
+        'AdMob initialization was skipped. The application will continue '
+        'without Google ads.',
+        '$error\n$stackTrace',
       );
     }
   }
@@ -113,6 +123,14 @@ class _BootstrapAppState extends State<BootstrapApp> {
       );
     } catch (_) {
       debugPrint('$message: $error\n$stackTrace');
+    }
+  }
+
+  Future<void> _safeInfo(String message, String details) async {
+    try {
+      await AppLogger.instance.info(message, details: details);
+    } catch (_) {
+      debugPrint('$message\n$details');
     }
   }
 
@@ -149,6 +167,14 @@ class _BootstrapAppState extends State<BootstrapApp> {
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
                           color: Colors.black54,
                           fontWeight: FontWeight.w700,
+                        ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    appAuthor,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Colors.black54,
+                          fontWeight: FontWeight.w600,
                         ),
                   ),
                   const SizedBox(height: 18),
@@ -238,6 +264,7 @@ class FatalBootstrapApp extends StatelessWidget {
 
 class CargoSortApp extends StatefulWidget {
   const CargoSortApp({super.key, required this.store});
+
   final ProgressStore store;
 
   @override
