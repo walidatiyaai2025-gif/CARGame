@@ -36,20 +36,16 @@ function Repair-ProjectPermissions {
     $projectPath = (Resolve-Path $PSScriptRoot).Path
     $androidPath = Join-Path $projectPath "android"
     $gradleBat = Join-Path $androidPath "gradlew.bat"
-    $gradleShell = Join-Path $androidPath "gradlew"
 
     if (-not (Test-Path $gradleBat)) {
         throw "Gradle wrapper was not generated: $gradleBat"
     }
 
-    # Remove Read-only/System/Hidden attributes that can prevent Gradle execution.
     & attrib.exe -R -S -H "$projectPath\*" /S /D 2>$null
 
-    # Remove the Mark-of-the-Web from downloaded/generated scripts.
     Get-ChildItem $projectPath -Recurse -File -ErrorAction SilentlyContinue |
         Unblock-File -ErrorAction SilentlyContinue
 
-    # Grant the current Windows user Modify permission recursively.
     $account = if ($env:USERDOMAIN) {
         "$env:USERDOMAIN\$env:USERNAME"
     } else {
@@ -61,12 +57,10 @@ function Repair-ProjectPermissions {
         Write-Warning "icacls could not update every file. The script will continue and test Gradle directly."
     }
 
-    # Ensure Git does not re-interpret Windows file modes as local changes.
     if (Test-Path (Join-Path $projectPath ".git")) {
         & git config core.fileMode false
     }
 
-    # Test the Windows Gradle wrapper explicitly through cmd.exe.
     Push-Location $androidPath
     try {
         & cmd.exe /d /c "gradlew.bat --version"
@@ -79,6 +73,45 @@ function Repair-ProjectPermissions {
     }
 
     Write-Host "Gradle execution permission check passed." -ForegroundColor Green
+}
+
+function Set-CorrectMainActivity {
+    param([Parameter(Mandatory = $true)][string]$ApplicationId)
+
+    Write-Step "Creating MainActivity in the correct Android package"
+
+    $srcMain = Join-Path $PSScriptRoot "android\app\src\main"
+    $kotlinRoot = Join-Path $srcMain "kotlin"
+    $javaRoot = Join-Path $srcMain "java"
+
+    foreach ($root in @($kotlinRoot, $javaRoot)) {
+        if (Test-Path $root) {
+            Get-ChildItem $root -Recurse -File -Filter "MainActivity.*" -ErrorAction SilentlyContinue |
+                Remove-Item -Force -ErrorAction SilentlyContinue
+        }
+    }
+
+    $packagePath = $ApplicationId.Replace('.', [System.IO.Path]::DirectorySeparatorChar)
+    $activityDirectory = Join-Path $kotlinRoot $packagePath
+    New-Item -ItemType Directory -Path $activityDirectory -Force | Out-Null
+
+    $activityFile = Join-Path $activityDirectory "MainActivity.kt"
+    $activityContent = @"
+package $ApplicationId
+
+import io.flutter.embedding.android.FlutterActivity
+
+class MainActivity : FlutterActivity()
+"@
+
+    [System.IO.File]::WriteAllText(
+        $activityFile,
+        $activityContent.Trim() + "`r`n",
+        [System.Text.UTF8Encoding]::new($false)
+    )
+
+    Write-Host "MainActivity: $activityFile" -ForegroundColor Green
+    Write-Host "Package:      $ApplicationId" -ForegroundColor Green
 }
 
 if (-not (Test-Path ".\pubspec.yaml")) {
@@ -163,6 +196,8 @@ kotlin {
     [System.IO.File]::WriteAllText((Resolve-Path $appGradle), $app, [System.Text.UTF8Encoding]::new($false))
 }
 
+Set-CorrectMainActivity -ApplicationId $PackageId
+
 $props = @"
 org.gradle.jvmargs=-Xmx6144m -XX:MaxMetaspaceSize=1536m -Dfile.encoding=UTF-8
 org.gradle.workers.max=2
@@ -217,6 +252,16 @@ try {
 }
 finally {
     Pop-Location
+}
+
+Write-Step "Verifying MainActivity before build"
+$expectedActivity = Join-Path $PSScriptRoot ("android\app\src\main\kotlin\" + $PackageId.Replace('.', '\') + "\MainActivity.kt")
+if (-not (Test-Path $expectedActivity)) {
+    throw "MainActivity is missing from the expected package path: $expectedActivity"
+}
+$activityText = Get-Content $expectedActivity -Raw
+if ($activityText -notmatch ("package\s+" + [regex]::Escape($PackageId))) {
+    throw "MainActivity package declaration does not match $PackageId."
 }
 
 Write-Step "Building the ARM64 release APK"
