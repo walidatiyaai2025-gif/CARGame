@@ -1,7 +1,6 @@
 param(
     [string]$RepositoryUrl = "https://github.com/walidatiyaai2025-gif/CARGame.git",
-    [string]$Branch = "main",
-    [string]$DefaultProjectName = "CARGame"
+    [string]$Branch = "main"
 )
 
 $ErrorActionPreference = "Stop"
@@ -17,7 +16,7 @@ function Write-Step([string]$Text) {
 function Invoke-Native {
     param(
         [Parameter(Mandatory = $true)][string]$Command,
-        [Parameter(ValueFromRemainingArguments = $true)][string[]]$Arguments
+        [string[]]$Arguments = @()
     )
 
     Write-Host "> $Command $($Arguments -join ' ')" -ForegroundColor DarkGray
@@ -37,8 +36,8 @@ function Assert-Command([string]$Name, [string]$Message) {
 function Get-SafeProjectPath {
     while ($true) {
         Write-Host ""
-        Write-Host "Enter the FULL project folder path." -ForegroundColor Yellow
-        Write-Host "Example: D:\Android\CARGame" -ForegroundColor DarkGray
+        Write-Host "Enter the FULL folder where the fresh project should be installed." -ForegroundColor Yellow
+        Write-Host "Example: D:\Android\CARGame_Fresh" -ForegroundColor DarkGray
         $value = Read-Host "Project path"
         $value = [Environment]::ExpandEnvironmentVariables($value.Trim().Trim('"'))
 
@@ -57,7 +56,7 @@ function Get-SafeProjectPath {
 
         $root = [System.IO.Path]::GetPathRoot($full)
         if ($full.TrimEnd('\') -eq $root.TrimEnd('\')) {
-            Write-Warning "For safety, do not use a drive root such as D:\. Choose a subfolder."
+            Write-Warning "Do not use a drive root such as D:\. Choose a subfolder."
             continue
         }
 
@@ -69,11 +68,13 @@ $scriptSucceeded = $false
 $transcriptStarted = $false
 $projectPath = $null
 $logPath = $null
+$apkPath = $null
+$crashLog = $null
 
 try {
     Clear-Host
-    Write-Host "CAR GAME - FRESH DOWNLOAD, BUILD AND RUN" -ForegroundColor Green
-    Write-Host "The window will remain open when the process finishes or fails." -ForegroundColor Yellow
+    Write-Host "CAR GAME - FRESH DOWNLOAD, BUILD, EMULATOR RUN" -ForegroundColor Green
+    Write-Host "This window always remains open so you can read any error." -ForegroundColor Yellow
 
     Assert-Command "git" "Git was not found in PATH. Install Git for Windows first."
     Assert-Command "flutter" "Flutter was not found in PATH. Add C:\flutter\bin to PATH."
@@ -90,7 +91,7 @@ try {
         Write-Host ""
         Write-Warning "The following folder already exists:"
         Write-Host $projectPath -ForegroundColor Yellow
-        Write-Warning "Its complete contents must be deleted to install a clean copy."
+        Write-Warning "All contents must be deleted to install a truly fresh copy."
         $answer = Read-Host "Type DELETE to permanently remove it, or press Enter to cancel"
         if ($answer -cne "DELETE") {
             throw "Operation cancelled. Existing folder was not changed."
@@ -103,24 +104,23 @@ try {
         Remove-Item $projectPath -Recurse -Force
     }
 
-    New-Item -ItemType Directory -Path $projectPath -Force | Out-Null
+    Write-Step "Cloning a completely fresh copy from GitHub"
+    Invoke-Native -Command "git" -Arguments @(
+        "clone", "--branch", $Branch, "--single-branch", $RepositoryUrl, $projectPath
+    )
+
+    Set-Location $projectPath
     $logPath = Join-Path $projectPath ("install_build_run_{0}.log" -f (Get-Date -Format "yyyyMMdd_HHmmss"))
     Start-Transcript -Path $logPath -Force | Out-Null
     $transcriptStarted = $true
 
-    Write-Step "Cloning a completely fresh copy from GitHub"
-    Remove-Item $projectPath -Recurse -Force
-    Invoke-Native git clone --branch $Branch --single-branch $RepositoryUrl $projectPath
+    Write-Step "Confirming exact repository state"
+    Invoke-Native -Command "git" -Arguments @("fetch", "origin")
+    Invoke-Native -Command "git" -Arguments @("reset", "--hard", "origin/$Branch")
+    Invoke-Native -Command "git" -Arguments @("clean", "-xfd")
 
-    Set-Location $projectPath
-
-    Write-Step "Confirming repository state"
-    Invoke-Native git fetch origin
-    Invoke-Native git reset --hard "origin/$Branch"
-    Invoke-Native git clean -xfd
-
-    Write-Step "Checking Flutter environment"
-    Invoke-Native flutter doctor -v
+    Write-Step "Checking Flutter and Android environment"
+    Invoke-Native -Command "flutter" -Arguments @("doctor", "-v")
 
     Write-Step "Building a fresh Android release APK"
     $rebuildScript = Join-Path $projectPath "REBUILD_FRESH_ANDROID.ps1"
@@ -129,24 +129,27 @@ try {
     }
 
     & $rebuildScript -SkipGitSync
-    if ($LASTEXITCODE -ne 0) {
-        throw "Fresh Android rebuild failed with exit code $LASTEXITCODE."
-    }
 
     $apkPath = Join-Path $projectPath "build\app\outputs\flutter-apk\app-release.apk"
     if (-not (Test-Path $apkPath)) {
         throw "APK was not found after the build: $apkPath"
     }
 
-    Write-Step "Starting emulator, installing APK and launching the application"
+    Write-Step "Starting emulator, installing APK and verifying application startup"
     $runScript = Join-Path $projectPath "RUN_ON_EMULATOR.ps1"
     if (-not (Test-Path $runScript)) {
         throw "RUN_ON_EMULATOR.ps1 was not found after cloning."
     }
 
     & $runScript -ApkPath $apkPath
-    if ($LASTEXITCODE -ne 0) {
-        throw "Emulator run failed with exit code $LASTEXITCODE."
+
+    $latestCrash = Get-ChildItem $projectPath -Filter "emulator_crash_filtered_*.log" -File -ErrorAction SilentlyContinue |
+        Sort-Object LastWriteTime -Descending |
+        Select-Object -First 1
+
+    if ($latestCrash -and $latestCrash.LastWriteTime -gt (Get-Date).AddMinutes(-5)) {
+        $crashLog = $latestCrash.FullName
+        throw "The application closed after launch. Automatic crash log: $crashLog"
     }
 
     Write-Host ""
@@ -164,11 +167,32 @@ catch {
     Write-Host "PROCESS FAILED" -ForegroundColor Red
     Write-Host "============================================================" -ForegroundColor Red
     Write-Host $_.Exception.Message -ForegroundColor Red
-    Write-Host ""
-    Write-Host $_.ScriptStackTrace -ForegroundColor DarkRed
+
+    if ($_.ScriptStackTrace) {
+        Write-Host ""
+        Write-Host $_.ScriptStackTrace -ForegroundColor DarkRed
+    }
+
+    if ($projectPath -and -not $crashLog) {
+        $latestCrash = Get-ChildItem $projectPath -Filter "emulator_crash_filtered_*.log" -File -ErrorAction SilentlyContinue |
+            Sort-Object LastWriteTime -Descending |
+            Select-Object -First 1
+        if ($latestCrash) {
+            $crashLog = $latestCrash.FullName
+        }
+    }
+
     if ($logPath) {
         Write-Host ""
-        Write-Host "Log file: $logPath" -ForegroundColor Yellow
+        Write-Host "Complete operation log:" -ForegroundColor Yellow
+        Write-Host $logPath -ForegroundColor Yellow
+    }
+
+    if ($crashLog) {
+        Write-Host ""
+        Write-Host "Automatic emulator crash log:" -ForegroundColor Yellow
+        Write-Host $crashLog -ForegroundColor Yellow
+        Write-Host "Upload this filtered log for diagnosis." -ForegroundColor Yellow
     }
 }
 finally {
@@ -181,7 +205,12 @@ finally {
         Write-Host "The application should now be open on the Android Emulator." -ForegroundColor Green
     }
     else {
-        Write-Host "Review the error above. This window will not close automatically." -ForegroundColor Yellow
+        Write-Host "Review the error and log paths above. This window will not close automatically." -ForegroundColor Yellow
     }
+
+    if ($projectPath -and (Test-Path $projectPath)) {
+        Write-Host "Project folder: $projectPath" -ForegroundColor Cyan
+    }
+
     [void](Read-Host "Press Enter to close this window")
 }
