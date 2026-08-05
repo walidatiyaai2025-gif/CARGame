@@ -12,64 +12,232 @@ import 'core/theme/app_theme.dart';
 import 'features/home/home_screen.dart';
 import 'l10n/app_localizations.dart';
 
-Future<void> main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  await AppErrorBoundary.install();
 
-  await runZonedGuarded<Future<void>>(() async {
-    final logger = AppLogger.instance;
-    await logger.checkpoint('BOOTSTRAP_START');
+  runZonedGuarded<void>(
+    () => runApp(const BootstrapApp()),
+    (Object error, StackTrace stackTrace) {
+      debugPrint('Uncaught zone error: $error\n$stackTrace');
+    },
+  );
+}
 
+class BootstrapApp extends StatefulWidget {
+  const BootstrapApp({super.key});
+
+  @override
+  State<BootstrapApp> createState() => _BootstrapAppState();
+}
+
+class _BootstrapAppState extends State<BootstrapApp> {
+  final ProgressStore _store = ProgressStore();
+
+  String _status = 'Starting Cargo Sort...';
+  Object? _fatalError;
+  StackTrace? _fatalStackTrace;
+  bool _ready = false;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_bootstrap());
+  }
+
+  Future<void> _bootstrap() async {
     try {
-      await SystemChrome.setPreferredOrientations([
-        DeviceOrientation.portraitUp,
-        DeviceOrientation.portraitDown,
-      ]);
-      await logger.checkpoint('ORIENTATION_READY');
+      _setStatus('Preparing application services...');
+      try {
+        await AppErrorBoundary.install().timeout(const Duration(seconds: 5));
+      } catch (error, stackTrace) {
+        debugPrint('Logger initialization skipped: $error\n$stackTrace');
+      }
+
+      _setStatus('Configuring display...');
+      try {
+        await SystemChrome.setPreferredOrientations([
+          DeviceOrientation.portraitUp,
+          DeviceOrientation.portraitDown,
+        ]).timeout(const Duration(seconds: 3));
+      } catch (error, stackTrace) {
+        await _safeWarning(
+          'Failed to configure orientation',
+          error,
+          stackTrace,
+        );
+      }
+
+      _setStatus('Loading saved progress...');
+      try {
+        await _store.load().timeout(const Duration(seconds: 5));
+      } catch (error, stackTrace) {
+        await _safeWarning(
+          'Progress store load failed; defaults will be used',
+          error,
+          stackTrace,
+        );
+      }
+
+      if (!mounted) return;
+      setState(() => _ready = true);
+
+      // Ads must never block the first visible application screen.
+      unawaited(_initializeAdsInBackground());
     } catch (error, stackTrace) {
-      await logger.warning(
-        'Failed to configure orientation',
-        error: error,
-        stackTrace: stackTrace,
-      );
+      if (!mounted) return;
+      setState(() {
+        _fatalError = error;
+        _fatalStackTrace = stackTrace;
+      });
     }
+  }
 
+  Future<void> _initializeAdsInBackground() async {
     try {
-      await MobileAds.instance.initialize();
-      await logger.checkpoint('ADMOB_READY');
+      await MobileAds.instance.initialize().timeout(const Duration(seconds: 10));
+      await AppLogger.instance.checkpoint('ADMOB_READY');
     } catch (error, stackTrace) {
-      await logger.warning(
+      await _safeWarning(
         'Google Mobile Ads initialization failed; app will continue without ads',
-        error: error,
-        stackTrace: stackTrace,
-        notifyUser: true,
+        error,
+        stackTrace,
       );
     }
+  }
 
-    final store = ProgressStore();
+  Future<void> _safeWarning(
+    String message,
+    Object error,
+    StackTrace stackTrace,
+  ) async {
     try {
-      await store.load();
-      await logger.checkpoint('PROGRESS_STORE_READY');
-    } catch (error, stackTrace) {
-      await logger.warning(
-        'Progress store load failed; defaults will be used',
+      await AppLogger.instance.warning(
+        message,
         error: error,
         stackTrace: stackTrace,
-        notifyUser: true,
+      );
+    } catch (_) {
+      debugPrint('$message: $error\n$stackTrace');
+    }
+  }
+
+  void _setStatus(String value) {
+    if (!mounted) return;
+    setState(() => _status = value);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_fatalError != null) {
+      return FatalBootstrapApp(
+        error: _fatalError!,
+        stackTrace: _fatalStackTrace ?? StackTrace.empty,
       );
     }
 
-    runApp(CargoSortApp(store: store));
-    await logger.checkpoint('RUN_APP_CALLED');
-  }, (Object error, StackTrace stackTrace) async {
-    await AppLogger.instance.error(
-      'Uncaught bootstrap error',
-      error,
-      stackTrace,
-      notifyUser: false,
+    if (_ready) {
+      return CargoSortApp(store: _store);
+    }
+
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.light,
+      home: Scaffold(
+        body: SafeArea(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(32),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const FlutterLogo(size: 92),
+                  const SizedBox(height: 28),
+                  Text(
+                    'Cargo Sort',
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                          fontWeight: FontWeight.w900,
+                          color: AppTheme.navy,
+                        ),
+                  ),
+                  const SizedBox(height: 24),
+                  const SizedBox(
+                    width: 34,
+                    height: 34,
+                    child: CircularProgressIndicator(),
+                  ),
+                  const SizedBox(height: 18),
+                  Text(
+                    _status,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
     );
-    runApp(FatalErrorScreen(error: error, stackTrace: stackTrace));
+  }
+}
+
+class FatalBootstrapApp extends StatelessWidget {
+  const FatalBootstrapApp({
+    super.key,
+    required this.error,
+    required this.stackTrace,
   });
+
+  final Object error;
+  final StackTrace stackTrace;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = '$error\n\n$stackTrace';
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: Scaffold(
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              children: [
+                const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                const SizedBox(height: 12),
+                const Text(
+                  'Cargo Sort could not finish startup.',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 12),
+                Expanded(
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    color: Colors.black87,
+                    child: SingleChildScrollView(
+                      child: SelectableText(
+                        text,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontFamily: 'monospace',
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                FilledButton.icon(
+                  onPressed: () => Clipboard.setData(ClipboardData(text: text)),
+                  icon: const Icon(Icons.copy),
+                  label: const Text('Copy error'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class CargoSortApp extends StatefulWidget {
@@ -116,9 +284,7 @@ class _CargoSortAppState extends State<CargoSortApp>
           ? const Locale('ar')
           : const Locale('en');
     });
-    unawaited(
-      _logger.info('Language changed', details: _locale.languageCode),
-    );
+    unawaited(_logger.info('Language changed', details: _locale.languageCode));
   }
 
   Future<void> _showRuntimeError(LoggedAppError appError) async {
@@ -133,11 +299,7 @@ class _CargoSortAppState extends State<CargoSortApp>
         context: context,
         barrierDismissible: false,
         builder: (dialogContext) => AlertDialog(
-          icon: const Icon(
-            Icons.error_outline_rounded,
-            color: Colors.red,
-            size: 42,
-          ),
+          icon: const Icon(Icons.error_outline_rounded, color: Colors.red, size: 42),
           title: Text('${appError.level}: Application issue'),
           content: SizedBox(
             width: double.maxFinite,
@@ -177,9 +339,7 @@ class _CargoSortAppState extends State<CargoSortApp>
           actions: [
             TextButton.icon(
               onPressed: () async {
-                await Clipboard.setData(
-                  ClipboardData(text: appError.fullText),
-                );
+                await Clipboard.setData(ClipboardData(text: appError.fullText));
                 if (dialogContext.mounted) {
                   ScaffoldMessenger.of(dialogContext).showSnackBar(
                     const SnackBar(content: Text('Error copied')),
@@ -226,11 +386,7 @@ class _CargoSortAppState extends State<CargoSortApp>
             padding: const EdgeInsets.all(16),
             child: Column(
               children: [
-                const Icon(
-                  Icons.error_outline_rounded,
-                  size: 64,
-                  color: Colors.red,
-                ),
+                const Icon(Icons.error_outline_rounded, size: 64, color: Colors.red),
                 const SizedBox(height: 12),
                 const Text('A screen error occurred. Copy the details below.'),
                 const SizedBox(height: 12),
@@ -252,9 +408,7 @@ class _CargoSortAppState extends State<CargoSortApp>
                 ),
                 const SizedBox(height: 12),
                 FilledButton.icon(
-                  onPressed: () => Clipboard.setData(
-                    ClipboardData(text: text),
-                  ),
+                  onPressed: () => Clipboard.setData(ClipboardData(text: text)),
                   icon: const Icon(Icons.copy_rounded),
                   label: const Text('Copy error'),
                 ),
