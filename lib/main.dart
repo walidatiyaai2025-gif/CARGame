@@ -12,9 +12,11 @@ import 'core/theme/app_theme.dart';
 import 'features/home/home_screen.dart';
 import 'l10n/app_localizations.dart';
 
+const String appVersion = '1.0.1';
+const String appBuildNumber = '2';
+
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-
   runZonedGuarded<void>(
     () => runApp(const BootstrapApp()),
     (Object error, StackTrace stackTrace) {
@@ -32,7 +34,6 @@ class BootstrapApp extends StatefulWidget {
 
 class _BootstrapAppState extends State<BootstrapApp> {
   final ProgressStore _store = ProgressStore();
-
   String _status = 'Starting Cargo Sort...';
   Object? _fatalError;
   StackTrace? _fatalStackTrace;
@@ -60,11 +61,7 @@ class _BootstrapAppState extends State<BootstrapApp> {
           DeviceOrientation.portraitDown,
         ]).timeout(const Duration(seconds: 3));
       } catch (error, stackTrace) {
-        await _safeWarning(
-          'Failed to configure orientation',
-          error,
-          stackTrace,
-        );
+        await _safeWarning('Failed to configure orientation', error, stackTrace);
       }
 
       _setStatus('Loading saved progress...');
@@ -80,8 +77,6 @@ class _BootstrapAppState extends State<BootstrapApp> {
 
       if (!mounted) return;
       setState(() => _ready = true);
-
-      // Ads must never block the first visible application screen.
       unawaited(_initializeAdsInBackground());
     } catch (error, stackTrace) {
       if (!mounted) return;
@@ -122,8 +117,7 @@ class _BootstrapAppState extends State<BootstrapApp> {
   }
 
   void _setStatus(String value) {
-    if (!mounted) return;
-    setState(() => _status = value);
+    if (mounted) setState(() => _status = value);
   }
 
   @override
@@ -135,9 +129,7 @@ class _BootstrapAppState extends State<BootstrapApp> {
       );
     }
 
-    if (_ready) {
-      return CargoSortApp(store: _store);
-    }
+    if (_ready) return CargoSortApp(store: _store);
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
@@ -151,7 +143,15 @@ class _BootstrapAppState extends State<BootstrapApp> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const FlutterLogo(size: 92),
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Version $appVersion ($appBuildNumber)',
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                          color: Colors.black54,
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
+                  const SizedBox(height: 18),
                   Text(
                     'Cargo Sort',
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
@@ -166,11 +166,7 @@ class _BootstrapAppState extends State<BootstrapApp> {
                     child: CircularProgressIndicator(),
                   ),
                   const SizedBox(height: 18),
-                  Text(
-                    _status,
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
+                  Text(_status, textAlign: TextAlign.center),
                 ],
               ),
             ),
@@ -242,7 +238,6 @@ class FatalBootstrapApp extends StatelessWidget {
 
 class CargoSortApp extends StatefulWidget {
   const CargoSortApp({super.key, required this.store});
-
   final ProgressStore store;
 
   @override
@@ -253,7 +248,6 @@ class _CargoSortAppState extends State<CargoSortApp>
     with WidgetsBindingObserver {
   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
   final AppLogger _logger = AppLogger.instance;
-
   Locale _locale = const Locale('en');
   StreamSubscription<LoggedAppError>? _errorSubscription;
   bool _dialogVisible = false;
@@ -284,14 +278,12 @@ class _CargoSortAppState extends State<CargoSortApp>
           ? const Locale('ar')
           : const Locale('en');
     });
-    unawaited(_logger.info('Language changed', details: _locale.languageCode));
   }
 
   Future<void> _showRuntimeError(LoggedAppError appError) async {
-    if (_dialogVisible) return;
-
+    if (_dialogVisible || !mounted) return;
     final context = _navigatorKey.currentContext;
-    if (context == null || !mounted) return;
+    if (context == null) return;
 
     _dialogVisible = true;
     try {
@@ -299,54 +291,20 @@ class _CargoSortAppState extends State<CargoSortApp>
         context: context,
         barrierDismissible: false,
         builder: (dialogContext) => AlertDialog(
-          icon: const Icon(Icons.error_outline_rounded, color: Colors.red, size: 42),
+          icon: const Icon(Icons.error_outline, color: Colors.red, size: 42),
           title: Text('${appError.level}: Application issue'),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  'The app captured an error. Copy it and send it for review.',
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 12),
-                ConstrainedBox(
-                  constraints: const BoxConstraints(maxHeight: 320),
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.black87,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: SingleChildScrollView(
-                      child: SelectableText(
-                        appError.fullText,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontFamily: 'monospace',
-                          fontSize: 11,
-                          height: 1.4,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+          content: ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 320),
+            child: SingleChildScrollView(
+              child: SelectableText(appError.fullText),
             ),
           ),
           actions: [
             TextButton.icon(
-              onPressed: () async {
-                await Clipboard.setData(ClipboardData(text: appError.fullText));
-                if (dialogContext.mounted) {
-                  ScaffoldMessenger.of(dialogContext).showSnackBar(
-                    const SnackBar(content: Text('Error copied')),
-                  );
-                }
-              },
-              icon: const Icon(Icons.copy_rounded),
+              onPressed: () => Clipboard.setData(
+                ClipboardData(text: appError.fullText),
+              ),
+              icon: const Icon(Icons.copy),
               label: const Text('Copy'),
             ),
             TextButton.icon(
@@ -375,50 +333,6 @@ class _CargoSortAppState extends State<CargoSortApp>
 
   @override
   Widget build(BuildContext context) {
-    ErrorWidget.builder = (FlutterErrorDetails details) {
-      unawaited(_logger.flutterError(details));
-      final text = '${details.exceptionAsString()}\n\n${details.stack ?? ''}';
-
-      return Material(
-        color: const Color(0xFFF8F9FA),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                const Icon(Icons.error_outline_rounded, size: 64, color: Colors.red),
-                const SizedBox(height: 12),
-                const Text('A screen error occurred. Copy the details below.'),
-                const SizedBox(height: 12),
-                Expanded(
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(12),
-                    color: Colors.black87,
-                    child: SingleChildScrollView(
-                      child: SelectableText(
-                        text,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontFamily: 'monospace',
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                FilledButton.icon(
-                  onPressed: () => Clipboard.setData(ClipboardData(text: text)),
-                  icon: const Icon(Icons.copy_rounded),
-                  label: const Text('Copy error'),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    };
-
     return MaterialApp(
       navigatorKey: _navigatorKey,
       debugShowCheckedModeBanner: false,
