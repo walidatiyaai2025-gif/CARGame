@@ -32,7 +32,7 @@ function Find-AndroidTool {
 function Invoke-Checked {
     param(
         [Parameter(Mandatory = $true)][string]$Command,
-        [Parameter(ValueFromRemainingArguments = $true)][string[]]$Arguments
+        [string[]]$Arguments = @()
     )
 
     Write-Host "> $Command $($Arguments -join ' ')" -ForegroundColor DarkGray
@@ -51,18 +51,27 @@ if (-not $emulator) { throw "emulator.exe was not found. Install Android Emulato
 
 if ($BuildFirst) {
     Write-Host "Building release APK first..." -ForegroundColor Cyan
-    Invoke-Checked flutter clean
-    Invoke-Checked flutter pub get
-    try { Invoke-Checked flutter gen-l10n } catch { Write-Warning "gen-l10n skipped." }
-    Invoke-Checked flutter build apk --release --target-platform android-arm64
+    Invoke-Checked -Command "flutter" -Arguments @("clean")
+    Invoke-Checked -Command "flutter" -Arguments @("pub", "get")
+    try {
+        Invoke-Checked -Command "flutter" -Arguments @("gen-l10n")
+    }
+    catch {
+        Write-Warning "gen-l10n skipped."
+    }
+    Invoke-Checked -Command "flutter" -Arguments @(
+        "build", "apk", "--release", "--target-platform", "android-arm64"
+    )
 }
 
-$resolvedApk = Join-Path $PSScriptRoot $ApkPath
+$resolvedApk = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot $ApkPath))
 if (-not (Test-Path $resolvedApk)) {
     throw "APK was not found at: $resolvedApk"
 }
 
-$runningEmulator = (& $adb devices) | Select-String '^emulator-\d+\s+device$' | Select-Object -First 1
+$runningEmulator = (& $adb devices) |
+    Select-String '^emulator-\d+\s+device$' |
+    Select-Object -First 1
 
 if (-not $runningEmulator) {
     $avds = & $emulator -list-avds | Where-Object { $_.Trim() }
@@ -79,14 +88,16 @@ if (-not $runningEmulator) {
     }
 
     Write-Host "Starting emulator: $AvdName" -ForegroundColor Cyan
-    Start-Process -FilePath $emulator -ArgumentList @('-avd', $AvdName, '-netdelay', 'none', '-netspeed', 'full') | Out-Null
+    Start-Process -FilePath $emulator -ArgumentList @(
+        "-avd", $AvdName, "-netdelay", "none", "-netspeed", "full"
+    ) | Out-Null
 }
 else {
     Write-Host "An emulator is already running." -ForegroundColor Green
 }
 
 Write-Host "Waiting for emulator connection..." -ForegroundColor Cyan
-Invoke-Checked $adb wait-for-device
+Invoke-Checked -Command $adb -Arguments @("wait-for-device")
 
 $timeoutSeconds = 240
 $startedAt = Get-Date
@@ -94,7 +105,7 @@ while ($true) {
     $bootCompleted = (& $adb shell getprop sys.boot_completed 2>$null).Trim()
     $bootAnimation = (& $adb shell getprop init.svc.bootanim 2>$null).Trim()
 
-    if ($bootCompleted -eq '1' -and $bootAnimation -eq 'stopped') {
+    if ($bootCompleted -eq "1" -and $bootAnimation -eq "stopped") {
         break
     }
 
@@ -108,10 +119,18 @@ while ($true) {
 Write-Host "Emulator is ready." -ForegroundColor Green
 Write-Host "Installing APK..." -ForegroundColor Cyan
 & $adb uninstall $PackageId 2>$null | Out-Null
-Invoke-Checked $adb install -r $resolvedApk
+Invoke-Checked -Command $adb -Arguments @("install", "-r", $resolvedApk)
 
 Write-Host "Launching application..." -ForegroundColor Cyan
-Invoke-Checked $adb shell monkey -p $PackageId -c android.intent.category.LAUNCHER 1
+Invoke-Checked -Command $adb -Arguments @(
+    "shell",
+    "monkey",
+    "-p",
+    $PackageId,
+    "-c",
+    "android.intent.category.LAUNCHER",
+    "1"
+)
 
 Write-Host ""
 Write-Host "APPLICATION STARTED ON EMULATOR" -ForegroundColor Green
