@@ -2,7 +2,8 @@ param(
     [string]$AvdName = "",
     [string]$PackageId = "com.walka.cargosort",
     [string]$ApkPath = ".\build\app\outputs\flutter-apk\app-release.apk",
-    [switch]$BuildFirst
+    [switch]$BuildFirst,
+    [int]$VerifySeconds = 12
 )
 
 $ErrorActionPreference = "Stop"
@@ -41,6 +42,59 @@ function Invoke-Checked {
     if ($code -ne 0) {
         throw "Command failed with exit code ${code}: $Command $($Arguments -join ' ')"
     }
+}
+
+function Save-CrashLog {
+    param([string]$AdbPath, [string]$AppId)
+
+    $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
+    $fullLog = Join-Path $PSScriptRoot "emulator_crash_$timestamp.log"
+    $filteredLog = Join-Path $PSScriptRoot "emulator_crash_filtered_$timestamp.log"
+
+    Write-Host "Collecting emulator crash log..." -ForegroundColor Yellow
+    & $AdbPath logcat -d -v threadtime 2>&1 | Set-Content $fullLog -Encoding UTF8
+
+    $patterns = @(
+        $AppId,
+        "FATAL EXCEPTION",
+        "AndroidRuntime",
+        "E/flutter",
+        "FlutterError",
+        "PlatformException",
+        "Caused by:",
+        "Process:",
+        "google_mobile_ads",
+        "shared_preferences"
+    )
+
+    $regex = ($patterns | ForEach-Object { [regex]::Escape($_) }) -join "|"
+    $lines = Get-Content $fullLog
+    $selected = New-Object System.Collections.Generic.HashSet[int]
+
+    for ($index = 0; $index -lt $lines.Count; $index++) {
+        if ($lines[$index] -match $regex) {
+            $start = [Math]::Max(0, $index - 12)
+            $end = [Math]::Min($lines.Count - 1, $index + 40)
+            for ($lineIndex = $start; $lineIndex -le $end; $lineIndex++) {
+                [void]$selected.Add($lineIndex)
+            }
+        }
+    }
+
+    if ($selected.Count -gt 0) {
+        foreach ($lineNumber in ($selected | Sort-Object)) {
+            $lines[$lineNumber]
+        } | Set-Content $filteredLog -Encoding UTF8
+    }
+    else {
+        @(
+            "No matching crash lines were found.",
+            "Review the complete log: $fullLog"
+        ) | Set-Content $filteredLog -Encoding UTF8
+    }
+
+    Write-Host "Complete log: $fullLog" -ForegroundColor Yellow
+    Write-Host "Filtered log: $filteredLog" -ForegroundColor Yellow
 }
 
 $adb = Find-AndroidTool "platform-tools\adb.exe" "adb"
@@ -121,6 +175,8 @@ Write-Host "Installing APK..." -ForegroundColor Cyan
 & $adb uninstall $PackageId 2>$null | Out-Null
 Invoke-Checked -Command $adb -Arguments @("install", "-r", $resolvedApk)
 
+& $adb logcat -c | Out-Null
+
 Write-Host "Launching application..." -ForegroundColor Cyan
 Invoke-Checked -Command $adb -Arguments @(
     "shell",
@@ -132,6 +188,16 @@ Invoke-Checked -Command $adb -Arguments @(
     "1"
 )
 
+Write-Host "Verifying application process for $VerifySeconds seconds..." -ForegroundColor Cyan
+Start-Sleep -Seconds $VerifySeconds
+$pid = (& $adb shell pidof $PackageId 2>$null).Trim()
+
+if (-not $pid) {
+    Save-CrashLog -AdbPath $adb -AppId $PackageId
+    throw "The application exited immediately after launch. Review the generated emulator_crash_filtered log."
+}
+
 Write-Host ""
 Write-Host "APPLICATION STARTED ON EMULATOR" -ForegroundColor Green
+Write-Host "PID: $pid" -ForegroundColor Green
 Write-Host "APK: $resolvedApk" -ForegroundColor Green
