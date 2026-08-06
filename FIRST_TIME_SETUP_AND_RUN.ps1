@@ -205,12 +205,18 @@ try {
     $parent = Split-Path $TargetPath -Parent
     New-Item -ItemType Directory -Path $parent -Force | Out-Null
 
+    $targetExists = Test-Path $TargetPath
+    $targetHasFiles = $false
+    if ($targetExists) {
+        $existingItems = @(Get-ChildItem -LiteralPath $TargetPath -Force -ErrorAction SilentlyContinue)
+        $targetHasFiles = $existingItems.Count -gt 0
+    }
+
     if (Test-Path (Join-Path $TargetPath '.git')) {
         Run 'git' @('fetch', 'origin') $TargetPath
         Run 'git' @('reset', '--hard', 'origin/main') $TargetPath
     }
-    elseif (Test-Path $TargetPath -and
-            @(Get-ChildItem $TargetPath -Force -ErrorAction SilentlyContinue).Count -gt 0) {
+    elseif ($targetExists -and $targetHasFiles) {
         $TargetPath = "${TargetPath}_Fresh_$(Get-Date -Format yyyyMMdd_HHmmss)"
         Run 'git' @('clone', $RepoUrl, $TargetPath)
     }
