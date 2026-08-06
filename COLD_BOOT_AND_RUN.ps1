@@ -126,7 +126,8 @@ function Ensure-CompatibleJdk {
     }
     $env:Path = "$jdkBin;" + ($remainingPath -join ';')
     $env:GRADLE_JAVA_HOME = $jdk
-    $env:GRADLE_OPTS = "-Dorg.gradle.java.home=$($jdk -replace '\\','/')"
+    Remove-Item Env:GRADLE_OPTS -ErrorAction SilentlyContinue
+    Remove-Item Env:JAVA_TOOL_OPTIONS -ErrorAction SilentlyContinue
 
     $javaInfo = Get-JavaInfo $jdk
     Write-Host "Using JDK 17: $jdk" -ForegroundColor Green
