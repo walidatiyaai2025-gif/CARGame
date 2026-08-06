@@ -6,20 +6,14 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$PSNativeCommandUseErrorActionPreference = $false
-
 $ProjectPath = [IO.Path]::GetFullPath($ProjectPath)
 $DashboardPath = Join-Path $ProjectPath 'docs\dashboard\index.html'
 $CatalogPath = Join-Path $ProjectPath 'docs\FEATURE_CATALOG.md'
-$ServerScript = Join-Path $ProjectPath 'DASHBOARD_HTTP_SERVER.ps1'
 $LogDirectory = Join-Path $ProjectPath 'logs'
 $LogPath = Join-Path $LogDirectory 'development_dashboard.log'
 $ServerLogPath = Join-Path $LogDirectory 'development_dashboard_server.log'
-$StdOutPath = Join-Path $LogDirectory 'development_dashboard_server.stdout.log'
-$StdErrPath = Join-Path $LogDirectory 'development_dashboard_server.stderr.log'
-$PidPath = Join-Path $LogDirectory 'development_dashboard_server.pid'
 $Url = "http://127.0.0.1:$Port/docs/dashboard/"
-$serverProcess = $null
+$serverJob = $null
 
 function Write-Log {
     param([Parameter(Mandatory)][string]$Message, [ConsoleColor]$Color = [ConsoleColor]::Gray)
@@ -28,13 +22,20 @@ function Write-Log {
     Add-Content -LiteralPath $LogPath -Value $line -Encoding UTF8
 }
 
+function Test-DashboardHttp {
+    try {
+        $response = Invoke-WebRequest -Uri $Url -UseBasicParsing -TimeoutSec 2
+        return $response.StatusCode -eq 200 -and $response.Content -match 'CARGame'
+    }
+    catch { return $false }
+}
+
 function Test-PortListening {
-    param([int]$LocalPort)
     try {
         $client = [Net.Sockets.TcpClient]::new()
         try {
-            $task = $client.ConnectAsync('127.0.0.1', $LocalPort)
-            if (-not $task.Wait(600)) { return $false }
+            $task = $client.ConnectAsync('127.0.0.1', $Port)
+            if (-not $task.Wait(500)) { return $false }
             return $client.Connected
         }
         finally { $client.Dispose() }
@@ -42,45 +43,35 @@ function Test-PortListening {
     catch { return $false }
 }
 
-function Test-DashboardHttp {
-    try {
-        $response = Invoke-WebRequest -Uri $Url -UseBasicParsing -TimeoutSec 3
-        return $response.StatusCode -eq 200 -and $response.Content -match 'CARGame'
-    }
-    catch { return $false }
-}
-
-function Show-Logs {
+function Show-JobErrors {
+    if (-not $serverJob) { return }
     Write-Host ''
-    foreach ($item in @(
-        @{ Name = 'SERVER LOG'; Path = $ServerLogPath },
-        @{ Name = 'SERVER STDOUT'; Path = $StdOutPath },
-        @{ Name = 'SERVER STDERR'; Path = $StdErrPath }
-    )) {
-        Write-Host "---------------- $($item.Name) ----------------" -ForegroundColor DarkCyan
-        if (Test-Path -LiteralPath $item.Path) {
-            Get-Content -LiteralPath $item.Path -Tail 80 -ErrorAction SilentlyContinue
-        }
-        else { Write-Host '(no log)' -ForegroundColor DarkGray }
+    Write-Host '---------------- SERVER JOB OUTPUT ----------------' -ForegroundColor DarkCyan
+    Receive-Job -Job $serverJob -Keep -ErrorAction SilentlyContinue | Select-Object -Last 80
+    $reason = $serverJob.ChildJobs[0].JobStateInfo.Reason
+    if ($reason) {
+        Write-Host '---------------- SERVER JOB ERROR -----------------' -ForegroundColor DarkCyan
+        Write-Host $reason -ForegroundColor Red
     }
 }
 
 try {
     Clear-Host
     Write-Host '============================================================' -ForegroundColor Cyan
-    Write-Host '       CARGAME DEVELOPMENT DASHBOARD' -ForegroundColor Green
+    Write-Host '       CARGAME DEVELOPMENT PORTAL' -ForegroundColor Green
     Write-Host '============================================================' -ForegroundColor Cyan
     Write-Host ''
 
     New-Item -ItemType Directory -Path $LogDirectory -Force | Out-Null
     Set-Content -LiteralPath $LogPath -Value '' -Encoding UTF8
+    Set-Content -LiteralPath $ServerLogPath -Value '' -Encoding UTF8
 
     Write-Log "Project path: $ProjectPath" Cyan
     Write-Log "Dashboard file: $DashboardPath" Cyan
     Write-Log "Dashboard URL: $Url" Cyan
     Write-Log "Launcher log: $LogPath" Cyan
 
-    foreach ($required in @($DashboardPath, $CatalogPath, $ServerScript)) {
+    foreach ($required in @($DashboardPath, $CatalogPath)) {
         if (-not (Test-Path -LiteralPath $required -PathType Leaf)) {
             throw "Required dashboard file was not found: $required"
         }
@@ -90,57 +81,118 @@ try {
         Write-Log "A working CARGame dashboard is already running on port $Port." Green
     }
     else {
-        if (Test-PortListening $Port) {
+        if (Test-PortListening) {
             throw "Port $Port is already used by another application. Run: .\OPEN_DEVELOPMENT_DASHBOARD.ps1 -Port 9000"
         }
 
-        Remove-Item -LiteralPath $ServerLogPath, $StdOutPath, $StdErrPath, $PidPath -Force -ErrorAction SilentlyContinue
+        Write-Log 'Starting built-in PowerShell HTTP server...' Yellow
 
-        $hostExe = (Get-Process -Id $PID).Path
-        if ([string]::IsNullOrWhiteSpace($hostExe) -or -not (Test-Path $hostExe)) {
-            $hostExe = (Get-Command powershell.exe -ErrorAction Stop).Source
+        $serverJob = Start-Job -Name "CARGameDashboard_$Port" -ArgumentList $ProjectPath, $Port, $ServerLogPath -ScriptBlock {
+            param($RootPath, $ListenPort, $ServerLog)
+
+            $ErrorActionPreference = 'Stop'
+            $listener = [Net.HttpListener]::new()
+            $listener.Prefixes.Add("http://127.0.0.1:$ListenPort/")
+
+            function Write-ServerLog([string]$Message) {
+                $line = "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] $Message"
+                Add-Content -LiteralPath $ServerLog -Value $line -Encoding UTF8
+                Write-Output $line
+            }
+
+            function Get-MimeType([string]$Path) {
+                switch ([IO.Path]::GetExtension($Path).ToLowerInvariant()) {
+                    '.html' { 'text/html; charset=utf-8' }
+                    '.htm'  { 'text/html; charset=utf-8' }
+                    '.css'  { 'text/css; charset=utf-8' }
+                    '.js'   { 'application/javascript; charset=utf-8' }
+                    '.json' { 'application/json; charset=utf-8' }
+                    '.md'   { 'text/markdown; charset=utf-8' }
+                    '.svg'  { 'image/svg+xml' }
+                    '.png'  { 'image/png' }
+                    '.jpg'  { 'image/jpeg' }
+                    '.jpeg' { 'image/jpeg' }
+                    '.webp' { 'image/webp' }
+                    '.ico'  { 'image/x-icon' }
+                    default { 'application/octet-stream' }
+                }
+            }
+
+            try {
+                $listener.Start()
+                Write-ServerLog "Listening on http://127.0.0.1:$ListenPort/"
+
+                while ($listener.IsListening) {
+                    $context = $listener.GetContext()
+                    try {
+                        $relative = [Uri]::UnescapeDataString($context.Request.Url.AbsolutePath.TrimStart('/'))
+                        if ([string]::IsNullOrWhiteSpace($relative)) {
+                            $relative = 'docs/dashboard/index.html'
+                        }
+                        if ($relative.EndsWith('/')) {
+                            $relative += 'index.html'
+                        }
+
+                        $candidate = [IO.Path]::GetFullPath((Join-Path $RootPath $relative.Replace('/', [IO.Path]::DirectorySeparatorChar)))
+                        $rootFull = [IO.Path]::GetFullPath($RootPath).TrimEnd('\') + '\'
+
+                        if (-not $candidate.StartsWith($rootFull, [StringComparison]::OrdinalIgnoreCase)) {
+                            $context.Response.StatusCode = 403
+                            $payload = [Text.Encoding]::UTF8.GetBytes('Forbidden')
+                        }
+                        elseif (-not (Test-Path -LiteralPath $candidate -PathType Leaf)) {
+                            $context.Response.StatusCode = 404
+                            $payload = [Text.Encoding]::UTF8.GetBytes('Not Found')
+                        }
+                        else {
+                            $context.Response.StatusCode = 200
+                            $context.Response.ContentType = Get-MimeType $candidate
+                            $context.Response.Headers['Cache-Control'] = 'no-store, no-cache, must-revalidate'
+                            $payload = [IO.File]::ReadAllBytes($candidate)
+                        }
+
+                        $context.Response.ContentLength64 = $payload.Length
+                        $context.Response.OutputStream.Write($payload, 0, $payload.Length)
+                    }
+                    catch {
+                        try {
+                            $context.Response.StatusCode = 500
+                            $payload = [Text.Encoding]::UTF8.GetBytes("Server error: $($_.Exception.Message)")
+                            $context.Response.ContentLength64 = $payload.Length
+                            $context.Response.OutputStream.Write($payload, 0, $payload.Length)
+                        }
+                        catch {}
+                        Write-ServerLog "Request failed: $($_.Exception.Message)"
+                    }
+                    finally {
+                        try { $context.Response.OutputStream.Close() } catch {}
+                        try { $context.Response.Close() } catch {}
+                    }
+                }
+            }
+            finally {
+                if ($listener.IsListening) { $listener.Stop() }
+                $listener.Close()
+                Write-ServerLog 'Server stopped.'
+            }
         }
 
-        $arguments = @(
-            '-NoLogo',
-            '-NoProfile',
-            '-ExecutionPolicy', 'Bypass',
-            '-File', $ServerScript,
-            '-Port', [string]$Port,
-            '-RootPath', $ProjectPath,
-            '-ServerLogPath', $ServerLogPath
-        )
+        Write-Log "Server job ID: $($serverJob.Id)" Cyan
 
-        Write-Log 'Starting dependency-free PowerShell HTTP server...' Yellow
-        Write-Log "$hostExe $($arguments -join ' ')" DarkGray
-
-        $serverProcess = Start-Process `
-            -FilePath $hostExe `
-            -ArgumentList $arguments `
-            -WorkingDirectory $ProjectPath `
-            -RedirectStandardOutput $StdOutPath `
-            -RedirectStandardError $StdErrPath `
-            -WindowStyle Hidden `
-            -PassThru
-
-        Set-Content -LiteralPath $PidPath -Value $serverProcess.Id -Encoding ASCII
-        Write-Log "Server process ID: $($serverProcess.Id)" Cyan
-
-        $deadline = (Get-Date).AddSeconds(25)
-        $ready = $false
+        $deadline = (Get-Date).AddSeconds(20)
         do {
-            Start-Sleep -Milliseconds 500
-            $serverProcess.Refresh()
-            if ($serverProcess.HasExited) {
-                Show-Logs
-                throw "The PowerShell dashboard server exited before startup. Exit code: $($serverProcess.ExitCode)"
+            Start-Sleep -Milliseconds 400
+            $serverJob = Get-Job -Id $serverJob.Id
+            if ($serverJob.State -in @('Failed', 'Stopped', 'Completed')) {
+                Show-JobErrors
+                throw "The dashboard server job stopped before startup. State: $($serverJob.State)"
             }
             $ready = Test-DashboardHttp
         } while (-not $ready -and (Get-Date) -lt $deadline)
 
         if (-not $ready) {
-            Show-Logs
-            throw 'The dashboard server did not become ready within 25 seconds.'
+            Show-JobErrors
+            throw 'The dashboard server did not become ready within 20 seconds.'
         }
 
         Write-Log 'Dashboard server started successfully.' Green
@@ -152,18 +204,14 @@ try {
     }
 
     Write-Host ''
-    Write-Host 'Dashboard is running.' -ForegroundColor Green
+    Write-Host 'Development portal is running.' -ForegroundColor Green
     Write-Host "URL: $Url" -ForegroundColor White
-    Write-Host "Log: $LogPath" -ForegroundColor White
+    Write-Host "Launcher log: $LogPath" -ForegroundColor White
+    Write-Host "Server log: $ServerLogPath" -ForegroundColor White
     Write-Host ''
-    Write-Host 'Keep this window open. Press Enter to stop the server.' -ForegroundColor Yellow
+    Write-Host 'Keep this window open while viewing the portal.' -ForegroundColor Yellow
+    Write-Host 'Press Enter to stop the local server.' -ForegroundColor Yellow
     [void](Read-Host)
-
-    if ($serverProcess -and -not $serverProcess.HasExited) {
-        Write-Log "Stopping server process $($serverProcess.Id)..." Yellow
-        Stop-Process -Id $serverProcess.Id -Force -ErrorAction SilentlyContinue
-        Write-Log 'Dashboard server stopped.' Green
-    }
 }
 catch {
     Write-Host ''
@@ -175,9 +223,18 @@ catch {
         Add-Content -LiteralPath $LogPath -Value $_.ScriptStackTrace -Encoding UTF8
     }
     catch {}
-    Show-Logs
+    Show-JobErrors
     Write-Host ''
     Write-Host "Full launcher log: $LogPath" -ForegroundColor Yellow
     [void](Read-Host 'Press Enter to close')
     exit 1
+}
+finally {
+    if ($serverJob) {
+        try {
+            Stop-Job -Job $serverJob -ErrorAction SilentlyContinue
+            Remove-Job -Job $serverJob -Force -ErrorAction SilentlyContinue
+        }
+        catch {}
+    }
 }
