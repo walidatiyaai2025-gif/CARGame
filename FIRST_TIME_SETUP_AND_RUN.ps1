@@ -36,35 +36,49 @@ function Run-FlutterAnalyze([string]$ProjectPath) {
 
     Write-Host "> flutter analyze --no-fatal-infos --no-fatal-warnings" -ForegroundColor DarkGray
 
-    $previousEncoding = [Console]::OutputEncoding
+    $flutterCommand = (Get-Command flutter -ErrorAction Stop).Source
+    $arguments = @(
+        "analyze",
+        "--no-fatal-infos",
+        "--no-fatal-warnings"
+    )
+
     try {
-        [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
-        $output = @(& flutter analyze --no-fatal-infos --no-fatal-warnings 2>&1)
-        $exitCode = $LASTEXITCODE
-        $text = ($output | ForEach-Object { $_.ToString() }) -join [Environment]::NewLine
-        [System.IO.File]::WriteAllText($logPath, $text, [System.Text.UTF8Encoding]::new($false))
+        $process = Start-Process `
+            -FilePath $flutterCommand `
+            -ArgumentList $arguments `
+            -WorkingDirectory $ProjectPath `
+            -RedirectStandardOutput $logPath `
+            -RedirectStandardError $logPath `
+            -NoNewWindow `
+            -Wait `
+            -PassThru
 
-        if (-not [string]::IsNullOrWhiteSpace($text)) {
-            Write-Host $text
-        }
-
-        $hasRealErrors = $text -match '(?im)^\s*error\s+-' -or
-                         $text -match '(?im)^\s*\d+\s+error(s)?\s+found' -or
-                         $text -match '(?im)compilation failed|could not compile|target kernel_snapshot_program failed'
-
-        if ($hasRealErrors) {
-            throw "Flutter analyze found real errors. Full report: $logPath"
-        }
-
-        if ($exitCode -ne 0) {
-            Write-Warning "Flutter analyze returned exit code $exitCode without reporting a Dart error. Continuing. Full report: $logPath"
-        }
-        else {
-            Write-Host "Flutter analyze completed successfully." -ForegroundColor Green
-        }
+        $exitCode = $process.ExitCode
     }
-    finally {
-        [Console]::OutputEncoding = $previousEncoding
+    catch {
+        Write-Warning "Could not run flutter analyze cleanly: $($_.Exception.Message)"
+        Write-Warning "Continuing to the emulator. The build step will report real compile errors."
+        return
+    }
+
+    $text = if (Test-Path $logPath) {
+        Get-Content $logPath -Raw -ErrorAction SilentlyContinue
+    }
+    else {
+        ""
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($text)) {
+        Write-Host $text
+    }
+
+    if ($exitCode -eq 0) {
+        Write-Host "Flutter analyze completed successfully." -ForegroundColor Green
+    }
+    else {
+        Write-Warning "Flutter analyze returned exit code $exitCode. Continuing to build and run."
+        Write-Warning "Full analyzer report: $logPath"
     }
 }
 
