@@ -87,5 +87,22 @@ void main() {
       expect(coordinator.snapshot('ads').status, OptionalServiceStatus.ready);
       await coordinator.dispose();
     });
+
+    test('does not retry beyond the configured attempt limit', () async {
+      final coordinator = OptionalServiceCoordinator(maxAttempts: 2);
+      var calls = 0;
+
+      Future<void> fail() async {
+        calls++;
+        throw StateError('offline');
+      }
+
+      expect(await coordinator.initialize('ads', fail), isFalse);
+      expect(await coordinator.retry('ads', fail), isFalse);
+      expect(await coordinator.retry('ads', fail), isFalse);
+      expect(calls, 2);
+      expect(coordinator.snapshot('ads').attempts, 2);
+      await coordinator.dispose();
+    });
   });
 }
