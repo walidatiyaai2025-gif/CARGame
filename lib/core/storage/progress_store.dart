@@ -54,6 +54,8 @@ class ProgressStore extends ChangeNotifier {
     return true;
   }
 
+  Future<bool> loseHeart() => spendHeart();
+
   Future<void> addHearts(int amount) async {
     hearts = (hearts + amount).clamp(0, 5);
     await _prefs.setInt(_heartsKey, hearts);
