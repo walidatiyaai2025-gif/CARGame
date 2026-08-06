@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/logging/log_viewer_screen.dart';
 import '../../core/storage/progress_store.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/theme/three_d_game_icon.dart';
 import '../../l10n/app_localizations.dart';
 import '../game/city_catalog.dart';
 import '../game/level_data.dart';
@@ -29,21 +30,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   ProgressStore get store => widget.store;
 
-  Future<void> _claimDailyReward(BuildContext context) async {
-    final reward = await store.claimDailyReward();
-    if (!context.mounted) return;
-    final ar = Localizations.localeOf(context).languageCode == 'ar';
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          reward == null
-              ? (ar ? 'تم استلام مكافأة اليوم بالفعل' : 'Daily reward already claimed')
-              : (ar ? 'حصلت على $reward عملة' : 'You earned $reward coins'),
-        ),
-      ),
-    );
-  }
-
   Future<void> _openJourney() async {
     if (_openingJourney || store.hearts <= 0) return;
     setState(() => _openingJourney = true);
@@ -58,6 +44,21 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<void> _claimDailyReward() async {
+    final reward = await store.claimDailyReward();
+    if (!mounted) return;
+    final ar = Localizations.localeOf(context).languageCode == 'ar';
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          reward == null
+              ? (ar ? 'تم استلام مكافأة اليوم بالفعل' : 'Daily reward already claimed')
+              : (ar ? 'حصلت على $reward عملة' : 'You earned $reward coins'),
+        ),
+      ),
+    );
+  }
+
   String _heartTimer(bool ar) {
     final remaining = store.timeUntilNextHeart;
     if (remaining == Duration.zero) return ar ? 'القلوب مكتملة' : 'Hearts full';
@@ -66,231 +67,133 @@ class _HomeScreenState extends State<HomeScreen> {
     return ar ? 'القلب التالي $minutes:$seconds' : 'Next heart $minutes:$seconds';
   }
 
+  void _openShop() => Navigator.of(context).push(
+        MaterialPageRoute<void>(builder: (_) => ShopScreen(store: store)),
+      );
+
+  void _openProgress() => Navigator.of(context).push(
+        MaterialPageRoute<void>(builder: (_) => ProgressHubScreen(store: store)),
+      );
+
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
     final ar = Localizations.localeOf(context).languageCode == 'ar';
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFFEAF4FF), AppTheme.cream],
-          ),
-        ),
-        child: SafeArea(
-          child: AnimatedBuilder(
-            animation: store,
-            builder: (context, _) {
-              final unlocked = store.highestUnlockedLevel.clamp(1, levels.length);
-              final worldNumber = ((unlocked - 1) ~/ 25 + 1).clamp(1, gameWorlds.length);
-              final world = gameWorlds[worldNumber - 1];
-              final currentCity = levels[unlocked - 1].cityName;
+      body: AnimatedBuilder(
+        animation: store,
+        builder: (context, _) {
+          final unlocked = store.highestUnlockedLevel.clamp(1, levels.length);
+          final worldNumber = ((unlocked - 1) ~/ 25 + 1).clamp(1, gameWorlds.length);
+          final world = gameWorlds[worldNumber - 1];
+          final currentCity = levels[unlocked - 1].cityName;
 
-              return LayoutBuilder(
+          return Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  world.startColor.withValues(alpha: .18),
+                  const Color(0xFFF6FAFF),
+                  AppTheme.cream,
+                ],
+              ),
+            ),
+            child: SafeArea(
+              child: LayoutBuilder(
                 builder: (context, constraints) {
                   final compact = constraints.maxWidth < 390;
-                  final pagePadding = compact ? 12.0 : 18.0;
+                  final horizontal = compact ? 12.0 : 18.0;
                   return ListView(
-                    keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-                    padding: EdgeInsets.fromLTRB(pagePadding, 10, pagePadding, 24),
+                    padding: EdgeInsets.fromLTRB(horizontal, 10, horizontal, 28),
                     children: [
-                      _Header(
+                      _TopBar(
                         ar: ar,
                         compact: compact,
-                        onShop: () => Navigator.of(context).push(
-                          MaterialPageRoute<void>(builder: (_) => ShopScreen(store: store)),
-                        ),
-                        onProgress: () => Navigator.of(context).push(
-                          MaterialPageRoute<void>(builder: (_) => ProgressHubScreen(store: store)),
-                        ),
+                        onShop: _openShop,
+                        onProgress: _openProgress,
                         onLogs: () => Navigator.of(context).push(
                           MaterialPageRoute<void>(builder: (_) => const LogViewerScreen()),
                         ),
                         onLanguage: widget.onToggleLanguage,
                       ),
                       const SizedBox(height: 14),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _ResourcePill(
-                              icon: Icons.favorite_rounded,
-                              value: '${store.hearts}/${ProgressStore.maxHearts}',
-                              label: _heartTimer(ar),
-                              accent: AppTheme.red,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: _ResourcePill(
-                              icon: Icons.monetization_on_rounded,
-                              value: '${store.coins}',
-                              label: l10n.coins,
-                              accent: AppTheme.orange,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: _ResourcePill(
-                              icon: Icons.star_rounded,
-                              value: '${store.totalStars}',
-                              label: ar ? 'النجوم' : 'Stars',
-                              accent: AppTheme.yellow,
-                            ),
-                          ),
-                        ],
+                      _ResourceStrip(
+                        compact: compact,
+                        hearts: '${store.hearts}/${ProgressStore.maxHearts}',
+                        heartLabel: _heartTimer(ar),
+                        coins: '${store.coins}',
+                        coinLabel: l10n.coins,
+                        stars: '${store.totalStars}',
+                        starLabel: ar ? 'النجوم' : 'Stars',
                       ),
-                      const SizedBox(height: 16),
-                      _PlayerLevelCard(store: store, ar: ar),
-                      const SizedBox(height: 16),
-                      _JourneyCard(
-                        store: store,
-                        world: world,
-                        worldNumber: worldNumber,
-                        currentCity: currentCity,
-                        title: l10n.appTitle,
+                      const SizedBox(height: 18),
+                      _JourneyHero(
                         ar: ar,
                         compact: compact,
+                        title: l10n.appTitle,
+                        worldName: world.name,
+                        worldNumber: worldNumber,
+                        currentCity: currentCity,
+                        progress: store.completionProgress,
+                        completed: store.completedLevels,
+                        startColor: world.startColor,
+                        endColor: world.endColor,
                       ),
                       const SizedBox(height: 16),
-                      if (compact) ...[
-                        _FeatureCard(
-                          icon: Icons.card_giftcard_rounded,
-                          title: ar ? 'المكافأة اليومية' : 'Daily Reward',
-                          subtitle: store.canClaimDailyReward ? '+50' : (ar ? 'تم الاستلام' : 'Claimed'),
-                          accent: AppTheme.orange,
-                          onTap: () => _claimDailyReward(context),
-                        ),
-                        const SizedBox(height: 10),
-                        _FeatureCard(
-                          icon: Icons.task_alt_rounded,
-                          title: ar ? 'مهمة اليوم' : 'Daily Mission',
-                          subtitle: store.missionClaimed
-                              ? (ar ? 'مكتملة' : 'Completed')
-                              : '${store.missionWins}/3 • ${store.missionStars}/6',
-                          accent: AppTheme.green,
-                          onTap: () => Navigator.of(context).push(
-                            MaterialPageRoute<void>(builder: (_) => ProgressHubScreen(store: store)),
-                          ),
-                        ),
-                      ] else
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _FeatureCard(
-                                icon: Icons.card_giftcard_rounded,
-                                title: ar ? 'المكافأة اليومية' : 'Daily Reward',
-                                subtitle: store.canClaimDailyReward ? '+50' : (ar ? 'تم الاستلام' : 'Claimed'),
-                                accent: AppTheme.orange,
-                                onTap: () => _claimDailyReward(context),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _FeatureCard(
-                                icon: Icons.task_alt_rounded,
-                                title: ar ? 'مهمة اليوم' : 'Daily Mission',
-                                subtitle: store.missionClaimed
-                                    ? (ar ? 'مكتملة' : 'Completed')
-                                    : '${store.missionWins}/3 • ${store.missionStars}/6',
-                                accent: AppTheme.green,
-                                onTap: () => Navigator.of(context).push(
-                                  MaterialPageRoute<void>(builder: (_) => ProgressHubScreen(store: store)),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      const SizedBox(height: 12),
-                      _FeatureCard(
-                        icon: Icons.local_fire_department_rounded,
-                        title: ar ? 'سلسلة الانتصارات' : 'Win Streak',
-                        subtitle: ar
-                            ? '${store.currentWinStreak} حاليًا • الأفضل ${store.bestWinStreak} • أفضل Combo ${store.bestCombo}'
-                            : '${store.currentWinStreak} current • best ${store.bestWinStreak} • combo ${store.bestCombo}',
-                        accent: const Color(0xFF7B43C6),
-                        onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute<void>(builder: (_) => ProgressHubScreen(store: store)),
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      Center(
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(
-                            minWidth: 220,
-                            maxWidth: 560,
-                            minHeight: 58,
-                          ),
-                          child: SizedBox(
-                            width: double.infinity,
-                            child: FilledButton(
-                              onPressed: store.hearts > 0 && !_openingJourney ? _openJourney : null,
-                              style: FilledButton.styleFrom(
-                                minimumSize: const Size.fromHeight(58),
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: compact ? 14 : 24,
-                                  vertical: 12,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  if (_openingJourney)
-                                    const SizedBox(
-                                      width: 24,
-                                      height: 24,
-                                      child: CircularProgressIndicator(strokeWidth: 2.5),
-                                    )
-                                  else
-                                    const Icon(Icons.play_arrow_rounded, size: 30),
-                                  const SizedBox(width: 8),
-                                  Flexible(
-                                    child: FittedBox(
-                                      fit: BoxFit.scaleDown,
-                                      child: Text(
-                                        store.hearts > 0
-                                            ? (ar ? 'استكمل الرحلة' : 'CONTINUE JOURNEY')
-                                            : (ar ? 'لا توجد قلوب' : 'NO HEARTS'),
-                                        maxLines: 1,
-                                        style: TextStyle(
-                                          fontSize: compact ? 17 : 19,
-                                          fontWeight: FontWeight.w900,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
+                      _QuickActions(
+                        compact: compact,
+                        ar: ar,
+                        dailyClaimed: !store.canClaimDailyReward,
+                        missionClaimed: store.missionClaimed,
+                        missionText: '${store.missionWins}/3 • ${store.missionStars}/6',
+                        onDaily: _claimDailyReward,
+                        onMission: _openProgress,
+                        onShop: _openShop,
                       ),
                       const SizedBox(height: 14),
+                      _StreakPanel(
+                        ar: ar,
+                        current: store.currentWinStreak,
+                        best: store.bestWinStreak,
+                        combo: store.bestCombo,
+                        onTap: _openProgress,
+                      ),
+                      const SizedBox(height: 20),
+                      _StartJourneyButton(
+                        ar: ar,
+                        compact: compact,
+                        busy: _openingJourney,
+                        enabled: store.hearts > 0,
+                        cityName: currentCity,
+                        onPressed: _openJourney,
+                      ),
+                      const SizedBox(height: 16),
                       const Text(
                         'Walid Atiya Ata - PMP',
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: AppTheme.muted, fontWeight: FontWeight.w800),
+                        style: TextStyle(
+                          color: AppTheme.muted,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: .2,
+                        ),
                       ),
                     ],
                   );
                 },
-              );
-            },
-          ),
-        ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
 }
 
-class _Header extends StatelessWidget {
-  const _Header({
+class _TopBar extends StatelessWidget {
+  const _TopBar({
     required this.ar,
     required this.compact,
     required this.onShop,
@@ -307,321 +210,429 @@ class _Header extends StatelessWidget {
   final VoidCallback onLanguage;
 
   @override
-  Widget build(BuildContext context) {
-    final actions = [
-      _RoundAction(icon: Icons.storefront_rounded, onTap: onShop, compact: compact),
-      _RoundAction(icon: Icons.insights_rounded, onTap: onProgress, compact: compact),
-      _RoundAction(icon: Icons.article_outlined, onTap: onLogs, compact: compact),
-      _RoundAction(icon: Icons.language_rounded, onTap: onLanguage, compact: compact),
-    ];
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          ar ? 'مرحبًا أيها المستخدم' : 'Welcome, player',
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                color: AppTheme.navy,
-                fontWeight: FontWeight.w900,
-              ),
-        ),
-        const SizedBox(height: 10),
-        Wrap(spacing: 8, runSpacing: 8, children: actions),
-      ],
-    );
-  }
-}
-
-class _JourneyCard extends StatelessWidget {
-  const _JourneyCard({
-    required this.store,
-    required this.world,
-    required this.worldNumber,
-    required this.currentCity,
-    required this.title,
-    required this.ar,
-    required this.compact,
-  });
-
-  final ProgressStore store;
-  final GameWorld world;
-  final int worldNumber;
-  final String currentCity;
-  final String title;
-  final bool ar;
-  final bool compact;
-
-  @override
-  Widget build(BuildContext context) => Container(
-        padding: EdgeInsets.all(compact ? 18 : 22),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(colors: [world.startColor, world.endColor]),
-          borderRadius: BorderRadius.circular(34),
-          boxShadow: [
-            BoxShadow(
-              color: world.startColor.withValues(alpha: .35),
-              blurRadius: 26,
-              offset: const Offset(0, 13),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+  Widget build(BuildContext context) => Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      FittedBox(
-                        fit: BoxFit.scaleDown,
-                        alignment: AlignmentDirectional.centerStart,
-                        child: Text(
-                          title,
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: compact ? 28 : 34,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 5),
-                      Text(
-                        ar ? 'العالم $worldNumber — ${world.name}' : 'World $worldNumber — ${world.name}',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: compact ? 14 : 17,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      Text(
-                        currentCity,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: AppTheme.yellow,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Container(
-                  width: compact ? 68 : 88,
-                  height: compact ? 68 : 88,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: .14),
-                    borderRadius: BorderRadius.circular(26),
-                  ),
-                  child: Icon(world.icon, color: Colors.white, size: compact ? 42 : 54),
-                ),
-              ],
-            ),
-            const SizedBox(height: 18),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Flexible(
-                  child: Text(
-                    ar ? 'التقدم العالمي' : 'Global progress',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
+                Text(
+                  ar ? 'مرحبًا أيها المستخدم' : 'Welcome, player',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: AppTheme.navy,
+                    fontSize: compact ? 22 : 27,
+                    fontWeight: FontWeight.w900,
                   ),
                 ),
                 Text(
-                  '${(store.completionProgress * 100).round()}%',
-                  style: const TextStyle(color: AppTheme.yellow, fontWeight: FontWeight.w900),
+                  ar ? 'جهّز شحنتك وابدأ المغامرة' : 'Prepare your cargo and start the adventure',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: AppTheme.muted,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ],
             ),
-            const SizedBox(height: 8),
-            LinearProgressIndicator(
-              value: store.completionProgress,
-              minHeight: 10,
-              borderRadius: BorderRadius.circular(10),
-              backgroundColor: Colors.white24,
-              valueColor: const AlwaysStoppedAnimation(AppTheme.yellow),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '${store.completedLevels}/${ProgressStore.totalLevels} ${ar ? 'مدينة' : 'cities'}',
-              style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w700),
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(width: 8),
+          _TopAction(icon: Icons.storefront_rounded, onTap: onShop),
+          _TopAction(icon: Icons.insights_rounded, onTap: onProgress),
+          _TopAction(icon: Icons.article_outlined, onTap: onLogs),
+          _TopAction(icon: Icons.language_rounded, onTap: onLanguage),
+        ],
       );
 }
 
-class _PlayerLevelCard extends StatelessWidget {
-  const _PlayerLevelCard({required this.store, required this.ar});
-  final ProgressStore store;
-  final bool ar;
+class _TopAction extends StatelessWidget {
+  const _TopAction({required this.icon, required this.onTap});
 
-  @override
-  Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(26),
-          boxShadow: AppTheme.softShadow,
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 62,
-              height: 62,
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(colors: [Color(0xFF7B43C6), Color(0xFFB778F2)]),
-                shape: BoxShape.circle,
-              ),
-              child: Center(
-                child: Text(
-                  '${store.playerLevel}',
-                  style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900),
-                ),
-              ),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Wrap(
-                    alignment: WrapAlignment.spaceBetween,
-                    spacing: 8,
-                    runSpacing: 4,
-                    children: [
-                      Text(
-                        ar ? 'مستوى اللاعب' : 'Player Level',
-                        style: const TextStyle(color: AppTheme.navy, fontWeight: FontWeight.w900),
-                      ),
-                      Text(
-                        '${store.xpIntoCurrentLevel}/500 XP',
-                        style: const TextStyle(color: AppTheme.muted, fontWeight: FontWeight.w700),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 9),
-                  LinearProgressIndicator(
-                    value: store.playerLevelProgress,
-                    minHeight: 9,
-                    borderRadius: BorderRadius.circular(10),
-                    backgroundColor: const Color(0xFFE9E1F5),
-                    valueColor: const AlwaysStoppedAnimation(Color(0xFF7B43C6)),
-                  ),
-                  const SizedBox(height: 7),
-                  Text(
-                    ar ? 'كل 500 XP تفتح مستوى جديد' : 'Every 500 XP unlocks a new player level',
-                    style: const TextStyle(color: AppTheme.muted, fontSize: 11),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      );
-}
-
-class _RoundAction extends StatelessWidget {
-  const _RoundAction({required this.icon, required this.onTap, required this.compact});
   final IconData icon;
   final VoidCallback onTap;
-  final bool compact;
 
   @override
-  Widget build(BuildContext context) => Material(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(18),
-          onTap: onTap,
-          child: Padding(
-            padding: EdgeInsets.all(compact ? 10 : 12),
-            child: Icon(icon, color: AppTheme.navy, size: compact ? 22 : 24),
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsetsDirectional.only(start: 5),
+        child: Material(
+          color: Colors.white.withValues(alpha: .90),
+          borderRadius: BorderRadius.circular(16),
+          elevation: 2,
+          shadowColor: Colors.black12,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: onTap,
+            child: SizedBox(
+              width: 40,
+              height: 40,
+              child: Icon(icon, color: AppTheme.navy, size: 21),
+            ),
           ),
         ),
       );
 }
 
-class _ResourcePill extends StatelessWidget {
-  const _ResourcePill({required this.icon, required this.value, required this.label, required this.accent});
-  final IconData icon;
+class _ResourceStrip extends StatelessWidget {
+  const _ResourceStrip({
+    required this.compact,
+    required this.hearts,
+    required this.heartLabel,
+    required this.coins,
+    required this.coinLabel,
+    required this.stars,
+    required this.starLabel,
+  });
+
+  final bool compact;
+  final String hearts;
+  final String heartLabel;
+  final String coins;
+  final String coinLabel;
+  final String stars;
+  final String starLabel;
+
+  @override
+  Widget build(BuildContext context) => Row(
+        children: [
+          Expanded(
+            child: _ResourceCard(
+              icon: ThreeDIconType.heart,
+              value: hearts,
+              label: heartLabel,
+              compact: compact,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: _ResourceCard(
+              icon: ThreeDIconType.coin,
+              value: coins,
+              label: coinLabel,
+              compact: compact,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: _ResourceCard(
+              icon: ThreeDIconType.star,
+              value: stars,
+              label: starLabel,
+              compact: compact,
+            ),
+          ),
+        ],
+      );
+}
+
+class _ResourceCard extends StatelessWidget {
+  const _ResourceCard({
+    required this.icon,
+    required this.value,
+    required this.label,
+    required this.compact,
+  });
+
+  final ThreeDIconType icon;
   final String value;
   final String label;
-  final Color accent;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 10),
+        padding: EdgeInsets.symmetric(horizontal: compact ? 7 : 10, vertical: 9),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
+          color: Colors.white.withValues(alpha: .92),
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: Colors.white),
           boxShadow: AppTheme.softShadow,
         ),
         child: Column(
           children: [
-            Icon(icon, color: accent),
+            ThreeDGameIcon(type: icon, size: compact ? 34 : 42, animate: icon == ThreeDIconType.heart),
+            const SizedBox(height: 2),
             FittedBox(
               fit: BoxFit.scaleDown,
               child: Text(
                 value,
-                style: const TextStyle(color: AppTheme.navy, fontWeight: FontWeight.w900, fontSize: 16),
+                style: TextStyle(
+                  color: AppTheme.navy,
+                  fontSize: compact ? 15 : 18,
+                  fontWeight: FontWeight.w900,
+                ),
               ),
             ),
             Text(
               label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(color: AppTheme.muted, fontSize: 9, fontWeight: FontWeight.w700),
+              style: TextStyle(
+                color: AppTheme.muted,
+                fontSize: compact ? 9 : 10,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ],
         ),
       );
 }
 
-class _FeatureCard extends StatelessWidget {
-  const _FeatureCard({
+class _JourneyHero extends StatelessWidget {
+  const _JourneyHero({
+    required this.ar,
+    required this.compact,
+    required this.title,
+    required this.worldName,
+    required this.worldNumber,
+    required this.currentCity,
+    required this.progress,
+    required this.completed,
+    required this.startColor,
+    required this.endColor,
+  });
+
+  final bool ar;
+  final bool compact;
+  final String title;
+  final String worldName;
+  final int worldNumber;
+  final String currentCity;
+  final double progress;
+  final int completed;
+  final Color startColor;
+  final Color endColor;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: EdgeInsets.all(compact ? 18 : 24),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [startColor, endColor],
+          ),
+          borderRadius: BorderRadius.circular(34),
+          boxShadow: [
+            BoxShadow(
+              color: startColor.withValues(alpha: .38),
+              blurRadius: 28,
+              offset: const Offset(0, 15),
+            ),
+          ],
+        ),
+        child: Stack(
+          children: [
+            PositionedDirectional(
+              end: -12,
+              top: -6,
+              child: Opacity(
+                opacity: .16,
+                child: ThreeDGameIcon(
+                  type: ThreeDIconType.city,
+                  size: compact ? 150 : 185,
+                ),
+              ),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: compact ? 27 : 34,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            ar ? 'العالم $worldNumber — $worldName' : 'World $worldNumber — $worldName',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: .16),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: Colors.white24),
+                            ),
+                            child: Text(
+                              currentCity,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: AppTheme.yellow,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    ThreeDGameIcon(
+                      type: ThreeDIconType.city,
+                      size: compact ? 82 : 108,
+                      animate: true,
+                      semanticLabel: currentCity,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 18),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        ar ? 'التقدم العالمي' : 'Global progress',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      '${(progress * 100).round()}%',
+                      style: const TextStyle(
+                        color: AppTheme.yellow,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: LinearProgressIndicator(
+                    value: progress,
+                    minHeight: 11,
+                    backgroundColor: Colors.white24,
+                    valueColor: const AlwaysStoppedAnimation(AppTheme.yellow),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '$completed/${ProgressStore.totalLevels} ${ar ? 'مدينة مكتملة' : 'cities completed'}',
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+}
+
+class _QuickActions extends StatelessWidget {
+  const _QuickActions({
+    required this.compact,
+    required this.ar,
+    required this.dailyClaimed,
+    required this.missionClaimed,
+    required this.missionText,
+    required this.onDaily,
+    required this.onMission,
+    required this.onShop,
+  });
+
+  final bool compact;
+  final bool ar;
+  final bool dailyClaimed;
+  final bool missionClaimed;
+  final String missionText;
+  final VoidCallback onDaily;
+  final VoidCallback onMission;
+  final VoidCallback onShop;
+
+  @override
+  Widget build(BuildContext context) {
+    final cards = [
+      _ActionCard(
+        icon: ThreeDIconType.gift,
+        title: ar ? 'المكافأة اليومية' : 'Daily reward',
+        subtitle: dailyClaimed ? (ar ? 'تم الاستلام' : 'Claimed') : '+50',
+        onTap: onDaily,
+      ),
+      _ActionCard(
+        icon: ThreeDIconType.chest,
+        title: ar ? 'مهمة اليوم' : 'Daily mission',
+        subtitle: missionClaimed ? (ar ? 'مكتملة' : 'Completed') : missionText,
+        onTap: onMission,
+      ),
+      _ActionCard(
+        icon: ThreeDIconType.coin,
+        title: ar ? 'متجر الشحنات' : 'Cargo shop',
+        subtitle: ar ? 'طور قدراتك' : 'Upgrade your loadout',
+        onTap: onShop,
+      ),
+    ];
+
+    if (compact) {
+      return Column(
+        children: [
+          for (var i = 0; i < cards.length; i++) ...[
+            cards[i],
+            if (i != cards.length - 1) const SizedBox(height: 10),
+          ],
+        ],
+      );
+    }
+
+    return Row(
+      children: [
+        for (var i = 0; i < cards.length; i++) ...[
+          Expanded(child: cards[i]),
+          if (i != cards.length - 1) const SizedBox(width: 10),
+        ],
+      ],
+    );
+  }
+}
+
+class _ActionCard extends StatelessWidget {
+  const _ActionCard({
     required this.icon,
     required this.title,
     required this.subtitle,
-    required this.accent,
     required this.onTap,
   });
-  final IconData icon;
+
+  final ThreeDIconType icon;
   final String title;
   final String subtitle;
-  final Color accent;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) => Material(
-        color: Colors.white,
+        color: Colors.white.withValues(alpha: .94),
         borderRadius: BorderRadius.circular(24),
+        elevation: 2,
+        shadowColor: Colors.black12,
         child: InkWell(
           borderRadius: BorderRadius.circular(24),
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(14),
             child: Row(
               children: [
-                Container(
-                  width: 46,
-                  height: 46,
-                  decoration: BoxDecoration(
-                    color: accent.withValues(alpha: .13),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Icon(icon, color: accent),
-                ),
-                const SizedBox(width: 12),
+                ThreeDGameIcon(type: icon, size: 52, animate: icon == ThreeDIconType.gift),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -630,19 +641,205 @@ class _FeatureCard extends StatelessWidget {
                         title,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(color: AppTheme.navy, fontWeight: FontWeight.w900),
+                        style: const TextStyle(
+                          color: AppTheme.navy,
+                          fontWeight: FontWeight.w900,
+                        ),
                       ),
+                      const SizedBox(height: 3),
                       Text(
                         subtitle,
-                        maxLines: 2,
+                        maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(color: AppTheme.muted, fontSize: 12, fontWeight: FontWeight.w600),
+                        style: const TextStyle(
+                          color: AppTheme.orange,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 12,
+                        ),
                       ),
                     ],
                   ),
                 ),
-                const Icon(Icons.chevron_right_rounded, color: Colors.black26),
               ],
+            ),
+          ),
+        ),
+      );
+}
+
+class _StreakPanel extends StatelessWidget {
+  const _StreakPanel({
+    required this.ar,
+    required this.current,
+    required this.best,
+    required this.combo,
+    required this.onTap,
+  });
+
+  final bool ar;
+  final int current;
+  final int best;
+  final int combo;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => Material(
+        color: const Color(0xFFF2ECFF),
+        borderRadius: BorderRadius.circular(24),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(24),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            child: Row(
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF9C5CFF), Color(0xFF5D2BA8)],
+                    ),
+                    borderRadius: BorderRadius.circular(17),
+                  ),
+                  child: const Icon(Icons.local_fire_department_rounded, color: Colors.white, size: 29),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        ar ? 'سلسلة الانتصارات' : 'Win streak',
+                        style: const TextStyle(
+                          color: AppTheme.navy,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      Text(
+                        ar
+                            ? '$current حاليًا • الأفضل $best • Combo $combo'
+                            : '$current current • best $best • combo $combo',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(color: AppTheme.muted, fontWeight: FontWeight.w700),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.chevron_right_rounded, color: Color(0xFF7B43C6)),
+              ],
+            ),
+          ),
+        ),
+      );
+}
+
+class _StartJourneyButton extends StatelessWidget {
+  const _StartJourneyButton({
+    required this.ar,
+    required this.compact,
+    required this.busy,
+    required this.enabled,
+    required this.cityName,
+    required this.onPressed,
+  });
+
+  final bool ar;
+  final bool compact;
+  final bool busy;
+  final bool enabled;
+  final String cityName;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) => Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 620),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: enabled && !busy ? onPressed : null,
+              borderRadius: BorderRadius.circular(28),
+              child: Ink(
+                height: compact ? 70 : 78,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: enabled
+                        ? const [Color(0xFFFFB62E), Color(0xFFF06419)]
+                        : const [Color(0xFFB8BEC7), Color(0xFF8C939D)],
+                  ),
+                  borderRadius: BorderRadius.circular(28),
+                  boxShadow: enabled
+                      ? const [
+                          BoxShadow(
+                            color: Color(0x66E76B17),
+                            blurRadius: 22,
+                            offset: Offset(0, 12),
+                          ),
+                        ]
+                      : null,
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 18),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 52,
+                        height: 52,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: .18),
+                          shape: BoxShape.circle,
+                        ),
+                        child: busy
+                            ? const Padding(
+                                padding: EdgeInsets.all(14),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 3,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 36),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              enabled
+                                  ? (ar ? 'ابدأ المرحلة التالية' : 'START NEXT CITY')
+                                  : (ar ? 'لا توجد قلوب' : 'NO HEARTS'),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: compact ? 17 : 20,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: .3,
+                              ),
+                            ),
+                            Text(
+                              cityName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const ThreeDGameIcon(
+                        type: ThreeDIconType.chest,
+                        size: 52,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
           ),
         ),
