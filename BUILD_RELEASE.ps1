@@ -1,7 +1,7 @@
 param(
     [switch]$BuildAppBundle,
     [switch]$InstallAndRun,
-    [string]$PackageId = "com.walka.cargosort"
+    [string]$PackageId = 'com.walka.cargosort'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -23,20 +23,81 @@ function Invoke-Checked {
 
     Write-Host "> $Command $($Arguments -join ' ')" -ForegroundColor DarkGray
     & $Command @Arguments
-    $code = $LASTEXITCODE
-    if ($code -ne 0) {
-        throw "Command failed with exit code ${code}: $Command $($Arguments -join ' ')"
+    $exitCode = $LASTEXITCODE
+    if ($exitCode -ne 0) {
+        throw "Command failed with exit code ${exitCode}: $Command $($Arguments -join ' ')"
     }
 }
 
-function Remove-LongPathDirectory([string]$Path) {
+function Remove-SafeDirectory([string]$Path) {
     if (-not (Test-Path $Path)) { return }
     $fullPath = [System.IO.Path]::GetFullPath($Path)
     Write-Host "Deleting: $fullPath" -ForegroundColor DarkYellow
-    & cmd.exe /d /c "rd /s /q \\?\$fullPath"
+    & cmd.exe /d /c "rd /s /q `"\\?\$fullPath`"" | Out-Null
     if (Test-Path $fullPath) {
         Remove-Item $fullPath -Recurse -Force -ErrorAction SilentlyContinue
     }
+}
+
+function Write-BuildLog {
+    param(
+        [Parameter(Mandatory = $true)][string]$FilePath,
+        [Parameter(Mandatory = $true)][scriptblock]$Action
+    )
+
+    & $Action 2>&1 | Tee-Object -FilePath $FilePath
+    return $LASTEXITCODE
+}
+
+function Invoke-ReleaseBuild {
+    $stamp = Get-Date -Format 'yyyyMMdd_HHmmss'
+    $flutterLog = Join-Path $PSScriptRoot "release_build_$stamp.log"
+
+    $flutterArgs = if ($BuildAppBundle) {
+        @('build', 'appbundle', '--release', '--no-pub', '--verbose')
+    } else {
+        @('build', 'apk', '--release', '--no-pub', '--verbose')
+    }
+
+    Write-Host "> flutter $($flutterArgs -join ' ')" -ForegroundColor DarkGray
+    $flutterExit = Write-BuildLog -FilePath $flutterLog -Action { & flutter @flutterArgs }
+
+    if ($flutterExit -eq 0) {
+        return
+    }
+
+    Write-Host ''
+    Write-Host 'Flutter build failed. Running Gradle directly with stacktrace...' -ForegroundColor Yellow
+
+    $gradleLog = Join-Path $PSScriptRoot "release_gradle_stacktrace_$stamp.log"
+    Push-Location (Join-Path $PSScriptRoot 'android')
+    try {
+        $task = if ($BuildAppBundle) { 'bundleRelease' } else { 'assembleRelease' }
+        $gradleArgs = @(
+            $task,
+            '--stacktrace',
+            '--info',
+            '--no-daemon',
+            '--max-workers=1'
+        )
+        Write-Host "> .\gradlew.bat $($gradleArgs -join ' ')" -ForegroundColor DarkGray
+        $gradleExit = Write-BuildLog -FilePath $gradleLog -Action { & .\gradlew.bat @gradleArgs }
+    }
+    finally {
+        Pop-Location
+    }
+
+    Write-Host ''
+    Write-Host "Flutter log: $flutterLog" -ForegroundColor Yellow
+    Write-Host "Gradle stacktrace: $gradleLog" -ForegroundColor Yellow
+    Write-Host ''
+    Write-Host 'Most relevant Gradle lines:' -ForegroundColor Yellow
+    Get-Content $gradleLog -ErrorAction SilentlyContinue |
+        Select-String -Pattern 'What went wrong|Execution failed|Caused by:|Exception|Error:|FAILURE:' |
+        Select-Object -Last 40 |
+        ForEach-Object { Write-Host $_.Line -ForegroundColor Red }
+
+    throw "Release build failed. Send this file: $gradleLog"
 }
 
 function Get-AdbPath {
@@ -57,27 +118,29 @@ function Get-AdbPath {
 
 try {
     Clear-Host
-    Write-Host 'CAR GAME - UNIVERSAL RELEASE BUILD' -ForegroundColor Green
+    Write-Host 'CAR GAME - RELEASE BUILD WITH FULL DIAGNOSTICS' -ForegroundColor Green
     Write-Host 'The window remains open after success or failure.' -ForegroundColor Yellow
 
     if (-not (Test-Path '.\pubspec.yaml')) {
         throw "pubspec.yaml was not found in $PSScriptRoot"
+    }
+    if (-not (Test-Path '.\android\gradlew.bat')) {
+        throw 'android\gradlew.bat was not found.'
     }
     if (-not (Get-Command flutter -ErrorAction SilentlyContinue)) {
         throw 'Flutter was not found in PATH.'
     }
 
     Write-Step 'Stopping Gradle, Kotlin, Java and Dart processes'
-    if (Test-Path '.\android\gradlew.bat') {
-        Push-Location '.\android'
-        try { & .\gradlew.bat --stop 2>$null | Out-Null } catch {}
-        Pop-Location
-    }
+    Push-Location '.\android'
+    try { & .\gradlew.bat --stop 2>$null | Out-Null } catch {}
+    Pop-Location
     Get-Process java,javaw,gradle,kotlinc,dart -ErrorAction SilentlyContinue |
         Stop-Process -Force -ErrorAction SilentlyContinue
 
-    Write-Step 'Applying stable release build settings'
-    $gradleProperties = '.\android\gradle.properties'
+    Write-Step 'Applying stable Gradle and Kotlin settings'
+    $gradleProperties = Join-Path $PSScriptRoot 'android\gradle.properties'
+    $properties = if (Test-Path $gradleProperties) { Get-Content $gradleProperties -Raw } else { '' }
     $required = @(
         'org.gradle.daemon=false',
         'org.gradle.parallel=false',
@@ -89,57 +152,40 @@ try {
         'kotlin.daemon.enabled=false'
     )
 
-    $properties = if (Test-Path $gradleProperties) {
-        Get-Content $gradleProperties -Raw
-    } else {
-        ''
-    }
-
     foreach ($line in $required) {
         $key = $line.Split('=')[0]
         if ($properties -match "(?m)^$([regex]::Escape($key))=") {
-            $properties = [regex]::Replace(
-                $properties,
-                "(?m)^$([regex]::Escape($key))=.*$",
-                $line
-            )
+            $properties = [regex]::Replace($properties, "(?m)^$([regex]::Escape($key))=.*$", $line)
         } else {
             $properties += "`r`n$line"
         }
     }
+    [System.IO.File]::WriteAllText($gradleProperties, $properties.Trim() + "`r`n", [System.Text.UTF8Encoding]::new($false))
 
-    [System.IO.File]::WriteAllText(
-        (Join-Path $PSScriptRoot 'android\gradle.properties'),
-        $properties.Trim() + "`r`n",
-        [System.Text.UTF8Encoding]::new($false)
-    )
+    Write-Step 'Cleaning Flutter, Gradle and Kotlin caches'
+    Remove-SafeDirectory '.\build'
+    Remove-SafeDirectory '.\.dart_tool'
+    Remove-SafeDirectory '.\android\.gradle'
+    Remove-SafeDirectory '.\android\app\build'
 
-    Write-Step 'Cleaning previous release and Kotlin caches'
-    Remove-LongPathDirectory '.\build'
-    Remove-LongPathDirectory '.\.dart_tool'
-    Remove-LongPathDirectory '.\android\.gradle'
-    Remove-LongPathDirectory '.\android\app\build'
-
-    Write-Step 'Restoring Flutter packages'
     Invoke-Checked 'flutter' @('clean')
     Invoke-Checked 'flutter' @('pub', 'get')
-    try { Invoke-Checked 'flutter' @('gen-l10n') } catch {
-        Write-Warning 'flutter gen-l10n was skipped.'
-    }
-    Invoke-Checked 'flutter' @('analyze', '--no-fatal-infos')
+    try { Invoke-Checked 'flutter' @('gen-l10n') } catch { Write-Warning 'flutter gen-l10n was skipped.' }
 
-    if ($BuildAppBundle) {
-        Write-Step 'Building Google Play release AAB'
-        Invoke-Checked 'flutter' @('build', 'appbundle', '--release', '--no-pub')
-        $output = Join-Path $PSScriptRoot 'build\app\outputs\bundle\release\app-release.aab'
+    Write-Step 'Analyzing project'
+    Invoke-Checked 'flutter' @('analyze', '--no-fatal-infos', '--no-fatal-warnings')
+
+    Write-Step $(if ($BuildAppBundle) { 'Building release AAB' } else { 'Building universal release APK' })
+    Invoke-ReleaseBuild
+
+    $output = if ($BuildAppBundle) {
+        Join-Path $PSScriptRoot 'build\app\outputs\bundle\release\app-release.aab'
     } else {
-        Write-Step 'Building universal release APK for physical Android phones'
-        Invoke-Checked 'flutter' @('build', 'apk', '--release', '--no-pub')
-        $output = Join-Path $PSScriptRoot 'build\app\outputs\flutter-apk\app-release.apk'
+        Join-Path $PSScriptRoot 'build\app\outputs\flutter-apk\app-release.apk'
     }
 
     if (-not (Test-Path $output)) {
-        throw "Build completed but output was not found: $output"
+        throw "Build reported success but output was not found: $output"
     }
 
     Write-Host ''
@@ -150,43 +196,14 @@ try {
 
     if ($InstallAndRun -and -not $BuildAppBundle) {
         $adb = Get-AdbPath
-
-        Write-Step 'Checking connected Android phone'
         & $adb start-server | Out-Null
-        $deviceLines = & $adb devices
-        $devices = @($deviceLines | Select-String -Pattern '^\S+\s+device$')
+        $devices = @((& $adb devices) | Select-String -Pattern '^\S+\s+device$')
         if ($devices.Count -eq 0) {
-            throw 'No authorized Android phone was found. Enable Developer options and USB debugging, connect the phone, then accept the USB debugging prompt.'
+            throw 'No authorized Android device was found.'
         }
-
-        Write-Step 'Removing old application from the phone'
         & $adb uninstall $PackageId 2>$null | Out-Null
-
-        Write-Step 'Installing universal release APK'
         Invoke-Checked $adb @('install', '-r', $output)
-
-        Write-Step 'Launching release application'
-        & $adb logcat -c
         Invoke-Checked $adb @('shell', 'am', 'start', '-n', "$PackageId/.MainActivity")
-
-        Start-Sleep -Seconds 15
-        $appProcessId = (& $adb shell pidof $PackageId 2>$null).Trim()
-        if ([string]::IsNullOrWhiteSpace($appProcessId)) {
-            $stamp = Get-Date -Format 'yyyyMMdd_HHmmss'
-            $fullLog = Join-Path $PSScriptRoot "android_release_crash_$stamp.log"
-            $filteredLog = Join-Path $PSScriptRoot "android_release_crash_filtered_$stamp.log"
-
-            & $adb logcat -d -v time | Set-Content $fullLog -Encoding UTF8
-            & $adb logcat -d -v time |
-                Select-String -Pattern 'FATAL EXCEPTION|AndroidRuntime|Caused by|ClassNotFoundException|UnsatisfiedLinkError|flutter|Dart|com.walka.cargosort' |
-                Set-Content $filteredLog -Encoding UTF8
-
-            Write-Host 'The application closed after launch.' -ForegroundColor Red
-            Write-Host "Crash log: $filteredLog" -ForegroundColor Yellow
-            throw 'Release application crashed. Send the filtered crash log for review.'
-        }
-
-        Write-Host "Application is running on the phone. PID: $appProcessId" -ForegroundColor Green
     }
 
     Start-Process explorer.exe -ArgumentList "/select,`"$output`""
