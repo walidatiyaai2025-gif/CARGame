@@ -84,8 +84,17 @@ function Ensure-CompatibleJdk {
     }
 
     $env:JAVA_HOME = $jdk
-    $env:Path = "$(Join-Path $jdk 'bin');" + (($env:Path -split ';' | Where-Object { $_ -and $_ -notmatch '\\Java\\|\\jdk-|Android Studio\\jbr' }) -join ';')
+    $jdkBin = Join-Path $jdk "bin"
+    $filteredPath = $env:Path -split ';' | Where-Object {
+        $_ -and
+        $_ -notmatch '\\Java\\' -and
+        $_ -notmatch '\\jdk-' -and
+        $_ -notmatch 'Android Studio\\jbr'
+    }
+    $env:Path = "$jdkBin;" + ($filteredPath -join ';')
+    $env:GRADLE_JAVA_HOME = $jdk
     $env:GRADLE_OPTS = "-Dorg.gradle.java.home=$($jdk -replace '\\','/') --enable-native-access=ALL-UNNAMED"
+    $env:JAVA_TOOL_OPTIONS = "--enable-native-access=ALL-UNNAMED"
 
     Write-Host "Using JDK 17: $jdk" -ForegroundColor Green
     & flutter config --jdk-dir $jdk
@@ -93,6 +102,41 @@ function Ensure-CompatibleJdk {
 
     $javaVersion = & (Join-Path $jdk "bin\java.exe") -version 2>&1
     $javaVersion | Select-Object -First 1 | Write-Host -ForegroundColor Cyan
+    return $jdk
+}
+
+function Force-ProjectGradleJdk([string]$Root, [string]$JdkPath) {
+    $propertiesPath = Join-Path $Root "android\gradle.properties"
+    if (-not (Test-Path $propertiesPath)) {
+        New-Item -ItemType File -Path $propertiesPath -Force | Out-Null
+    }
+
+    $content = Get-Content $propertiesPath -Raw -ErrorAction SilentlyContinue
+    if ($null -eq $content) { $content = "" }
+
+    $javaHomeValue = $JdkPath -replace '\\', '\\'
+    $line = "org.gradle.java.home=$javaHomeValue"
+
+    if ($content -match '(?m)^org\.gradle\.java\.home=.*$') {
+        $content = [regex]::Replace(
+            $content,
+            '(?m)^org\.gradle\.java\.home=.*$',
+            $line
+        )
+    }
+    else {
+        if ($content.Length -gt 0 -and -not $content.EndsWith("`n")) {
+            $content += "`r`n"
+        }
+        $content += "$line`r`n"
+    }
+
+    [System.IO.File]::WriteAllText(
+        $propertiesPath,
+        $content,
+        [System.Text.UTF8Encoding]::new($false)
+    )
+    Write-Host "Pinned Gradle JDK in: $propertiesPath" -ForegroundColor Green
 }
 
 function Stop-GradleDaemons([string]$Root) {
@@ -102,6 +146,36 @@ function Stop-GradleDaemons([string]$Root) {
         Push-Location (Split-Path $gradlew -Parent)
         try { & $gradlew --stop 2>$null | Out-Null } catch { }
         finally { Pop-Location }
+    }
+
+    Get-CimInstance Win32_Process -Filter "Name='java.exe'" -ErrorAction SilentlyContinue |
+        Where-Object { $_.CommandLine -match 'GradleDaemon|gradle-launcher' } |
+        ForEach-Object {
+            try { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue } catch { }
+        }
+}
+
+function Verify-GradleJdk([string]$Root) {
+    $gradlew = Join-Path $Root "android\gradlew.bat"
+    if (-not (Test-Path $gradlew)) { throw "Gradle wrapper was not found: $gradlew" }
+
+    Push-Location (Split-Path $gradlew -Parent)
+    try {
+        $output = & $gradlew --version --no-daemon 2>&1
+        $exitCode = $LASTEXITCODE
+        $output | ForEach-Object { Write-Host $_ }
+        if ($exitCode -ne 0) {
+            throw "Gradle JDK verification failed with exit code $exitCode."
+        }
+
+        $text = ($output | Out-String)
+        if ($text -notmatch '(?im)^JVM:\s+17(?:\.|\s)') {
+            throw "Gradle is still not using JDK 17. Check android\gradle.properties and Flutter JDK configuration."
+        }
+        Write-Host "Gradle confirmed on JDK 17." -ForegroundColor Green
+    }
+    finally {
+        Pop-Location
     }
 }
 
@@ -133,8 +207,10 @@ try {
     $ProjectPath = [System.IO.Path]::GetFullPath($ProjectPath)
     Set-Location $ProjectPath
 
-    Ensure-CompatibleJdk
+    $jdk = Ensure-CompatibleJdk
+    Force-ProjectGradleJdk $ProjectPath $jdk
     Stop-GradleDaemons $ProjectPath
+    Verify-GradleJdk $ProjectPath
 
     $sdk = Find-AndroidSdk
     $adb = Join-Path $sdk "platform-tools\adb.exe"
@@ -198,7 +274,7 @@ try {
     & flutter pub get
     if ($LASTEXITCODE -ne 0) { throw "flutter pub get failed with exit code $LASTEXITCODE" }
 
-    Write-Host "Running application with JDK 17..." -ForegroundColor Cyan
+    Write-Host "Running application with forced JDK 17..." -ForegroundColor Cyan
     & flutter run --no-pub -d $device
     $runExitCode = $LASTEXITCODE
 
