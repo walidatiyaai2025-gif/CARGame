@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/storage/progress_store.dart';
 import '../../core/theme/app_theme.dart';
 import '../../l10n/app_localizations.dart';
+import '../game/city_catalog.dart';
 import '../game/game_screen.dart';
 import '../game/level_data.dart';
 
@@ -17,7 +18,10 @@ class LevelSelectScreen extends StatelessWidget {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.levels), centerTitle: true),
+      appBar: AppBar(
+        title: Text(isArabic ? 'خريطة العالم' : 'World Map'),
+        centerTitle: true,
+      ),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -28,75 +32,27 @@ class LevelSelectScreen extends StatelessWidget {
         ),
         child: AnimatedBuilder(
           animation: store,
-          builder: (context, _) => CustomScrollView(
-            slivers: [
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(18, 18, 18, 10),
-                sliver: SliverToBoxAdapter(
-                  child: _JourneyHeader(
-                    title: isArabic ? 'رحلة الشحن العالمية' : 'Global Cargo Journey',
-                    subtitle: isArabic
-                        ? '150 مرحلة داخل 6 عوالم احترافية'
-                        : '150 levels across 6 professional worlds',
-                    unlocked: store.highestUnlockedLevel,
-                    total: levels.length,
-                  ),
+          builder: (context, _) => ListView(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+            children: [
+              _GlobalHeader(
+                isArabic: isArabic,
+                completed: store.completedLevels,
+                total: ProgressStore.totalLevels,
+                stars: store.totalStars,
+                maximumStars: store.maximumStars,
+              ),
+              const SizedBox(height: 18),
+              for (final world in gameWorlds) ...[
+                _WorldSection(
+                  world: world,
+                  levels: levels.where((level) => level.world == world.number).toList(),
+                  store: store,
+                  isArabic: isArabic,
+                  levelLabel: l10n.level,
                 ),
-              ),
-              ...gameWorlds.expand(
-                (world) => [
-                  SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(18, 12, 18, 10),
-                    sliver: SliverToBoxAdapter(
-                      child: _WorldHeader(
-                        world: world,
-                        completed: store.highestUnlockedLevel > world.number * 25,
-                        unlocked: store.highestUnlockedLevel >= ((world.number - 1) * 25 + 1),
-                        isArabic: isArabic,
-                      ),
-                    ),
-                  ),
-                  SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(18, 0, 18, 26),
-                    sliver: SliverGrid(
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 3,
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
-                        childAspectRatio: .88,
-                      ),
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) {
-                          final levelNumber = (world.number - 1) * 25 + index + 1;
-                          final level = levels[levelNumber - 1];
-                          final unlocked = level.number <= store.highestUnlockedLevel;
-                          final completed = level.number < store.highestUnlockedLevel;
-                          final isBoss = level.number % 25 == 0;
-
-                          return _LevelCard(
-                            level: level,
-                            world: world,
-                            unlocked: unlocked,
-                            completed: completed,
-                            isBoss: isBoss,
-                            levelLabel: l10n.level,
-                            lockedLabel: l10n.locked,
-                            onTap: unlocked
-                                ? () => Navigator.of(context).push(
-                                      MaterialPageRoute<void>(
-                                        builder: (_) => GameScreen(level: level, store: store),
-                                      ),
-                                    )
-                                : null,
-                          );
-                        },
-                        childCount: 25,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                const SizedBox(height: 18),
+              ],
             ],
           ),
         ),
@@ -105,50 +61,71 @@ class LevelSelectScreen extends StatelessWidget {
   }
 }
 
-class _JourneyHeader extends StatelessWidget {
-  const _JourneyHeader({required this.title, required this.subtitle, required this.unlocked, required this.total});
+class _GlobalHeader extends StatelessWidget {
+  const _GlobalHeader({
+    required this.isArabic,
+    required this.completed,
+    required this.total,
+    required this.stars,
+    required this.maximumStars,
+  });
 
-  final String title;
-  final String subtitle;
-  final int unlocked;
+  final bool isArabic;
+  final int completed;
   final int total;
+  final int stars;
+  final int maximumStars;
 
   @override
   Widget build(BuildContext context) {
-    final progress = ((unlocked - 1).clamp(0, total)) / total;
+    final progress = completed / total;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [Color(0xFF142A47), Color(0xFF2D5D8F)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(30),
-        boxShadow: const [BoxShadow(color: Color(0x33142A47), blurRadius: 24, offset: Offset(0, 12))],
+        boxShadow: const [
+          BoxShadow(color: Color(0x33142A47), blurRadius: 24, offset: Offset(0, 12)),
+        ],
       ),
       child: Column(
         children: [
           Row(
             children: [
-              Container(
-                width: 58,
-                height: 58,
-                decoration: const BoxDecoration(color: Color(0x22FFFFFF), shape: BoxShape.circle),
-                child: const Icon(Icons.public_rounded, color: AppTheme.orange, size: 32),
-              ),
+              const Icon(Icons.public_rounded, color: AppTheme.yellow, size: 44),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title, style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w900)),
-                    const SizedBox(height: 3),
-                    Text(subtitle, style: const TextStyle(color: Colors.white70)),
+                    Text(
+                      isArabic ? 'رحلة المدن العالمية' : 'Global City Journey',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    Text(
+                      isArabic
+                          ? '$completed مدينة مكتملة من $total'
+                          : '$completed of $total cities completed',
+                      style: const TextStyle(color: Colors.white70),
+                    ),
                   ],
                 ),
               ),
-              Text('${(progress * 100).round()}%', style: const TextStyle(color: AppTheme.orange, fontWeight: FontWeight.w900, fontSize: 20)),
+              Column(
+                children: [
+                  const Icon(Icons.star_rounded, color: AppTheme.yellow),
+                  Text(
+                    '$stars/$maximumStars',
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900),
+                  ),
+                ],
+              ),
             ],
           ),
           const SizedBox(height: 16),
@@ -167,139 +144,243 @@ class _JourneyHeader extends StatelessWidget {
   }
 }
 
-class _WorldHeader extends StatelessWidget {
-  const _WorldHeader({required this.world, required this.completed, required this.unlocked, required this.isArabic});
+class _WorldSection extends StatelessWidget {
+  const _WorldSection({
+    required this.world,
+    required this.levels,
+    required this.store,
+    required this.isArabic,
+    required this.levelLabel,
+  });
 
   final GameWorld world;
-  final bool completed;
-  final bool unlocked;
+  final List<LevelData> levels;
+  final ProgressStore store;
   final bool isArabic;
+  final String levelLabel;
 
   @override
   Widget build(BuildContext context) {
-    final start = (world.number - 1) * 25 + 1;
-    final end = world.number * 25;
-    return AnimatedOpacity(
-      opacity: unlocked ? 1 : .55,
-      duration: const Duration(milliseconds: 250),
-      child: Container(
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(colors: [world.startColor, world.endColor]),
-          borderRadius: BorderRadius.circular(26),
-          boxShadow: [BoxShadow(color: world.startColor.withValues(alpha: .28), blurRadius: 18, offset: const Offset(0, 9))],
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 58,
-              height: 58,
-              decoration: BoxDecoration(color: Colors.white.withValues(alpha: .16), borderRadius: BorderRadius.circular(18)),
-              child: Icon(world.icon, color: Colors.white, size: 32),
+    final firstLevel = levels.first.number;
+    final lastLevel = levels.last.number;
+    final unlocked = store.highestUnlockedLevel >= firstLevel;
+    final completedInWorld = levels
+        .where((level) => level.number < store.highestUnlockedLevel)
+        .length;
+    final starsInWorld = levels.fold<int>(
+      0,
+      (sum, level) => sum + store.starsForLevel(level.number),
+    );
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(30),
+        boxShadow: const [
+          BoxShadow(color: Color(0x1F000000), blurRadius: 18, offset: Offset(0, 9)),
+        ],
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(colors: [world.startColor, world.endColor]),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
             ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    isArabic ? 'العالم ${world.number} — ${world.name}' : 'World ${world.number} — ${world.name}',
-                    style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900),
+            child: Row(
+              children: [
+                Container(
+                  width: 58,
+                  height: 58,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: .16),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white24),
                   ),
-                  const SizedBox(height: 4),
-                  Text('$start–$end • ${world.subtitle}', style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w600)),
+                  child: Icon(world.icon, color: Colors.white, size: 32),
+                ),
+                const SizedBox(width: 13),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${isArabic ? 'العالم' : 'World'} ${world.number}: ${world.name}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 19,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      Text(
+                        unlocked
+                            ? '$completedInWorld/25 ${isArabic ? 'مدينة' : 'cities'} • ⭐ $starsInWorld/75'
+                            : (isArabic ? 'أكمل العالم السابق لفتحه' : 'Complete the previous world to unlock'),
+                        style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  unlocked ? Icons.map_rounded : Icons.lock_rounded,
+                  color: Colors.white,
+                ),
+              ],
+            ),
+          ),
+          if (unlocked)
+            Padding(
+              padding: const EdgeInsets.all(14),
+              child: GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: levels.length,
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3,
+                  crossAxisSpacing: 10,
+                  mainAxisSpacing: 10,
+                  childAspectRatio: .82,
+                ),
+                itemBuilder: (context, index) {
+                  final level = levels[index];
+                  final cityUnlocked = level.number <= store.highestUnlockedLevel;
+                  final stars = store.starsForLevel(level.number);
+                  return _CityCard(
+                    level: level,
+                    unlocked: cityUnlocked,
+                    stars: stars,
+                    world: world,
+                    levelLabel: levelLabel,
+                    onTap: cityUnlocked
+                        ? () async {
+                            await Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (_) => GameScreen(level: level, store: store),
+                              ),
+                            );
+                          }
+                        : null,
+                  );
+                },
+              ),
+            )
+          else
+            Padding(
+              padding: const EdgeInsets.all(22),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.lock_clock_rounded, color: Colors.black38),
+                  const SizedBox(width: 8),
+                  Text(
+                    '${isArabic ? 'المراحل' : 'Levels'} $firstLevel–$lastLevel',
+                    style: const TextStyle(color: Colors.black45, fontWeight: FontWeight.w700),
+                  ),
                 ],
               ),
             ),
-            Icon(completed ? Icons.workspace_premium_rounded : unlocked ? Icons.lock_open_rounded : Icons.lock_rounded, color: Colors.white, size: 30),
-          ],
-        ),
+        ],
       ),
     );
   }
 }
 
-class _LevelCard extends StatelessWidget {
-  const _LevelCard({
+class _CityCard extends StatelessWidget {
+  const _CityCard({
     required this.level,
-    required this.world,
     required this.unlocked,
-    required this.completed,
-    required this.isBoss,
+    required this.stars,
+    required this.world,
     required this.levelLabel,
-    required this.lockedLabel,
     required this.onTap,
   });
 
   final LevelData level;
-  final GameWorld world;
   final bool unlocked;
-  final bool completed;
-  final bool isBoss;
+  final int stars;
+  final GameWorld world;
   final String levelLabel;
-  final String lockedLabel;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
+    final boss = level.isBossCity;
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(20),
         child: Ink(
+          padding: const EdgeInsets.all(9),
           decoration: BoxDecoration(
             gradient: unlocked
-                ? LinearGradient(colors: [Colors.white, world.endColor.withValues(alpha: .13)], begin: Alignment.topLeft, end: Alignment.bottomRight)
-                : const LinearGradient(colors: [Color(0xFFE4E8ED), Color(0xFFD2D8DF)]),
-            borderRadius: BorderRadius.circular(24),
+                ? LinearGradient(
+                    colors: boss
+                        ? const [Color(0xFFFFD86F), Color(0xFFFF9B36)]
+                        : [Colors.white, world.startColor.withValues(alpha: .10)],
+                  )
+                : const LinearGradient(colors: [Color(0xFFE6E9ED), Color(0xFFD5DAE0)]),
+            borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: isBoss
+              color: boss
                   ? AppTheme.orange
-                  : completed
-                      ? const Color(0xFF52B788)
-                      : unlocked
-                          ? world.startColor
-                          : Colors.black12,
-              width: isBoss ? 3 : 2,
+                  : unlocked
+                      ? world.startColor.withValues(alpha: .45)
+                      : Colors.black12,
+              width: boss ? 2.5 : 1.5,
             ),
-            boxShadow: const [BoxShadow(color: Color(0x1F000000), blurRadius: 12, offset: Offset(0, 7))],
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(10),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  width: 52,
-                  height: 52,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: unlocked
-                        ? LinearGradient(colors: [world.startColor, world.endColor])
-                        : const LinearGradient(colors: [Color(0xFF9AA6B2), Color(0xFF7D8995)]),
-                  ),
-                  child: Icon(
-                    completed
-                        ? Icons.check_rounded
-                        : isBoss
-                            ? Icons.local_fire_department_rounded
-                            : unlocked
-                                ? Icons.inventory_2_rounded
-                                : Icons.lock_rounded,
-                    color: Colors.white,
-                    size: 28,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: unlocked ? world.startColor : Colors.black26,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  unlocked
+                      ? boss
+                          ? Icons.workspace_premium_rounded
+                          : Icons.location_city_rounded
+                      : Icons.lock_rounded,
+                  color: Colors.white,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(height: 7),
+              Text(
+                level.cityName,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: unlocked ? AppTheme.navy : Colors.black38,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              Text(
+                '$levelLabel ${level.number}',
+                style: const TextStyle(color: AppTheme.muted, fontSize: 9),
+              ),
+              const SizedBox(height: 4),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(
+                  3,
+                  (index) => Icon(
+                    index < stars ? Icons.star_rounded : Icons.star_outline_rounded,
+                    size: 14,
+                    color: index < stars ? AppTheme.yellow : Colors.black12,
                   ),
                 ),
-                const SizedBox(height: 9),
-                Text('$levelLabel ${level.number}', maxLines: 1, style: TextStyle(color: unlocked ? AppTheme.navy : Colors.black45, fontWeight: FontWeight.w900, fontSize: 14)),
-                const SizedBox(height: 3),
-                Text(
-                  unlocked ? (isBoss ? 'BOSS' : '★' * level.difficulty.clamp(1, 3)) : lockedLabel,
-                  style: TextStyle(color: isBoss ? AppTheme.orange : unlocked ? world.startColor : Colors.black38, fontWeight: FontWeight.w900, fontSize: 11),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
