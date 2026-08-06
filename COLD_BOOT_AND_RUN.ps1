@@ -22,6 +22,89 @@ function Find-AndroidSdk {
     throw "Android SDK was not found."
 }
 
+function Get-JavaMajor([string]$JdkPath) {
+    $javaExe = Join-Path $JdkPath "bin\java.exe"
+    if (-not (Test-Path $javaExe)) { return $null }
+    $versionText = (& $javaExe -version 2>&1 | Select-Object -First 1).ToString()
+    if ($versionText -match 'version\s+"(?<major>\d+)') {
+        return [int]$Matches.major
+    }
+    return $null
+}
+
+function Find-CompatibleJdk {
+    $candidates = @(
+        $env:JAVA_HOME,
+        "C:\Program Files\Eclipse Adoptium\jdk-17.0.16.8-hotspot",
+        "C:\Program Files\Eclipse Adoptium\jdk-17.0.15.6-hotspot",
+        "C:\Program Files\Microsoft\jdk-17.0.16.8-hotspot",
+        "C:\Program Files\Microsoft\jdk-17.0.15.6-hotspot"
+    )
+
+    $roots = @(
+        "C:\Program Files\Eclipse Adoptium",
+        "C:\Program Files\Microsoft",
+        "C:\Program Files\Java"
+    )
+    foreach ($root in $roots) {
+        if (Test-Path $root) {
+            $candidates += Get-ChildItem $root -Directory -ErrorAction SilentlyContinue |
+                Where-Object { $_.Name -match 'jdk-17|jdk17' } |
+                ForEach-Object { $_.FullName }
+        }
+    }
+
+    foreach ($candidate in $candidates | Where-Object { $_ } | Select-Object -Unique) {
+        $major = Get-JavaMajor $candidate
+        if ($major -eq 17) {
+            return [System.IO.Path]::GetFullPath($candidate)
+        }
+    }
+    return $null
+}
+
+function Ensure-CompatibleJdk {
+    $jdk = Find-CompatibleJdk
+    if (-not $jdk) {
+        $winget = Get-Command winget -ErrorAction SilentlyContinue
+        if (-not $winget) {
+            throw "JDK 17 is required but was not found. Install Eclipse Temurin JDK 17, then run this script again."
+        }
+
+        Write-Host "JDK 17 was not found. Installing Eclipse Temurin JDK 17..." -ForegroundColor Yellow
+        & winget install --id EclipseAdoptium.Temurin.17.JDK --exact --silent --accept-package-agreements --accept-source-agreements
+        if ($LASTEXITCODE -ne 0) {
+            throw "Automatic JDK 17 installation failed with exit code $LASTEXITCODE."
+        }
+        $jdk = Find-CompatibleJdk
+    }
+
+    if (-not $jdk) {
+        throw "JDK 17 installation completed but its folder could not be detected. Restart PowerShell and run again."
+    }
+
+    $env:JAVA_HOME = $jdk
+    $env:Path = "$(Join-Path $jdk 'bin');" + (($env:Path -split ';' | Where-Object { $_ -and $_ -notmatch '\\Java\\|\\jdk-|Android Studio\\jbr' }) -join ';')
+    $env:GRADLE_OPTS = "-Dorg.gradle.java.home=$($jdk -replace '\\','/') --enable-native-access=ALL-UNNAMED"
+
+    Write-Host "Using JDK 17: $jdk" -ForegroundColor Green
+    & flutter config --jdk-dir $jdk
+    if ($LASTEXITCODE -ne 0) { throw "Could not configure Flutter to use JDK 17." }
+
+    $javaVersion = & (Join-Path $jdk "bin\java.exe") -version 2>&1
+    $javaVersion | Select-Object -First 1 | Write-Host -ForegroundColor Cyan
+}
+
+function Stop-GradleDaemons([string]$Root) {
+    $gradlew = Join-Path $Root "android\gradlew.bat"
+    if (Test-Path $gradlew) {
+        Write-Host "Stopping old Gradle daemons..." -ForegroundColor DarkGray
+        Push-Location (Split-Path $gradlew -Parent)
+        try { & $gradlew --stop 2>$null | Out-Null } catch { }
+        finally { Pop-Location }
+    }
+}
+
 function Get-OnlineDevice([string]$Adb) {
     foreach ($line in (& $Adb devices)) {
         if ($line -match '^([^\s]+)\s+device$' -and $Matches[1] -ne 'List') {
@@ -49,6 +132,9 @@ try {
 
     $ProjectPath = [System.IO.Path]::GetFullPath($ProjectPath)
     Set-Location $ProjectPath
+
+    Ensure-CompatibleJdk
+    Stop-GradleDaemons $ProjectPath
 
     $sdk = Find-AndroidSdk
     $adb = Join-Path $sdk "platform-tools\adb.exe"
@@ -112,7 +198,7 @@ try {
     & flutter pub get
     if ($LASTEXITCODE -ne 0) { throw "flutter pub get failed with exit code $LASTEXITCODE" }
 
-    Write-Host "Running application..." -ForegroundColor Cyan
+    Write-Host "Running application with JDK 17..." -ForegroundColor Cyan
     & flutter run --no-pub -d $device
     $runExitCode = $LASTEXITCODE
 
@@ -123,7 +209,7 @@ try {
     }
 }
 catch {
-    Write-Host "" 
+    Write-Host ""
     Write-Host "COLD BOOT RUN FAILED" -ForegroundColor Red
     Write-Host $_.Exception.Message -ForegroundColor Red
 
