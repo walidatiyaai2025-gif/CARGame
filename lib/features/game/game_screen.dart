@@ -148,7 +148,7 @@ class _GameScreenState extends State<GameScreen> {
                   ],
                 ),
                 child: Icon(
-                  won ? Icons.emoji_events_rounded : Icons.favorite_broken_rounded,
+                  won ? Icons.emoji_events_rounded : Icons.heart_broken_rounded,
                   size: 50,
                   color: Colors.white,
                 ),
