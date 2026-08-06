@@ -4,9 +4,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 class ProgressStore extends ChangeNotifier {
   static const int totalLevels = 150;
   static const int maxStarsPerLevel = 3;
+  static const int maxHearts = 5;
+  static const Duration heartRefillInterval = Duration(minutes: 30);
+
   static const _levelKey = 'highest_unlocked_level';
   static const _coinsKey = 'coins';
   static const _heartsKey = 'hearts';
+  static const _heartTimestampKey = 'heart_refill_timestamp';
   static const _dailyRewardKey = 'daily_reward_date';
   static const _starsPrefix = 'level_stars_';
   static const _gamesKey = 'stats_games';
@@ -14,6 +18,10 @@ class ProgressStore extends ChangeNotifier {
   static const _lossesKey = 'stats_losses';
   static const _coinsEarnedKey = 'stats_coins_earned';
   static const _perfectWinsKey = 'stats_perfect_wins';
+  static const _bestComboKey = 'stats_best_combo';
+  static const _winStreakKey = 'stats_win_streak';
+  static const _bestWinStreakKey = 'stats_best_win_streak';
+  static const _xpKey = 'player_xp';
   static const _missionDateKey = 'mission_date';
   static const _missionWinsKey = 'mission_wins';
   static const _missionStarsKey = 'mission_stars';
@@ -25,18 +33,23 @@ class ProgressStore extends ChangeNotifier {
 
   int highestUnlockedLevel = 1;
   int coins = 100;
-  int hearts = 5;
+  int hearts = maxHearts;
   int gamesPlayed = 0;
   int wins = 0;
   int losses = 0;
   int lifetimeCoinsEarned = 0;
   int perfectWins = 0;
+  int bestCombo = 0;
+  int currentWinStreak = 0;
+  int bestWinStreak = 0;
+  int playerXp = 0;
   int missionWins = 0;
   int missionStars = 0;
   int missionCoins = 0;
   bool missionClaimed = false;
   String? _lastDailyRewardDate;
   String? _missionDate;
+  DateTime? _heartRefillTimestamp;
 
   int get completedLevels => (highestUnlockedLevel - 1).clamp(0, totalLevels);
   double get completionProgress => completedLevels / totalLevels;
@@ -44,6 +57,9 @@ class ProgressStore extends ChangeNotifier {
   int get maximumStars => totalLevels * maxStarsPerLevel;
   double get winRate => gamesPlayed == 0 ? 0 : wins / gamesPlayed;
   bool get dailyMissionComplete => missionWins >= 3 && missionStars >= 6 && missionCoins >= 150;
+  int get playerLevel => 1 + (playerXp ~/ 500);
+  int get xpIntoCurrentLevel => playerXp % 500;
+  double get playerLevelProgress => xpIntoCurrentLevel / 500;
 
   int starsForLevel(int level) => _levelStars[level] ?? 0;
 
@@ -54,16 +70,32 @@ class ProgressStore extends ChangeNotifier {
 
   bool get canClaimDailyReward => _lastDailyRewardDate != _today;
 
+  Duration get timeUntilNextHeart {
+    if (hearts >= maxHearts || _heartRefillTimestamp == null) return Duration.zero;
+    final elapsed = DateTime.now().difference(_heartRefillTimestamp!);
+    final remaining = heartRefillInterval - elapsed;
+    return remaining.isNegative ? Duration.zero : remaining;
+  }
+
   Future<void> load() async {
     highestUnlockedLevel = (await _prefs.getInt(_levelKey) ?? 1).clamp(1, totalLevels);
     coins = await _prefs.getInt(_coinsKey) ?? 100;
-    hearts = (await _prefs.getInt(_heartsKey) ?? 5).clamp(0, 5);
+    hearts = (await _prefs.getInt(_heartsKey) ?? maxHearts).clamp(0, maxHearts);
+    final heartTimestampText = await _prefs.getString(_heartTimestampKey);
+    _heartRefillTimestamp = heartTimestampText == null ? null : DateTime.tryParse(heartTimestampText);
+    await refreshHearts();
+
     _lastDailyRewardDate = await _prefs.getString(_dailyRewardKey);
     gamesPlayed = await _prefs.getInt(_gamesKey) ?? 0;
     wins = await _prefs.getInt(_winsKey) ?? 0;
     losses = await _prefs.getInt(_lossesKey) ?? 0;
     lifetimeCoinsEarned = await _prefs.getInt(_coinsEarnedKey) ?? 0;
     perfectWins = await _prefs.getInt(_perfectWinsKey) ?? 0;
+    bestCombo = await _prefs.getInt(_bestComboKey) ?? 0;
+    currentWinStreak = await _prefs.getInt(_winStreakKey) ?? 0;
+    bestWinStreak = await _prefs.getInt(_bestWinStreakKey) ?? 0;
+    playerXp = await _prefs.getInt(_xpKey) ?? 0;
+
     _missionDate = await _prefs.getString(_missionDateKey);
     if (_missionDate != _today) {
       await _resetDailyMission();
@@ -82,6 +114,33 @@ class ProgressStore extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> refreshHearts() async {
+    if (hearts >= maxHearts) {
+      _heartRefillTimestamp = null;
+      await _prefs.remove(_heartTimestampKey);
+      return;
+    }
+
+    final now = DateTime.now();
+    _heartRefillTimestamp ??= now;
+    final elapsed = now.difference(_heartRefillTimestamp!);
+    final recovered = elapsed.inMinutes ~/ heartRefillInterval.inMinutes;
+    if (recovered <= 0) return;
+
+    hearts = (hearts + recovered).clamp(0, maxHearts);
+    if (hearts >= maxHearts) {
+      _heartRefillTimestamp = null;
+      await _prefs.remove(_heartTimestampKey);
+    } else {
+      _heartRefillTimestamp = _heartRefillTimestamp!.add(
+        Duration(minutes: recovered * heartRefillInterval.inMinutes),
+      );
+      await _prefs.setString(_heartTimestampKey, _heartRefillTimestamp!.toIso8601String());
+    }
+    await _prefs.setInt(_heartsKey, hearts);
+    notifyListeners();
+  }
+
   Future<void> _resetDailyMission() async {
     _missionDate = _today;
     missionWins = 0;
@@ -95,10 +154,20 @@ class ProgressStore extends ChangeNotifier {
     await _prefs.setBool(_missionClaimedKey, false);
   }
 
-  Future<void> completeLevel(int level, int reward, {int stars = 1}) async {
+  Future<void> completeLevel(
+    int level,
+    int reward, {
+    int stars = 1,
+    int combo = 0,
+    int xpEarned = 0,
+  }) async {
     coins += reward;
     gamesPlayed++;
     wins++;
+    currentWinStreak++;
+    if (currentWinStreak > bestWinStreak) bestWinStreak = currentWinStreak;
+    if (combo > bestCombo) bestCombo = combo;
+    playerXp += xpEarned;
     lifetimeCoinsEarned += reward;
     missionWins++;
     missionCoins += reward;
@@ -123,8 +192,10 @@ class ProgressStore extends ChangeNotifier {
   Future<void> recordLoss() async {
     gamesPlayed++;
     losses++;
+    currentWinStreak = 0;
     await _prefs.setInt(_gamesKey, gamesPlayed);
     await _prefs.setInt(_lossesKey, losses);
+    await _prefs.setInt(_winStreakKey, currentWinStreak);
     notifyListeners();
   }
 
@@ -149,6 +220,10 @@ class ProgressStore extends ChangeNotifier {
     await _prefs.setInt(_lossesKey, losses);
     await _prefs.setInt(_coinsEarnedKey, lifetimeCoinsEarned);
     await _prefs.setInt(_perfectWinsKey, perfectWins);
+    await _prefs.setInt(_bestComboKey, bestCombo);
+    await _prefs.setInt(_winStreakKey, currentWinStreak);
+    await _prefs.setInt(_bestWinStreakKey, bestWinStreak);
+    await _prefs.setInt(_xpKey, playerXp);
     await _prefs.setInt(_missionWinsKey, missionWins);
     await _prefs.setInt(_missionStarsKey, missionStars);
     await _prefs.setInt(_missionCoinsKey, missionCoins);
@@ -163,9 +238,12 @@ class ProgressStore extends ChangeNotifier {
   }
 
   Future<bool> spendHeart() async {
+    await refreshHearts();
     if (hearts <= 0) return false;
     hearts--;
+    _heartRefillTimestamp ??= DateTime.now();
     await _prefs.setInt(_heartsKey, hearts);
+    await _prefs.setString(_heartTimestampKey, _heartRefillTimestamp!.toIso8601String());
     notifyListeners();
     return true;
   }
@@ -173,7 +251,11 @@ class ProgressStore extends ChangeNotifier {
   Future<bool> loseHeart() => spendHeart();
 
   Future<void> addHearts(int amount) async {
-    hearts = (hearts + amount).clamp(0, 5);
+    hearts = (hearts + amount).clamp(0, maxHearts);
+    if (hearts >= maxHearts) {
+      _heartRefillTimestamp = null;
+      await _prefs.remove(_heartTimestampKey);
+    }
     await _prefs.setInt(_heartsKey, hearts);
     notifyListeners();
   }
