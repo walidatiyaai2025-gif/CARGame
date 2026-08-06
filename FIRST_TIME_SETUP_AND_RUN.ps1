@@ -1,28 +1,33 @@
 param(
-    [string]$TargetPath = "C:\Apps\CARGame",
-    [string]$AvdName = ""
+    [string]$TargetPath = 'C:\Apps\CARGame',
+    [string]$AvdName = ''
 )
 
-$ErrorActionPreference = "Stop"
+$ErrorActionPreference = 'Stop'
 $PSNativeCommandUseErrorActionPreference = $false
-$RepoUrl = "https://github.com/walidatiyaai2025-gif/CARGame.git"
-$MinimumDartVersion = [version]"3.10.0"
+$RepoUrl = 'https://github.com/walidatiyaai2025-gif/CARGame.git'
 
 function Step([int]$Number, [string]$Text) {
-    Write-Host ""
-    Write-Host "============================================================" -ForegroundColor Cyan
+    Write-Host ''
+    Write-Host '============================================================' -ForegroundColor Cyan
     Write-Host "STEP $Number - $Text" -ForegroundColor Cyan
-    Write-Host "============================================================" -ForegroundColor Cyan
+    Write-Host '============================================================' -ForegroundColor Cyan
 }
 
-function Run([string]$Command, [string[]]$Arguments, [string]$Folder = "") {
+function Run {
+    param(
+        [Parameter(Mandatory)][string]$Command,
+        [string[]]$Arguments = @(),
+        [string]$Folder = ''
+    )
+
     if ($Folder) { Push-Location $Folder }
     try {
         Write-Host "> $Command $($Arguments -join ' ')" -ForegroundColor DarkGray
         & $Command @Arguments
-        $exitCode = $LASTEXITCODE
-        if ($exitCode -ne 0) {
-            throw "Command failed with exit code ${exitCode}: $Command $($Arguments -join ' ')"
+        $code = $LASTEXITCODE
+        if ($code -ne 0) {
+            throw "Command failed with exit code ${code}: $Command $($Arguments -join ' ')"
         }
     }
     finally {
@@ -30,241 +35,225 @@ function Run([string]$Command, [string[]]$Arguments, [string]$Folder = "") {
     }
 }
 
-function Run-ProcessLogged {
-    param(
-        [Parameter(Mandatory)][string]$FilePath,
-        [string[]]$Arguments = @(),
-        [Parameter(Mandatory)][string]$LogPath,
-        [string]$WorkingDirectory = ""
+function Get-AndroidSdk {
+    foreach ($candidate in @(
+        $env:ANDROID_SDK_ROOT,
+        $env:ANDROID_HOME,
+        (Join-Path $env:LOCALAPPDATA 'Android\Sdk')
+    ) | Where-Object { $_ }) {
+        if (Test-Path (Join-Path $candidate 'platform-tools\adb.exe')) {
+            return [IO.Path]::GetFullPath($candidate)
+        }
+    }
+    throw 'Android SDK was not found.'
+}
+
+function Get-PropertyValue {
+    param($Object, [string]$Name, $Default = $null)
+    $property = $Object.PSObject.Properties[$Name]
+    if ($null -eq $property) { return $Default }
+    return $property.Value
+}
+
+function Get-SupportedAndroidDeviceId {
+    $json = (& flutter devices --machine 2>$null) -join "`n"
+    if ([string]::IsNullOrWhiteSpace($json)) { return $null }
+
+    try { $devices = @($json | ConvertFrom-Json) }
+    catch { return $null }
+
+    foreach ($device in $devices) {
+        $platform = [string](Get-PropertyValue $device 'targetPlatform' '')
+        $id = [string](Get-PropertyValue $device 'id' '')
+        $isSupported = Get-PropertyValue $device 'isSupported' $true
+        $unsupported = Get-PropertyValue $device 'unsupported' $false
+
+        if ($platform -like 'android*' -and
+            $isSupported -ne $false -and
+            $unsupported -ne $true -and
+            -not [string]::IsNullOrWhiteSpace($id)) {
+            return $id
+        }
+    }
+    return $null
+}
+
+function Select-Avd {
+    param([string]$EmulatorExe, [string]$RequestedAvd)
+
+    $avds = @(& $EmulatorExe -list-avds | Where-Object { $_.Trim() })
+    if ($avds.Count -eq 0) {
+        throw 'No Android AVD exists. Create an API 35 or newer emulator in Android Studio.'
+    }
+
+    if ($RequestedAvd) {
+        if ($avds -notcontains $RequestedAvd) {
+            throw "Requested AVD was not found: $RequestedAvd"
+        }
+        return $RequestedAvd
+    }
+
+    $preferred = @(
+        'Pixel_9_Pro',
+        'Resizable_Experimental',
+        'Pixel_3a_API_33_x86_64',
+        'Pixel_6_Pro_API_31'
     )
 
-    $stdout = "$LogPath.stdout"
-    $stderr = "$LogPath.stderr"
-    Remove-Item $stdout, $stderr, $LogPath -Force -ErrorAction SilentlyContinue
-
-    $params = @{
-        FilePath               = $FilePath
-        ArgumentList           = $Arguments
-        RedirectStandardOutput = $stdout
-        RedirectStandardError  = $stderr
-        NoNewWindow            = $true
-        Wait                   = $true
-        PassThru               = $true
+    foreach ($name in $preferred) {
+        if ($avds -contains $name) { return $name }
     }
-    if ($WorkingDirectory) { $params.WorkingDirectory = $WorkingDirectory }
 
-    $process = Start-Process @params
-    $parts = @()
-    if (Test-Path $stdout) { $parts += Get-Content $stdout -Raw -ErrorAction SilentlyContinue }
-    if (Test-Path $stderr) { $parts += Get-Content $stderr -Raw -ErrorAction SilentlyContinue }
-    $text = ($parts | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }) -join [Environment]::NewLine
-    [System.IO.File]::WriteAllText($LogPath, $text, [System.Text.UTF8Encoding]::new($false))
-    Remove-Item $stdout, $stderr -Force -ErrorAction SilentlyContinue
+    $safeAvds = @($avds | Where-Object { $_ -notmatch '(?i)API[_ -]?30|A51_API_30' })
+    if ($safeAvds.Count -eq 1) { return $safeAvds[0] }
 
-    [pscustomobject]@{ ExitCode = $process.ExitCode; Text = $text; LogPath = $LogPath }
+    Write-Host ''
+    Write-Host 'Available Android emulators:' -ForegroundColor Cyan
+    for ($i = 0; $i -lt $safeAvds.Count; $i++) {
+        Write-Host "[$($i + 1)] $($safeAvds[$i])"
+    }
+
+    if ($safeAvds.Count -eq 0) {
+        throw 'Only unsupported API 30 emulators were found. Create an API 35 or newer AVD.'
+    }
+
+    $choice = Read-Host 'Choose emulator number'
+    $index = 0
+    if (-not [int]::TryParse($choice, [ref]$index) -or
+        $index -lt 1 -or
+        $index -gt $safeAvds.Count) {
+        throw 'Invalid emulator selection.'
+    }
+    return $safeAvds[$index - 1]
 }
 
-function Run-FlutterAnalyze([string]$ProjectPath) {
-    $logPath = Join-Path $ProjectPath "flutter_analyze.log"
-    Write-Host "> flutter analyze --no-fatal-infos --no-fatal-warnings" -ForegroundColor DarkGray
-    try {
-        $result = Run-ProcessLogged -FilePath (Get-Command flutter).Source `
-            -Arguments @("analyze", "--no-fatal-infos", "--no-fatal-warnings") `
-            -LogPath $logPath -WorkingDirectory $ProjectPath
-        if ($result.Text) { Write-Host $result.Text }
-        if ($result.ExitCode -eq 0) {
-            Write-Host "Flutter analyze completed successfully." -ForegroundColor Green
-        } else {
-            Write-Warning "Flutter analyze returned exit code $($result.ExitCode). Continuing; build will report compile errors."
-            Write-Warning "Analyzer log: $logPath"
-        }
-    }
-    catch {
-        Write-Warning "Could not run flutter analyze: $($_.Exception.Message)"
-        Write-Warning "Continuing; build will report real compile errors."
-    }
-}
+function Start-SupportedEmulator {
+    param([string]$SdkRoot, [string]$RequestedAvd)
 
-function Get-FlutterInfo {
-    $jsonText = (& flutter --version --machine 2>$null) -join "`n"
-    if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($jsonText)) {
-        throw "Could not read Flutter version information."
-    }
-    try { $jsonText | ConvertFrom-Json }
-    catch { throw "Flutter returned invalid version information: $($_.Exception.Message)" }
-}
+    $adb = Join-Path $SdkRoot 'platform-tools\adb.exe'
+    $emulator = Join-Path $SdkRoot 'emulator\emulator.exe'
+    if (-not (Test-Path $emulator)) { throw "Emulator was not found: $emulator" }
 
-function Ensure-CompatibleFlutter {
-    $info = Get-FlutterInfo
-    $dartText = ([string]$info.dartSdkVersion).Split(' ')[0].Split('-')[0]
-    try { $dartVersion = [version]$dartText }
-    catch { throw "Could not parse Dart SDK version: $dartText" }
-
-    Write-Host "Flutter: $($info.frameworkVersion)" -ForegroundColor Cyan
-    Write-Host "Dart:    $dartVersion" -ForegroundColor Cyan
-    Write-Host "Required Dart: $MinimumDartVersion or newer" -ForegroundColor Cyan
-
-    if ($dartVersion -ge $MinimumDartVersion) {
-        Write-Host "Flutter/Dart version is compatible." -ForegroundColor Green
-        return
-    }
-
-    Write-Host "Installed Dart is too old. Upgrading Flutter stable..." -ForegroundColor Yellow
-    Run "flutter" @("channel", "stable")
-    Run "flutter" @("upgrade")
-
-    $updated = Get-FlutterInfo
-    $updatedDart = [version](([string]$updated.dartSdkVersion).Split(' ')[0].Split('-')[0])
-    if ($updatedDart -lt $MinimumDartVersion) {
-        throw "Dart $updatedDart is still below required $MinimumDartVersion. Install Flutter 3.44.8 or newer."
-    }
-}
-
-function AndroidSdkRoot {
-    $candidates = @($env:ANDROID_SDK_ROOT, $env:ANDROID_HOME, (Join-Path $env:LOCALAPPDATA "Android\Sdk")) |
-        Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
-    foreach ($candidate in $candidates) {
-        if (Test-Path (Join-Path $candidate "platform-tools\adb.exe")) {
-            return [System.IO.Path]::GetFullPath($candidate)
-        }
-    }
-    throw "Android SDK not found. Install Android SDK Platform, Platform-Tools, Emulator and Command-line Tools (latest)."
-}
-
-function Accept-AndroidLicenses([string]$ProjectPath) {
-    $logPath = Join-Path $ProjectPath "android_licenses.log"
-    Write-Host "> flutter doctor --android-licenses" -ForegroundColor DarkGray
-    Write-Host "Answer y when prompted. SDK XML warnings are non-fatal." -ForegroundColor Yellow
-
-    $oldPreference = $ErrorActionPreference
-    try {
-        $ErrorActionPreference = "Continue"
-        & flutter doctor --android-licenses 2>&1 | Tee-Object -FilePath $logPath
-        $exitCode = $LASTEXITCODE
-    }
-    catch {
-        Write-Warning "License command emitted a PowerShell warning: $($_.Exception.Message)"
-        $exitCode = if ($null -eq $LASTEXITCODE) { 0 } else { $LASTEXITCODE }
-    }
-    finally {
-        $ErrorActionPreference = $oldPreference
-    }
-
-    if ($exitCode -eq 0) {
-        Write-Host "Android licenses completed." -ForegroundColor Green
-    } else {
-        Write-Warning "Android license command returned exit code $exitCode. Continuing to flutter doctor."
-        Write-Warning "License log: $logPath"
-    }
-}
-
-function OnlineDevice([string]$Adb) {
-    foreach ($line in (& $Adb devices)) {
-        if ($line -match '^([^\s]+)\s+device$' -and $Matches[1] -ne 'List') { return $Matches[1] }
-    }
-    $null
-}
-
-function StartEmulator([string]$SdkRoot, [string]$RequestedAvd) {
-    $adb = Join-Path $SdkRoot "platform-tools\adb.exe"
-    $emulator = Join-Path $SdkRoot "emulator\emulator.exe"
     & $adb start-server | Out-Null
-    $device = OnlineDevice $adb
-    if ($device) { return $device }
+    $supported = Get-SupportedAndroidDeviceId
+    if ($supported) {
+        Write-Host "Supported Android device already available: $supported" -ForegroundColor Green
+        return $supported
+    }
 
-    if (-not (Test-Path $emulator)) { throw "Android Emulator not found: $emulator" }
-    $avds = @(& $emulator -list-avds | Where-Object { $_.Trim() })
-    if ($avds.Count -eq 0) { throw "No AVD found. Create one from Android Studio > Device Manager." }
+    foreach ($line in (& $adb devices)) {
+        if ($line -match '^(emulator-\d+)\s+(device|offline)$') {
+            Write-Host "Closing old emulator: $($Matches[1])" -ForegroundColor Yellow
+            & $adb -s $Matches[1] emu kill 2>$null | Out-Null
+        }
+    }
+    Start-Sleep -Seconds 3
 
-    $selected = if ($RequestedAvd) { $RequestedAvd } else { $avds[0] }
-    if ($avds -notcontains $selected) { throw "AVD not found: $selected. Available: $($avds -join ', ')" }
+    $selected = Select-Avd -EmulatorExe $emulator -RequestedAvd $RequestedAvd
+    Write-Host "Starting modern emulator: $selected" -ForegroundColor Yellow
+    Start-Process -FilePath $emulator -ArgumentList @(
+        '-avd', $selected,
+        '-no-boot-anim',
+        '-no-snapshot-load',
+        '-no-snapshot-save'
+    ) | Out-Null
 
-    Write-Host "Starting emulator: $selected" -ForegroundColor Yellow
-    Start-Process -FilePath $emulator -ArgumentList @("-avd", $selected, "-no-snapshot-save") | Out-Null
+    $deadline = (Get-Date).AddMinutes(10)
+    do {
+        Start-Sleep -Seconds 4
+        $supported = Get-SupportedAndroidDeviceId
+        if ((Get-Date) -gt $deadline) {
+            throw "The emulator '$selected' started, but Flutter did not mark it as supported. Use an API 35 or newer system image."
+        }
+    } until ($supported)
 
-    $limit = (Get-Date).AddMinutes(7)
+    & $adb -s $supported wait-for-device | Out-Null
     do {
         Start-Sleep -Seconds 3
-        $device = OnlineDevice $adb
-        if ((Get-Date) -gt $limit) { throw "Timed out waiting for emulator." }
-    } until ($device)
+        $boot = (& $adb -s $supported shell getprop sys.boot_completed 2>$null).Trim()
+        if ((Get-Date) -gt $deadline) { throw 'Timed out waiting for Android boot.' }
+    } until ($boot -eq '1')
 
-    Run $adb @("-s", $device, "wait-for-device")
-    do {
-        Start-Sleep -Seconds 3
-        $boot = (& $adb -s $device shell getprop sys.boot_completed 2>$null).Trim()
-        if ((Get-Date) -gt $limit) { throw "Timed out waiting for Android boot." }
-    } until ($boot -eq "1")
-    $device
+    Start-Sleep -Seconds 8
+    return $supported
 }
 
 try {
     Clear-Host
-    Write-Host "CAR GAME - FIRST TIME SETUP AND RUN" -ForegroundColor Green
-    Write-Host "The window stays open after success or failure." -ForegroundColor Yellow
+    Write-Host 'CAR GAME - FIRST TIME SETUP AND RUN' -ForegroundColor Green
+    Write-Host 'This window remains open after success or failure.' -ForegroundColor Yellow
 
-    Step 1 "Choose project folder"
+    Step 1 'Choose project folder'
     $entered = Read-Host "Project path [$TargetPath]"
     if ($entered) { $TargetPath = $entered }
-    $TargetPath = [System.IO.Path]::GetFullPath($TargetPath)
+    $TargetPath = [IO.Path]::GetFullPath($TargetPath)
 
-    Step 2 "Check Git, Flutter and Dart compatibility"
-    if (-not (Get-Command git -ErrorAction SilentlyContinue)) { throw "Git is not available in PATH." }
-    if (-not (Get-Command flutter -ErrorAction SilentlyContinue)) { throw "Flutter is not available in PATH." }
-    Run "git" @("--version")
-    Ensure-CompatibleFlutter
+    Step 2 'Check prerequisites'
+    foreach ($command in @('git', 'flutter')) {
+        if (-not (Get-Command $command -ErrorAction SilentlyContinue)) {
+            throw "$command was not found in PATH."
+        }
+    }
+    Run 'git' @('--version')
+    Run 'flutter' @('--version')
 
-    Step 3 "Locate Android SDK"
-    $sdk = AndroidSdkRoot
+    Step 3 'Locate Android SDK'
+    $sdk = Get-AndroidSdk
     Write-Host "Android SDK: $sdk" -ForegroundColor Green
 
-    Step 4 "Download or update project"
+    Step 4 'Download or update project'
     $parent = Split-Path $TargetPath -Parent
     New-Item -ItemType Directory -Path $parent -Force | Out-Null
-    if (Test-Path (Join-Path $TargetPath ".git")) {
-        Run "git" @("fetch", "origin") $TargetPath
-        Run "git" @("reset", "--hard", "origin/main") $TargetPath
-    } elseif (Test-Path $TargetPath -and @(Get-ChildItem $TargetPath -Force -ErrorAction SilentlyContinue).Count -gt 0) {
-        $TargetPath = "$TargetPath`_Fresh_$(Get-Date -Format yyyyMMdd_HHmmss)"
-        Write-Host "Selected folder was not empty. Using: $TargetPath" -ForegroundColor Yellow
-        Run "git" @("clone", $RepoUrl, $TargetPath)
-    } else {
-        Run "git" @("clone", $RepoUrl, $TargetPath)
+
+    if (Test-Path (Join-Path $TargetPath '.git')) {
+        Run 'git' @('fetch', 'origin') $TargetPath
+        Run 'git' @('reset', '--hard', 'origin/main') $TargetPath
+    }
+    elseif (Test-Path $TargetPath -and
+            @(Get-ChildItem $TargetPath -Force -ErrorAction SilentlyContinue).Count -gt 0) {
+        $TargetPath = "${TargetPath}_Fresh_$(Get-Date -Format yyyyMMdd_HHmmss)"
+        Run 'git' @('clone', $RepoUrl, $TargetPath)
+    }
+    else {
+        Run 'git' @('clone', $RepoUrl, $TargetPath)
     }
 
     Set-Location $TargetPath
-    git config core.longpaths true
+    & git config core.longpaths true
 
-    Step 5 "Configure Flutter and accept Android licenses"
-    Run "flutter" @("config", "--android-sdk", $sdk)
-    Accept-AndroidLicenses $TargetPath
-    Run "flutter" @("doctor", "-v")
+    Step 5 'Configure Flutter Android SDK'
+    Run 'flutter' @('config', '--android-sdk', $sdk)
+    Run 'flutter' @('doctor', '-v')
 
-    Step 6 "Restore project packages"
-    Ensure-CompatibleFlutter
-    $env:GRADLE_USER_HOME = Join-Path $TargetPath ".gradle-user-home-first-run"
-    New-Item -ItemType Directory -Path $env:GRADLE_USER_HOME -Force | Out-Null
-    Run "flutter" @("clean")
-    Run "flutter" @("pub", "get")
-    try { Run "flutter" @("gen-l10n") } catch { Write-Warning "gen-l10n was skipped." }
+    Step 6 'Restore packages and repair build caches'
+    if (Test-Path (Join-Path $TargetPath 'BUILD_COMMON.ps1')) {
+        . (Join-Path $TargetPath 'BUILD_COMMON.ps1')
+        Repair-KotlinBuildCache $TargetPath -Deep
+    }
+    else {
+        Run 'flutter' @('clean') $TargetPath
+    }
+    Run 'flutter' @('pub', 'get') $TargetPath
+    try { Run 'flutter' @('gen-l10n') $TargetPath }
+    catch { Write-Warning 'flutter gen-l10n was skipped.' }
 
-    Step 7 "Analyze project before starting emulator"
-    Run-FlutterAnalyze $TargetPath
+    Step 7 'Analyze project'
+    Run 'flutter' @('analyze', '--no-fatal-infos', '--no-fatal-warnings') $TargetPath
 
-    Step 8 "Start Android emulator"
-    $device = StartEmulator $sdk $AvdName
-    Write-Host "Device ready: $device" -ForegroundColor Green
+    Step 8 'Start Flutter-supported Android emulator'
+    $device = Start-SupportedEmulator -SdkRoot $sdk -RequestedAvd $AvdName
+    Write-Host "Supported device ready: $device" -ForegroundColor Green
 
-    Step 9 "Run Cargo Sort"
-    Run "flutter" @("run", "--no-pub", "-d", $device)
+    Step 9 'Run Cargo Sort'
+    Run 'flutter' @('run', '--no-pub', '-d', $device) $TargetPath
 }
 catch {
-    Write-Host ""
-    Write-Host "FIRST TIME SETUP FAILED" -ForegroundColor Red
+    Write-Host ''
+    Write-Host 'FIRST TIME SETUP FAILED' -ForegroundColor Red
     Write-Host $_.Exception.Message -ForegroundColor Red
     Write-Host $_.ScriptStackTrace -ForegroundColor DarkRed
 }
 finally {
-    Write-Host ""
-    [void](Read-Host "Press Enter to close")
+    Write-Host ''
+    [void](Read-Host 'Press Enter to close')
 }
