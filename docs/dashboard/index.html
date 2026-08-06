@@ -3,126 +3,95 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>CARGame — Development Dashboard</title>
+  <title>CARGame — Developer Portal</title>
   <style>
-    :root {
-      --bg:#07111f; --panel:#0e1c2f; --panel2:#13243a; --text:#edf6ff;
-      --muted:#91a7bd; --line:#243b55; --cyan:#39d5ff; --green:#35d07f;
-      --yellow:#ffc857; --orange:#ff914d; --red:#ff5f6d; --violet:#a98bff;
-      --blue:#4f91ff; --shadow:0 18px 50px rgba(0,0,0,.28);
-    }
-    *{box-sizing:border-box} html{scroll-behavior:smooth}
-    body{margin:0;background:radial-gradient(circle at 80% -10%,#163e68 0,transparent 32%),linear-gradient(160deg,#06101d,#091727 45%,#07111f);color:var(--text);font-family:Inter,"Segoe UI",Tahoma,Arial,sans-serif;min-height:100vh}
-    .shell{width:min(1480px,calc(100% - 28px));margin:auto;padding:24px 0 56px}
-    .hero{position:relative;overflow:hidden;padding:28px;border:1px solid #244464;border-radius:28px;background:linear-gradient(135deg,rgba(18,48,78,.96),rgba(10,27,47,.96));box-shadow:var(--shadow)}
-    .hero:after{content:"";position:absolute;width:320px;height:320px;border-radius:50%;left:-100px;top:-170px;background:radial-gradient(circle,rgba(57,213,255,.22),transparent 68%);animation:float 7s ease-in-out infinite}
-    @keyframes float{50%{transform:translate(20px,16px) scale(1.08)}}
-    h1{font-size:clamp(27px,4vw,49px);margin:0 0 8px}.subtitle{color:var(--muted);font-size:15px}
-    .hero-row{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;position:relative;z-index:1}
-    .live{display:flex;align-items:center;gap:9px;padding:9px 14px;border:1px solid rgba(53,208,127,.4);border-radius:999px;background:rgba(53,208,127,.09);font-weight:800;color:#b9ffd7}.dot{width:10px;height:10px;border-radius:50%;background:var(--green);box-shadow:0 0 15px var(--green);animation:pulse 1.6s infinite}@keyframes pulse{50%{opacity:.35;transform:scale(.72)}}
-    .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}.btn,.select,.search{border:1px solid var(--line);background:#0a1829;color:var(--text);border-radius:13px;padding:11px 14px;font:inherit}.btn{cursor:pointer;font-weight:800}.btn:hover{transform:translateY(-1px);border-color:var(--cyan)}.search{min-width:230px;flex:1}.select{min-width:160px}
-    .notice{display:none;margin-top:15px;padding:12px 15px;border-radius:13px;background:rgba(255,200,87,.1);border:1px solid rgba(255,200,87,.35);color:#ffe4a6}
-    .grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:13px;margin:18px 0}.card{padding:17px;border-radius:20px;border:1px solid var(--line);background:linear-gradient(145deg,rgba(18,36,58,.94),rgba(10,25,43,.94));box-shadow:0 9px 25px rgba(0,0,0,.18);min-width:0}.metric .label{color:var(--muted);font-size:12px;font-weight:700}.metric .value{font-size:clamp(25px,3vw,40px);font-weight:900;margin:5px 0}.metric .small{font-size:12px;color:var(--muted)}
-    .progress-wrap{display:grid;grid-template-columns:220px 1fr;gap:18px;margin-bottom:18px}.ring-card,.progress-card{display:flex;align-items:center;justify-content:center}.ring{--p:0;width:154px;height:154px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--green) calc(var(--p)*1%),#20344a 0);position:relative}.ring:before{content:"";position:absolute;inset:13px;border-radius:50%;background:#0e1c2f}.ring strong{position:relative;font-size:30px}.bar{height:16px;border-radius:999px;background:#20344a;overflow:hidden;margin:12px 0}.bar>i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--cyan),var(--green));border-radius:inherit;transition:width .8s cubic-bezier(.2,.8,.2,1)}
-    .section{margin-top:20px}.section-title{display:flex;justify-content:space-between;align-items:end;gap:12px;margin:0 0 11px}.section-title h2{margin:0;font-size:23px}.muted{color:var(--muted)}
-    .roadmap{display:flex;gap:12px;overflow:auto;padding:8px 3px 18px;scroll-snap-type:x proximity}.stage{flex:0 0 270px;scroll-snap-align:start;padding:17px;border-radius:20px;border:1px solid var(--line);background:var(--panel);position:relative}.stage:not(:last-child):after{content:"←";position:absolute;left:-20px;top:50%;color:var(--cyan);font-size:22px}.stage-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}.stage-num{width:35px;height:35px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(145deg,#1e537b,#12324f);font-weight:900}.stage h3{font-size:15px;margin:3px 0 8px}.stage-stats{font-size:12px;color:var(--muted);margin-top:10px}.stage.active{border-color:var(--yellow);box-shadow:0 0 0 2px rgba(255,200,87,.1)}.stage.done{border-color:rgba(53,208,127,.5)}
-    .table-shell{overflow:auto;border:1px solid var(--line);border-radius:20px;background:rgba(8,22,38,.75)}table{width:100%;border-collapse:collapse;min-width:1000px}th,td{text-align:right;padding:12px;border-bottom:1px solid #1d334a;font-size:13px;vertical-align:top}th{position:sticky;top:0;background:#11243a;color:#bcd0e3;z-index:2}tr:hover td{background:rgba(57,213,255,.035)}
-    .badge{display:inline-flex;align-items:center;padding:5px 9px;border-radius:999px;font-size:11px;font-weight:900;white-space:nowrap}.verified{background:rgba(53,208,127,.14);color:#75f2ad}.implemented{background:rgba(79,145,255,.14);color:#88b7ff}.in-progress{background:rgba(255,200,87,.14);color:#ffd978}.blocked{background:rgba(255,95,109,.14);color:#ff9ca6}.ready{background:rgba(57,213,255,.13);color:#78e5ff}.planned{background:rgba(169,139,255,.13);color:#c5afff}.deferred{background:rgba(145,167,189,.12);color:#b2c3d3}
-    .phase-progress{height:8px;background:#20344a;border-radius:99px;overflow:hidden;margin-top:8px}.phase-progress i{display:block;height:100%;background:linear-gradient(90deg,var(--cyan),var(--green))}
-    .empty{text-align:center;color:var(--muted);padding:30px}.footer{text-align:center;color:var(--muted);margin-top:30px;font-size:12px}
-    @media(max-width:1100px){.grid{grid-template-columns:repeat(3,1fr)}}@media(max-width:700px){.shell{width:min(100% - 18px,1480px);padding-top:10px}.hero{padding:20px;border-radius:20px}.grid{grid-template-columns:repeat(2,1fr)}.progress-wrap{grid-template-columns:1fr}.ring{width:130px;height:130px}.stage{flex-basis:235px}}@media(max-width:410px){.grid{grid-template-columns:1fr 1fr}.card{padding:13px}.metric .value{font-size:25px}}
+    :root{--bg:#06101c;--panel:#0d1b2d;--panel2:#12243a;--text:#eff7ff;--muted:#91a7bd;--line:#243b55;--cyan:#39d5ff;--green:#35d07f;--yellow:#ffc857;--red:#ff5f6d;--violet:#a98bff;--blue:#4f91ff;--shadow:0 18px 50px rgba(0,0,0,.26)}
+    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;min-height:100vh;background:radial-gradient(circle at 80% -10%,#17436f 0,transparent 31%),linear-gradient(155deg,#050e19,#091827 48%,#06101c);color:var(--text);font-family:Inter,"Segoe UI",Tahoma,Arial,sans-serif}.shell{width:min(1500px,calc(100% - 28px));margin:auto;padding:22px 0 55px}
+    .hero,.card,.phase-card,.table-shell{border:1px solid var(--line);box-shadow:var(--shadow)}.hero{padding:26px;border-radius:27px;background:linear-gradient(135deg,rgba(18,48,78,.97),rgba(9,25,43,.97));position:relative;overflow:hidden}.hero:after{content:"";position:absolute;width:330px;height:330px;border-radius:50%;left:-120px;top:-190px;background:radial-gradient(circle,rgba(57,213,255,.22),transparent 68%);animation:float 7s ease-in-out infinite}@keyframes float{50%{transform:translate(22px,18px) scale(1.08)}}
+    .hero-row,.section-title,.phase-head,.phase-footer,.active-row{display:flex;align-items:center;justify-content:space-between;gap:14px}.hero-row{position:relative;z-index:1;flex-wrap:wrap}.hero h1{margin:0 0 7px;font-size:clamp(28px,4vw,48px)}.subtitle,.muted{color:var(--muted)}.live{display:flex;align-items:center;gap:9px;padding:9px 14px;border:1px solid rgba(53,208,127,.4);border-radius:999px;background:rgba(53,208,127,.09);font-weight:800;color:#bcffda}.dot{width:10px;height:10px;border-radius:50%;background:var(--green);box-shadow:0 0 15px var(--green);animation:pulse 1.5s infinite}@keyframes pulse{50%{opacity:.35;transform:scale(.72)}}
+    .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px;position:relative;z-index:1}.btn,.select,.search{border:1px solid var(--line);background:#091827;color:var(--text);border-radius:13px;padding:11px 14px;font:inherit}.btn{cursor:pointer;font-weight:800}.btn:hover{border-color:var(--cyan);transform:translateY(-1px)}.search{min-width:240px;flex:1}.select{min-width:160px}.notice{display:none;margin-top:14px;padding:12px 15px;border-radius:13px;background:rgba(255,200,87,.1);border:1px solid rgba(255,200,87,.35);color:#ffe3a1;position:relative;z-index:1}
+    .metrics{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:12px;margin:18px 0}.card{padding:17px;border-radius:19px;background:linear-gradient(145deg,rgba(18,36,58,.95),rgba(9,24,42,.95));min-width:0}.metric .label{font-size:12px;color:var(--muted);font-weight:700}.metric .value{font-size:clamp(24px,3vw,38px);font-weight:900;margin:5px 0}.metric .small{font-size:11px;color:var(--muted)}
+    .overview{display:grid;grid-template-columns:220px 1.25fr 1fr;gap:14px}.ring-card{display:grid;place-items:center}.ring{--p:0;width:154px;height:154px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--green) calc(var(--p)*1%),#20344a 0);position:relative}.ring:before{content:"";position:absolute;inset:13px;border-radius:50%;background:#0e1c2f}.ring strong{position:relative;font-size:31px}.bar{height:13px;border-radius:999px;background:#20344a;overflow:hidden;margin:11px 0}.bar>i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--cyan),var(--green));border-radius:inherit;transition:width .7s cubic-bezier(.2,.8,.2,1)}
+    .active-feature{border-color:rgba(255,200,87,.45);background:linear-gradient(145deg,rgba(65,48,18,.28),rgba(13,28,47,.96))}.active-id{font-weight:900;color:var(--yellow)}.active-name{font-size:19px;font-weight:900;margin:9px 0}.mini-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-top:13px}.mini{padding:10px;border-radius:12px;background:rgba(7,20,35,.55);border:1px solid #203750}.mini b{display:block;font-size:17px}.mini span{font-size:11px;color:var(--muted)}
+    .section{margin-top:23px}.section-title{align-items:end;margin-bottom:11px}.section-title h2{margin:0;font-size:23px}.audit-ok{color:#8bf1b6}.audit-warn{color:#ffd978}.audit-bad{color:#ff9ca6}
+    .phase-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.phase-card{border-radius:22px;padding:18px;background:linear-gradient(150deg,rgba(17,37,60,.97),rgba(8,23,40,.97));position:relative;overflow:hidden;cursor:pointer;transition:.2s transform,.2s border-color}.phase-card:hover{transform:translateY(-3px);border-color:#3a668b}.phase-card.active{border-color:var(--yellow);box-shadow:0 0 0 2px rgba(255,200,87,.09),var(--shadow)}.phase-card.done{border-color:rgba(53,208,127,.52)}.phase-card.empty-phase{border-style:dashed;opacity:.72}.phase-index{width:42px;height:42px;display:grid;place-items:center;border-radius:14px;background:linear-gradient(145deg,#245d87,#123551);font-weight:900}.phase-title{font-size:17px;font-weight:900;margin:0}.phase-code{font-size:11px;color:var(--cyan);font-weight:900}.phase-desc{color:var(--muted);font-size:12px;line-height:1.65;min-height:39px;margin:12px 0}.phase-percent{font-size:28px;font-weight:900}.phase-progress{height:9px;background:#20344a;border-radius:99px;overflow:hidden;margin:10px 0}.phase-progress i{display:block;height:100%;background:linear-gradient(90deg,var(--cyan),var(--green))}.phase-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:12px}.phase-stat{text-align:center;padding:8px 4px;border-radius:11px;background:rgba(5,17,30,.55);border:1px solid #1d344c}.phase-stat b{display:block;font-size:16px}.phase-stat span{display:block;color:var(--muted);font-size:9px;margin-top:2px}.phase-footer{margin-top:12px;font-size:11px;color:var(--muted)}
+    .status-pills{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}.badge{display:inline-flex;align-items:center;padding:5px 9px;border-radius:999px;font-size:10px;font-weight:900;white-space:nowrap}.verified{background:rgba(53,208,127,.14);color:#75f2ad}.implemented{background:rgba(79,145,255,.14);color:#88b7ff}.in-progress{background:rgba(255,200,87,.14);color:#ffd978}.blocked{background:rgba(255,95,109,.14);color:#ff9ca6}.ready{background:rgba(57,213,255,.13);color:#78e5ff}.planned{background:rgba(169,139,255,.13);color:#c5afff}.deferred{background:rgba(145,167,189,.12);color:#b2c3d3}
+    .table-shell{overflow:auto;border-radius:20px;background:rgba(8,22,38,.78)}table{width:100%;border-collapse:collapse;min-width:1050px}th,td{text-align:right;padding:12px;border-bottom:1px solid #1d334a;font-size:13px;vertical-align:top}th{position:sticky;top:0;background:#11243a;color:#bfd2e4;z-index:2}tr:hover td{background:rgba(57,213,255,.035)}.empty{text-align:center;color:var(--muted);padding:30px}.footer{text-align:center;color:var(--muted);margin-top:29px;font-size:12px}
+    @media(max-width:1250px){.metrics{grid-template-columns:repeat(4,1fr)}.overview{grid-template-columns:190px 1fr}.active-feature{grid-column:1/-1}.phase-grid{grid-template-columns:repeat(2,1fr)}}@media(max-width:760px){.shell{width:min(100% - 18px,1500px);padding-top:10px}.hero{padding:20px;border-radius:20px}.metrics{grid-template-columns:repeat(2,1fr)}.overview{grid-template-columns:1fr}.ring{width:132px;height:132px}.phase-grid{grid-template-columns:1fr}.phase-desc{min-height:0}.phase-stats{grid-template-columns:repeat(4,1fr)}}
   </style>
 </head>
 <body>
 <div class="shell">
   <header class="hero">
-    <div class="hero-row">
-      <div><h1>لوحة تطوير CARGame</h1><div class="subtitle">متابعة الوظائف والمراحل والتنفيذ والتحقق — تُقرأ مباشرة من ملفات المشروع</div></div>
-      <div class="live"><span class="dot"></span> Development Live</div>
-    </div>
-    <div class="toolbar">
-      <button class="btn" id="reload">تحديث البيانات</button>
-      <select class="select" id="statusFilter"><option value="ALL">كل الحالات</option></select>
-      <select class="select" id="phaseFilter"><option value="ALL">كل المراحل</option></select>
-      <input class="search" id="search" placeholder="بحث بالرقم أو الوظيفة أو المعيار..." />
-    </div>
+    <div class="hero-row"><div><h1>CARGame Developer Portal</h1><div class="subtitle">حالة التطوير، مراحل التنفيذ، نسب الإنجاز، والمهام — محسوبة مباشرة من قائمة الوظائف</div></div><div class="live"><span class="dot"></span> Development Live</div></div>
+    <div class="toolbar"><button class="btn" id="reload">تحديث البيانات</button><select class="select" id="statusFilter"><option value="ALL">كل الحالات</option></select><select class="select" id="phaseFilter"><option value="ALL">كل المراحل</option></select><input class="search" id="search" placeholder="بحث بالرقم أو الوظيفة أو معيار القبول..." /></div>
     <div class="notice" id="notice"></div>
   </header>
 
-  <section class="grid" id="metrics"></section>
-  <section class="progress-wrap">
-    <div class="card ring-card"><div class="ring" id="ring"><strong id="percent">0%</strong></div></div>
-    <div class="card progress-card"><div style="width:100%"><h2 style="margin:0">التقدم الإجمالي</h2><div class="muted" id="summary">جاري تحميل قائمة الوظائف...</div><div class="bar"><i id="mainBar"></i></div><div class="muted" id="updated"></div></div></div>
+  <section class="metrics" id="metrics"></section>
+
+  <section class="overview">
+    <div class="card ring-card"><div><div class="ring" id="ring"><strong id="percent">0%</strong></div><div class="muted" style="text-align:center;margin-top:10px">نسبة الإنجاز الموزونة</div></div></div>
+    <div class="card"><h2 style="margin:0">ملخص المشروع</h2><div class="muted" id="summary">جاري تحميل البيانات...</div><div class="bar"><i id="mainBar"></i></div><div class="mini-grid"><div class="mini"><b id="phaseCount">0</b><span>إجمالي المراحل</span></div><div class="mini"><b id="completedPhaseCount">0</b><span>مراحل مكتملة</span></div><div class="mini"><b id="remainingTasks">0</b><span>مهام متبقية</span></div><div class="mini"><b id="updated">—</b><span>آخر تحديث</span></div></div></div>
+    <div class="card active-feature" id="activeFeature"><div class="muted">المهمة الحالية</div><div class="active-name">لا توجد مهمة قيد التنفيذ</div></div>
   </section>
 
   <section class="section">
-    <div class="section-title"><h2>مراحل التنفيذ</h2><span class="muted" id="phaseSummary"></span></div>
-    <div class="roadmap" id="roadmap"></div>
+    <div class="section-title"><div><h2>مراجعة اكتمال الخطة</h2><div class="muted">تتحقق من وجود كل مراحل الإنتاج الأساسية ومن وجود مهام داخل كل مرحلة.</div></div><strong id="auditResult">—</strong></div>
+    <div class="card" id="auditDetails"></div>
   </section>
 
   <section class="section">
-    <div class="section-title"><h2>قائمة الوظائف</h2><span class="muted" id="visibleCount"></span></div>
+    <div class="section-title"><div><h2>كروت مراحل التنفيذ</h2><div class="muted">اضغط على أي مرحلة لفلترة قائمة مهامها.</div></div><span class="muted" id="phaseSummary"></span></div>
+    <div class="phase-grid" id="phaseGrid"></div>
+  </section>
+
+  <section class="section">
+    <div class="section-title"><h2>كل المهام والوظائف</h2><span class="muted" id="visibleCount"></span></div>
     <div class="table-shell"><table><thead><tr><th>المرحلة</th><th>ID</th><th>الوظيفة</th><th>الأولوية</th><th>الحالة</th><th>الاعتماديات</th><th>معيار القبول / الدليل</th></tr></thead><tbody id="rows"></tbody></table></div>
   </section>
-  <div class="footer">Source: docs/FEATURE_CATALOG.md · افتح الصفحة عبر HTTP server أو GitHub Pages لتحديث البيانات تلقائيًا.</div>
+  <div class="footer">المصدر الوحيد للحالات والمهام: docs/FEATURE_CATALOG.md · الصفحة لا تستخدم أرقام إنجاز ثابتة.</div>
 </div>
 <script>
 const STATUS_ORDER=['IN PROGRESS','BLOCKED','READY','PLANNED','IMPLEMENTED','VERIFIED','DEFERRED'];
 const LABELS={'VERIFIED':'متحقق','IMPLEMENTED':'منفذ','IN PROGRESS':'قيد التنفيذ','BLOCKED':'محجوب','READY':'جاهز','PLANNED':'مخطط','DEFERRED':'مؤجل'};
 const WEIGHTS={'VERIFIED':1,'IMPLEMENTED':.82,'IN PROGRESS':.5,'READY':.12,'PLANNED':0,'BLOCKED':0,'DEFERRED':0};
+const REQUIRED_PHASES={
+ A:['Engineering foundation','تثبيت الأساس الهندسي، البناء، الاستقرار، المعمارية، والهجرة الآمنة للبيانات.'],
+ B:['Shared 3D design system','إنشاء نظام تصميم 3D موحد للألوان والبطاقات والأزرار والشاشات المتجاوبة.'],
+ C:['Motion and living interface','جعل التطبيق حيًا بحركات موحدة واستجابات فورية وانتقالات ومؤثرات محسوبة.'],
+ D:['3D asset pipeline','إدارة أصول 3D والـManifest والـFallback والتحميل المسبق وضبط الذاكرة.'],
+ E:['Home and navigation','الصفحة الرئيسية والتنقل والـStart والمهام اليومية وروابط المتجر والتقدم.'],
+ F:['Worlds, cities, and level map','العوالم والمدن والخريطة وحالات الفتح والـBoss والتنقل بين المراحل.'],
+ G:['Mission briefing and loadout','تجهيز المهمة واختيار الـBoosters والقلوب وبدء المرحلة بأمان.'],
+ H:['Core gameplay','منطق اللعب الأساسي، الترتيب، الحركات، الـCombo، الأدوات، والإدخال الآمن.'],
+ I:['Level design and content','تصميم 150 مرحلة، منحنى الصعوبة، التحقق من الحل، والـBoss mechanics.'],
+ J:['Results and rewards','الفوز والخسارة والنجوم والعملات والمكافآت والانتقال للمدينة التالية.'],
+ K:['Economy, progress, and shop','الاقتصاد والقلوب والعملات والـXP والمتجر والمعاملات الآمنة.'],
+ L:['Retention','المكافآت اليومية والمهام والإنجازات والـStreaks والعودة للعبة.'],
+ M:['Ads','إعلانات Rewarded وInterstitial بشكل لا يمنع التشغيل أو يضر التجربة.'],
+ N:['Audio and haptics','الصوت والموسيقى والاهتزاز وربطها بالأحداث والحركات.'],
+ O:['Localization','العربية والإنجليزية وRTL/LTR وعدم وجود نصوص ثابتة.'],
+ P:['Accessibility','الوصول، النص الكبير، Semantics، عدم الاعتماد على اللون، وتقليل الحركة.'],
+ Q:['Performance','الأداء والذاكرة والـFPS والتحميل والتعامل مع الأجهزة الضعيفة.'],
+ R:['Testing','اختبارات Unit وWidget وRegression وResponsive وRelease gates.'],
+ S:['Release','التوقيع والإصدارات وAPK/AAB والمتجر والتوثيق النهائي.']
+};
 let model={features:[],phases:[]};
-function clean(s){return (s||'').replace(/`/g,'').trim()}
-function slug(s){return s.toLowerCase().replace(/\s+/g,'-')}
-function parseCatalog(md){
-  const lines=md.split(/\r?\n/); let phase=null; const phases=[]; const features=[];
-  for(const line of lines){
-    const h=line.match(/^#\s+([A-Z])\.\s+(.+)$/);
-    if(h){phase={code:h[1],name:h[2].trim(),features:[]};phases.push(phase);continue}
-    if(!phase||!line.startsWith('|'))continue;
-    const cells=line.split('|').slice(1,-1).map(clean);
-    if(cells.length<6||cells[0]==='ID'||/^[-:]+$/.test(cells[0]))continue;
-    const f={phaseCode:phase.code,phaseName:phase.name,id:cells[0],name:cells[1],priority:cells[2],status:cells[3].toUpperCase(),deps:cells[4],evidence:cells[5]};
-    if(!/^[A-Z0-9]+-\d+/.test(f.id))continue;
-    features.push(f);phase.features.push(f);
-  }
-  return {features,phases};
-}
-function count(status){return model.features.filter(f=>f.status===status).length}
+function clean(s){return(s||'').replace(/`/g,'').trim()}
+function parseCatalog(md){const lines=md.split(/\r?\n/);let phase=null;const phases=[],features=[];for(const line of lines){const h=line.match(/^#\s+([A-Z])\.\s+(.+)$/);if(h){phase={code:h[1],name:h[2].trim(),features:[]};phases.push(phase);continue}if(!phase||!line.startsWith('|'))continue;const c=line.split('|').slice(1,-1).map(clean);if(c.length<6||c[0]==='ID'||/^[-:]+$/.test(c[0]))continue;const f={phaseCode:phase.code,phaseName:phase.name,id:c[0],name:c[1],priority:c[2],status:c[3].toUpperCase(),deps:c[4],evidence:c[5]};if(!/^[A-Z0-9]+-\d+/.test(f.id))continue;features.push(f);phase.features.push(f)}return{features,phases}}
 function weighted(items){if(!items.length)return 0;return Math.round(items.reduce((a,f)=>a+(WEIGHTS[f.status]??0),0)/items.length*100)}
-function renderMetrics(){
-  const total=model.features.length, verified=count('VERIFIED'), implemented=count('IMPLEMENTED'), active=count('IN PROGRESS'), blocked=count('BLOCKED'), remaining=total-verified;
-  const data=[['إجمالي الوظائف',total,'كل نطاق المشروع','var(--cyan)'],['متحقق منها',verified,'اختبارات ومعايير مكتملة','var(--green)'],['منفذة',implemented,'تنتظر تحققًا نهائيًا','var(--blue)'],['قيد التنفيذ',active,'المهمة النشطة الآن','var(--yellow)'],['متبقية',remaining,'غير VERIFIED','var(--violet)'],['محجوبة',blocked,'تحتاج إزالة عائق','var(--red)']];
-  document.getElementById('metrics').innerHTML=data.map(x=>`<div class="card metric"><div class="label">${x[0]}</div><div class="value" style="color:${x[3]}">${x[1]}</div><div class="small">${x[2]}</div></div>`).join('');
-  const p=weighted(model.features);document.getElementById('ring').style.setProperty('--p',p);document.getElementById('percent').textContent=p+'%';document.getElementById('mainBar').style.width=p+'%';
-  document.getElementById('summary').textContent=`${verified} وظيفة VERIFIED من ${total} · ${active} قيد التنفيذ · ${implemented} منفذة وتنتظر التحقق`;
-}
-function renderRoadmap(){
-  const el=document.getElementById('roadmap');let completed=0;
-  el.innerHTML=model.phases.map((p,i)=>{const t=p.features.length,v=p.features.filter(f=>f.status==='VERIFIED').length,a=p.features.some(f=>f.status==='IN PROGRESS'),progress=weighted(p.features);if(t&&v===t)completed++;return `<article class="stage ${a?'active':''} ${t&&v===t?'done':''}" data-phase="${p.code}"><div class="stage-head"><div><div class="stage-num">${i+1}</div><h3>${p.code}. ${p.name}</h3></div><span class="badge ${a?'in-progress':t&&v===t?'verified':'planned'}">${a?'قيد التنفيذ':t&&v===t?'مكتملة':'مرحلة'}</span></div><div class="phase-progress"><i style="width:${progress}%"></i></div><div class="stage-stats">${progress}% موزون · ${v}/${t} VERIFIED · ${p.features.filter(f=>f.status==='IMPLEMENTED').length} منفذة</div></article>`}).join('');
-  document.getElementById('phaseSummary').textContent=`${completed} مراحل مكتملة من ${model.phases.length}`;
-  el.querySelectorAll('.stage').forEach(x=>x.onclick=()=>{document.getElementById('phaseFilter').value=x.dataset.phase;renderRows()});
-}
-function badge(s){return `<span class="badge ${slug(s)}">${LABELS[s]||s}</span>`}
-function renderRows(){
-  const sf=document.getElementById('statusFilter').value,pf=document.getElementById('phaseFilter').value,q=document.getElementById('search').value.trim().toLowerCase();
-  const list=model.features.filter(f=>(sf==='ALL'||f.status===sf)&&(pf==='ALL'||f.phaseCode===pf)&&(!q||[f.id,f.name,f.priority,f.status,f.deps,f.evidence,f.phaseName].join(' ').toLowerCase().includes(q)));
-  document.getElementById('rows').innerHTML=list.length?list.map(f=>`<tr><td>${f.phaseCode}. ${f.phaseName}</td><td><strong>${f.id}</strong></td><td>${f.name}</td><td>${f.priority}</td><td>${badge(f.status)}</td><td>${f.deps}</td><td>${f.evidence}</td></tr>`).join(''):`<tr><td colspan="7" class="empty">لا توجد وظائف مطابقة للفلاتر الحالية.</td></tr>`;
-  document.getElementById('visibleCount').textContent=`عرض ${list.length} من ${model.features.length}`;
-}
-function setupFilters(){
-  const s=document.getElementById('statusFilter');STATUS_ORDER.forEach(x=>s.insertAdjacentHTML('beforeend',`<option value="${x}">${LABELS[x]||x}</option>`));
-  const p=document.getElementById('phaseFilter');model.phases.forEach(x=>p.insertAdjacentHTML('beforeend',`<option value="${x.code}">${x.code}. ${x.name}</option>`));
-}
-async function load(){
-  const notice=document.getElementById('notice');notice.style.display='none';
-  try{
-    const response=await fetch('../FEATURE_CATALOG.md?ts='+Date.now(),{cache:'no-store'});if(!response.ok)throw new Error('HTTP '+response.status);
-    model=parseCatalog(await response.text());if(!model.features.length)throw new Error('لم يتم العثور على صفوف وظائف صالحة.');
-    document.getElementById('statusFilter').innerHTML='<option value="ALL">كل الحالات</option>';document.getElementById('phaseFilter').innerHTML='<option value="ALL">كل المراحل</option>';
-    setupFilters();renderMetrics();renderRoadmap();renderRows();document.getElementById('updated').textContent='آخر قراءة: '+new Date().toLocaleString('ar');
-  }catch(e){notice.style.display='block';notice.innerHTML=`تعذر قراءة FEATURE_CATALOG.md تلقائيًا: ${e.message}<br>شغّل الصفحة عبر Local HTTP Server من جذر المشروع، مثال: <b>python -m http.server 8080</b> ثم افتح <b>http://localhost:8080/docs/dashboard/</b>.`;}
-}
-['statusFilter','phaseFilter'].forEach(id=>document.getElementById(id).addEventListener('change',renderRows));document.getElementById('search').addEventListener('input',renderRows);document.getElementById('reload').onclick=load;load();
+function count(status,items=model.features){return items.filter(f=>f.status===status).length}
+function statusClass(s){return s.toLowerCase().replace(/\s+/g,'-')}
+function phaseDescription(p){return(REQUIRED_PHASES[p.code]||[])[1]||`مرحلة ${p.name} ضمن خطة تطوير اللعبة.`}
+function renderMetrics(){const total=model.features.length,v=count('VERIFIED'),i=count('IMPLEMENTED'),a=count('IN PROGRESS'),b=count('BLOCKED'),ready=count('READY'),remaining=total-v;const data=[['إجمالي المهام',total,'كل عناصر الخطة','var(--cyan)'],['VERIFIED',v,'مكتملة ومتحقق منها','var(--green)'],['IMPLEMENTED',i,'منفذة وتنتظر تحققًا','var(--blue)'],['قيد التنفيذ',a,'المهام النشطة','var(--yellow)'],['جاهزة',ready,'يمكن البدء بها','var(--cyan)'],['متبقية',remaining,'غير VERIFIED','var(--violet)'],['محجوبة',b,'تحتاج إزالة عائق','var(--red)']];document.getElementById('metrics').innerHTML=data.map(x=>`<div class="card metric"><div class="label">${x[0]}</div><div class="value" style="color:${x[3]}">${x[1]}</div><div class="small">${x[2]}</div></div>`).join('');const p=weighted(model.features);document.getElementById('ring').style.setProperty('--p',p);document.getElementById('percent').textContent=p+'%';document.getElementById('mainBar').style.width=p+'%';document.getElementById('summary').textContent=`${v} مهمة متحقق منها من ${total} · ${i} منفذة وتنتظر التحقق · ${a} قيد التنفيذ`;document.getElementById('phaseCount').textContent=model.phases.length;document.getElementById('completedPhaseCount').textContent=model.phases.filter(p=>p.features.length&&count('VERIFIED',p.features)===p.features.length).length;document.getElementById('remainingTasks').textContent=remaining;document.getElementById('updated').textContent=new Date().toLocaleTimeString('ar',{hour:'2-digit',minute:'2-digit'})}
+function renderActive(){const f=model.features.find(x=>x.status==='IN PROGRESS');const el=document.getElementById('activeFeature');if(!f){el.innerHTML='<div class="muted">المهمة الحالية</div><div class="active-name">لا توجد مهمة قيد التنفيذ</div><div class="muted">Codex يجب أن يحدد مهمة واحدة IN PROGRESS قبل بدء البرمجة.</div>';return}el.innerHTML=`<div class="active-row"><span class="active-id">${f.id}</span><span class="badge in-progress">قيد التنفيذ</span></div><div class="active-name">${f.name}</div><div class="muted">المرحلة: ${f.phaseCode}. ${f.phaseName}</div><div class="mini-grid"><div class="mini"><b>${f.priority}</b><span>الأولوية</span></div><div class="mini"><b>${f.deps||'None'}</b><span>الاعتماديات</span></div></div><div class="muted" style="margin-top:12px">${f.evidence}</div>`}
+function renderAudit(){const found=new Map(model.phases.map(p=>[p.code,p]));const missing=[],empty=[];Object.keys(REQUIRED_PHASES).forEach(code=>{if(!found.has(code))missing.push(`${code}. ${REQUIRED_PHASES[code][0]}`);else if(found.get(code).features.length===0)empty.push(`${code}. ${found.get(code).name}`)});const unknown=model.phases.filter(p=>!REQUIRED_PHASES[p.code]);const result=document.getElementById('auditResult'),details=document.getElementById('auditDetails');if(!missing.length&&!empty.length){result.textContent='الخطة الأساسية مكتملة التغطية';result.className='audit-ok'}else{result.textContent=`${missing.length+empty.length} ملاحظة على الخطة`;result.className=missing.length?'audit-bad':'audit-warn'}details.innerHTML=`<div class="status-pills"><span class="badge verified">${model.phases.length} مرحلة مسجلة</span><span class="badge ready">${model.features.length} مهمة مسجلة</span><span class="badge ${missing.length?'blocked':'verified'}">${missing.length} مراحل ناقصة</span><span class="badge ${empty.length?'in-progress':'verified'}">${empty.length} مراحل بدون مهام</span><span class="badge planned">${unknown.length} مراحل إضافية</span></div>${missing.length?`<p class="audit-bad"><b>المراحل الناقصة:</b> ${missing.join('، ')}</p>`:''}${empty.length?`<p class="audit-warn"><b>مراحل تحتاج مهام:</b> ${empty.join('، ')}</p>`:''}${!missing.length&&!empty.length?'<p class="muted">تم العثور على مراحل الأساس، التصميم 3D، الحركة، الأصول، اللعب، المحتوى، الاقتصاد، الاستبقاء، الإعلانات، الصوت، اللغات، الوصول، الأداء، الاختبارات والإصدار.</p>':''}`}
+function renderPhases(){const grid=document.getElementById('phaseGrid');grid.innerHTML=model.phases.map((p,index)=>{const t=p.features.length,v=count('VERIFIED',p.features),impl=count('IMPLEMENTED',p.features),active=count('IN PROGRESS',p.features),blocked=count('BLOCKED',p.features),remaining=t-v,percent=weighted(p.features),isDone=t>0&&v===t,isActive=active>0;return `<article class="phase-card ${isDone?'done':''} ${isActive?'active':''} ${!t?'empty-phase':''}" data-phase="${p.code}"><div class="phase-head"><div><div class="phase-code">PHASE ${String(index+1).padStart(2,'0')} · ${p.code}</div><h3 class="phase-title">${p.name}</h3></div><div class="phase-index">${index+1}</div></div><div class="phase-desc">${phaseDescription(p)}</div><div class="phase-footer"><span>نسبة اكتمال المرحلة</span><strong class="phase-percent">${percent}%</strong></div><div class="phase-progress"><i style="width:${percent}%"></i></div><div class="phase-stats"><div class="phase-stat"><b>${t}</b><span>المهام</span></div><div class="phase-stat"><b style="color:var(--green)">${v}</b><span>متحقق</span></div><div class="phase-stat"><b style="color:var(--yellow)">${active}</b><span>قيد العمل</span></div><div class="phase-stat"><b style="color:var(--violet)">${remaining}</b><span>متبقي</span></div></div><div class="status-pills"><span class="badge implemented">${impl} منفذ</span><span class="badge blocked">${blocked} محجوب</span><span class="badge ready">${count('READY',p.features)} جاهز</span><span class="badge planned">${count('PLANNED',p.features)} مخطط</span></div><div class="phase-footer"><span>${isDone?'مكتملة':isActive?'جاري تنفيذها':'ضمن خطة التنفيذ'}</span><span>${v}/${t} VERIFIED</span></div></article>`}).join('');document.getElementById('phaseSummary').textContent=`${model.phases.length} مرحلة · ${model.features.length} مهمة`;document.querySelectorAll('.phase-card').forEach(card=>card.addEventListener('click',()=>{document.getElementById('phaseFilter').value=card.dataset.phase;renderRows()}))}
+function renderRows(){const q=document.getElementById('search').value.toLowerCase(),sf=document.getElementById('statusFilter').value,pf=document.getElementById('phaseFilter').value;const rows=model.features.filter(f=>(sf==='ALL'||f.status===sf)&&(pf==='ALL'||f.phaseCode===pf)&&(!q||[f.id,f.name,f.phaseName,f.evidence,f.deps].join(' ').toLowerCase().includes(q)));document.getElementById('visibleCount').textContent=`عرض ${rows.length} من ${model.features.length}`;document.getElementById('rows').innerHTML=rows.length?rows.map(f=>`<tr><td>${f.phaseCode}. ${f.phaseName}</td><td><b>${f.id}</b></td><td>${f.name}</td><td>${f.priority}</td><td><span class="badge ${statusClass(f.status)}">${LABELS[f.status]||f.status}</span></td><td>${f.deps}</td><td>${f.evidence}</td></tr>`).join(''):'<tr><td colspan="7" class="empty">لا توجد نتائج مطابقة.</td></tr>'}
+function setupFilters(){const sf=document.getElementById('statusFilter'),pf=document.getElementById('phaseFilter');sf.innerHTML='<option value="ALL">كل الحالات</option>'+STATUS_ORDER.map(s=>`<option value="${s}">${LABELS[s]||s}</option>`).join('');pf.innerHTML='<option value="ALL">كل المراحل</option>'+model.phases.map(p=>`<option value="${p.code}">${p.code}. ${p.name}</option>`).join('')}
+async function load(){const notice=document.getElementById('notice');try{const res=await fetch('../FEATURE_CATALOG.md?ts='+Date.now(),{cache:'no-store'});if(!res.ok)throw new Error('HTTP '+res.status);model=parseCatalog(await res.text());if(!model.features.length)throw new Error('لم يتم العثور على جداول وظائف صالحة.');notice.style.display='none';setupFilters();renderMetrics();renderActive();renderAudit();renderPhases();renderRows()}catch(e){notice.style.display='block';notice.textContent='تعذر تحميل FEATURE_CATALOG.md: '+e.message+' — افتح الصفحة من OPEN_DEVELOPMENT_DASHBOARD.ps1.'}}
+document.getElementById('reload').onclick=load;document.getElementById('statusFilter').onchange=renderRows;document.getElementById('phaseFilter').onchange=renderRows;document.getElementById('search').oninput=renderRows;load();setInterval(load,30000);
 </script>
 </body>
 </html>
