@@ -2,113 +2,83 @@
 
 ## Objective
 
-Transform the existing Flutter project into a production-quality global cargo sorting game with:
-
-- 150 playable levels.
-- 6 worlds.
-- 25 cities per world.
-- A unified stylized 3D-rendered visual language.
-- Responsive animation that makes the application feel alive.
-- Stable offline-first progress and economy.
-- Arabic RTL and English LTR.
-- Android APK and AAB release readiness.
+Transform the existing Flutter project into a production-quality global cargo sorting game with 150 levels, 6 worlds, 25 cities per world, premium 3D-rendered visuals, a living motion system, safe offline-first progress/economy, Arabic/English support, measurable quality, privacy/security/legal readiness, and sustainable Android release operations.
 
 ## Delivery approach
 
-Codex executes one coherent phase at a time. Every phase follows the same loop:
+Codex executes one coherent catalog feature or tightly coupled checkpoint at a time:
 
 ```mermaid
 flowchart LR
-    A[Read AGENTS and STATUS] --> B[Inspect relevant code only]
-    B --> C[Implement one coherent phase]
-    C --> D[Format]
-    D --> E[Analyze]
-    E --> F[Test]
-    F --> G[Android build when applicable]
-    G --> H[Fix regressions]
-    H --> I[Update docs and STATUS]
-    I --> J[Commit checkpoint]
-    J --> K[Continue next incomplete phase]
+    A[Read AGENTS, catalog, status] --> B[Validate dependencies and evidence]
+    B --> C[Mark one feature IN PROGRESS]
+    C --> D[Inspect relevant code and tests]
+    D --> E[Implement production checkpoint]
+    E --> F[Format, analyze, test, build]
+    F --> G[Validate data, lifecycle, EN/AR, accessibility, performance]
+    G --> H[Update evidence, status, dashboard]
+    H --> I[Review diff and commit]
 ```
 
-## Workstreams
+## Mandatory workstreams
 
-### A. Foundation
+### 1. Foundation and governance
 
-- Audit repository and establish a reproducible baseline.
-- Consolidate architecture and scripts.
-- Protect persistent storage compatibility.
-- Establish design, motion, asset, level, and test documentation.
+- Repository baseline, architecture boundaries, persistence migrations, startup resilience, diagnostics, dependencies, environments, secret handling, CI, clean-machine developer tooling, and offline service isolation.
+- Versioned analytics schema and privacy-gated crash/non-fatal diagnostics.
 
-### B. Premium 3D presentation
+### 2. Premium 3D presentation and assets
 
-- Build shared 3D UI primitives.
-- Replace primary flat icons and emoji placeholders.
-- Integrate optimized transparent WebP assets.
-- Ensure consistent lighting, perspective, materials, shadows, and scale.
+- Shared 3D tokens/components, responsive states, loading/error/retry patterns, optimized WebP registry, fallbacks, precaching, production product/world/reward packs, provenance, licensing, and automated asset validation.
 
-### C. Live motion experience
+### 3. Living motion, audio, and haptics
 
-- Build shared motion tokens and reusable effects.
-- Add immediate tap feedback.
-- Add route, reward, progress, selection, gameplay, and ambient animation.
-- Couple motion with sound and haptics.
-- Support reduced motion and low-performance modes.
+- Shared motion tokens, immediate interactions, guarded transitions, gameplay causality, reward motion, interruption/background safety, reduced motion, licensed audio, loudness rules, settings, and synchronized haptics.
 
-### D. Gameplay and content
+### 4. Gameplay, content, and progression
 
-- Harden the gameplay state machine.
-- Implement deterministic, varied, and testable 150-level content.
-- Add at least 100 unique cargo products.
-- Add world-specific mechanics and boss cities.
+- Deterministic input/state machine, interruption recovery, 3D board/products, 150 versioned/validated levels, quantitative difficulty, six distinct bosses, content migrations, reward ledger, economy configuration, atomic shop/progress/achievement flows.
 
-### E. Progression and retention
+### 5. Retention, live operations, and monetization
 
-- Complete economy, hearts, XP, boosters, themes, rewards, missions, streaks, achievements, and chests.
-- Guarantee transaction and reward idempotency.
+- Daily/weekly systems, streaks, chests, events, clock safeguards, safe cached live configuration, opt-in notifications, optional social/cloud/billing boundaries, consent-aware ads, pacing, quality analytics, and no-fill fallback.
 
-### F. Monetization and services
+### 6. Localization and accessibility
 
-- Add non-blocking rewarded and interstitial ad architecture.
-- Ensure ad failure never blocks startup or progression.
+- EN/AR ARB coverage, RTL/LTR, locale-aware formatting, fonts/plurals/bidi, translation QA/fallback, semantics, screen reader, large text, contrast, focus, touch targets, non-color cues, and accessibility statement.
 
-### G. Quality and release
+### 7. Performance, reliability, and quality gates
 
-- Complete localization, accessibility, performance profiling, automated tests, signing documentation, APK/AAB generation, and store readiness.
+- Frame/memory/startup/app-size/network/battery budgets, low-end mode, runtime/storage recovery, dynamic device/build scripts, unit/widget/golden/integration tests, device/API matrix, dashboard parser, privacy/security tests, release smoke/soak tests.
+
+### 8. Privacy, security, legal, release, and operations
+
+- Data inventory/minimization/deletion, privacy policy and Play Data safety, threat model, secret/dependency/artifact scans, app hardening, open-source and content-rights notices, signing/key management, APK/AAB, listings, testing tracks, production monitoring, rollback, release archive, and go/no-go ownership.
 
 ## Mandatory engineering constraints
 
-- Never hard-code an emulator or device name.
-- Never commit secrets or local machine paths.
-- Never use animation to mask slow work.
-- Never grant rewards from an animation callback without idempotent domain protection.
-- Never accept gameplay input while the board is resolving.
-- Never allow route actions to execute twice.
-- Never make ads, logging, orientation, or remote services block startup.
-- Never introduce a real-time 3D engine without documenting a proven blocker.
+- Never hard-code a device, emulator, local SDK path, secret, keystore, production ad ID, or analytics credential.
+- Never use animation to mask slow work or grant state from animation callbacks without domain idempotency.
+- Never accept gameplay input while resolving or execute route/reward/purchase/ad callbacks twice.
+- Never make ads, analytics, crash reporting, logging, orientation, remote config, notifications, or network services block startup/core play.
+- Never change storage/content/economy schemas without versioning, migration, compatibility tests, and rollback/recovery behavior.
+- Never ship an asset/audio/font/SDK without documented rights, license, and privacy implications.
+- Never collect analytics or personalized advertising data before the applicable consent/config gate.
+- Never mark work `VERIFIED` without measurable acceptance evidence and applicable checks.
 
-## Definition of done for each phase
+## Definition of done
 
-A phase is complete only when:
+A catalog feature is complete only when it is integrated into the real flow; handles loading/empty/error/retry/offline/interruption states; preserves saved data; guards asynchronous races; considers EN/AR, accessibility, responsive layouts, motion lifecycle, performance, privacy/security/legal impact; adds practical tests; passes applicable verification; updates documentation/status/dashboard; and has one coherent reviewed commit.
 
-- Acceptance criteria in `docs/ROADMAP.md` are met.
-- The feature is integrated into real user flow, not just a demo page.
-- Relevant documentation is updated.
-- Code is formatted.
-- Analyze passes or pre-existing unrelated findings are documented.
-- Tests pass.
-- Applicable Android build passes.
-- One coherent commit is created.
-- `docs/STATUS.md` identifies the next exact phase and task.
+A phase is complete only when every required non-deferred task in its catalog section is `VERIFIED`.
+
+## Verification tiers
+
+1. **Code gate:** format, analyze, unit/widget tests.
+2. **Android gate:** debug build and relevant device/API smoke test.
+3. **Release gate:** signed candidate APK/AAB, privacy/security/legal checks, smoke/soak matrix, monitoring/rollback readiness.
+4. **External blocker:** recorded as `BLOCKED`, never reported as passed.
 
 ## Codex response contract
 
-Codex responses must remain compact:
-
-1. Completed.
-2. Changed files.
-3. Verification results.
-4. Assumptions or blockers.
-5. Commit SHA.
-
-Do not paste full source files. Do not repeat the roadmap. Do not ask questions for non-blocking choices.
+Return only completed work, feature status changes, changed files, verification, dashboard validation, blockers, and commit SHA. Do not paste full files, repeat the roadmap, or ask questions for non-blocking decisions.
