@@ -30,76 +30,77 @@ function Run([string]$Command, [string[]]$Arguments, [string]$Folder = "") {
     }
 }
 
-function Run-FlutterAnalyze([string]$ProjectPath) {
-    $logPath = Join-Path $ProjectPath "flutter_analyze.log"
-    if (Test-Path $logPath) { Remove-Item $logPath -Force }
-
-    Write-Host "> flutter analyze --no-fatal-infos --no-fatal-warnings" -ForegroundColor DarkGray
-
-    $flutterCommand = (Get-Command flutter -ErrorAction Stop).Source
-    $arguments = @(
-        "analyze",
-        "--no-fatal-infos",
-        "--no-fatal-warnings"
+function Run-ProcessLogged {
+    param(
+        [Parameter(Mandatory)][string]$FilePath,
+        [string[]]$Arguments = @(),
+        [Parameter(Mandatory)][string]$LogPath,
+        [string]$WorkingDirectory = ""
     )
 
-    try {
-        $process = Start-Process `
-            -FilePath $flutterCommand `
-            -ArgumentList $arguments `
-            -WorkingDirectory $ProjectPath `
-            -RedirectStandardOutput $logPath `
-            -RedirectStandardError $logPath `
-            -NoNewWindow `
-            -Wait `
-            -PassThru
+    $stdout = "$LogPath.stdout"
+    $stderr = "$LogPath.stderr"
+    Remove-Item $stdout, $stderr, $LogPath -Force -ErrorAction SilentlyContinue
 
-        $exitCode = $process.ExitCode
+    $params = @{
+        FilePath               = $FilePath
+        ArgumentList           = $Arguments
+        RedirectStandardOutput = $stdout
+        RedirectStandardError  = $stderr
+        NoNewWindow            = $true
+        Wait                   = $true
+        PassThru               = $true
+    }
+    if ($WorkingDirectory) { $params.WorkingDirectory = $WorkingDirectory }
+
+    $process = Start-Process @params
+    $parts = @()
+    if (Test-Path $stdout) { $parts += Get-Content $stdout -Raw -ErrorAction SilentlyContinue }
+    if (Test-Path $stderr) { $parts += Get-Content $stderr -Raw -ErrorAction SilentlyContinue }
+    $text = ($parts | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }) -join [Environment]::NewLine
+    [System.IO.File]::WriteAllText($LogPath, $text, [System.Text.UTF8Encoding]::new($false))
+    Remove-Item $stdout, $stderr -Force -ErrorAction SilentlyContinue
+
+    [pscustomobject]@{ ExitCode = $process.ExitCode; Text = $text; LogPath = $LogPath }
+}
+
+function Run-FlutterAnalyze([string]$ProjectPath) {
+    $logPath = Join-Path $ProjectPath "flutter_analyze.log"
+    Write-Host "> flutter analyze --no-fatal-infos --no-fatal-warnings" -ForegroundColor DarkGray
+    try {
+        $result = Run-ProcessLogged -FilePath (Get-Command flutter).Source `
+            -Arguments @("analyze", "--no-fatal-infos", "--no-fatal-warnings") `
+            -LogPath $logPath -WorkingDirectory $ProjectPath
+        if ($result.Text) { Write-Host $result.Text }
+        if ($result.ExitCode -eq 0) {
+            Write-Host "Flutter analyze completed successfully." -ForegroundColor Green
+        } else {
+            Write-Warning "Flutter analyze returned exit code $($result.ExitCode). Continuing; build will report compile errors."
+            Write-Warning "Analyzer log: $logPath"
+        }
     }
     catch {
-        Write-Warning "Could not run flutter analyze cleanly: $($_.Exception.Message)"
-        Write-Warning "Continuing to the emulator. The build step will report real compile errors."
-        return
-    }
-
-    $text = if (Test-Path $logPath) {
-        Get-Content $logPath -Raw -ErrorAction SilentlyContinue
-    }
-    else {
-        ""
-    }
-
-    if (-not [string]::IsNullOrWhiteSpace($text)) {
-        Write-Host $text
-    }
-
-    if ($exitCode -eq 0) {
-        Write-Host "Flutter analyze completed successfully." -ForegroundColor Green
-    }
-    else {
-        Write-Warning "Flutter analyze returned exit code $exitCode. Continuing to build and run."
-        Write-Warning "Full analyzer report: $logPath"
+        Write-Warning "Could not run flutter analyze: $($_.Exception.Message)"
+        Write-Warning "Continuing; build will report real compile errors."
     }
 }
 
 function Get-FlutterInfo {
     $jsonText = (& flutter --version --machine 2>$null) -join "`n"
-    $exitCode = $LASTEXITCODE
-    if ($exitCode -ne 0 -or [string]::IsNullOrWhiteSpace($jsonText)) {
+    if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($jsonText)) {
         throw "Could not read Flutter version information."
     }
-    try { return $jsonText | ConvertFrom-Json }
+    try { $jsonText | ConvertFrom-Json }
     catch { throw "Flutter returned invalid version information: $($_.Exception.Message)" }
 }
 
 function Ensure-CompatibleFlutter {
     $info = Get-FlutterInfo
-    $dartVersionText = ([string]$info.dartSdkVersion).Split(' ')[0].Split('-')[0]
-    $flutterVersionText = ([string]$info.frameworkVersion).Split('-')[0]
-    try { $dartVersion = [version]$dartVersionText }
-    catch { throw "Could not parse Dart SDK version: $dartVersionText" }
+    $dartText = ([string]$info.dartSdkVersion).Split(' ')[0].Split('-')[0]
+    try { $dartVersion = [version]$dartText }
+    catch { throw "Could not parse Dart SDK version: $dartText" }
 
-    Write-Host "Flutter: $flutterVersionText" -ForegroundColor Cyan
+    Write-Host "Flutter: $($info.frameworkVersion)" -ForegroundColor Cyan
     Write-Host "Dart:    $dartVersion" -ForegroundColor Cyan
     Write-Host "Required Dart: $MinimumDartVersion or newer" -ForegroundColor Cyan
 
@@ -111,35 +112,57 @@ function Ensure-CompatibleFlutter {
     Write-Host "Installed Dart is too old. Upgrading Flutter stable..." -ForegroundColor Yellow
     Run "flutter" @("channel", "stable")
     Run "flutter" @("upgrade")
-    Run "flutter" @("doctor", "-v")
 
-    $updatedInfo = Get-FlutterInfo
-    $updatedDartText = ([string]$updatedInfo.dartSdkVersion).Split(' ')[0].Split('-')[0]
-    $updatedDart = [version]$updatedDartText
-    Write-Host "Updated Flutter: $($updatedInfo.frameworkVersion)" -ForegroundColor Green
-    Write-Host "Updated Dart:    $updatedDart" -ForegroundColor Green
-
+    $updated = Get-FlutterInfo
+    $updatedDart = [version](([string]$updated.dartSdkVersion).Split(' ')[0].Split('-')[0])
     if ($updatedDart -lt $MinimumDartVersion) {
-        throw "Flutter upgrade completed, but Dart $updatedDart is still below required $MinimumDartVersion. Install Flutter 3.44.8 or newer, then run this script again."
+        throw "Dart $updatedDart is still below required $MinimumDartVersion. Install Flutter 3.44.8 or newer."
     }
 }
 
 function AndroidSdkRoot {
-    $items = @($env:ANDROID_SDK_ROOT, $env:ANDROID_HOME, (Join-Path $env:LOCALAPPDATA "Android\Sdk")) |
+    $candidates = @($env:ANDROID_SDK_ROOT, $env:ANDROID_HOME, (Join-Path $env:LOCALAPPDATA "Android\Sdk")) |
         Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
-    foreach ($item in $items) {
-        if (Test-Path (Join-Path $item "platform-tools\adb.exe")) {
-            return [System.IO.Path]::GetFullPath($item)
+    foreach ($candidate in $candidates) {
+        if (Test-Path (Join-Path $candidate "platform-tools\adb.exe")) {
+            return [System.IO.Path]::GetFullPath($candidate)
         }
     }
-    throw "Android SDK not found. Open Android Studio > SDK Manager and install Android SDK Platform, Platform-Tools and Emulator."
+    throw "Android SDK not found. Install Android SDK Platform, Platform-Tools, Emulator and Command-line Tools (latest)."
+}
+
+function Accept-AndroidLicenses([string]$ProjectPath) {
+    $logPath = Join-Path $ProjectPath "android_licenses.log"
+    Write-Host "> flutter doctor --android-licenses" -ForegroundColor DarkGray
+    Write-Host "Answer y when prompted. SDK XML warnings are non-fatal." -ForegroundColor Yellow
+
+    $oldPreference = $ErrorActionPreference
+    try {
+        $ErrorActionPreference = "Continue"
+        & flutter doctor --android-licenses 2>&1 | Tee-Object -FilePath $logPath
+        $exitCode = $LASTEXITCODE
+    }
+    catch {
+        Write-Warning "License command emitted a PowerShell warning: $($_.Exception.Message)"
+        $exitCode = if ($null -eq $LASTEXITCODE) { 0 } else { $LASTEXITCODE }
+    }
+    finally {
+        $ErrorActionPreference = $oldPreference
+    }
+
+    if ($exitCode -eq 0) {
+        Write-Host "Android licenses completed." -ForegroundColor Green
+    } else {
+        Write-Warning "Android license command returned exit code $exitCode. Continuing to flutter doctor."
+        Write-Warning "License log: $logPath"
+    }
 }
 
 function OnlineDevice([string]$Adb) {
     foreach ($line in (& $Adb devices)) {
         if ($line -match '^([^\s]+)\s+device$' -and $Matches[1] -ne 'List') { return $Matches[1] }
     }
-    return $null
+    $null
 }
 
 function StartEmulator([string]$SdkRoot, [string]$RequestedAvd) {
@@ -172,26 +195,7 @@ function StartEmulator([string]$SdkRoot, [string]$RequestedAvd) {
         $boot = (& $adb -s $device shell getprop sys.boot_completed 2>$null).Trim()
         if ((Get-Date) -gt $limit) { throw "Timed out waiting for Android boot." }
     } until ($boot -eq "1")
-    return $device
-}
-
-function Apply-SourceCompatibilityFixes([string]$ProjectPath) {
-    $gameFile = Join-Path $ProjectPath "lib\features\game\game_screen.dart"
-    if (Test-Path $gameFile) {
-        $content = Get-Content $gameFile -Raw
-        $updated = $content.Replace(
-            "Icons.favorite_broken_rounded",
-            "Icons.heart_broken_rounded"
-        )
-        if ($updated -ne $content) {
-            [System.IO.File]::WriteAllText(
-                $gameFile,
-                $updated,
-                [System.Text.UTF8Encoding]::new($false)
-            )
-            Write-Host "Replaced unsupported favorite_broken icon." -ForegroundColor Green
-        }
-    }
+    $device
 }
 
 try {
@@ -220,16 +224,11 @@ try {
     if (Test-Path (Join-Path $TargetPath ".git")) {
         Run "git" @("fetch", "origin") $TargetPath
         Run "git" @("reset", "--hard", "origin/main") $TargetPath
-    }
-    elseif (Test-Path $TargetPath) {
-        $hasFiles = @(Get-ChildItem $TargetPath -Force -ErrorAction SilentlyContinue).Count -gt 0
-        if ($hasFiles) {
-            $TargetPath = "$TargetPath`_Fresh_$(Get-Date -Format yyyyMMdd_HHmmss)"
-            Write-Host "Selected folder was not empty. Using: $TargetPath" -ForegroundColor Yellow
-        }
+    } elseif (Test-Path $TargetPath -and @(Get-ChildItem $TargetPath -Force -ErrorAction SilentlyContinue).Count -gt 0) {
+        $TargetPath = "$TargetPath`_Fresh_$(Get-Date -Format yyyyMMdd_HHmmss)"
+        Write-Host "Selected folder was not empty. Using: $TargetPath" -ForegroundColor Yellow
         Run "git" @("clone", $RepoUrl, $TargetPath)
-    }
-    else {
+    } else {
         Run "git" @("clone", $RepoUrl, $TargetPath)
     }
 
@@ -238,15 +237,13 @@ try {
 
     Step 5 "Configure Flutter and accept Android licenses"
     Run "flutter" @("config", "--android-sdk", $sdk)
-    Write-Host "Answer y to any Android license questions." -ForegroundColor Yellow
-    & flutter doctor --android-licenses
+    Accept-AndroidLicenses $TargetPath
     Run "flutter" @("doctor", "-v")
 
     Step 6 "Restore project packages"
     Ensure-CompatibleFlutter
     $env:GRADLE_USER_HOME = Join-Path $TargetPath ".gradle-user-home-first-run"
     New-Item -ItemType Directory -Path $env:GRADLE_USER_HOME -Force | Out-Null
-    Apply-SourceCompatibilityFixes $TargetPath
     Run "flutter" @("clean")
     Run "flutter" @("pub", "get")
     try { Run "flutter" @("gen-l10n") } catch { Write-Warning "gen-l10n was skipped." }
