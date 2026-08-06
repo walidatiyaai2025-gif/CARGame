@@ -1,0 +1,225 @@
+CAR GAME - دليل التشغيل لأول مرة على جهاز Windows جديد
+=========================================================
+
+المتطلبات قبل البداية
+----------------------
+1) تثبيت Android Studio.
+2) تثبيت Flutter SDK وإضافة C:\flutter\bin إلى PATH.
+3) تثبيت Git for Windows.
+4) من Android Studio افتح SDK Manager وثبّت:
+   - Android SDK Platform
+   - Android SDK Platform-Tools
+   - Android SDK Build-Tools
+   - Android Emulator
+   - Android SDK Command-line Tools (latest)
+5) من Android Studio افتح Device Manager وأنشئ Emulator واحدًا على الأقل.
+6) تأكد أن Virtualization مفعّلة من BIOS.
+
+=========================================================
+الطريقة الأسهل: تشغيل الملف الجاهز
+=========================================================
+
+1) نزّل المشروع أو افتح مجلد المشروع.
+
+2) اعمل دبل كليك على:
+
+   FIRST_TIME_SETUP_AND_RUN.bat
+
+3) السكربت سيسألك عن مسار المشروع.
+   المسار الافتراضي:
+
+   C:\Apps\CARGame
+
+4) السكربت سيقوم تلقائيًا بالآتي:
+   - فحص Git وFlutter.
+   - اكتشاف Android SDK.
+   - تنزيل المشروع من GitHub أو تحديثه من main.
+   - ضبط Flutter على Android SDK.
+   - تشغيل Android licenses.
+   - تشغيل flutter doctor.
+   - تشغيل flutter clean.
+   - تشغيل flutter pub get.
+   - إنشاء ملفات Localization.
+   - تشغيل أول Emulator متاح.
+   - انتظار اكتمال إقلاع Android.
+   - تشغيل التطبيق في Debug Mode.
+   - إبقاء النافذة مفتوحة عند النجاح أو الخطأ.
+
+=========================================================
+الطريقة اليدوية - كل أوامر PowerShell بالأرقام
+=========================================================
+
+1) افتح PowerShell كمسؤول وتأكد من Git:
+
+   git --version
+
+2) تأكد من Flutter:
+
+   flutter --version
+
+3) تأكد من إعداد Flutter وAndroid:
+
+   flutter doctor -v
+
+4) وافق على تراخيص Android:
+
+   flutter doctor --android-licenses
+
+   اكتب y ثم Enter لكل سؤال.
+
+5) أنشئ مجلد التطبيقات:
+
+   New-Item -ItemType Directory -Path "C:\Apps" -Force
+
+6) نزّل المشروع من GitHub:
+
+   git clone "https://github.com/walidatiyaai2025-gif/CARGame.git" "C:\Apps\CARGame"
+
+7) ادخل إلى مجلد المشروع:
+
+   cd "C:\Apps\CARGame"
+
+8) فعّل دعم المسارات الطويلة داخل Git:
+
+   git config core.longpaths true
+
+9) اضبط Android SDK داخل Flutter:
+
+   flutter config --android-sdk "$env:LOCALAPPDATA\Android\Sdk"
+
+10) نظف المشروع:
+
+   flutter clean
+
+11) نزّل Packages:
+
+   flutter pub get
+
+12) أنشئ ملفات الترجمة:
+
+   flutter gen-l10n
+
+13) اعرض أجهزة Android المتاحة:
+
+   flutter devices
+
+14) اعرض أسماء الـEmulators:
+
+   & "$env:LOCALAPPDATA\Android\Sdk\emulator\emulator.exe" -list-avds
+
+15) شغّل Emulator باسم موجود في الخطوة السابقة، مثال:
+
+   Start-Process "$env:LOCALAPPDATA\Android\Sdk\emulator\emulator.exe" -ArgumentList "-avd","Resizable_Experimental","-no-snapshot-save"
+
+16) انتظر حتى يظهر Emulator:
+
+   & "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe" wait-for-device
+
+17) تأكد أن Android انتهى من الإقلاع:
+
+   & "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe" shell getprop sys.boot_completed
+
+   النتيجة الصحيحة:
+
+   1
+
+18) اعرض Device ID:
+
+   & "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe" devices
+
+   مثال:
+
+   emulator-5554    device
+
+19) شغّل التطبيق على Emulator:
+
+   flutter run -d emulator-5554
+
+20) لتشغيل السكربت الجاهز من PowerShell بدل BAT:
+
+   Set-ExecutionPolicy -Scope Process Bypass
+   .\FIRST_TIME_SETUP_AND_RUN.ps1
+
+21) لتحديد مسار المشروع مباشرة:
+
+   .\FIRST_TIME_SETUP_AND_RUN.ps1 -TargetPath "D:\Android\CARGame"
+
+22) لتحديد اسم Emulator مباشرة:
+
+   .\FIRST_TIME_SETUP_AND_RUN.ps1 -TargetPath "D:\Android\CARGame" -AvdName "Resizable_Experimental"
+
+=========================================================
+تنزيل أحدث نسخة من GitHub لاحقًا
+=========================================================
+
+1) ادخل إلى المشروع:
+
+   cd "C:\Apps\CARGame"
+
+2) اجلب آخر تعديلات:
+
+   git fetch origin
+
+3) اجعل النسخة المحلية مطابقة تمامًا لـ main:
+
+   git reset --hard origin/main
+
+4) شغّل التطبيق بعد التحديث:
+
+   .\CLEAN_DEBUG_RUN_V2.ps1
+
+=========================================================
+بناء APK Release
+=========================================================
+
+1) ادخل إلى المشروع:
+
+   cd "C:\Apps\CARGame"
+
+2) شغّل:
+
+   .\BUILD_RELEASE_V2.ps1
+
+أو اعمل دبل كليك على:
+
+   BUILD_RELEASE_V2.bat
+
+مسار APK الناتج:
+
+   build\app\outputs\flutter-apk\app-release.apk
+
+=========================================================
+أخطاء شائعة
+=========================================================
+
+1) No supported devices connected
+   الحل: أنشئ وشغّل Emulator من Android Studio > Device Manager.
+
+2) Android SDK not found
+   الحل: افتح Android Studio > SDK Manager وثبّت Platform-Tools وEmulator.
+
+3) Could not close incremental caches
+   الحل: أغلق Android Studio وشغّل:
+
+   CLEAN_DEBUG_RUN_V2.bat
+
+4) Virtualization Enabled In Firmware: No
+   الحل: فعّل Intel Virtualization Technology من BIOS.
+
+5) adb device unauthorized
+   الحل: وافق على رسالة USB Debugging على الهاتف، ثم نفّذ:
+
+   adb kill-server
+   adb start-server
+   adb devices
+
+6) Flutter غير معروف في PowerShell
+   أضف هذا المسار إلى PATH:
+
+   C:\flutter\bin
+
+=========================================================
+المستودع
+=========================================================
+
+https://github.com/walidatiyaai2025-gif/CARGame
