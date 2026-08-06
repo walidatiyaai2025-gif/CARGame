@@ -20,7 +20,44 @@ function Get-AndroidTools {
     [pscustomobject]@{ Sdk=$sdk; Adb=$adb; Emulator=$emulator }
 }
 
-function Get-OnlineDevice([string]$Adb) {
+function Get-FlutterAndroidDevices {
+    $json = & flutter devices --machine 2>$null | Out-String
+    if ([string]::IsNullOrWhiteSpace($json)) { return @() }
+    try {
+        $devices = $json | ConvertFrom-Json
+    } catch {
+        throw 'Could not parse Flutter device list.'
+    }
+
+    return @($devices | Where-Object {
+        $_.targetPlatform -like 'android*' -and
+        $_.isSupported -eq $true -and
+        $_.isEmulator -ne $null
+    })
+}
+
+function Get-SupportedAndroidDeviceId {
+    $devices = @(Get-FlutterAndroidDevices)
+    if ($devices.Count -eq 0) { return $null }
+
+    if ($devices.Count -eq 1) {
+        return [string]$devices[0].id
+    }
+
+    Write-Host ''
+    Write-Host 'Supported Android devices:' -ForegroundColor Cyan
+    for ($i = 0; $i -lt $devices.Count; $i++) {
+        Write-Host "[$($i + 1)] $($devices[$i].name) - $($devices[$i].id) - $($devices[$i].targetPlatform)"
+    }
+    $choice = Read-Host 'Choose device number'
+    $index = 0
+    if (-not [int]::TryParse($choice, [ref]$index) -or $index -lt 1 -or $index -gt $devices.Count) {
+        throw 'Invalid device selection.'
+    }
+    return [string]$devices[$index - 1].id
+}
+
+function Get-OnlineAdbDevice([string]$Adb) {
     foreach ($line in (& $Adb devices)) {
         if ($line -match '^([^\s]+)\s+device$' -and $Matches[1] -ne 'List') { return $Matches[1] }
     }
@@ -30,27 +67,55 @@ function Get-OnlineDevice([string]$Adb) {
 function Start-Device([switch]$ColdBoot) {
     $tools = Get-AndroidTools
     & $tools.Adb start-server | Out-Null
-    $device = Get-OnlineDevice $tools.Adb
-    if ($device) { return $device }
+
+    $supported = Get-SupportedAndroidDeviceId
+    if ($supported) { return $supported }
+
+    $onlineAdb = Get-OnlineAdbDevice $tools.Adb
+    if ($onlineAdb) {
+        Write-Warning "Android device '$onlineAdb' is connected but Flutter marks it as unsupported."
+        Write-Warning 'Use an emulator with a newer Android API image, preferably API 35 or later.'
+    }
+
     if (-not (Test-Path $tools.Emulator)) { throw 'Android Emulator was not found.' }
     $avds = @(& $tools.Emulator -list-avds | Where-Object { $_.Trim() })
-    if ($avds.Count -eq 0) { throw 'No Android emulator exists.' }
-    $selected = if ($AvdName) { $AvdName } else { $avds[0] }
+    if ($avds.Count -eq 0) {
+        throw 'No Android emulator exists. Create a new AVD with Android API 35 or later in Android Studio Device Manager.'
+    }
+
+    $selected = $null
+    if ($AvdName) {
+        if ($avds -notcontains $AvdName) { throw "AVD not found: $AvdName" }
+        $selected = $AvdName
+    } else {
+        Write-Host ''
+        Write-Host 'Available AVDs:' -ForegroundColor Cyan
+        for ($i = 0; $i -lt $avds.Count; $i++) {
+            Write-Host "[$($i + 1)] $($avds[$i])"
+        }
+        $choice = Read-Host 'Choose an AVD number to start'
+        $index = 0
+        if (-not [int]::TryParse($choice, [ref]$index) -or $index -lt 1 -or $index -gt $avds.Count) {
+            throw 'Invalid AVD selection.'
+        }
+        $selected = $avds[$index - 1]
+    }
+
     $args = @('-avd',$selected,'-no-boot-anim')
     if ($ColdBoot) { $args += @('-no-snapshot-load','-no-snapshot-save','-wipe-data') }
+    Write-Host "Starting emulator: $selected" -ForegroundColor Yellow
     Start-Process $tools.Emulator -ArgumentList $args | Out-Null
+
     $deadline = (Get-Date).AddMinutes(8)
     do {
         Start-Sleep -Seconds 3
-        $device = Get-OnlineDevice $tools.Adb
-        if ((Get-Date) -gt $deadline) { throw 'Timed out waiting for emulator.' }
-    } until ($device)
-    do {
-        Start-Sleep -Seconds 3
-        $boot = (& $tools.Adb -s $device shell getprop sys.boot_completed 2>$null).Trim()
-        if ((Get-Date) -gt $deadline) { throw 'Timed out waiting for Android boot.' }
-    } until ($boot -eq '1')
-    return $device
+        $supported = Get-SupportedAndroidDeviceId
+        if ((Get-Date) -gt $deadline) {
+            throw 'Timed out waiting for a Flutter-supported Android device. The selected AVD may use an unsupported Android API image.'
+        }
+    } until ($supported)
+
+    return $supported
 }
 
 function Install-And-Run([string]$Apk) {
@@ -68,7 +133,7 @@ function Show-Menu {
     Write-Host '============================================================' -ForegroundColor Cyan
     Write-Host "Project: $ProjectPath"
     Write-Host ''
-    Write-Host ' 1  - Run Debug on device/emulator'
+    Write-Host ' 1  - Run Debug on supported device/emulator'
     Write-Host ' 2  - Build Debug APK'
     Write-Host ' 3  - Build Release APK'
     Write-Host ' 4  - Build Release App Bundle (AAB)'
@@ -76,8 +141,8 @@ function Show-Menu {
     Write-Host ' 6  - Build + Install Release APK'
     Write-Host ' 7  - Repair Kotlin/Gradle caches only'
     Write-Host ' 8  - Flutter analyze'
-    Write-Host ' 9  - Start emulator only'
-    Write-Host '10  - Cold boot emulator'
+    Write-Host ' 9  - Start supported emulator only'
+    Write-Host '10  - Cold boot supported emulator'
     Write-Host '11  - Update project from GitHub'
     Write-Host '12  - Update + repair + run Debug'
     Write-Host ' 0  - Exit'
@@ -111,8 +176,8 @@ while ($true) {
             }
             '7' { Repair-KotlinBuildCache $ProjectPath -Deep; Write-Host 'Cache repair completed.' -ForegroundColor Green }
             '8' { Invoke-NativeChecked 'flutter' @('analyze','--no-fatal-infos','--no-fatal-warnings') $ProjectPath }
-            '9' { [void](Start-Device); Write-Host 'Device is ready.' -ForegroundColor Green }
-            '10' { [void](Start-Device -ColdBoot); Write-Host 'Cold-boot emulator is ready.' -ForegroundColor Green }
+            '9' { [void](Start-Device); Write-Host 'Supported Android device is ready.' -ForegroundColor Green }
+            '10' { [void](Start-Device -ColdBoot); Write-Host 'Cold-boot supported emulator is ready.' -ForegroundColor Green }
             '11' {
                 Invoke-NativeChecked 'git' @('fetch','origin') $ProjectPath
                 Invoke-NativeChecked 'git' @('reset','--hard','origin/main') $ProjectPath
