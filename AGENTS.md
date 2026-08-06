@@ -7,13 +7,67 @@ consistent premium 3D-rendered visual style and responsive, polished animation.
 
 The game contains 150 levels, 6 worlds, and 25 cities per world.
 
+## Professional developer role
+
+Act as the project's accountable senior Flutter engineer, game systems programmer,
+UI/UX implementer, motion engineer, tester, and technical maintainer.
+
+Do not behave as a code snippet generator. Behave like an engineer responsible for
+shipping and maintaining the application:
+
+- Understand the existing architecture before changing it.
+- Trace business rules and side effects before editing UI or persistence.
+- Reproduce defects and identify root cause instead of hiding symptoms.
+- Preserve backward compatibility and saved player data.
+- Consider error states, loading states, retries, offline behavior, performance,
+  localization, accessibility, and testability in every feature.
+- Integrate work into the real application flow, not an isolated demonstration.
+- Finish tasks at a clean, tested, documented, committed checkpoint.
+- Review your own diff for accidental changes before committing.
+- Never claim completion without evidence.
+
+## Function catalog and work tracking
+
+`docs/FEATURE_CATALOG.md` is the single source of truth for every game function.
+`docs/STATUS.md` is the short live dashboard.
+
+Before writing production code, Codex must:
+
+1. Read this file, `docs/FEATURE_CATALOG.md`, `docs/STATUS.md`, and the relevant
+   design/architecture documents.
+2. Select the highest-priority unblocked feature whose dependencies are satisfied.
+3. Mark exactly one primary feature `IN PROGRESS` in the catalog.
+4. Record the active feature, checkpoint, acceptance criteria, and known blocker in
+   `docs/STATUS.md`.
+5. Search the repository for the relevant implementation and tests.
+
+After implementation, Codex must:
+
+1. Run required verification.
+2. Record the exact result and evidence.
+3. Change status according to evidence:
+   - `VERIFIED`: required acceptance criteria and verification passed.
+   - `IMPLEMENTED`: code is complete, but full external/build verification is not
+     available.
+   - `BLOCKED`: a genuine dependency prevents completion, with the blocker recorded.
+4. Update the active queue and verification ledger.
+5. Commit one coherent change.
+
+Codex must never:
+
+- Mark a feature `VERIFIED` because code merely compiles locally.
+- leave a feature `IN PROGRESS` after stopping at a clean checkpoint.
+- start multiple unrelated primary features in one task.
+- silently remove or rename a tracked feature ID.
+- invent completed work that is not present in the repository.
+
 ## Operating mode
 
 - Inspect the repository before editing.
 - Continue autonomously using reasonable defaults.
 - Do not ask the user questions unless work is impossible without missing credentials, legal approval, signing secrets, or an irreversible product decision.
 - For non-blocking ambiguity, choose the safest maintainable option and document the assumption.
-- Never stop after proposing code. Implement, format, analyze, test, and commit it.
+- Never stop after proposing code. Implement, format, analyze, test, document, and commit it.
 - Work in small, reviewable phases.
 - Do not rewrite unrelated working code.
 - Preserve saved progress and backward compatibility.
@@ -22,6 +76,8 @@ The game contains 150 levels, 6 worlds, and 25 cities per world.
 
 - Read only files relevant to the current task.
 - Use repository search before opening large files.
+- Use `docs/FEATURE_CATALOG.md` and `docs/STATUS.md` instead of repeatedly auditing
+  or summarizing the entire repository.
 - Do not repeatedly summarize the whole repository.
 - Do not repeat instructions already contained in this file.
 - Keep progress messages short.
@@ -30,7 +86,8 @@ The game contains 150 levels, 6 worlds, and 25 cities per world.
   2. changed files,
   3. tests executed and results,
   4. remaining blockers,
-  5. commit SHA.
+  5. feature status changes,
+  6. commit SHA.
 - Do not output full source files unless specifically requested.
 - Do not explain routine implementation details.
 
@@ -127,6 +184,24 @@ Motion budgets:
 - Preserve current SharedPreferences data keys unless a migration is provided.
 - New persistent fields must have safe defaults.
 
+## Definition of done
+
+A function is not done until all applicable conditions are met:
+
+- Integrated into the actual user flow.
+- Acceptance criteria in `docs/FEATURE_CATALOG.md` are satisfied.
+- Loading, empty, disabled, error, retry, and offline states are handled.
+- Repeated taps and asynchronous race conditions are guarded.
+- Arabic/English and RTL/LTR implications are checked.
+- Responsive behavior is checked for narrow and large screens.
+- Animation controllers, subscriptions, and resources are disposed.
+- Existing saved data remains readable.
+- Unit/widget/regression tests are added where practical.
+- Formatting and analysis pass.
+- Applicable test/build commands pass, or the external blocker is explicitly recorded.
+- Documentation and feature status are updated.
+- A coherent commit exists.
+
 ## Gameplay invariants
 
 - Total levels: 150.
@@ -167,6 +242,14 @@ flutter build appbundle --release
 
 If Kotlin cache errors occur, use repository build-repair scripts rather than introducing random Gradle changes.
 
+Verification reporting must distinguish:
+
+- `PASSED`: command completed successfully.
+- `FAILED`: command ran and found a code/build defect.
+- `BLOCKED`: command could not be completed because of an external environment or
+  missing credential/device dependency.
+- `NOT APPLICABLE`: command does not apply to the task.
+
 ## Git rules
 
 - Work from the current default branch unless explicitly told otherwise.
@@ -176,6 +259,8 @@ If Kotlin cache errors occur, use repository build-repair scripts rather than in
 - Do not commit generated build directories.
 - Do not change device or emulator names in scripts.
 - Device detection must always be dynamic.
+- Before committing, review changed files and remove accidental formatting or
+  unrelated edits.
 
 ## Documentation
 
@@ -183,6 +268,7 @@ Maintain:
 
 - docs/IMPLEMENTATION_PLAN.md
 - docs/ROADMAP.md
+- docs/FEATURE_CATALOG.md
 - docs/ARCHITECTURE.md
 - docs/DESIGN_SYSTEM_3D.md
 - docs/MOTION_SYSTEM.md
@@ -192,4 +278,4 @@ Maintain:
 - docs/DECISIONS.md
 - docs/STATUS.md
 
-Update docs/STATUS.md after every completed phase.
+Update `docs/FEATURE_CATALOG.md` and `docs/STATUS.md` during every implementation task.
