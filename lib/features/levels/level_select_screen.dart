@@ -307,61 +307,91 @@ class _CityCard extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(20),
         child: Ink(
-          padding: const EdgeInsets.all(9),
           decoration: BoxDecoration(
             color: unlocked ? Colors.white : const Color(0xFFE0E3E8),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: unlocked ? accent : Colors.black12, width: boss ? 2.5 : 1.5),
+            border: Border.all(
+              color: unlocked ? accent : Colors.black12,
+              width: boss ? 2.5 : 1.5,
+            ),
           ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: unlocked ? accent : Colors.black26,
-                  shape: BoxShape.circle,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final compact = constraints.maxHeight < 102;
+              final padding = compact ? 6.0 : 9.0;
+              final iconBox = compact ? 36.0 : 42.0;
+              final iconSize = compact ? 21.0 : 24.0;
+              final gap = compact ? 4.0 : 7.0;
+              final cityFont = compact ? 10.0 : 11.0;
+              final levelFont = compact ? 8.0 : 9.0;
+              final starSize = compact ? 12.0 : 14.0;
+
+              return Padding(
+                padding: EdgeInsets.all(padding),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: iconBox,
+                      height: iconBox,
+                      decoration: BoxDecoration(
+                        color: unlocked ? accent : Colors.black26,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        unlocked
+                            ? boss
+                                ? Icons.workspace_premium_rounded
+                                : Icons.location_city_rounded
+                            : Icons.lock_rounded,
+                        color: Colors.white,
+                        size: iconSize,
+                      ),
+                    ),
+                    SizedBox(height: gap),
+                    Flexible(
+                      child: Text(
+                        level.cityName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: unlocked ? AppTheme.navy : Colors.black38,
+                          fontSize: cityFont,
+                          height: 1.0,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${isArabic ? 'مرحلة' : 'Level'} ${level.number}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: AppTheme.muted,
+                        fontSize: levelFont,
+                        height: 1.0,
+                      ),
+                    ),
+                    SizedBox(height: compact ? 2 : 4),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(
+                        3,
+                        (index) => Icon(
+                          index < stars ? Icons.star_rounded : Icons.star_outline_rounded,
+                          size: starSize,
+                          color: index < stars ? skin.accent : Colors.black12,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                child: Icon(
-                  unlocked
-                      ? boss
-                          ? Icons.workspace_premium_rounded
-                          : Icons.location_city_rounded
-                      : Icons.lock_rounded,
-                  color: Colors.white,
-                  size: 24,
-                ),
-              ),
-              const SizedBox(height: 7),
-              Text(
-                level.cityName,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: unlocked ? AppTheme.navy : Colors.black38,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              Text(
-                '${isArabic ? 'مرحلة' : 'Level'} ${level.number}',
-                style: const TextStyle(color: AppTheme.muted, fontSize: 9),
-              ),
-              const SizedBox(height: 4),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(
-                  3,
-                  (index) => Icon(
-                    index < stars ? Icons.star_rounded : Icons.star_outline_rounded,
-                    size: 14,
-                    color: index < stars ? skin.accent : Colors.black12,
-                  ),
-                ),
-              ),
-            ],
+              );
+            },
           ),
         ),
       ),
