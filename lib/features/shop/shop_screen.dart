@@ -10,17 +10,24 @@ class ShopScreen extends StatelessWidget {
   final ProgressStore store;
 
   Future<void> _buyHearts(BuildContext context, int amount, int price) async {
+    final messenger = ScaffoldMessenger.of(context);
     if (store.hearts >= ProgressStore.maxHearts) {
-      _message(context, 'Your hearts are already full.');
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Your hearts are already full.')),
+      );
       return;
     }
     final paid = await store.spendCoins(price);
     if (!paid) {
-      _message(context, 'Not enough coins.');
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Not enough coins.')),
+      );
       return;
     }
     await store.addHearts(amount);
-    if (context.mounted) _message(context, 'Hearts added successfully.');
+    messenger.showSnackBar(
+      const SnackBar(content: Text('Hearts added successfully.')),
+    );
   }
 
   Future<void> _buyBooster(
