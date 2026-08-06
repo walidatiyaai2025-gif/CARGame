@@ -4,6 +4,7 @@ import '../../core/logging/log_viewer_screen.dart';
 import '../../core/storage/progress_store.dart';
 import '../../core/theme/app_theme.dart';
 import '../../l10n/app_localizations.dart';
+import '../game/city_catalog.dart';
 import '../game/level_data.dart';
 import '../levels/level_select_screen.dart';
 import '../progress/progress_hub_screen.dart';
