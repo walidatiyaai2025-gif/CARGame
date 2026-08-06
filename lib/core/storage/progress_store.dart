@@ -54,6 +54,9 @@ class ProgressStore extends ChangeNotifier {
   int freeHints = 2;
   int extraMovesBoosters = 1;
   int comboShields = 1;
+  int lastCompletionBonus = 0;
+  int lastCompletionBonusXp = 0;
+  bool lastCompletionWasWorldReward = false;
   bool missionClaimed = false;
   String selectedTheme = 'classic';
   Set<String> unlockedThemes = <String>{'classic'};
@@ -65,6 +68,7 @@ class ProgressStore extends ChangeNotifier {
   double get completionProgress => completedLevels / totalLevels;
   int get totalStars => _levelStars.values.fold(0, (sum, stars) => sum + stars);
   int get maximumStars => totalLevels * maxStarsPerLevel;
+  int get worldsCompleted => completedLevels ~/ 25;
   double get winRate => gamesPlayed == 0 ? 0 : wins / gamesPlayed;
   bool get dailyMissionComplete => missionWins >= 3 && missionStars >= 6 && missionCoins >= 150;
   int get playerLevel => 1 + (playerXp ~/ 500);
@@ -112,6 +116,10 @@ class ProgressStore extends ChangeNotifier {
     freeHints = await _prefs.getInt(_freeHintsKey) ?? 2;
     extraMovesBoosters = await _prefs.getInt(_extraMovesKey) ?? 1;
     comboShields = await _prefs.getInt(_comboShieldsKey) ?? 1;
+
+    lastCompletionBonus = 0;
+    lastCompletionBonusXp = 0;
+    lastCompletionWasWorldReward = false;
 
     _missionDate = await _prefs.getString(_missionDateKey);
     if (_missionDate != _today) {
@@ -178,6 +186,13 @@ class ProgressStore extends ChangeNotifier {
     int combo = 0,
     int xpEarned = 0,
   }) async {
+    final previousStars = _levelStars[level] ?? 0;
+    final firstClear = previousStars == 0;
+
+    lastCompletionBonus = 0;
+    lastCompletionBonusXp = 0;
+    lastCompletionWasWorldReward = false;
+
     coins += reward;
     gamesPlayed++;
     wins++;
@@ -189,6 +204,28 @@ class ProgressStore extends ChangeNotifier {
     missionWins++;
     missionCoins += reward;
 
+    if (firstClear && level % 25 == 0) {
+      final worldNumber = level ~/ 25;
+      lastCompletionBonus = 300 + worldNumber * 100;
+      lastCompletionBonusXp = 150 + worldNumber * 25;
+      lastCompletionWasWorldReward = true;
+
+      coins += lastCompletionBonus;
+      playerXp += lastCompletionBonusXp;
+      lifetimeCoinsEarned += lastCompletionBonus;
+      missionCoins += lastCompletionBonus;
+      freeHints++;
+      extraMovesBoosters++;
+      comboShields++;
+    } else if (firstClear && level % 5 == 0) {
+      lastCompletionBonus = 50 + (level ~/ 5) * 5;
+      lastCompletionBonusXp = 25;
+      coins += lastCompletionBonus;
+      playerXp += lastCompletionBonusXp;
+      lifetimeCoinsEarned += lastCompletionBonus;
+      missionCoins += lastCompletionBonus;
+    }
+
     if (level >= highestUnlockedLevel && highestUnlockedLevel < totalLevels) {
       highestUnlockedLevel = level + 1;
     }
@@ -196,7 +233,6 @@ class ProgressStore extends ChangeNotifier {
     final safeStars = stars.clamp(1, maxStarsPerLevel);
     missionStars += safeStars;
     if (safeStars == 3) perfectWins++;
-    final previousStars = _levelStars[level] ?? 0;
     if (safeStars > previousStars) {
       _levelStars[level] = safeStars;
       await _prefs.setInt('$_starsPrefix$level', safeStars);
@@ -210,6 +246,9 @@ class ProgressStore extends ChangeNotifier {
     gamesPlayed++;
     losses++;
     currentWinStreak = 0;
+    lastCompletionBonus = 0;
+    lastCompletionBonusXp = 0;
+    lastCompletionWasWorldReward = false;
     await _prefs.setInt(_gamesKey, gamesPlayed);
     await _prefs.setInt(_lossesKey, losses);
     await _prefs.setInt(_winStreakKey, currentWinStreak);
@@ -244,6 +283,9 @@ class ProgressStore extends ChangeNotifier {
     await _prefs.setInt(_missionWinsKey, missionWins);
     await _prefs.setInt(_missionStarsKey, missionStars);
     await _prefs.setInt(_missionCoinsKey, missionCoins);
+    await _prefs.setInt(_freeHintsKey, freeHints);
+    await _prefs.setInt(_extraMovesKey, extraMovesBoosters);
+    await _prefs.setInt(_comboShieldsKey, comboShields);
   }
 
   Future<bool> spendCoins(int amount) async {
