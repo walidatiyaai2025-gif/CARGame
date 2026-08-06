@@ -36,26 +36,16 @@ function Get-FlutterInfo {
     if ($exitCode -ne 0 -or [string]::IsNullOrWhiteSpace($jsonText)) {
         throw "Could not read Flutter version information."
     }
-
-    try {
-        return $jsonText | ConvertFrom-Json
-    }
-    catch {
-        throw "Flutter returned invalid version information: $($_.Exception.Message)"
-    }
+    try { return $jsonText | ConvertFrom-Json }
+    catch { throw "Flutter returned invalid version information: $($_.Exception.Message)" }
 }
 
 function Ensure-CompatibleFlutter {
     $info = Get-FlutterInfo
     $dartVersionText = ([string]$info.dartSdkVersion).Split(' ')[0].Split('-')[0]
     $flutterVersionText = ([string]$info.frameworkVersion).Split('-')[0]
-
-    try {
-        $dartVersion = [version]$dartVersionText
-    }
-    catch {
-        throw "Could not parse Dart SDK version: $dartVersionText"
-    }
+    try { $dartVersion = [version]$dartVersionText }
+    catch { throw "Could not parse Dart SDK version: $dartVersionText" }
 
     Write-Host "Flutter: $flutterVersionText" -ForegroundColor Cyan
     Write-Host "Dart:    $dartVersion" -ForegroundColor Cyan
@@ -74,7 +64,6 @@ function Ensure-CompatibleFlutter {
     $updatedInfo = Get-FlutterInfo
     $updatedDartText = ([string]$updatedInfo.dartSdkVersion).Split(' ')[0].Split('-')[0]
     $updatedDart = [version]$updatedDartText
-
     Write-Host "Updated Flutter: $($updatedInfo.frameworkVersion)" -ForegroundColor Green
     Write-Host "Updated Dart:    $updatedDart" -ForegroundColor Green
 
@@ -134,6 +123,25 @@ function StartEmulator([string]$SdkRoot, [string]$RequestedAvd) {
     return $device
 }
 
+function Apply-SourceCompatibilityFixes([string]$ProjectPath) {
+    $gameFile = Join-Path $ProjectPath "lib\features\game\game_screen.dart"
+    if (Test-Path $gameFile) {
+        $content = Get-Content $gameFile -Raw
+        $updated = $content.Replace(
+            "Icons.favorite_broken_rounded",
+            "Icons.heart_broken_rounded"
+        )
+        if ($updated -ne $content) {
+            [System.IO.File]::WriteAllText(
+                $gameFile,
+                $updated,
+                [System.Text.UTF8Encoding]::new($false)
+            )
+            Write-Host "Replaced unsupported favorite_broken icon." -ForegroundColor Green
+        }
+    }
+}
+
 try {
     Clear-Host
     Write-Host "CAR GAME - FIRST TIME SETUP AND RUN" -ForegroundColor Green
@@ -186,15 +194,19 @@ try {
     Ensure-CompatibleFlutter
     $env:GRADLE_USER_HOME = Join-Path $TargetPath ".gradle-user-home-first-run"
     New-Item -ItemType Directory -Path $env:GRADLE_USER_HOME -Force | Out-Null
+    Apply-SourceCompatibilityFixes $TargetPath
     Run "flutter" @("clean")
     Run "flutter" @("pub", "get")
     try { Run "flutter" @("gen-l10n") } catch { Write-Warning "gen-l10n was skipped." }
 
-    Step 7 "Start Android emulator"
+    Step 7 "Analyze project before starting emulator"
+    Run "flutter" @("analyze", "--no-fatal-infos")
+
+    Step 8 "Start Android emulator"
     $device = StartEmulator $sdk $AvdName
     Write-Host "Device ready: $device" -ForegroundColor Green
 
-    Step 8 "Run Cargo Sort"
+    Step 9 "Run Cargo Sort"
     Run "flutter" @("run", "--no-pub", "-d", $device)
 }
 catch {
