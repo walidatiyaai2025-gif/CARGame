@@ -1,6 +1,5 @@
 param(
-    [string]$TargetPath = 'C:\Apps\CARGame',
-    [string]$AvdName = ''
+    [string]$TargetPath = 'C:\Apps\CARGame'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -79,78 +78,61 @@ function Get-SupportedAndroidDeviceId {
 }
 
 function Select-Avd {
-    param([string]$EmulatorExe, [string]$RequestedAvd)
+    param([string]$EmulatorExe)
 
-    $avds = @(& $EmulatorExe -list-avds | Where-Object { $_.Trim() })
+    $avds = @(& $EmulatorExe -list-avds | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
     if ($avds.Count -eq 0) {
-        throw 'No Android AVD exists. Create an API 35 or newer emulator in Android Studio.'
+        throw 'No Android emulator exists. Create one in Android Studio Device Manager.'
     }
-
-    if ($RequestedAvd) {
-        if ($avds -notcontains $RequestedAvd) {
-            throw "Requested AVD was not found: $RequestedAvd"
-        }
-        return $RequestedAvd
-    }
-
-    $preferred = @(
-        'Pixel_9_Pro',
-        'Resizable_Experimental',
-        'Pixel_3a_API_33_x86_64',
-        'Pixel_6_Pro_API_31'
-    )
-
-    foreach ($name in $preferred) {
-        if ($avds -contains $name) { return $name }
-    }
-
-    $safeAvds = @($avds | Where-Object { $_ -notmatch '(?i)API[_ -]?30|A51_API_30' })
-    if ($safeAvds.Count -eq 1) { return $safeAvds[0] }
 
     Write-Host ''
     Write-Host 'Available Android emulators:' -ForegroundColor Cyan
-    for ($i = 0; $i -lt $safeAvds.Count; $i++) {
-        Write-Host "[$($i + 1)] $($safeAvds[$i])"
-    }
-
-    if ($safeAvds.Count -eq 0) {
-        throw 'Only unsupported API 30 emulators were found. Create an API 35 or newer AVD.'
+    for ($i = 0; $i -lt $avds.Count; $i++) {
+        Write-Host "[$($i + 1)] $($avds[$i])"
     }
 
     $choice = Read-Host 'Choose emulator number'
     $index = 0
     if (-not [int]::TryParse($choice, [ref]$index) -or
         $index -lt 1 -or
-        $index -gt $safeAvds.Count) {
+        $index -gt $avds.Count) {
         throw 'Invalid emulator selection.'
     }
-    return $safeAvds[$index - 1]
+
+    return [string]$avds[$index - 1]
+}
+
+function Restart-AdbIfNeeded {
+    param([string]$Adb)
+
+    $states = @(& $Adb devices)
+    if ($states -match '\boffline\b') {
+        Write-Host 'ADB reports an offline device. Restarting ADB server...' -ForegroundColor Yellow
+        & $Adb kill-server 2>$null | Out-Null
+        Start-Sleep -Seconds 2
+        & $Adb start-server | Out-Null
+        Start-Sleep -Seconds 2
+    }
 }
 
 function Start-SupportedEmulator {
-    param([string]$SdkRoot, [string]$RequestedAvd)
+    param([string]$SdkRoot)
 
     $adb = Join-Path $SdkRoot 'platform-tools\adb.exe'
     $emulator = Join-Path $SdkRoot 'emulator\emulator.exe'
     if (-not (Test-Path $emulator)) { throw "Emulator was not found: $emulator" }
 
     & $adb start-server | Out-Null
+    Restart-AdbIfNeeded -Adb $adb
+
     $supported = Get-SupportedAndroidDeviceId
     if ($supported) {
         Write-Host "Supported Android device already available: $supported" -ForegroundColor Green
         return $supported
     }
 
-    foreach ($line in (& $adb devices)) {
-        if ($line -match '^(emulator-\d+)\s+(device|offline)$') {
-            Write-Host "Closing old emulator: $($Matches[1])" -ForegroundColor Yellow
-            & $adb -s $Matches[1] emu kill 2>$null | Out-Null
-        }
-    }
-    Start-Sleep -Seconds 3
-
-    $selected = Select-Avd -EmulatorExe $emulator -RequestedAvd $RequestedAvd
-    Write-Host "Starting modern emulator: $selected" -ForegroundColor Yellow
+    $selected = Select-Avd -EmulatorExe $emulator
+    Write-Host "Starting selected emulator: $selected" -ForegroundColor Yellow
     Start-Process -FilePath $emulator -ArgumentList @(
         '-avd', $selected,
         '-no-boot-anim',
@@ -161,16 +143,22 @@ function Start-SupportedEmulator {
     $deadline = (Get-Date).AddMinutes(10)
     do {
         Start-Sleep -Seconds 4
+        Restart-AdbIfNeeded -Adb $adb
         $supported = Get-SupportedAndroidDeviceId
         if ((Get-Date) -gt $deadline) {
-            throw "The emulator '$selected' started, but Flutter did not mark it as supported. Use an API 35 or newer system image."
+            throw 'The selected emulator started, but Flutter did not report a supported Android device.'
         }
     } until ($supported)
 
     & $adb -s $supported wait-for-device | Out-Null
     do {
         Start-Sleep -Seconds 3
-        $boot = (& $adb -s $supported shell getprop sys.boot_completed 2>$null).Trim()
+        $state = (& $adb -s $supported get-state 2>$null | Out-String).Trim()
+        if ($state -eq 'offline') {
+            Restart-AdbIfNeeded -Adb $adb
+            continue
+        }
+        $boot = (& $adb -s $supported shell getprop sys.boot_completed 2>$null | Out-String).Trim()
         if ((Get-Date) -gt $deadline) { throw 'Timed out waiting for Android boot.' }
     } until ($boot -eq '1')
 
@@ -181,7 +169,7 @@ function Start-SupportedEmulator {
 try {
     Clear-Host
     Write-Host 'CAR GAME - FIRST TIME SETUP AND RUN' -ForegroundColor Green
-    Write-Host 'This window remains open after success or failure.' -ForegroundColor Yellow
+    Write-Host 'No device or emulator name is hardcoded in this script.' -ForegroundColor Yellow
 
     Step 1 'Choose project folder'
     $entered = Read-Host "Project path [$TargetPath]"
@@ -246,9 +234,9 @@ try {
     Step 7 'Analyze project'
     Run 'flutter' @('analyze', '--no-fatal-infos', '--no-fatal-warnings') $TargetPath
 
-    Step 8 'Start Flutter-supported Android emulator'
-    $device = Start-SupportedEmulator -SdkRoot $sdk -RequestedAvd $AvdName
-    Write-Host "Supported device ready: $device" -ForegroundColor Green
+    Step 8 'Select and start an Android emulator'
+    $device = Start-SupportedEmulator -SdkRoot $sdk
+    Write-Host "Flutter device ready: $device" -ForegroundColor Green
 
     Step 9 'Run Cargo Sort'
     Run 'flutter' @('run', '--no-pub', '-d', $device) $TargetPath
