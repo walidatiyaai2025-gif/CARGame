@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../core/storage/progress_store.dart';
 import '../../core/theme/app_theme.dart';
-import '../../l10n/app_localizations.dart';
+import '../../core/theme/game_skin.dart';
 import '../game/city_catalog.dart';
-import '../game/game_screen.dart';
 import '../game/level_data.dart';
+import 'city_briefing_screen.dart';
 
 class LevelSelectScreen extends StatelessWidget {
   const LevelSelectScreen({super.key, required this.store});
@@ -14,49 +14,43 @@ class LevelSelectScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(isArabic ? 'خريطة العالم' : 'World Map'),
-        centerTitle: true,
-      ),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFFF6FAFF), Color(0xFFE9F1FB)],
+    return AnimatedBuilder(
+      animation: store,
+      builder: (context, _) {
+        final skin = gameSkinById(store.selectedTheme);
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(isArabic ? 'خريطة العالم' : 'World Map'),
+            centerTitle: true,
           ),
-        ),
-        child: AnimatedBuilder(
-          animation: store,
-          builder: (context, _) => ListView(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-            children: [
-              _GlobalHeader(
-                isArabic: isArabic,
-                completed: store.completedLevels,
-                total: ProgressStore.totalLevels,
-                stars: store.totalStars,
-                maximumStars: store.maximumStars,
-              ),
-              const SizedBox(height: 18),
-              for (final world in gameWorlds) ...[
-                _WorldSection(
-                  world: world,
-                  levels: levels.where((level) => level.world == world.number).toList(),
-                  store: store,
+          body: Container(
+            decoration: BoxDecoration(gradient: skin.backgroundGradient),
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+              children: [
+                _GlobalHeader(
                   isArabic: isArabic,
-                  levelLabel: l10n.level,
+                  store: store,
+                  skin: skin,
                 ),
                 const SizedBox(height: 18),
+                for (final world in gameWorlds) ...[
+                  _WorldSection(
+                    world: world,
+                    levels: levels.where((level) => level.world == world.number).toList(),
+                    store: store,
+                    isArabic: isArabic,
+                    skin: skin,
+                  ),
+                  const SizedBox(height: 18),
+                ],
               ],
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
@@ -64,84 +58,82 @@ class LevelSelectScreen extends StatelessWidget {
 class _GlobalHeader extends StatelessWidget {
   const _GlobalHeader({
     required this.isArabic,
-    required this.completed,
-    required this.total,
-    required this.stars,
-    required this.maximumStars,
+    required this.store,
+    required this.skin,
   });
 
   final bool isArabic;
-  final int completed;
-  final int total;
-  final int stars;
-  final int maximumStars;
+  final ProgressStore store;
+  final GameSkin skin;
 
   @override
-  Widget build(BuildContext context) {
-    final progress = completed / total;
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF142A47), Color(0xFF2D5D8F)],
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          gradient: skin.heroGradient,
+          borderRadius: BorderRadius.circular(30),
+          boxShadow: [
+            BoxShadow(
+              color: skin.primary.withValues(alpha: .28),
+              blurRadius: 24,
+              offset: const Offset(0, 12),
+            ),
+          ],
         ),
-        borderRadius: BorderRadius.circular(30),
-        boxShadow: const [
-          BoxShadow(color: Color(0x33142A47), blurRadius: 24, offset: Offset(0, 12)),
-        ],
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.public_rounded, color: AppTheme.yellow, size: 44),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Icon(Icons.public_rounded, color: skin.accent, size: 44),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        isArabic ? 'رحلة المدن العالمية' : 'Global City Journey',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      Text(
+                        isArabic
+                            ? '${store.completedLevels} مدينة مكتملة من ${ProgressStore.totalLevels}'
+                            : '${store.completedLevels} of ${ProgressStore.totalLevels} cities completed',
+                        style: const TextStyle(color: Colors.white70),
+                      ),
+                    ],
+                  ),
+                ),
+                Column(
                   children: [
+                    Icon(Icons.star_rounded, color: skin.accent),
                     Text(
-                      isArabic ? 'رحلة المدن العالمية' : 'Global City Journey',
+                      '${store.totalStars}/${store.maximumStars}',
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 22,
                         fontWeight: FontWeight.w900,
                       ),
                     ),
-                    Text(
-                      isArabic
-                          ? '$completed مدينة مكتملة من $total'
-                          : '$completed of $total cities completed',
-                      style: const TextStyle(color: Colors.white70),
-                    ),
                   ],
                 ),
-              ),
-              Column(
-                children: [
-                  const Icon(Icons.star_rounded, color: AppTheme.yellow),
-                  Text(
-                    '$stars/$maximumStars',
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(20),
-            child: LinearProgressIndicator(
-              value: progress,
-              minHeight: 10,
-              backgroundColor: Colors.white24,
-              valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.orange),
+              ],
             ),
-          ),
-        ],
-      ),
-    );
-  }
+            const SizedBox(height: 16),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: LinearProgressIndicator(
+                value: store.completionProgress,
+                minHeight: 10,
+                backgroundColor: Colors.white24,
+                valueColor: AlwaysStoppedAnimation<Color>(skin.accent),
+              ),
+            ),
+          ],
+        ),
+      );
 }
 
 class _WorldSection extends StatelessWidget {
@@ -150,31 +142,27 @@ class _WorldSection extends StatelessWidget {
     required this.levels,
     required this.store,
     required this.isArabic,
-    required this.levelLabel,
+    required this.skin,
   });
 
   final GameWorld world;
   final List<LevelData> levels;
   final ProgressStore store;
   final bool isArabic;
-  final String levelLabel;
+  final GameSkin skin;
 
   @override
   Widget build(BuildContext context) {
-    final firstLevel = levels.first.number;
-    final lastLevel = levels.last.number;
-    final unlocked = store.highestUnlockedLevel >= firstLevel;
-    final completedInWorld = levels
-        .where((level) => level.number < store.highestUnlockedLevel)
-        .length;
-    final starsInWorld = levels.fold<int>(
+    final unlocked = store.highestUnlockedLevel >= levels.first.number;
+    final completed = levels.where((level) => level.number < store.highestUnlockedLevel).length;
+    final stars = levels.fold<int>(
       0,
       (sum, level) => sum + store.starsForLevel(level.number),
     );
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Colors.white.withValues(alpha: .94),
         borderRadius: BorderRadius.circular(30),
         boxShadow: const [
           BoxShadow(color: Color(0x1F000000), blurRadius: 18, offset: Offset(0, 9)),
@@ -186,7 +174,12 @@ class _WorldSection extends StatelessWidget {
             width: double.infinity,
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              gradient: LinearGradient(colors: [world.startColor, world.endColor]),
+              gradient: LinearGradient(
+                colors: [
+                  Color.lerp(world.startColor, skin.primary, .20)!,
+                  Color.lerp(world.endColor, skin.secondary, .20)!,
+                ],
+              ),
               borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
             ),
             child: Row(
@@ -197,7 +190,6 @@ class _WorldSection extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: .16),
                     shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white24),
                   ),
                   child: Icon(world.icon, color: Colors.white, size: 32),
                 ),
@@ -216,9 +208,11 @@ class _WorldSection extends StatelessWidget {
                       ),
                       Text(
                         unlocked
-                            ? '$completedInWorld/25 ${isArabic ? 'مدينة' : 'cities'} • ⭐ $starsInWorld/75'
-                            : (isArabic ? 'أكمل العالم السابق لفتحه' : 'Complete the previous world to unlock'),
-                        style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w600),
+                            ? '$completed/25 ${isArabic ? 'مدينة' : 'cities'} • ⭐ $stars/75'
+                            : (isArabic
+                                ? 'أكمل العالم السابق لفتحه'
+                                : 'Complete the previous world to unlock'),
+                        style: const TextStyle(color: Colors.white70),
                       ),
                     ],
                   ),
@@ -246,18 +240,21 @@ class _WorldSection extends StatelessWidget {
                 itemBuilder: (context, index) {
                   final level = levels[index];
                   final cityUnlocked = level.number <= store.highestUnlockedLevel;
-                  final stars = store.starsForLevel(level.number);
                   return _CityCard(
                     level: level,
                     unlocked: cityUnlocked,
-                    stars: stars,
+                    stars: store.starsForLevel(level.number),
                     world: world,
-                    levelLabel: levelLabel,
+                    skin: skin,
+                    isArabic: isArabic,
                     onTap: cityUnlocked
                         ? () async {
                             await Navigator.of(context).push(
                               MaterialPageRoute<void>(
-                                builder: (_) => GameScreen(level: level, store: store),
+                                builder: (_) => CityBriefingScreen(
+                                  level: level,
+                                  store: store,
+                                ),
                               ),
                             );
                           }
@@ -269,16 +266,9 @@ class _WorldSection extends StatelessWidget {
           else
             Padding(
               padding: const EdgeInsets.all(22),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.lock_clock_rounded, color: Colors.black38),
-                  const SizedBox(width: 8),
-                  Text(
-                    '${isArabic ? 'المراحل' : 'Levels'} $firstLevel–$lastLevel',
-                    style: const TextStyle(color: Colors.black45, fontWeight: FontWeight.w700),
-                  ),
-                ],
+              child: Text(
+                isArabic ? 'هذا العالم ما زال مقفلاً' : 'This world is still locked',
+                style: const TextStyle(color: Colors.black45, fontWeight: FontWeight.w700),
               ),
             ),
         ],
@@ -293,7 +283,8 @@ class _CityCard extends StatelessWidget {
     required this.unlocked,
     required this.stars,
     required this.world,
-    required this.levelLabel,
+    required this.skin,
+    required this.isArabic,
     required this.onTap,
   });
 
@@ -301,12 +292,15 @@ class _CityCard extends StatelessWidget {
   final bool unlocked;
   final int stars;
   final GameWorld world;
-  final String levelLabel;
+  final GameSkin skin;
+  final bool isArabic;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final boss = level.isBossCity;
+    final accent = boss ? AppTheme.orange : Color.lerp(world.startColor, skin.primary, .18)!;
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -315,22 +309,9 @@ class _CityCard extends StatelessWidget {
         child: Ink(
           padding: const EdgeInsets.all(9),
           decoration: BoxDecoration(
-            gradient: unlocked
-                ? LinearGradient(
-                    colors: boss
-                        ? const [Color(0xFFFFD86F), Color(0xFFFF9B36)]
-                        : [Colors.white, world.startColor.withValues(alpha: .10)],
-                  )
-                : const LinearGradient(colors: [Color(0xFFE6E9ED), Color(0xFFD5DAE0)]),
+            color: unlocked ? Colors.white : const Color(0xFFE0E3E8),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: boss
-                  ? AppTheme.orange
-                  : unlocked
-                      ? world.startColor.withValues(alpha: .45)
-                      : Colors.black12,
-              width: boss ? 2.5 : 1.5,
-            ),
+            border: Border.all(color: unlocked ? accent : Colors.black12, width: boss ? 2.5 : 1.5),
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -339,7 +320,7 @@ class _CityCard extends StatelessWidget {
                 width: 42,
                 height: 42,
                 decoration: BoxDecoration(
-                  color: unlocked ? world.startColor : Colors.black26,
+                  color: unlocked ? accent : Colors.black26,
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -365,7 +346,7 @@ class _CityCard extends StatelessWidget {
                 ),
               ),
               Text(
-                '$levelLabel ${level.number}',
+                '${isArabic ? 'مرحلة' : 'Level'} ${level.number}',
                 style: const TextStyle(color: AppTheme.muted, fontSize: 9),
               ),
               const SizedBox(height: 4),
@@ -376,7 +357,7 @@ class _CityCard extends StatelessWidget {
                   (index) => Icon(
                     index < stars ? Icons.star_rounded : Icons.star_outline_rounded,
                     size: 14,
-                    color: index < stars ? AppTheme.yellow : Colors.black12,
+                    color: index < stars ? skin.accent : Colors.black12,
                   ),
                 ),
               ),
