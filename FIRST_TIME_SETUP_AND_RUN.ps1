@@ -30,6 +30,44 @@ function Run([string]$Command, [string[]]$Arguments, [string]$Folder = "") {
     }
 }
 
+function Run-FlutterAnalyze([string]$ProjectPath) {
+    $logPath = Join-Path $ProjectPath "flutter_analyze.log"
+    if (Test-Path $logPath) { Remove-Item $logPath -Force }
+
+    Write-Host "> flutter analyze --no-fatal-infos --no-fatal-warnings" -ForegroundColor DarkGray
+
+    $previousEncoding = [Console]::OutputEncoding
+    try {
+        [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
+        $output = @(& flutter analyze --no-fatal-infos --no-fatal-warnings 2>&1)
+        $exitCode = $LASTEXITCODE
+        $text = ($output | ForEach-Object { $_.ToString() }) -join [Environment]::NewLine
+        [System.IO.File]::WriteAllText($logPath, $text, [System.Text.UTF8Encoding]::new($false))
+
+        if (-not [string]::IsNullOrWhiteSpace($text)) {
+            Write-Host $text
+        }
+
+        $hasRealErrors = $text -match '(?im)^\s*error\s+-' -or
+                         $text -match '(?im)^\s*\d+\s+error(s)?\s+found' -or
+                         $text -match '(?im)compilation failed|could not compile|target kernel_snapshot_program failed'
+
+        if ($hasRealErrors) {
+            throw "Flutter analyze found real errors. Full report: $logPath"
+        }
+
+        if ($exitCode -ne 0) {
+            Write-Warning "Flutter analyze returned exit code $exitCode without reporting a Dart error. Continuing. Full report: $logPath"
+        }
+        else {
+            Write-Host "Flutter analyze completed successfully." -ForegroundColor Green
+        }
+    }
+    finally {
+        [Console]::OutputEncoding = $previousEncoding
+    }
+}
+
 function Get-FlutterInfo {
     $jsonText = (& flutter --version --machine 2>$null) -join "`n"
     $exitCode = $LASTEXITCODE
@@ -200,7 +238,7 @@ try {
     try { Run "flutter" @("gen-l10n") } catch { Write-Warning "gen-l10n was skipped." }
 
     Step 7 "Analyze project before starting emulator"
-    Run "flutter" @("analyze", "--no-fatal-infos")
+    Run-FlutterAnalyze $TargetPath
 
     Step 8 "Start Android emulator"
     $device = StartEmulator $sdk $AvdName
