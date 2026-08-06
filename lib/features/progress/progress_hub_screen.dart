@@ -23,6 +23,14 @@ class ProgressHubScreen extends StatelessWidget {
     );
   }
 
+  String _heartTimer(bool ar) {
+    final remaining = store.timeUntilNextHeart;
+    if (remaining == Duration.zero) return ar ? 'القلوب مكتملة' : 'Hearts full';
+    final minutes = remaining.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final seconds = remaining.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return ar ? 'القلب التالي خلال $minutes:$seconds' : 'Next heart in $minutes:$seconds';
+  }
+
   @override
   Widget build(BuildContext context) {
     final ar = Localizations.localeOf(context).languageCode == 'ar';
@@ -33,7 +41,54 @@ class ProgressHubScreen extends StatelessWidget {
         builder: (context, _) => ListView(
           padding: const EdgeInsets.all(18),
           children: [
+            _LevelHero(store: store, ar: ar),
+            const SizedBox(height: 14),
             _HeroStats(store: store, ar: ar),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                Expanded(
+                  child: _CompactMetric(
+                    icon: Icons.local_fire_department_rounded,
+                    label: ar ? 'السلسلة الحالية' : 'Current streak',
+                    value: '${store.currentWinStreak}',
+                    accent: AppTheme.orange,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _CompactMetric(
+                    icon: Icons.emoji_events_rounded,
+                    label: ar ? 'أفضل سلسلة' : 'Best streak',
+                    value: '${store.bestWinStreak}',
+                    accent: AppTheme.green,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _CompactMetric(
+                    icon: Icons.bolt_rounded,
+                    label: ar ? 'أفضل Combo' : 'Best combo',
+                    value: '${store.bestCombo}',
+                    accent: const Color(0xFF7B43C6),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Card(
+              child: ListTile(
+                leading: const CircleAvatar(
+                  backgroundColor: Color(0xFFFFE7EC),
+                  child: Icon(Icons.favorite_rounded, color: AppTheme.red),
+                ),
+                title: Text('${store.hearts}/${ProgressStore.maxHearts} ${ar ? 'قلوب' : 'hearts'}'),
+                subtitle: Text(_heartTimer(ar)),
+                trailing: store.hearts < ProgressStore.maxHearts
+                    ? const Icon(Icons.timer_outlined, color: AppTheme.orange)
+                    : const Icon(Icons.check_circle_rounded, color: AppTheme.green),
+              ),
+            ),
             const SizedBox(height: 18),
             Text(ar ? 'مهمة اليوم' : 'Daily Mission', style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 10),
@@ -52,6 +107,8 @@ class ProgressHubScreen extends StatelessWidget {
             _Achievement(title: ar ? 'أول انتصار' : 'First Win', unlocked: store.wins >= 1, icon: Icons.emoji_events_rounded),
             _Achievement(title: ar ? 'خبير المدن' : 'City Expert', unlocked: store.completedLevels >= 25, icon: Icons.location_city_rounded),
             _Achievement(title: ar ? 'جامع النجوم' : 'Star Collector', unlocked: store.totalStars >= 100, icon: Icons.auto_awesome_rounded),
+            _Achievement(title: ar ? 'سلسلة نارية' : 'Hot Streak', unlocked: store.bestWinStreak >= 10, icon: Icons.local_fire_department_rounded),
+            _Achievement(title: ar ? 'محترف الكومبو' : 'Combo Master', unlocked: store.bestCombo >= 10, icon: Icons.bolt_rounded),
             _Achievement(title: ar ? 'لاعب مثالي' : 'Perfect Player', unlocked: store.perfectWins >= 10, icon: Icons.workspace_premium_rounded),
             _Achievement(title: ar ? 'سيد العالم' : 'World Master', unlocked: store.completedLevels >= 150, icon: Icons.public_rounded),
           ],
@@ -59,6 +116,52 @@ class ProgressHubScreen extends StatelessWidget {
       ),
     );
   }
+}
+
+class _LevelHero extends StatelessWidget {
+  const _LevelHero({required this.store, required this.ar});
+  final ProgressStore store;
+  final bool ar;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(colors: [Color(0xFF7B43C6), Color(0xFFB778F2)]),
+          borderRadius: BorderRadius.circular(28),
+          boxShadow: AppTheme.softShadow,
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 72,
+              height: 72,
+              decoration: BoxDecoration(color: Colors.white.withValues(alpha: .16), shape: BoxShape.circle),
+              alignment: Alignment.center,
+              child: Text('${store.playerLevel}', style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w900)),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(ar ? 'مستوى اللاعب' : 'Player Level', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18)),
+                  const SizedBox(height: 6),
+                  LinearProgressIndicator(
+                    value: store.playerLevelProgress,
+                    minHeight: 9,
+                    borderRadius: BorderRadius.circular(9),
+                    backgroundColor: Colors.white24,
+                    valueColor: const AlwaysStoppedAnimation(AppTheme.yellow),
+                  ),
+                  const SizedBox(height: 6),
+                  Text('${store.xpIntoCurrentLevel}/500 XP', style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w700)),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
 }
 
 class _HeroStats extends StatelessWidget {
@@ -89,6 +192,26 @@ class _HeroStats extends StatelessWidget {
             ]),
           ],
         ),
+      );
+}
+
+class _CompactMetric extends StatelessWidget {
+  const _CompactMetric({required this.icon, required this.label, required this.value, required this.accent});
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
+        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), boxShadow: AppTheme.softShadow),
+        child: Column(children: [
+          Icon(icon, color: accent),
+          const SizedBox(height: 5),
+          Text(value, style: const TextStyle(color: AppTheme.navy, fontSize: 19, fontWeight: FontWeight.w900)),
+          Text(label, textAlign: TextAlign.center, style: const TextStyle(color: AppTheme.muted, fontSize: 9)),
+        ]),
       );
 }
 
