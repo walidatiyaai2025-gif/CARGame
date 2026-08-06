@@ -46,13 +46,13 @@ function Invoke-CapturedProcess {
 
     try {
         $start = @{
-            FilePath = $FilePath
-            ArgumentList = $Arguments
+            FilePath               = $FilePath
+            ArgumentList           = $Arguments
             RedirectStandardOutput = $stdout
-            RedirectStandardError = $stderr
-            NoNewWindow = $true
-            Wait = $true
-            PassThru = $true
+            RedirectStandardError  = $stderr
+            NoNewWindow            = $true
+            Wait                   = $true
+            PassThru               = $true
         }
         if ($WorkingDirectory) { $start.WorkingDirectory = $WorkingDirectory }
 
@@ -61,7 +61,7 @@ function Invoke-CapturedProcess {
         if (Test-Path $stdout) { $parts += Get-Content $stdout -Raw -ErrorAction SilentlyContinue }
         if (Test-Path $stderr) { $parts += Get-Content $stderr -Raw -ErrorAction SilentlyContinue }
 
-        [pscustomobject]@{
+        return [pscustomobject]@{
             ExitCode = $process.ExitCode
             Text = (($parts | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }) -join [Environment]::NewLine)
         }
@@ -129,6 +129,7 @@ function Ensure-Jdk17 {
         if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
             throw "JDK 17 is required. Install Eclipse Temurin JDK 17 and run again."
         }
+
         Write-Host "Installing Eclipse Temurin JDK 17..." -ForegroundColor Yellow
         Invoke-Checked "winget" @(
             "install", "--id", "EclipseAdoptium.Temurin.17.JDK", "--exact", "--silent",
@@ -136,7 +137,9 @@ function Ensure-Jdk17 {
         )
         $jdk = Find-CompatibleJdk17
     }
+
     if (-not $jdk) { throw "JDK 17 could not be detected after installation." }
+    $jdk = [System.IO.Path]::GetFullPath([string]$jdk)
 
     $env:JAVA_HOME = $jdk
     $jdkBin = Join-Path $jdk "bin"
@@ -150,14 +153,27 @@ function Ensure-Jdk17 {
     $info = Get-JavaInfo $jdk
     Write-Host "Using JDK 17: $jdk" -ForegroundColor Green
     Write-Host $info.FirstLine -ForegroundColor Cyan
-    Invoke-Checked "flutter" @("config", "--jdk-dir", $jdk)
-    return $jdk
+
+    # Capture Flutter output so the function returns only the JDK path.
+    $flutterCommand = (Get-Command flutter -ErrorAction Stop).Source
+    $configResult = Invoke-CapturedProcess -FilePath $flutterCommand -Arguments @("config", "--jdk-dir", $jdk)
+    if ($configResult.Text) { Write-Host $configResult.Text }
+    if ($configResult.ExitCode -ne 0) {
+        throw "Flutter JDK configuration failed with exit code $($configResult.ExitCode)."
+    }
+
+    return [string]$jdk
 }
 
 function Pin-GradleJdk([string]$Root, [string]$JdkPath) {
+    $cleanJdkPath = ([string]$JdkPath).Trim()
+    if (-not (Test-Path (Join-Path $cleanJdkPath "bin\java.exe"))) {
+        throw "Invalid JDK path received by Gradle configuration: $cleanJdkPath"
+    }
+
     $propertiesPath = Join-Path $Root "android\gradle.properties"
     $content = if (Test-Path $propertiesPath) { Get-Content $propertiesPath -Raw } else { "" }
-    $escaped = $JdkPath -replace '\\', '\\'
+    $escaped = $cleanJdkPath -replace '\\', '\\'
     $line = "org.gradle.java.home=$escaped"
 
     if ($content -match '(?m)^org\.gradle\.java\.home=.*$') {
@@ -169,12 +185,14 @@ function Pin-GradleJdk([string]$Root, [string]$JdkPath) {
     }
 
     [System.IO.File]::WriteAllText($propertiesPath, $content, [System.Text.UTF8Encoding]::new($false))
+    Write-Host "Pinned Gradle JDK: $cleanJdkPath" -ForegroundColor Green
 }
 
 function Verify-GradleJdk17([string]$Root) {
     $androidDir = Join-Path $Root "android"
     $gradlew = Join-Path $androidDir "gradlew.bat"
     $result = Invoke-CapturedProcess -FilePath $gradlew -Arguments @("--version", "--no-daemon") -WorkingDirectory $androidDir
+    if ($result.Text) { Write-Host $result.Text }
     if ($result.ExitCode -ne 0) { throw "Gradle verification failed.`n$($result.Text)" }
     if ($result.Text -notmatch '(?im)^(Launcher JVM|JVM):\s+17(?:\.|\s)') {
         throw "Gradle launcher is not using JDK 17.`n$($result.Text)"
@@ -185,7 +203,11 @@ function Verify-GradleJdk17([string]$Root) {
 function Initialize-Environment {
     $script:ProjectPath = [System.IO.Path]::GetFullPath($ProjectPath)
     Set-Location $script:ProjectPath
-    $jdk = Ensure-Jdk17
+
+    $jdkResult = @(Ensure-Jdk17)
+    $jdk = [string]$jdkResult[-1]
+    $jdk = $jdk.Trim()
+
     Pin-GradleJdk $script:ProjectPath $jdk
     Verify-GradleJdk17 $script:ProjectPath
 
@@ -244,15 +266,13 @@ function Restore-Packages {
 function Build-Debug {
     Restore-Packages
     Invoke-Checked "flutter" @("build", "apk", "--debug", "--no-pub") $script:ProjectPath
-    $apk = Join-Path $script:ProjectPath "build\app\outputs\flutter-apk\app-debug.apk"
-    Write-Host "Debug APK: $apk" -ForegroundColor Green
+    Write-Host "Debug APK: $(Join-Path $script:ProjectPath 'build\app\outputs\flutter-apk\app-debug.apk')" -ForegroundColor Green
 }
 
 function Build-Release {
     Restore-Packages
     Invoke-Checked "flutter" @("build", "apk", "--release", "--no-pub") $script:ProjectPath
-    $apk = Join-Path $script:ProjectPath "build\app\outputs\flutter-apk\app-release.apk"
-    Write-Host "Release APK: $apk" -ForegroundColor Green
+    Write-Host "Release APK: $(Join-Path $script:ProjectPath 'build\app\outputs\flutter-apk\app-release.apk')" -ForegroundColor Green
 }
 
 function Build-AppBundle {
@@ -275,10 +295,8 @@ function Update-FromGitHub {
 
 function Diagnose {
     $report = Join-Path $script:ProjectPath "diagnostics_report.txt"
-    $lines = @()
-    $lines += "Generated: $(Get-Date -Format s)"
-    $lines += "Project: $script:ProjectPath"
-    $lines += ""
+    $lines = @("Generated: $(Get-Date -Format s)", "Project: $script:ProjectPath", "")
+
     foreach ($command in @(
         @{ File = "flutter"; Args = @("--version") },
         @{ File = "flutter"; Args = @("doctor", "-v") },
@@ -290,6 +308,7 @@ function Diagnose {
         $lines += $result.Text
         $lines += ""
     }
+
     $lines += "> adb devices"
     $lines += (& $script:Adb devices | Out-String)
     [System.IO.File]::WriteAllLines($report, $lines, [System.Text.UTF8Encoding]::new($false))
