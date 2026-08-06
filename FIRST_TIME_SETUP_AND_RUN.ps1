@@ -19,8 +19,9 @@ function Run([string]$Command, [string[]]$Arguments, [string]$Folder = "") {
     try {
         Write-Host "> $Command $($Arguments -join ' ')" -ForegroundColor DarkGray
         & $Command @Arguments
-        if ($LASTEXITCODE -ne 0) {
-            throw "Command failed with exit code $LASTEXITCODE: $Command $($Arguments -join ' ')"
+        $exitCode = $LASTEXITCODE
+        if ($exitCode -ne 0) {
+            throw "Command failed with exit code ${exitCode}: $Command $($Arguments -join ' ')"
         }
     }
     finally {
