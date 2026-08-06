@@ -10,83 +10,94 @@ Build a production-quality Flutter cargo sorting game with 150 levels, 6 worlds,
 
 | Field | Value |
 |---|---|
-| Current phase | A — Engineering foundation and baseline stabilization |
+| Current phase | A — Engineering foundation |
 | Active primary feature | `ENG-002` Stable Android build toolchain |
-| Active coupled feature | `REL-001` Dynamic ADB/device scripts |
-| Status | IN PROGRESS |
+| Coupled feature | `REL-001` Dynamic ADB/device scripts |
+| Status | IMPLEMENTED checkpoint; Windows verification pending |
 | Branch | main |
-| Planning audit | Completed; production coverage expanded and phases normalized to A–S |
-| Next checkpoint | Finish repository-wide dynamic-device/build verification, then record the systematic baseline under `ENG-001` |
+| Blocker | The GitHub execution environment cannot run Windows PowerShell, Android SDK, JDK, Gradle, Flutter builds, or an emulator. |
+| Completed checkpoint | Central JDK 17/SDK/Gradle initialization, Kotlin cache recovery, reproducible build entry points, and static toolchain self-test. |
+| Next checkpoint | Run the documented environment self-test plus Debug APK, Release APK, and AAB builds on Windows. |
 
-## Planning coverage audit — 2026-08-07
+## ENG-002 implementation evidence — 2026-08-07
 
-- Required phase count: **19** (`A` through `S`).
-- Registered task count after audit: **190**.
-- Status distribution at audit time: **54 IMPLEMENTED**, **3 READY**, **2 IN PROGRESS**, **131 PLANNED**, **0 VERIFIED**, **0 BLOCKED**.
-- No task was promoted to `IMPLEMENTED` or `VERIFIED` by this audit.
-- Existing implementation statuses remain preliminary until verified against acceptance evidence.
-- Phase `O` is now Localization, `P` Accessibility, `Q` Performance/Reliability, `R` Testing/Quality Gates, and `S` Release/Privacy/Security/Legal/Store Readiness.
+- `BUILD_COMMON.ps1` dynamically resolves the Android SDK from environment variables or the standard Android Studio location.
+- JDK discovery validates a complete JDK 17 using both `java.exe` and `javac.exe`.
+- Java selection checks `JAVA_HOME`, `JDK_HOME`, PATH, Flutter configuration, and common vendor roots without committing a local machine path.
+- `JAVA_HOME`, `JDK_HOME`, `ANDROID_HOME`, and `ANDROID_SDK_ROOT` are applied to the current process.
+- `org.gradle.java.home` is normalized and written before Gradle execution.
+- Gradle caching, parallel execution, Kotlin incremental compilation, Kotlin daemon, and Kotlin caches remain disabled for the recurring Windows cache-lock defect.
+- Debug APK, Release APK, and Release AAB use one build/retry implementation.
+- A failed build triggers one deep Kotlin/Gradle cleanup and one deterministic retry.
+- `TEST_BUILD_TOOLCHAIN.ps1` checks PowerShell syntax and rejects fixed emulator IDs, fixed AVD/model names, local JDK paths, and PowerShell ISE usage.
+- Optional `-EnvironmentCheck` validates JDK 17, Android SDK, ADB, and the Gradle wrapper on the developer machine.
 
-## Coverage added or strengthened
+## Reproducible commands
 
-1. Environment/flavor configuration, secret handling, clean-machine developer tooling, dependency licensing, analytics schema, privacy-gated crash reporting, and offline service isolation.
-2. Complete UI loading/empty/error/retry states, animation lifecycle/interruption safety, asset provenance/licensing, and asset CI validation.
-3. Deep-link safety, onboarding/resume, world/level content versioning, gameplay interruption recovery, deterministic anti-spam state machine, and level authoring compatibility.
-4. Reward/economy ledgers, idempotency/reconciliation, probability disclosure, versioned balance rules, optional cloud/billing boundaries, live configuration, notifications, clock-abuse safeguards, and social readiness.
-5. Ad quality/no-fill behavior, audio rights/loudness/accessibility, locale formatting/translation QA, full accessibility scope, network/battery/app-size budgets, runtime/storage recovery.
-6. Integration, compatibility, privacy/security, dashboard-parser, smoke/soak quality gates.
-7. Privacy inventory/data safety/deletion, threat model/scans/hardening, legal notices/content rights, signing/key management, store assets/tracks, production monitoring/rollback, disaster recovery/archive, and final go/no-go.
+Static repository audit:
+
+```powershell
+cd "D:\Apps\CARGame"
+.\TEST_BUILD_TOOLCHAIN.ps1
+```
+
+Local toolchain audit:
+
+```powershell
+.\TEST_BUILD_TOOLCHAIN.ps1 -EnvironmentCheck
+```
+
+Build verification through the unified menu:
+
+```powershell
+.\COLD_BOOT_AND_RUN.ps1
+# 2 = Debug APK
+# 3 = Release APK
+# 4 = Release AAB
+```
+
+Direct release verification:
+
+```powershell
+.\BUILD_RELEASE_V2.ps1
+```
 
 ## Phase overview
 
-| Phase | Tasks | Current evidence state |
-|---|---:|---|
-| A Engineering foundation | 14 | 3 implemented, 1 ready, 1 in progress; governance and service boundaries added. |
-| B Shared 3D design system | 9 | 3 implemented; shared states and accessibility requirements expanded. |
-| C Motion and living interface | 10 | 1 ready; lifecycle/interruption safety added. |
-| D 3D asset pipeline | 12 | 1 ready; provenance, rights, and CI validation added. |
-| E Home and navigation | 10 | 7 implemented; onboarding/resume and external-entry safety added. |
-| F Worlds/cities/map | 8 | 5 implemented; content migration/versioning added. |
-| G Mission briefing/loadout | 6 | 4 implemented; accessible mission summary added. |
-| H Core gameplay | 16 | 10 implemented; interruption recovery and deterministic anti-spam added. |
-| I Level design/content | 8 | 2 implemented; schema/version compatibility added. |
-| J Results/rewards | 8 | 5 implemented; transaction ledger, reconciliation, and odds rules added. |
-| K Economy/progress/shop | 13 | 8 implemented; versioned balance and future sync/billing boundaries added. |
-| L Retention/live content | 10 | 2 implemented; live config, notifications, clock safeguards, social readiness added. |
-| M Ads/monetization | 9 | 1 implemented; analytics/quality/no-fill requirements added. |
-| N Audio/haptics | 7 | Planned; licensing, loudness, and accessibility added. |
-| O Localization | 6 | 2 implemented; locale formatting and translation QA added. |
-| P Accessibility | 5 | Planned as a dedicated phase. |
-| Q Performance/reliability | 11 | 2 implemented, 1 in progress; network/battery/app size/runtime/storage recovery added. |
-| R Testing/quality gates | 12 | Planned; integration, device, parser, privacy/security, smoke/soak gates added. |
-| S Release/privacy/security/legal/store | 16 | Planned as a complete production and operations gate. |
+| Phase | Current evidence state |
+|---|---|
+| A Engineering foundation | ENG-002 implementation checkpoint completed; external Windows verification remains. |
+| B Shared 3D design system | Partial; no changes in this infrastructure checkpoint. |
+| C Motion and living interface | Planned; no changes in this infrastructure checkpoint. |
+| D 3D asset pipeline | Planned; no changes in this infrastructure checkpoint. |
+| E–S | No functional or status promotion performed by this checkpoint. |
 
 ## Verification ledger
 
 | Date | Scope | Verification | Result | Commit |
 |---|---|---|---|---|
-| 2026-08-07 | Planning coverage audit | Confirmed 19 phase headings A–S, 190 unique feature IDs, valid catalog table schema, and dashboard-compatible statuses. No production commands were required because the task changed documentation only. | PASSED — static catalog/dashboard parser compatibility | Planning audit commit sequence ending at current HEAD |
-| Not recorded | Production baseline | A systematic format/analyze/test/build baseline has not yet been recorded under the new workflow. | Pending | - |
+| 2026-08-07 | ENG-002 static implementation review | Central JDK/SDK initialization, Gradle property pinning, Kotlin repair integration, deterministic retry, and self-test script added. | IMPLEMENTED | Current checkpoint |
+| 2026-08-07 | ENG-002 Windows parser/environment/build checks | `TEST_BUILD_TOOLCHAIN.ps1 -EnvironmentCheck`, Debug APK, Release APK, and AAB require Windows tooling. | BLOCKED by execution environment | - |
+| 2026-08-07 | Dashboard compatibility | Catalog table schema and statuses were not changed; existing parser contract remains intact. | PASSED — static compatibility | Current checkpoint |
 
 ## Known high-priority risks
 
-1. Two related tasks remain `IN PROGRESS`; the workflow should normally converge them to a clean status before starting unrelated production work.
-2. Emulator/ADB instability and recurring Kotlin cache failures still require multi-machine verification.
-3. Fifty-four features are marked `IMPLEMENTED` but none are `VERIFIED`; systematic regression evidence is required.
-4. Current 3D presentation is primarily procedural Flutter styling; production assets, provenance, memory budgets, and commercial rights remain open.
-5. Privacy, security, analytics, crash reporting, licensing, signing, store disclosures, monitoring, and rollback are now tracked but not implemented.
+1. `ENG-002` must not be promoted to `VERIFIED` until the documented Windows commands pass.
+2. Emulator/ADB instability can still end a debug attachment even when the application process remains alive.
+3. Kotlin cache behavior requires multi-machine verification.
+4. Existing implemented game features still need systematic regression evidence.
+5. Current 3D presentation remains primarily procedural and was not touched in this toolchain checkpoint.
 
 ## Next ready work
 
-1. Finish `ENG-002` and `REL-001` with repository-wide script audit and device/build evidence.
-2. Complete `ENG-001` baseline audit and capture format/analyze/test/debug-build results.
-3. Implement `MOT-001` shared motion tokens and lifecycle-safe primitives.
-4. Implement `AST-001` taxonomy plus `AST-011` provenance rules before producing large asset packs.
-5. Implement `TEST-001` economy/progress tests and `PRIV-001` before enabling analytics, personalized ads, cloud, or notification data flows.
+1. Execute the ENG-002 verification commands on Windows and record exact outputs.
+2. Converge `REL-001` to a clean evidence-based status after the repository-wide forbidden-pattern audit passes.
+3. Complete `ENG-001` baseline audit and capture format/analyze/test/debug-build results.
+4. Implement `MOT-001` shared motion tokens and lifecycle-safe primitives.
+5. Implement `AST-001` taxonomy and provenance rules.
 
 ## Last update
 
-- Completed the full global-production planning coverage audit.
-- Expanded the catalog to 190 measurable tasks across all mandatory phases A–S.
-- Updated phase definitions, roadmap sequencing, implementation governance, and live status.
-- No production feature implementation or evidence status was invented or promoted.
+- Hardened the Android build toolchain without changing game UI, motion, RTL/LTR, responsive layouts, offline behavior, persistence, or gameplay.
+- Added a self-test for script syntax and forbidden hard-coded environment/device values.
+- Kept ENG-002 below `VERIFIED` because Windows execution evidence is not available in this environment.
