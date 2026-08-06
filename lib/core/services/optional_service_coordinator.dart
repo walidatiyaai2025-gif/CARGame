@@ -28,7 +28,7 @@ class OptionalServiceCoordinator {
   OptionalServiceCoordinator({
     this.defaultTimeout = const Duration(seconds: 15),
     this.maxAttempts = 3,
-  });
+  }) : assert(maxAttempts > 0);
 
   final Duration defaultTimeout;
   final int maxAttempts;
@@ -52,15 +52,10 @@ class OptionalServiceCoordinator {
     String name,
     Future<void> Function() action, {
     Duration? timeout,
-    bool forceRetry = false,
   }) {
     final current = snapshot(name);
-    if (current.isReady && !forceRetry) {
-      return Future<bool>.value(true);
-    }
-    if (current.attempts >= maxAttempts && !forceRetry) {
-      return Future<bool>.value(false);
-    }
+    if (current.isReady) return Future<bool>.value(true);
+    if (current.attempts >= maxAttempts) return Future<bool>.value(false);
 
     final existing = _running[name];
     if (existing != null) return existing;
@@ -69,10 +64,9 @@ class OptionalServiceCoordinator {
       name,
       action,
       timeout: timeout ?? defaultTimeout,
-      forceRetry: forceRetry,
     );
     _running[name] = future;
-    future.whenComplete(() => _running.remove(name));
+    unawaited(future.whenComplete(() => _running.remove(name)));
     return future;
   }
 
@@ -81,18 +75,14 @@ class OptionalServiceCoordinator {
     Future<void> Function() action, {
     Duration? timeout,
   }) =>
-      initialize(name, action, timeout: timeout, forceRetry: true);
+      initialize(name, action, timeout: timeout);
 
   Future<bool> _run(
     String name,
     Future<void> Function() action, {
     required Duration timeout,
-    required bool forceRetry,
   }) async {
-    final previous = snapshot(name);
-    final attempts = forceRetry && previous.attempts >= maxAttempts
-        ? 1
-        : previous.attempts + 1;
+    final attempts = snapshot(name).attempts + 1;
     _publish(
       OptionalServiceSnapshot(
         name: name,
