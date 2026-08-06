@@ -25,18 +25,21 @@ class _GameScreenState extends State<GameScreen> {
   CargoItem? _selected;
   late int _moves;
   bool _finished = false;
+  int _combo = 0;
+  int _bestComboThisRun = 0;
+  int _mistakes = 0;
 
   int get _matchedCount => widget.level.items.length - _remaining.length;
-  double get _progress => widget.level.items.isEmpty
-      ? 0
-      : _matchedCount / widget.level.items.length;
+  double get _progress => widget.level.items.isEmpty ? 0 : _matchedCount / widget.level.items.length;
 
   int get _earnedStars {
     final ratio = widget.level.moves == 0 ? 0 : _moves / widget.level.moves;
-    if (ratio >= .35) return 3;
+    if (_mistakes == 0 && ratio >= .30) return 3;
     if (_moves > 0) return 2;
     return 1;
   }
+
+  int get _xpReward => 40 + widget.level.difficulty * 10 + _earnedStars * 15 + _bestComboThisRun * 3;
 
   @override
   void initState() {
@@ -46,11 +49,13 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   void _reset() {
-    _remaining = [...widget.level.items]
-      ..shuffle(Random(widget.level.number * 41));
+    _remaining = [...widget.level.items]..shuffle(Random(widget.level.number * 41));
     _moves = widget.level.moves;
     _selected = null;
     _finished = false;
+    _combo = 0;
+    _bestComboThisRun = 0;
+    _mistakes = 0;
   }
 
   List<CargoItem> get _warehouses {
@@ -69,27 +74,56 @@ class _GameScreenState extends State<GameScreen> {
   Future<void> _chooseWarehouse(CargoItem warehouse) async {
     final selected = _selected;
     if (selected == null || _finished || _moves <= 0) return;
+    final correct = selected.id == warehouse.id;
 
     setState(() {
       _moves--;
-      if (selected.id == warehouse.id) _remaining.remove(selected);
+      if (correct) {
+        _remaining.remove(selected);
+        _combo++;
+        if (_combo > _bestComboThisRun) _bestComboThisRun = _combo;
+      } else {
+        _combo = 0;
+        _mistakes++;
+      }
       _selected = null;
     });
+
+    if (correct && _combo >= 2 && mounted) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            duration: const Duration(milliseconds: 700),
+            behavior: SnackBarBehavior.floating,
+            content: Text(
+              _combo >= 5 ? '🔥 MEGA COMBO x$_combo' : '⚡ COMBO x$_combo',
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontWeight: FontWeight.w900),
+            ),
+          ),
+        );
+    }
 
     if (_remaining.isEmpty) {
       _finished = true;
       final stars = _earnedStars;
-      final reward = 25 + widget.level.number * 5 + (stars * 10);
+      final xp = _xpReward;
+      final comboBonus = _bestComboThisRun * 3;
+      final reward = 25 + widget.level.number * 5 + stars * 10 + comboBonus;
       await widget.store.completeLevel(
         widget.level.number,
         reward,
         stars: stars,
+        combo: _bestComboThisRun,
+        xpEarned: xp,
       );
       if (widget.level.number % 3 == 0) _ads.showInterstitial();
-      if (mounted) _showResult(true, stars: stars, reward: reward);
+      if (mounted) _showResult(true, stars: stars, reward: reward, xp: xp);
     } else if (_moves <= 0 && mounted) {
       await widget.store.loseHeart();
-      if (mounted) _showResult(false, stars: 0, reward: 0);
+      await widget.store.recordLoss();
+      if (mounted) _showResult(false, stars: 0, reward: 0, xp: 0);
     }
   }
 
@@ -98,17 +132,13 @@ class _GameScreenState extends State<GameScreen> {
     if (selected == null) return;
     final paid = await widget.store.spendCoins(10);
     if (!paid || !mounted) return;
-
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('${selected.name} → ${selected.category} warehouse'),
-      ),
+      SnackBar(content: Text('${selected.name} → ${selected.category} warehouse')),
     );
   }
 
-  void _showResult(bool won, {required int stars, required int reward}) {
+  void _showResult(bool won, {required int stars, required int reward, required int xp}) {
     final l10n = AppLocalizations.of(context)!;
-
     showModalBottomSheet<void>(
       context: context,
       isDismissible: false,
@@ -120,13 +150,7 @@ class _GameScreenState extends State<GameScreen> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(32),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x33000000),
-              blurRadius: 28,
-              offset: Offset(0, 16),
-            ),
-          ],
+          boxShadow: const [BoxShadow(color: Color(0x33000000), blurRadius: 28, offset: Offset(0, 16))],
         ),
         child: SafeArea(
           top: false,
@@ -153,16 +177,9 @@ class _GameScreenState extends State<GameScreen> {
               const SizedBox(height: 14),
               Text(
                 widget.level.cityName,
-                style: const TextStyle(
-                  color: AppTheme.navy,
-                  fontSize: 26,
-                  fontWeight: FontWeight.w900,
-                ),
+                style: const TextStyle(color: AppTheme.navy, fontSize: 26, fontWeight: FontWeight.w900),
               ),
-              Text(
-                won ? l10n.completed : l10n.failed,
-                style: const TextStyle(color: AppTheme.muted),
-              ),
+              Text(won ? l10n.completed : l10n.failed, style: const TextStyle(color: AppTheme.muted)),
               if (won) ...[
                 const SizedBox(height: 12),
                 Row(
@@ -179,25 +196,29 @@ class _GameScreenState extends State<GameScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 10),
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: 10,
+                  runSpacing: 8,
+                  children: [
+                    _ResultChip(icon: Icons.monetization_on_rounded, text: '+$reward'),
+                    _ResultChip(icon: Icons.bolt_rounded, text: '+$xp XP'),
+                    _ResultChip(icon: Icons.local_fire_department_rounded, text: 'x$_bestComboThisRun'),
+                  ],
+                ),
+                const SizedBox(height: 10),
                 Text(
-                  '+$reward ${l10n.coins}',
-                  style: const TextStyle(
-                    color: AppTheme.orange,
-                    fontSize: 20,
+                  _mistakes == 0 ? 'PERFECT SORT!' : 'Best combo: $_bestComboThisRun',
+                  style: TextStyle(
+                    color: _mistakes == 0 ? AppTheme.green : AppTheme.orange,
                     fontWeight: FontWeight.w900,
+                    fontSize: 18,
                   ),
                 ),
               ] else ...[
                 const SizedBox(height: 10),
-                Text(
-                  '${l10n.moves}: 0',
-                  style: const TextStyle(
-                    color: Colors.redAccent,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
+                Text('${l10n.moves}: 0', style: const TextStyle(color: Colors.redAccent, fontSize: 20, fontWeight: FontWeight.w900)),
               ],
               const SizedBox(height: 20),
               if (!won)
@@ -229,9 +250,7 @@ class _GameScreenState extends State<GameScreen> {
                       setState(_reset);
                     }
                   },
-                  icon: Icon(
-                    won ? Icons.map_rounded : Icons.restart_alt_rounded,
-                  ),
+                  icon: Icon(won ? Icons.map_rounded : Icons.restart_alt_rounded),
                   label: Text(won ? l10n.next : l10n.retry),
                 ),
               ),
@@ -258,19 +277,12 @@ class _GameScreenState extends State<GameScreen> {
         title: Column(
           children: [
             Text(widget.level.cityName),
-            Text(
-              '${world.name} • ${l10n.level} ${widget.level.number}',
-              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
-            ),
+            Text('${world.name} • ${l10n.level} ${widget.level.number}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
           ],
         ),
         centerTitle: true,
         actions: [
-          IconButton(
-            tooltip: l10n.restart,
-            onPressed: () => setState(_reset),
-            icon: const Icon(Icons.restart_alt_rounded),
-          ),
+          IconButton(tooltip: l10n.restart, onPressed: () => setState(_reset), icon: const Icon(Icons.restart_alt_rounded)),
         ],
       ),
       body: Container(
@@ -294,6 +306,7 @@ class _GameScreenState extends State<GameScreen> {
                   progress: _progress,
                   coins: widget.store.coins,
                   hearts: widget.store.hearts,
+                  combo: _combo,
                 ),
                 const SizedBox(height: 10),
                 Text(
@@ -307,19 +320,12 @@ class _GameScreenState extends State<GameScreen> {
                 const SizedBox(height: 10),
                 Expanded(
                   flex: 3,
-                  child: _CargoBoard(
-                    items: _remaining,
-                    selected: _selected,
-                    onTap: _choosePackage,
-                  ),
+                  child: _CargoBoard(items: _remaining, selected: _selected, onTap: _choosePackage),
                 ),
                 const SizedBox(height: 12),
                 Expanded(
                   flex: 2,
-                  child: _WarehouseBoard(
-                    warehouses: _warehouses,
-                    onTap: _chooseWarehouse,
-                  ),
+                  child: _WarehouseBoard(warehouses: _warehouses, onTap: _chooseWarehouse),
                 ),
                 const SizedBox(height: 12),
                 Row(
@@ -350,9 +356,25 @@ class _GameScreenState extends State<GameScreen> {
   }
 }
 
+class _ResultChip extends StatelessWidget {
+  const _ResultChip({required this.icon, required this.text});
+  final IconData icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(color: const Color(0xFFF3F6FA), borderRadius: BorderRadius.circular(18)),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          Icon(icon, size: 18, color: AppTheme.orange),
+          const SizedBox(width: 5),
+          Text(text, style: const TextStyle(color: AppTheme.navy, fontWeight: FontWeight.w900)),
+        ]),
+      );
+}
+
 class _CargoBoard extends StatelessWidget {
   const _CargoBoard({required this.items, required this.selected, required this.onTap});
-
   final List<CargoItem> items;
   final CargoItem? selected;
   final ValueChanged<CargoItem> onTap;
@@ -396,18 +418,8 @@ class _CargoBoard extends StatelessWidget {
                   children: [
                     Icon(item.icon, color: Colors.white, size: 34),
                     const SizedBox(height: 5),
-                    Text(
-                      item.name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900),
-                    ),
-                    Text(
-                      item.category,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: Colors.white70, fontSize: 8),
-                    ),
+                    Text(item.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900)),
+                    Text(item.category, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white70, fontSize: 8)),
                   ],
                 ),
               ),
@@ -421,7 +433,6 @@ class _CargoBoard extends StatelessWidget {
 
 class _WarehouseBoard extends StatelessWidget {
   const _WarehouseBoard({required this.warehouses, required this.onTap});
-
   final List<CargoItem> warehouses;
   final ValueChanged<CargoItem> onTap;
 
@@ -453,12 +464,7 @@ class _WarehouseBoard extends StatelessWidget {
               children: [
                 Icon(Icons.warehouse_rounded, color: item.color, size: 38),
                 const SizedBox(height: 3),
-                Text(
-                  item.category,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(color: item.color, fontSize: 9, fontWeight: FontWeight.w900),
-                ),
+                Text(item.category, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: item.color, fontSize: 9, fontWeight: FontWeight.w900)),
               ],
             ),
           ),
@@ -477,6 +483,7 @@ class _StatusPanel extends StatelessWidget {
     required this.progress,
     required this.coins,
     required this.hearts,
+    required this.combo,
   });
 
   final String movesLabel;
@@ -486,6 +493,7 @@ class _StatusPanel extends StatelessWidget {
   final double progress;
   final int coins;
   final int hearts;
+  final int combo;
 
   @override
   Widget build(BuildContext context) {
@@ -502,7 +510,7 @@ class _StatusPanel extends StatelessWidget {
             children: [
               _Metric(icon: Icons.touch_app_rounded, label: movesLabel, value: '$moves'),
               _Metric(icon: Icons.inventory_2_rounded, label: 'Cargo', value: '$matched/$total'),
-              _Metric(icon: Icons.monetization_on_rounded, label: 'Coins', value: '$coins'),
+              _Metric(icon: Icons.local_fire_department_rounded, label: 'Combo', value: 'x$combo'),
               _Metric(icon: Icons.favorite_rounded, label: 'Lives', value: '$hearts'),
             ],
           ),
@@ -524,7 +532,6 @@ class _StatusPanel extends StatelessWidget {
 
 class _Metric extends StatelessWidget {
   const _Metric({required this.icon, required this.label, required this.value});
-
   final IconData icon;
   final String label;
   final String value;
