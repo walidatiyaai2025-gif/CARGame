@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/settings/app_settings_store.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/game_button.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({
@@ -65,19 +66,24 @@ class SettingsScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 14),
                 _SettingsCard(
+                  padding: const EdgeInsets.all(10),
                   children: [
                     _ActionTile(
                       icon: Icons.language_rounded,
                       title: ar ? 'اللغة' : 'Language',
                       subtitle: ar ? 'التبديل إلى الإنجليزية' : 'Switch to Arabic',
                       onTap: onToggleLanguage,
+                      hapticsEnabled: settings.vibrationEnabled,
                     ),
+                    const SizedBox(height: 8),
                     _ActionTile(
                       icon: Icons.privacy_tip_rounded,
                       title: ar ? 'الخصوصية' : 'Privacy',
                       subtitle: ar ? 'سياسة الخصوصية والإعلانات' : 'Privacy and advertising information',
                       onTap: () => _showInfo(context, ar),
+                      hapticsEnabled: settings.vibrationEnabled,
                     ),
+                    const SizedBox(height: 8),
                     _ActionTile(
                       icon: Icons.info_rounded,
                       title: ar ? 'حول اللعبة' : 'About',
@@ -88,6 +94,7 @@ class SettingsScreen extends StatelessWidget {
                         applicationVersion: '1.0.1 (2)',
                         applicationLegalese: 'Walid Atiya Ata - PMP',
                       ),
+                      hapticsEnabled: settings.vibrationEnabled,
                     ),
                   ],
                 ),
@@ -174,11 +181,17 @@ class _HeroHeader extends StatelessWidget {
 }
 
 class _SettingsCard extends StatelessWidget {
-  const _SettingsCard({required this.children});
+  const _SettingsCard({
+    required this.children,
+    this.padding = EdgeInsets.zero,
+  });
+
   final List<Widget> children;
+  final EdgeInsetsGeometry padding;
 
   @override
   Widget build(BuildContext context) => Container(
+        padding: padding,
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(28),
@@ -214,19 +227,58 @@ class _SwitchTile extends StatelessWidget {
 }
 
 class _ActionTile extends StatelessWidget {
-  const _ActionTile({required this.icon, required this.title, required this.subtitle, required this.onTap});
+  const _ActionTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+    required this.hapticsEnabled,
+  });
+
   final IconData icon;
   final String title;
   final String subtitle;
   final VoidCallback onTap;
+  final bool hapticsEnabled;
 
   @override
-  Widget build(BuildContext context) => ListTile(
-        leading: _TileIcon(icon: icon),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w900, color: AppTheme.navy)),
-        subtitle: Text(subtitle),
-        trailing: const Icon(Icons.chevron_right_rounded),
-        onTap: onTap,
+  Widget build(BuildContext context) => GameButton(
+        semanticLabel: title,
+        onPressed: onTap,
+        hapticsEnabled: hapticsEnabled,
+        expand: true,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        backgroundColor: const Color(0xFFF8FBFF),
+        shadowColor: const Color(0x220A2945),
+        borderRadius: BorderRadius.circular(20),
+        child: Row(
+          children: [
+            _TileIcon(icon: icon),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w900,
+                      color: AppTheme.navy,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: AppTheme.muted),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right_rounded, color: AppTheme.blue),
+          ],
+        ),
       );
 }
 
