@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/storage/progress_store.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/game_skin.dart';
+import '../../core/theme/three_d_game_icon.dart';
 
 class ShopScreen extends StatelessWidget {
   const ShopScreen({super.key, required this.store});
@@ -73,7 +74,7 @@ class ShopScreen extends StatelessWidget {
               _BalanceHeader(store: store, skin: skin),
               const SizedBox(height: 22),
               const _SectionTitle(
-                icon: Icons.favorite_rounded,
+                iconType: ThreeDIconType.heart,
                 title: 'Heart Station',
                 subtitle: 'Continue your journey without waiting',
               ),
@@ -82,20 +83,18 @@ class ShopScreen extends StatelessWidget {
                 children: [
                   Expanded(
                     child: _OfferCard(
-                      icon: Icons.favorite_rounded,
+                      iconType: ThreeDIconType.heart,
                       title: '+1 Heart',
                       subtitle: '120 coins',
-                      color: AppTheme.red,
                       onTap: () => _buyHearts(context, 1, 120),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: _OfferCard(
-                      icon: Icons.favorite_border_rounded,
+                      iconType: ThreeDIconType.heart,
                       title: 'Full Hearts',
                       subtitle: '450 coins',
-                      color: AppTheme.red,
                       onTap: () => _buyHearts(
                         context,
                         ProgressStore.maxHearts,
@@ -107,18 +106,17 @@ class ShopScreen extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               const _SectionTitle(
-                icon: Icons.rocket_launch_rounded,
+                iconType: ThreeDIconType.chest,
                 title: 'Boosters',
                 subtitle: 'Power tools for difficult cities',
               ),
               const SizedBox(height: 12),
               _BoosterTile(
-                icon: Icons.lightbulb_rounded,
+                iconType: ThreeDIconType.hint,
                 title: 'Smart Hint Pack',
                 description: '3 free hints without spending coins',
                 inventory: store.freeHints,
                 price: 180,
-                color: const Color(0xFFFFB300),
                 onTap: () => _buyBooster(
                   context,
                   'hint',
@@ -128,12 +126,11 @@ class ShopScreen extends StatelessWidget {
                 ),
               ),
               _BoosterTile(
-                icon: Icons.add_circle_rounded,
+                iconType: ThreeDIconType.extraMoves,
                 title: 'Extra Moves Pack',
                 description: 'Adds 5 moves during a city mission',
                 inventory: store.extraMovesBoosters,
                 price: 260,
-                color: const Color(0xFF3D6FD8),
                 onTap: () => _buyBooster(
                   context,
                   'moves',
@@ -143,12 +140,11 @@ class ShopScreen extends StatelessWidget {
                 ),
               ),
               _BoosterTile(
-                icon: Icons.shield_rounded,
+                iconType: ThreeDIconType.shield,
                 title: 'Combo Shield',
                 description: 'Protects one combo from a wrong match',
                 inventory: store.comboShields,
                 price: 220,
-                color: const Color(0xFF7B43C6),
                 onTap: () => _buyBooster(
                   context,
                   'shield',
@@ -159,7 +155,7 @@ class ShopScreen extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               const _SectionTitle(
-                icon: Icons.palette_rounded,
+                iconType: ThreeDIconType.star,
                 title: 'Visual Themes',
                 subtitle: 'Apply a new identity across the game',
               ),
@@ -200,7 +196,12 @@ class _BalanceHeader extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(Icons.storefront_rounded, color: skin.accent, size: 48),
+          const ThreeDGameIcon(
+            type: ThreeDIconType.chest,
+            size: 58,
+            animate: true,
+            semanticLabel: 'Cargo shop',
+          ),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
@@ -210,26 +211,47 @@ class _BalanceHeader extends StatelessWidget {
                   'Available balance',
                   style: TextStyle(color: Colors.white70),
                 ),
-                Text(
-                  '${store.coins} coins',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.w900,
-                  ),
+                Row(
+                  children: [
+                    const ThreeDGameIcon(
+                      type: ThreeDIconType.coin,
+                      size: 30,
+                      semanticLabel: 'Coins',
+                    ),
+                    const SizedBox(width: 6),
+                    Flexible(
+                      child: Text(
+                        '${store.coins}',
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 24,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
-          Text(
-            '${store.hearts}/${ProgressStore.maxHearts}',
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w900,
-            ),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const ThreeDGameIcon(
+                type: ThreeDIconType.heart,
+                size: 34,
+                semanticLabel: 'Hearts',
+              ),
+              Text(
+                '${store.hearts}/${ProgressStore.maxHearts}',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 5),
-          const Icon(Icons.favorite_rounded, color: AppTheme.red),
         ],
       ),
     );
@@ -238,19 +260,23 @@ class _BalanceHeader extends StatelessWidget {
 
 class _SectionTitle extends StatelessWidget {
   const _SectionTitle({
-    required this.icon,
+    required this.iconType,
     required this.title,
     required this.subtitle,
   });
 
-  final IconData icon;
+  final ThreeDIconType iconType;
   final String title;
   final String subtitle;
 
   @override
   Widget build(BuildContext context) => Row(
         children: [
-          Icon(icon, color: AppTheme.orange),
+          ThreeDGameIcon(
+            type: iconType,
+            size: 38,
+            semanticLabel: title,
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -277,17 +303,15 @@ class _SectionTitle extends StatelessWidget {
 
 class _OfferCard extends StatelessWidget {
   const _OfferCard({
-    required this.icon,
+    required this.iconType,
     required this.title,
     required this.subtitle,
-    required this.color,
     required this.onTap,
   });
 
-  final IconData icon;
+  final ThreeDIconType iconType;
   final String title;
   final String subtitle;
-  final Color color;
   final VoidCallback onTap;
 
   @override
@@ -301,22 +325,40 @@ class _OfferCard extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             child: Column(
               children: [
-                Icon(icon, color: color, size: 40),
+                ThreeDGameIcon(
+                  type: iconType,
+                  size: 54,
+                  animate: true,
+                  semanticLabel: title,
+                ),
                 const SizedBox(height: 8),
                 Text(
                   title,
+                  textAlign: TextAlign.center,
                   style: const TextStyle(
                     color: AppTheme.navy,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  subtitle,
-                  style: const TextStyle(
-                    color: AppTheme.orange,
-                    fontWeight: FontWeight.w900,
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const ThreeDGameIcon(
+                      type: ThreeDIconType.coin,
+                      size: 24,
+                    ),
+                    const SizedBox(width: 4),
+                    Flexible(
+                      child: Text(
+                        subtitle.replaceAll(' coins', ''),
+                        style: const TextStyle(
+                          color: AppTheme.orange,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -327,21 +369,19 @@ class _OfferCard extends StatelessWidget {
 
 class _BoosterTile extends StatelessWidget {
   const _BoosterTile({
-    required this.icon,
+    required this.iconType,
     required this.title,
     required this.description,
     required this.inventory,
     required this.price,
-    required this.color,
     required this.onTap,
   });
 
-  final IconData icon;
+  final ThreeDIconType iconType;
   final String title;
   final String description;
   final int inventory;
   final int price;
-  final Color color;
   final VoidCallback onTap;
 
   @override
@@ -349,14 +389,13 @@ class _BoosterTile extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 10),
         child: ListTile(
           contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-          leading: Container(
-            width: 50,
-            height: 50,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: .14),
-              borderRadius: BorderRadius.circular(16),
+          leading: SizedBox.square(
+            dimension: 56,
+            child: ThreeDGameIcon(
+              type: iconType,
+              size: 54,
+              semanticLabel: title,
             ),
-            child: Icon(icon, color: color),
           ),
           title: Text(
             title,
@@ -369,7 +408,17 @@ class _BoosterTile extends StatelessWidget {
           isThreeLine: true,
           trailing: FilledButton(
             onPressed: onTap,
-            child: Text('$price'),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const ThreeDGameIcon(
+                  type: ThreeDIconType.coin,
+                  size: 22,
+                ),
+                const SizedBox(width: 4),
+                Text('$price'),
+              ],
+            ),
           ),
         ),
       );
@@ -443,17 +492,39 @@ class _ThemeTile extends StatelessWidget {
                         : AppTheme.orange.withValues(alpha: .12),
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  child: Text(
-                    selected
-                        ? 'Selected'
-                        : unlocked
-                            ? 'Use'
-                            : '${offer.price}',
-                    style: TextStyle(
-                      color: selected ? AppTheme.green : AppTheme.orange,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
+                  child: selected
+                      ? const Text(
+                          'Selected',
+                          style: TextStyle(
+                            color: AppTheme.green,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        )
+                      : unlocked
+                          ? const Text(
+                              'Use',
+                              style: TextStyle(
+                                color: AppTheme.orange,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            )
+                          : Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const ThreeDGameIcon(
+                                  type: ThreeDIconType.coin,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 3),
+                                Text(
+                                  '${offer.price}',
+                                  style: const TextStyle(
+                                    color: AppTheme.orange,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                              ],
+                            ),
                 ),
               ],
             ),
