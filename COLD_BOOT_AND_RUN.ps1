@@ -61,7 +61,7 @@ function Invoke-CapturedProcess {
         if (Test-Path $stdout) { $parts += Get-Content $stdout -Raw -ErrorAction SilentlyContinue }
         if (Test-Path $stderr) { $parts += Get-Content $stderr -Raw -ErrorAction SilentlyContinue }
 
-        return [pscustomobject]@{
+        [pscustomobject]@{
             ExitCode = $process.ExitCode
             Text = (($parts | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }) -join [Environment]::NewLine)
         }
@@ -123,6 +123,27 @@ function Find-CompatibleJdk17 {
     return $null
 }
 
+function Configure-FlutterJdk([string]$JdkPath) {
+    $flutterBat = (Get-Command flutter.bat -ErrorAction SilentlyContinue).Source
+    if (-not $flutterBat) {
+        $flutterBat = (Get-Command flutter -ErrorAction Stop).Source
+    }
+
+    # cmd.exe preserves the quoted JDK path as one argument, including Program Files.
+    $escapedFlutter = $flutterBat.Replace('"', '\"')
+    $escapedJdk = $JdkPath.Replace('"', '\"')
+    $commandLine = '"{0}" config --jdk-dir "{1}"' -f $escapedFlutter, $escapedJdk
+
+    $result = Invoke-CapturedProcess `
+        -FilePath $env:ComSpec `
+        -Arguments @('/d', '/s', '/c', $commandLine)
+
+    if ($result.Text) { Write-Host $result.Text }
+    if ($result.ExitCode -ne 0) {
+        throw "Flutter JDK configuration failed with exit code $($result.ExitCode)."
+    }
+}
+
 function Ensure-Jdk17 {
     $jdk = Find-CompatibleJdk17
     if (-not $jdk) {
@@ -154,15 +175,8 @@ function Ensure-Jdk17 {
     Write-Host "Using JDK 17: $jdk" -ForegroundColor Green
     Write-Host $info.FirstLine -ForegroundColor Cyan
 
-    # Capture Flutter output so the function returns only the JDK path.
-    $flutterCommand = (Get-Command flutter -ErrorAction Stop).Source
-    $configResult = Invoke-CapturedProcess -FilePath $flutterCommand -Arguments @("config", "--jdk-dir", $jdk)
-    if ($configResult.Text) { Write-Host $configResult.Text }
-    if ($configResult.ExitCode -ne 0) {
-        throw "Flutter JDK configuration failed with exit code $($configResult.ExitCode)."
-    }
-
-    return [string]$jdk
+    Configure-FlutterJdk $jdk
+    return ,$jdk
 }
 
 function Pin-GradleJdk([string]$Root, [string]$JdkPath) {
@@ -204,11 +218,8 @@ function Initialize-Environment {
     $script:ProjectPath = [System.IO.Path]::GetFullPath($ProjectPath)
     Set-Location $script:ProjectPath
 
-    $jdkResult = @(Ensure-Jdk17)
-    $jdk = [string]$jdkResult[-1]
-    $jdk = $jdk.Trim()
-
-    Pin-GradleJdk $script:ProjectPath $jdk
+    $jdk = Ensure-Jdk17
+    Pin-GradleJdk $script:ProjectPath ([string]$jdk)
     Verify-GradleJdk17 $script:ProjectPath
 
     $script:Sdk = Find-AndroidSdk
