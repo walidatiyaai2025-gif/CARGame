@@ -20,20 +20,57 @@ function Get-AndroidTools {
     [pscustomobject]@{ Sdk=$sdk; Adb=$adb; Emulator=$emulator }
 }
 
+function Get-PropertyValue {
+    param(
+        [Parameter(Mandatory)]$Object,
+        [Parameter(Mandatory)][string]$Name,
+        $Default = $null
+    )
+
+    $property = $Object.PSObject.Properties[$Name]
+    if ($null -eq $property) { return $Default }
+    return $property.Value
+}
+
 function Get-FlutterAndroidDevices {
     $json = & flutter devices --machine 2>$null | Out-String
     if ([string]::IsNullOrWhiteSpace($json)) { return @() }
+
     try {
-        $devices = $json | ConvertFrom-Json
+        $devices = @($json | ConvertFrom-Json)
     } catch {
         throw 'Could not parse Flutter device list.'
     }
 
-    return @($devices | Where-Object {
-        $_.targetPlatform -like 'android*' -and
-        $_.isSupported -eq $true -and
-        $_.isEmulator -ne $null
-    })
+    $supportedAndroid = foreach ($device in $devices) {
+        $targetPlatform = [string](Get-PropertyValue $device 'targetPlatform' '')
+        $id = [string](Get-PropertyValue $device 'id' '')
+        $name = [string](Get-PropertyValue $device 'name' $id)
+        $isSupportedValue = Get-PropertyValue $device 'isSupported' $true
+        $unsupportedValue = Get-PropertyValue $device 'unsupported' $false
+
+        $isSupported = ($isSupportedValue -ne $false) -and ($unsupportedValue -ne $true)
+        $isAndroid = $targetPlatform -like 'android*'
+
+        if ($isAndroid -and $isSupported -and -not [string]::IsNullOrWhiteSpace($id)) {
+            $emulatorFlag = Get-PropertyValue $device 'isEmulator' $null
+            $isEmulator = if ($null -ne $emulatorFlag) {
+                [bool]$emulatorFlag
+            } else {
+                $id -like 'emulator-*' -or
+                $name -match '(?i)emulator|sdk gphone|android sdk built for'
+            }
+
+            [pscustomobject]@{
+                id = $id
+                name = $name
+                targetPlatform = $targetPlatform
+                isEmulator = $isEmulator
+            }
+        }
+    }
+
+    return @($supportedAndroid)
 }
 
 function Get-SupportedAndroidDeviceId {
@@ -47,7 +84,8 @@ function Get-SupportedAndroidDeviceId {
     Write-Host ''
     Write-Host 'Supported Android devices:' -ForegroundColor Cyan
     for ($i = 0; $i -lt $devices.Count; $i++) {
-        Write-Host "[$($i + 1)] $($devices[$i].name) - $($devices[$i].id) - $($devices[$i].targetPlatform)"
+        $kind = if ($devices[$i].isEmulator) { 'Emulator' } else { 'Physical device' }
+        Write-Host "[$($i + 1)] $($devices[$i].name) - $($devices[$i].id) - $($devices[$i].targetPlatform) - $kind"
     }
     $choice = Read-Host 'Choose device number'
     $index = 0
