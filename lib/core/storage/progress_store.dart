@@ -27,6 +27,11 @@ class ProgressStore extends ChangeNotifier {
   static const _missionStarsKey = 'mission_stars';
   static const _missionCoinsKey = 'mission_coins';
   static const _missionClaimedKey = 'mission_claimed';
+  static const _selectedThemeKey = 'selected_shop_theme';
+  static const _unlockedThemesKey = 'unlocked_shop_themes';
+  static const _freeHintsKey = 'booster_free_hints';
+  static const _extraMovesKey = 'booster_extra_moves';
+  static const _comboShieldsKey = 'booster_combo_shields';
 
   final SharedPreferencesAsync _prefs = SharedPreferencesAsync();
   final Map<int, int> _levelStars = <int, int>{};
@@ -46,7 +51,12 @@ class ProgressStore extends ChangeNotifier {
   int missionWins = 0;
   int missionStars = 0;
   int missionCoins = 0;
+  int freeHints = 2;
+  int extraMovesBoosters = 1;
+  int comboShields = 1;
   bool missionClaimed = false;
+  String selectedTheme = 'classic';
+  Set<String> unlockedThemes = <String>{'classic'};
   String? _lastDailyRewardDate;
   String? _missionDate;
   DateTime? _heartRefillTimestamp;
@@ -62,6 +72,7 @@ class ProgressStore extends ChangeNotifier {
   double get playerLevelProgress => xpIntoCurrentLevel / 500;
 
   int starsForLevel(int level) => _levelStars[level] ?? 0;
+  bool isThemeUnlocked(String themeId) => unlockedThemes.contains(themeId);
 
   String get _today {
     final now = DateTime.now();
@@ -95,6 +106,12 @@ class ProgressStore extends ChangeNotifier {
     currentWinStreak = await _prefs.getInt(_winStreakKey) ?? 0;
     bestWinStreak = await _prefs.getInt(_bestWinStreakKey) ?? 0;
     playerXp = await _prefs.getInt(_xpKey) ?? 0;
+    selectedTheme = await _prefs.getString(_selectedThemeKey) ?? 'classic';
+    unlockedThemes = {...?await _prefs.getStringList(_unlockedThemesKey), 'classic'};
+    if (!unlockedThemes.contains(selectedTheme)) selectedTheme = 'classic';
+    freeHints = await _prefs.getInt(_freeHintsKey) ?? 2;
+    extraMovesBoosters = await _prefs.getInt(_extraMovesKey) ?? 1;
+    comboShields = await _prefs.getInt(_comboShieldsKey) ?? 1;
 
     _missionDate = await _prefs.getString(_missionDateKey);
     if (_missionDate != _today) {
@@ -233,6 +250,63 @@ class ProgressStore extends ChangeNotifier {
     if (coins < amount) return false;
     coins -= amount;
     await _prefs.setInt(_coinsKey, coins);
+    notifyListeners();
+    return true;
+  }
+
+  Future<bool> purchaseTheme(String themeId, int price) async {
+    if (!unlockedThemes.contains(themeId)) {
+      final paid = await spendCoins(price);
+      if (!paid) return false;
+      unlockedThemes.add(themeId);
+      await _prefs.setStringList(_unlockedThemesKey, unlockedThemes.toList());
+    }
+    selectedTheme = themeId;
+    await _prefs.setString(_selectedThemeKey, selectedTheme);
+    notifyListeners();
+    return true;
+  }
+
+  Future<bool> purchaseBooster(String boosterId, int amount, int price) async {
+    final paid = await spendCoins(price);
+    if (!paid) return false;
+    switch (boosterId) {
+      case 'hint':
+        freeHints += amount;
+        await _prefs.setInt(_freeHintsKey, freeHints);
+      case 'moves':
+        extraMovesBoosters += amount;
+        await _prefs.setInt(_extraMovesKey, extraMovesBoosters);
+      case 'shield':
+        comboShields += amount;
+        await _prefs.setInt(_comboShieldsKey, comboShields);
+      default:
+        throw ArgumentError.value(boosterId, 'boosterId');
+    }
+    notifyListeners();
+    return true;
+  }
+
+  Future<bool> useFreeHint() async {
+    if (freeHints <= 0) return false;
+    freeHints--;
+    await _prefs.setInt(_freeHintsKey, freeHints);
+    notifyListeners();
+    return true;
+  }
+
+  Future<bool> useExtraMoves() async {
+    if (extraMovesBoosters <= 0) return false;
+    extraMovesBoosters--;
+    await _prefs.setInt(_extraMovesKey, extraMovesBoosters);
+    notifyListeners();
+    return true;
+  }
+
+  Future<bool> useComboShield() async {
+    if (comboShields <= 0) return false;
+    comboShields--;
+    await _prefs.setInt(_comboShieldsKey, comboShields);
     notifyListeners();
     return true;
   }
