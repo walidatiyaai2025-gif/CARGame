@@ -1,83 +1,92 @@
 # CARGame Live Project Status
 
-This document is the short operational dashboard. Detailed function tracking lives in `docs/FEATURE_CATALOG.md`.
-Codex must update this file during every implementation task.
+This document is the short operational dashboard. Detailed tracking lives in `docs/FEATURE_CATALOG.md`; counts and percentages are calculated dynamically by the Developer Portal.
 
 ## Project objective
 
-Build a production-quality Flutter cargo sorting game with 150 levels, 6 worlds,
-a completely unified 3D-rendered visual style, responsive animation, offline-first
-progress, Arabic/English support, and Android release readiness.
+Build a production-quality Flutter cargo sorting game with 150 levels, 6 worlds, unified premium 3D visuals, responsive living motion, offline-first progress, Arabic/English support, measurable quality, privacy/security/legal readiness, and Android store release operations.
 
 ## Current work
 
 | Field | Value |
 |---|---|
-| Current phase | Engineering foundation and baseline stabilization |
-| Active feature | `ENG-002` Stable Android build toolchain / `REL-001` dynamic device scripts |
+| Current phase | A — Engineering foundation and baseline stabilization |
+| Active primary feature | `ENG-002` Stable Android build toolchain |
+| Active coupled feature | `REL-001` Dynamic ADB/device scripts |
 | Status | IN PROGRESS |
 | Branch | main |
-| Blocker | Repeated emulator/ADB offline behavior requires dynamic and resilient handling |
-| Next checkpoint | Verify all scripts contain no fixed device/AVD names and complete a debug run on any supported selected device |
+| Planning audit | Completed; production coverage expanded and phases normalized to A–S |
+| Next checkpoint | Finish repository-wide dynamic-device/build verification, then record the systematic baseline under `ENG-001` |
 
-## Overall progress by area
+## Planning coverage audit — 2026-08-07
 
-| Area | State | Notes |
-|---|---|---|
-| Engineering foundation | In progress | Build repair, startup resilience, diagnostics mostly implemented; audit and CI remain. |
-| Shared 3D design system | Partial | Reusable 3D-style icon component and several converted screens exist. |
-| Motion system | Planned | Requirements documented; reusable motion tokens/primitives are next. |
-| 3D asset pipeline | Planned | Folder taxonomy, manifest, typed registry, and production WebP packs remain. |
-| Home | Partial | 3D-style redesign exists; production assets and full motion pass remain. |
-| World/city map | Partial | Six worlds/150 cities and responsive map exist; production assets/unlock motion remain. |
-| Mission briefing | Partial | Loadout and 3D-style presentation exist; transition/motion verification remain. |
-| Gameplay | Partial | Core sorting, moves, combo, boosters, win/loss exist; full 3D board/products/effects remain. |
-| Levels | Partial | 150 entries exist; balancing, solvability validation, and boss mechanics remain. |
-| Rewards/economy/shop | Partial | Core persistence and rewards exist; tests and final 3D/motion pass remain. |
-| Retention | Partial | Daily reward and mission exist; weekly/achievements/streak/event systems remain. |
-| Ads | Partial | Non-blocking startup exists; safe IDs, rewarded flows, consent, pacing remain. |
-| Audio/haptics | Planned | Service, content, settings, and synchronized profiles remain. |
-| Localization/accessibility | Partial | EN/AR framework exists; hard-coded text and accessibility audit remain. |
-| Testing | Early | Systematic unit/widget/regression/golden coverage remains. |
-| Release | Not ready | Signing, release validation, CI, Play readiness remain. |
+- Required phase count: **19** (`A` through `S`).
+- Registered task count after audit: **190**.
+- Status distribution at audit time: **54 IMPLEMENTED**, **3 READY**, **2 IN PROGRESS**, **131 PLANNED**, **0 VERIFIED**, **0 BLOCKED**.
+- No task was promoted to `IMPLEMENTED` or `VERIFIED` by this audit.
+- Existing implementation statuses remain preliminary until verified against acceptance evidence.
+- Phase `O` is now Localization, `P` Accessibility, `Q` Performance/Reliability, `R` Testing/Quality Gates, and `S` Release/Privacy/Security/Legal/Store Readiness.
 
-## Active task checklist
+## Coverage added or strengthened
 
-- [ ] Read `AGENTS.md` and `docs/FEATURE_CATALOG.md`.
-- [ ] Confirm selected feature is marked `IN PROGRESS`.
-- [ ] Record affected modules and acceptance criteria.
-- [ ] Implement the smallest coherent production change.
-- [ ] Run format.
-- [ ] Run analyze.
-- [ ] Run tests.
-- [ ] Run applicable Android build or document external blocker.
-- [ ] Update feature status and evidence.
-- [ ] Update this dashboard.
-- [ ] Commit one coherent change.
+1. Environment/flavor configuration, secret handling, clean-machine developer tooling, dependency licensing, analytics schema, privacy-gated crash reporting, and offline service isolation.
+2. Complete UI loading/empty/error/retry states, animation lifecycle/interruption safety, asset provenance/licensing, and asset CI validation.
+3. Deep-link safety, onboarding/resume, world/level content versioning, gameplay interruption recovery, deterministic anti-spam state machine, and level authoring compatibility.
+4. Reward/economy ledgers, idempotency/reconciliation, probability disclosure, versioned balance rules, optional cloud/billing boundaries, live configuration, notifications, clock-abuse safeguards, and social readiness.
+5. Ad quality/no-fill behavior, audio rights/loudness/accessibility, locale formatting/translation QA, full accessibility scope, network/battery/app-size budgets, runtime/storage recovery.
+6. Integration, compatibility, privacy/security, dashboard-parser, smoke/soak quality gates.
+7. Privacy inventory/data safety/deletion, threat model/scans/hardening, legal notices/content rights, signing/key management, store assets/tracks, production monitoring/rollback, disaster recovery/archive, and final go/no-go.
+
+## Phase overview
+
+| Phase | Tasks | Current evidence state |
+|---|---:|---|
+| A Engineering foundation | 14 | 3 implemented, 1 ready, 1 in progress; governance and service boundaries added. |
+| B Shared 3D design system | 9 | 3 implemented; shared states and accessibility requirements expanded. |
+| C Motion and living interface | 10 | 1 ready; lifecycle/interruption safety added. |
+| D 3D asset pipeline | 12 | 1 ready; provenance, rights, and CI validation added. |
+| E Home and navigation | 10 | 7 implemented; onboarding/resume and external-entry safety added. |
+| F Worlds/cities/map | 8 | 5 implemented; content migration/versioning added. |
+| G Mission briefing/loadout | 6 | 4 implemented; accessible mission summary added. |
+| H Core gameplay | 16 | 10 implemented; interruption recovery and deterministic anti-spam added. |
+| I Level design/content | 8 | 2 implemented; schema/version compatibility added. |
+| J Results/rewards | 8 | 5 implemented; transaction ledger, reconciliation, and odds rules added. |
+| K Economy/progress/shop | 13 | 8 implemented; versioned balance and future sync/billing boundaries added. |
+| L Retention/live content | 10 | 2 implemented; live config, notifications, clock safeguards, social readiness added. |
+| M Ads/monetization | 9 | 1 implemented; analytics/quality/no-fill requirements added. |
+| N Audio/haptics | 7 | Planned; licensing, loudness, and accessibility added. |
+| O Localization | 6 | 2 implemented; locale formatting and translation QA added. |
+| P Accessibility | 5 | Planned as a dedicated phase. |
+| Q Performance/reliability | 11 | 2 implemented, 1 in progress; network/battery/app size/runtime/storage recovery added. |
+| R Testing/quality gates | 12 | Planned; integration, device, parser, privacy/security, smoke/soak gates added. |
+| S Release/privacy/security/legal/store | 16 | Planned as a complete production and operations gate. |
 
 ## Verification ledger
 
-| Date | Feature | Verification | Result | Commit |
+| Date | Scope | Verification | Result | Commit |
 |---|---|---|---|---|
-| Not recorded | Baseline | A systematic baseline has not yet been recorded under the new workflow. | Pending | - |
+| 2026-08-07 | Planning coverage audit | Confirmed 19 phase headings A–S, 190 unique feature IDs, valid catalog table schema, and dashboard-compatible statuses. No production commands were required because the task changed documentation only. | PASSED — static catalog/dashboard parser compatibility | Planning audit commit sequence ending at current HEAD |
+| Not recorded | Production baseline | A systematic format/analyze/test/build baseline has not yet been recorded under the new workflow. | Pending | - |
 
 ## Known high-priority risks
 
-1. Emulator/ADB instability can end debug sessions even when the application is still running.
-2. Kotlin incremental cache failures recur on Windows and require the shared repair workflow.
-3. Existing implemented features lack a complete regression test suite.
-4. The current 3D appearance is primarily procedural Flutter styling, not yet a full production WebP asset pipeline.
-5. Some user-facing text and Material icons may still bypass the final design/localization system.
+1. Two related tasks remain `IN PROGRESS`; the workflow should normally converge them to a clean status before starting unrelated production work.
+2. Emulator/ADB instability and recurring Kotlin cache failures still require multi-machine verification.
+3. Fifty-four features are marked `IMPLEMENTED` but none are `VERIFIED`; systematic regression evidence is required.
+4. Current 3D presentation is primarily procedural Flutter styling; production assets, provenance, memory budgets, and commercial rights remain open.
+5. Privacy, security, analytics, crash reporting, licensing, signing, store disclosures, monitoring, and rollback are now tracked but not implemented.
 
-## Next ready features
+## Next ready work
 
-1. Finish `ENG-002` and `REL-001` with repository-wide script audit and verification.
-2. Complete `ENG-001` repository baseline audit.
-3. Implement `MOT-001` shared motion tokens and reusable animation primitives.
-4. Implement `AST-001` 3D asset taxonomy and naming standard.
-5. Implement `TEST-001` progress/economy unit tests.
+1. Finish `ENG-002` and `REL-001` with repository-wide script audit and device/build evidence.
+2. Complete `ENG-001` baseline audit and capture format/analyze/test/debug-build results.
+3. Implement `MOT-001` shared motion tokens and lifecycle-safe primitives.
+4. Implement `AST-001` taxonomy plus `AST-011` provenance rules before producing large asset packs.
+5. Implement `TEST-001` economy/progress tests and `PRIV-001` before enabling analytics, personalized ads, cloud, or notification data flows.
 
 ## Last update
 
-- Added the formal feature catalog and live engineering workflow.
-- Existing feature states are preliminary and must be verified before changing from `IMPLEMENTED` to `VERIFIED`.
+- Completed the full global-production planning coverage audit.
+- Expanded the catalog to 190 measurable tasks across all mandatory phases A–S.
+- Updated phase definitions, roadmap sequencing, implementation governance, and live status.
+- No production feature implementation or evidence status was invented or promoted.
