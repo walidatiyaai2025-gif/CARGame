@@ -9,12 +9,19 @@ import '../../core/theme/game_skin.dart';
 import '../../l10n/app_localizations.dart';
 import 'city_catalog.dart';
 import 'level_data.dart';
+import 'mission_loadout.dart';
 
 class GameScreen extends StatefulWidget {
-  const GameScreen({super.key, required this.level, required this.store});
+  const GameScreen({
+    super.key,
+    required this.level,
+    required this.store,
+    this.loadout = MissionLoadout.empty,
+  });
 
   final LevelData level;
   final ProgressStore store;
+  final MissionLoadout loadout;
 
   @override
   State<GameScreen> createState() => _GameScreenState();
@@ -27,6 +34,7 @@ class _GameScreenState extends State<GameScreen> {
   late int _moves;
   int _combo = 0;
   int _bestCombo = 0;
+  int _preparedHints = 0;
   bool _finished = false;
   bool _usedShield = false;
   bool _madeWrongMove = false;
@@ -50,18 +58,21 @@ class _GameScreenState extends State<GameScreen> {
   void initState() {
     super.initState();
     _ads.preload();
-    _reset();
+    _reset(applyLoadout: true);
   }
 
-  void _reset() {
+  void _reset({bool applyLoadout = false}) {
     _remaining = [...widget.level.items]
       ..shuffle(Random(widget.level.number * 41));
-    _moves = widget.level.moves;
+    _moves = widget.level.moves +
+        (applyLoadout && widget.loadout.extraMoves ? 5 : 0);
+    _preparedHints =
+        applyLoadout && widget.loadout.smartHint ? 1 : 0;
     _selected = null;
     _combo = 0;
     _bestCombo = 0;
     _finished = false;
-    _usedShield = false;
+    _usedShield = applyLoadout && widget.loadout.comboShield;
     _madeWrongMove = false;
   }
 
@@ -125,6 +136,12 @@ class _GameScreenState extends State<GameScreen> {
   Future<void> _useHint() async {
     final selected = _selected;
     if (selected == null) return;
+
+    if (_preparedHints > 0) {
+      setState(() => _preparedHints--);
+      _message('${selected.name} → ${selected.category} warehouse');
+      return;
+    }
 
     var usedFreeHint = false;
     if (widget.store.freeHints > 0) {
@@ -304,7 +321,7 @@ class _GameScreenState extends State<GameScreen> {
                     if (won) {
                       Navigator.pop(context);
                     } else {
-                      setState(_reset);
+                      setState(() => _reset());
                     }
                   },
                   icon: Icon(won ? Icons.map_rounded : Icons.restart_alt_rounded),
@@ -345,7 +362,7 @@ class _GameScreenState extends State<GameScreen> {
         actions: [
           IconButton(
             tooltip: l10n.restart,
-            onPressed: () => setState(_reset),
+            onPressed: () => setState(() => _reset()),
             icon: const Icon(Icons.restart_alt_rounded),
           ),
         ],
@@ -366,6 +383,7 @@ class _GameScreenState extends State<GameScreen> {
                   combo: _combo,
                   hearts: widget.store.hearts,
                   skin: skin,
+                  shieldActive: _usedShield,
                 ),
                 const SizedBox(height: 10),
                 Text(
@@ -399,7 +417,7 @@ class _GameScreenState extends State<GameScreen> {
                     Expanded(
                       child: _BoosterButton(
                         icon: Icons.lightbulb_rounded,
-                        count: widget.store.freeHints,
+                        count: widget.store.freeHints + _preparedHints,
                         active: _selected != null,
                         onPressed: _selected == null ? null : _useHint,
                       ),
@@ -480,11 +498,7 @@ class _CargoBoard extends StatelessWidget {
           color: Colors.white.withValues(alpha: .95),
           borderRadius: BorderRadius.circular(28),
           boxShadow: const [
-            BoxShadow(
-              color: Color(0x22000000),
-              blurRadius: 20,
-              offset: Offset(0, 10),
-            ),
+            BoxShadow(color: Color(0x22000000), blurRadius: 20, offset: Offset(0, 10)),
           ],
         ),
         child: GridView.builder(
@@ -619,6 +633,7 @@ class _StatusPanel extends StatelessWidget {
     required this.combo,
     required this.hearts,
     required this.skin,
+    required this.shieldActive,
   });
 
   final String movesLabel;
@@ -629,6 +644,7 @@ class _StatusPanel extends StatelessWidget {
   final int combo;
   final int hearts;
   final GameSkin skin;
+  final bool shieldActive;
 
   @override
   Widget build(BuildContext context) => Container(
@@ -644,7 +660,13 @@ class _StatusPanel extends StatelessWidget {
               children: [
                 _Metric(icon: Icons.touch_app_rounded, label: movesLabel, value: '$moves'),
                 _Metric(icon: Icons.inventory_2_rounded, label: 'Cargo', value: '$matched/$total'),
-                _Metric(icon: Icons.local_fire_department_rounded, label: 'Combo', value: 'x$combo'),
+                _Metric(
+                  icon: shieldActive
+                      ? Icons.shield_rounded
+                      : Icons.local_fire_department_rounded,
+                  label: shieldActive ? 'Shield' : 'Combo',
+                  value: shieldActive ? 'ON' : 'x$combo',
+                ),
                 _Metric(icon: Icons.favorite_rounded, label: 'Lives', value: '$hearts'),
               ],
             ),
