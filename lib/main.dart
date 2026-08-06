@@ -7,9 +7,11 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 import 'core/logging/app_logger.dart';
 import 'core/logging/log_viewer_screen.dart';
+import 'core/settings/app_settings_store.dart';
 import 'core/storage/progress_store.dart';
 import 'core/theme/app_theme.dart';
 import 'features/home/home_screen.dart';
+import 'features/settings/settings_screen.dart';
 import 'l10n/app_localizations.dart';
 
 const String appVersion = '1.0.1';
@@ -35,7 +37,8 @@ class BootstrapApp extends StatefulWidget {
 
 class _BootstrapAppState extends State<BootstrapApp> {
   final ProgressStore _store = ProgressStore();
-  String _status = 'Starting Cargo Sort...';
+  final AppSettingsStore _settings = AppSettingsStore();
+  String _status = 'Preparing your cargo journey...';
   Object? _fatalError;
   StackTrace? _fatalStackTrace;
   bool _ready = false;
@@ -48,14 +51,13 @@ class _BootstrapAppState extends State<BootstrapApp> {
 
   Future<void> _bootstrap() async {
     try {
-      _setStatus('Preparing application services...');
+      _setStatus('Starting secure services...');
       try {
         await AppErrorBoundary.install().timeout(const Duration(seconds: 8));
       } catch (error, stackTrace) {
         debugPrint('Logger initialization skipped: $error\n$stackTrace');
       }
 
-      // Orientation configuration must never block application startup.
       unawaited(
         SystemChrome.setPreferredOrientations([
           DeviceOrientation.portraitUp,
@@ -65,21 +67,17 @@ class _BootstrapAppState extends State<BootstrapApp> {
         }),
       );
 
-      _setStatus('Loading saved progress...');
-      try {
-        await _store.load().timeout(const Duration(seconds: 8));
-      } catch (error, stackTrace) {
-        await _safeWarning(
-          'Progress store load failed; defaults will be used',
-          error,
-          stackTrace,
-        );
-      }
+      _setStatus('Loading player profile...');
+      await Future.wait<void>([
+        _store.load(),
+        _settings.load(),
+      ]).timeout(const Duration(seconds: 10));
+
+      _setStatus('Opening the warehouse...');
+      await Future<void>.delayed(const Duration(milliseconds: 650));
 
       if (!mounted) return;
       setState(() => _ready = true);
-
-      // Ads initialize after the first usable screen is visible.
       unawaited(_initializeAdsInBackground());
     } catch (error, stackTrace) {
       if (!mounted) return;
@@ -92,45 +90,17 @@ class _BootstrapAppState extends State<BootstrapApp> {
 
   Future<void> _initializeAdsInBackground() async {
     try {
-      // Google's Flutter plugin can take up to 30 seconds to complete.
       await MobileAds.instance.initialize().timeout(const Duration(seconds: 35));
       await AppLogger.instance.checkpoint('ADMOB_READY');
-    } on TimeoutException catch (error, stackTrace) {
-      await _safeInfo(
-        'AdMob is unavailable or Google Play services are not responding. '
-        'The application will continue without Google ads.',
-        '$error\n$stackTrace',
-      );
     } catch (error, stackTrace) {
-      await _safeInfo(
-        'AdMob initialization was skipped. The application will continue '
-        'without Google ads.',
-        '$error\n$stackTrace',
-      );
-    }
-  }
-
-  Future<void> _safeWarning(
-    String message,
-    Object error,
-    StackTrace stackTrace,
-  ) async {
-    try {
-      await AppLogger.instance.warning(
-        message,
-        error: error,
-        stackTrace: stackTrace,
-      );
-    } catch (_) {
-      debugPrint('$message: $error\n$stackTrace');
-    }
-  }
-
-  Future<void> _safeInfo(String message, String details) async {
-    try {
-      await AppLogger.instance.info(message, details: details);
-    } catch (_) {
-      debugPrint('$message\n$details');
+      try {
+        await AppLogger.instance.info(
+          'Ads unavailable; game continues normally.',
+          details: '$error\n$stackTrace',
+        );
+      } catch (_) {
+        debugPrint('Ads unavailable: $error');
+      }
     }
   }
 
@@ -147,60 +117,175 @@ class _BootstrapAppState extends State<BootstrapApp> {
       );
     }
 
-    if (_ready) return CargoSortApp(store: _store);
+    if (_ready) {
+      return CargoSortApp(store: _store, settings: _settings);
+    }
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
-      home: Scaffold(
-        body: SafeArea(
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.all(32),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const FlutterLogo(size: 92),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Version $appVersion ($appBuildNumber)',
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: Colors.black54,
-                          fontWeight: FontWeight.w700,
+      home: _PremiumSplash(status: _status),
+    );
+  }
+}
+
+class _PremiumSplash extends StatefulWidget {
+  const _PremiumSplash({required this.status});
+  final String status;
+
+  @override
+  State<_PremiumSplash> createState() => _PremiumSplashState();
+}
+
+class _PremiumSplashState extends State<_PremiumSplash>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _scale;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1100),
+    )..repeat(reverse: true);
+    _scale = Tween<double>(begin: .96, end: 1.04).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF102C4C), Color(0xFF255B88), Color(0xFF112A45)],
+          ),
+        ),
+        child: SafeArea(
+          child: Stack(
+            children: [
+              const Positioned(top: -70, right: -55, child: _GlowOrb(size: 210)),
+              const Positioned(bottom: -90, left: -70, child: _GlowOrb(size: 250)),
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(28),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ScaleTransition(
+                        scale: _scale,
+                        child: Container(
+                          width: 146,
+                          height: 146,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(42),
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFFFFC447), Color(0xFFFF8A1F)],
+                            ),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Color(0x66FF9F1C),
+                                blurRadius: 34,
+                                offset: Offset(0, 18),
+                              ),
+                            ],
+                          ),
+                          child: const Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              Icon(Icons.warehouse_rounded, size: 88, color: Colors.white),
+                              Positioned(
+                                right: 18,
+                                bottom: 18,
+                                child: Icon(Icons.inventory_2_rounded, size: 42, color: AppTheme.navy),
+                              ),
+                            ],
+                          ),
                         ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    appAuthor,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.black54,
-                          fontWeight: FontWeight.w600,
-                        ),
-                  ),
-                  const SizedBox(height: 18),
-                  Text(
-                    'Cargo Sort',
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      ),
+                      const SizedBox(height: 28),
+                      const Text(
+                        'CARGO SORT',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 38,
                           fontWeight: FontWeight.w900,
-                          color: AppTheme.navy,
+                          letterSpacing: 1.8,
                         ),
+                      ),
+                      const SizedBox(height: 6),
+                      const Text(
+                        'SORT • SHIP • CONQUER',
+                        style: TextStyle(
+                          color: AppTheme.yellow,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 2.4,
+                        ),
+                      ),
+                      const SizedBox(height: 34),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: const LinearProgressIndicator(
+                          minHeight: 9,
+                          backgroundColor: Colors.white24,
+                          valueColor: AlwaysStoppedAnimation<Color>(AppTheme.yellow),
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 250),
+                        child: Text(
+                          widget.status,
+                          key: ValueKey(widget.status),
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                      const SizedBox(height: 36),
+                      const Text(
+                        'Version $appVersion ($appBuildNumber)',
+                        style: TextStyle(color: Colors.white60, fontWeight: FontWeight.w700),
+                      ),
+                      const SizedBox(height: 5),
+                      const Text(
+                        appAuthor,
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 24),
-                  const SizedBox(
-                    width: 34,
-                    height: 34,
-                    child: CircularProgressIndicator(),
-                  ),
-                  const SizedBox(height: 18),
-                  Text(_status, textAlign: TextAlign.center),
-                ],
+                ),
               ),
-            ),
+            ],
           ),
         ),
       ),
     );
   }
+}
+
+class _GlowOrb extends StatelessWidget {
+  const _GlowOrb({required this.size});
+  final double size;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.white.withValues(alpha: .055),
+        ),
+      );
 }
 
 class FatalBootstrapApp extends StatelessWidget {
@@ -218,13 +303,14 @@ class FatalBootstrapApp extends StatelessWidget {
     final text = '$error\n\n$stackTrace';
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+      theme: AppTheme.light,
       home: Scaffold(
         body: SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(20),
             child: Column(
               children: [
-                const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                const Icon(Icons.error_outline_rounded, size: 64, color: Colors.red),
                 const SizedBox(height: 12),
                 const Text(
                   'Cargo Sort could not finish startup.',
@@ -239,10 +325,7 @@ class FatalBootstrapApp extends StatelessWidget {
                     child: SingleChildScrollView(
                       child: SelectableText(
                         text,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontFamily: 'monospace',
-                        ),
+                        style: const TextStyle(color: Colors.white, fontFamily: 'monospace'),
                       ),
                     ),
                   ),
@@ -263,9 +346,14 @@ class FatalBootstrapApp extends StatelessWidget {
 }
 
 class CargoSortApp extends StatefulWidget {
-  const CargoSortApp({super.key, required this.store});
+  const CargoSortApp({
+    super.key,
+    required this.store,
+    required this.settings,
+  });
 
   final ProgressStore store;
+  final AppSettingsStore settings;
 
   @override
   State<CargoSortApp> createState() => _CargoSortAppState();
@@ -307,11 +395,21 @@ class _CargoSortAppState extends State<CargoSortApp>
     });
   }
 
+  void _openSettings() {
+    _navigatorKey.currentState?.push(
+      MaterialPageRoute<void>(
+        builder: (_) => SettingsScreen(
+          settings: widget.settings,
+          onToggleLanguage: _toggleLanguage,
+        ),
+      ),
+    );
+  }
+
   Future<void> _showRuntimeError(LoggedAppError appError) async {
     if (_dialogVisible || !mounted) return;
     final context = _navigatorKey.currentContext;
     if (context == null) return;
-
     _dialogVisible = true;
     try {
       await showDialog<void>(
@@ -322,15 +420,11 @@ class _CargoSortAppState extends State<CargoSortApp>
           title: Text('${appError.level}: Application issue'),
           content: ConstrainedBox(
             constraints: const BoxConstraints(maxHeight: 320),
-            child: SingleChildScrollView(
-              child: SelectableText(appError.fullText),
-            ),
+            child: SingleChildScrollView(child: SelectableText(appError.fullText)),
           ),
           actions: [
             TextButton.icon(
-              onPressed: () => Clipboard.setData(
-                ClipboardData(text: appError.fullText),
-              ),
+              onPressed: () => Clipboard.setData(ClipboardData(text: appError.fullText)),
               icon: const Icon(Icons.copy),
               label: const Text('Copy'),
             ),
@@ -338,9 +432,7 @@ class _CargoSortAppState extends State<CargoSortApp>
               onPressed: () {
                 Navigator.of(dialogContext).pop();
                 _navigatorKey.currentState?.push(
-                  MaterialPageRoute<void>(
-                    builder: (_) => const LogViewerScreen(),
-                  ),
+                  MaterialPageRoute<void>(builder: (_) => const LogViewerScreen()),
                 );
               },
               icon: const Icon(Icons.article_outlined),
@@ -373,9 +465,26 @@ class _CargoSortAppState extends State<CargoSortApp>
         GlobalCupertinoLocalizations.delegate,
       ],
       theme: AppTheme.light,
-      home: HomeScreen(
-        store: widget.store,
-        onToggleLanguage: _toggleLanguage,
+      home: Stack(
+        children: [
+          HomeScreen(store: widget.store, onToggleLanguage: _toggleLanguage),
+          PositionedDirectional(
+            top: 66,
+            end: 16,
+            child: SafeArea(
+              child: Material(
+                color: Colors.white,
+                elevation: 5,
+                shape: const CircleBorder(),
+                child: IconButton(
+                  tooltip: 'Settings',
+                  onPressed: _openSettings,
+                  icon: const Icon(Icons.settings_rounded, color: AppTheme.navy),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
