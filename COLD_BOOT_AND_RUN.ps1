@@ -7,7 +7,7 @@ param(
 $ErrorActionPreference = "Stop"
 $PSNativeCommandUseErrorActionPreference = $false
 
-function Invoke-ProcessCapture {
+function Invoke-CapturedProcess {
     param(
         [Parameter(Mandatory)][string]$FilePath,
         [string[]]$Arguments = @(),
@@ -19,23 +19,23 @@ function Invoke-ProcessCapture {
     $stderr = Join-Path $env:TEMP "$token.err"
 
     try {
-        $params = @{
-            FilePath = $FilePath
-            ArgumentList = $Arguments
+        $start = @{
+            FilePath               = $FilePath
+            ArgumentList           = $Arguments
             RedirectStandardOutput = $stdout
-            RedirectStandardError = $stderr
-            NoNewWindow = $true
-            Wait = $true
-            PassThru = $true
+            RedirectStandardError  = $stderr
+            NoNewWindow            = $true
+            Wait                   = $true
+            PassThru               = $true
         }
-        if ($WorkingDirectory) { $params.WorkingDirectory = $WorkingDirectory }
+        if ($WorkingDirectory) { $start.WorkingDirectory = $WorkingDirectory }
 
-        $process = Start-Process @params
+        $process = Start-Process @start
         $parts = @()
         if (Test-Path $stdout) { $parts += Get-Content $stdout -Raw -ErrorAction SilentlyContinue }
         if (Test-Path $stderr) { $parts += Get-Content $stderr -Raw -ErrorAction SilentlyContinue }
 
-        [pscustomobject]@{
+        return [pscustomobject]@{
             ExitCode = $process.ExitCode
             Text = (($parts | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }) -join [Environment]::NewLine)
         }
@@ -64,10 +64,13 @@ function Get-JavaInfo([string]$JdkPath) {
     $javaExe = Join-Path $JdkPath "bin\java.exe"
     if (-not (Test-Path $javaExe)) { return $null }
 
-    $result = Invoke-ProcessCapture -FilePath $javaExe -Arguments @("-version")
+    $result = Invoke-CapturedProcess -FilePath $javaExe -Arguments @("-version")
     if ($result.ExitCode -ne 0) { return $null }
 
-    $firstLine = ($result.Text -split "`r?`n" | Where-Object { $_.Trim() } | Select-Object -First 1)
+    $firstLine = $result.Text -split "`r?`n" |
+        Where-Object { $_.Trim() } |
+        Select-Object -First 1
+
     if ($firstLine -match 'version\s+"(?<major>\d+)') {
         return [pscustomobject]@{
             Major = [int]$Matches.major
@@ -77,15 +80,13 @@ function Get-JavaInfo([string]$JdkPath) {
     return $null
 }
 
-function Find-CompatibleJdk {
+function Find-CompatibleJdk17 {
     $candidates = @($env:JAVA_HOME)
-    $roots = @(
+    foreach ($root in @(
         "C:\Program Files\Eclipse Adoptium",
         "C:\Program Files\Microsoft",
         "C:\Program Files\Java"
-    )
-
-    foreach ($root in $roots) {
+    )) {
         if (Test-Path $root) {
             $candidates += Get-ChildItem $root -Directory -ErrorAction SilentlyContinue |
                 Where-Object { $_.Name -match 'jdk-17|jdk17' } |
@@ -102,8 +103,8 @@ function Find-CompatibleJdk {
     return $null
 }
 
-function Ensure-CompatibleJdk {
-    $jdk = Find-CompatibleJdk
+function Ensure-Jdk17 {
+    $jdk = Find-CompatibleJdk17
     if (-not $jdk) {
         if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
             throw "JDK 17 is required. Install Eclipse Temurin JDK 17 and run again."
@@ -114,31 +115,34 @@ function Ensure-CompatibleJdk {
         if ($LASTEXITCODE -ne 0) {
             throw "JDK 17 installation failed with exit code $LASTEXITCODE."
         }
-        $jdk = Find-CompatibleJdk
+        $jdk = Find-CompatibleJdk17
     }
 
     if (-not $jdk) { throw "JDK 17 could not be detected after installation." }
 
     $env:JAVA_HOME = $jdk
     $jdkBin = Join-Path $jdk "bin"
-    $remainingPath = $env:Path -split ';' | Where-Object {
-        $_ -and $_ -notmatch '\\Java\\' -and $_ -notmatch '\\jdk-' -and $_ -notmatch 'Android Studio\\jbr'
+    $filteredPath = $env:Path -split ';' | Where-Object {
+        $_ -and
+        $_ -notmatch '\\Java\\' -and
+        $_ -notmatch '\\jdk-' -and
+        $_ -notmatch 'Android Studio\\jbr'
     }
-    $env:Path = "$jdkBin;" + ($remainingPath -join ';')
+    $env:Path = "$jdkBin;" + ($filteredPath -join ';')
     $env:GRADLE_JAVA_HOME = $jdk
     Remove-Item Env:GRADLE_OPTS -ErrorAction SilentlyContinue
     Remove-Item Env:JAVA_TOOL_OPTIONS -ErrorAction SilentlyContinue
 
-    $javaInfo = Get-JavaInfo $jdk
+    $info = Get-JavaInfo $jdk
     Write-Host "Using JDK 17: $jdk" -ForegroundColor Green
-    Write-Host $javaInfo.FirstLine -ForegroundColor Cyan
+    Write-Host $info.FirstLine -ForegroundColor Cyan
 
     & flutter config --jdk-dir $jdk | Out-Host
     if ($LASTEXITCODE -ne 0) { throw "Flutter JDK configuration failed." }
     return $jdk
 }
 
-function Force-ProjectGradleJdk([string]$Root, [string]$JdkPath) {
+function Pin-GradleJdk([string]$Root, [string]$JdkPath) {
     $propertiesPath = Join-Path $Root "android\gradle.properties"
     $content = if (Test-Path $propertiesPath) { Get-Content $propertiesPath -Raw } else { "" }
     $escaped = $JdkPath -replace '\\', '\\'
@@ -146,12 +150,17 @@ function Force-ProjectGradleJdk([string]$Root, [string]$JdkPath) {
 
     if ($content -match '(?m)^org\.gradle\.java\.home=.*$') {
         $content = [regex]::Replace($content, '(?m)^org\.gradle\.java\.home=.*$', $line)
-    } else {
+    }
+    else {
         if ($content -and -not $content.EndsWith("`n")) { $content += "`r`n" }
         $content += "$line`r`n"
     }
 
-    [System.IO.File]::WriteAllText($propertiesPath, $content, [System.Text.UTF8Encoding]::new($false))
+    [System.IO.File]::WriteAllText(
+        $propertiesPath,
+        $content,
+        [System.Text.UTF8Encoding]::new($false)
+    )
     Write-Host "Pinned Gradle JDK: $propertiesPath" -ForegroundColor Green
 }
 
@@ -159,7 +168,7 @@ function Stop-GradleDaemons([string]$Root) {
     $androidDir = Join-Path $Root "android"
     $gradlew = Join-Path $androidDir "gradlew.bat"
     if (Test-Path $gradlew) {
-        $null = Invoke-ProcessCapture -FilePath $gradlew -Arguments @("--stop") -WorkingDirectory $androidDir
+        $null = Invoke-CapturedProcess -FilePath $gradlew -Arguments @("--stop") -WorkingDirectory $androidDir
     }
 
     Get-CimInstance Win32_Process -Filter "Name='java.exe'" -ErrorAction SilentlyContinue |
@@ -167,23 +176,37 @@ function Stop-GradleDaemons([string]$Root) {
         ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
 }
 
-function Verify-GradleJdk([string]$Root) {
+function Verify-GradleJdk17([string]$Root) {
     $androidDir = Join-Path $Root "android"
     $gradlew = Join-Path $androidDir "gradlew.bat"
     if (-not (Test-Path $gradlew)) { throw "Gradle wrapper not found." }
 
-    $result = Invoke-ProcessCapture -FilePath $gradlew -Arguments @("--version", "--no-daemon") -WorkingDirectory $androidDir
+    $result = Invoke-CapturedProcess -FilePath $gradlew -Arguments @("--version", "--no-daemon") -WorkingDirectory $androidDir
     Write-Host $result.Text
-    if ($result.ExitCode -ne 0) { throw "Gradle verification failed with exit code $($result.ExitCode)." }
-    if ($result.Text -notmatch '(?im)^JVM:\s+17(?:\.|\s)') {
-        throw "Gradle is not using JDK 17."
+
+    if ($result.ExitCode -ne 0) {
+        throw "Gradle verification failed with exit code $($result.ExitCode)."
     }
+
+    $launcherIs17 = $result.Text -match '(?im)^Launcher JVM:\s+17(?:\.|\s)'
+    $legacyIs17 = $result.Text -match '(?im)^JVM:\s+17(?:\.|\s)'
+    $daemonUsesPinnedJdk = $result.Text -match '(?im)^Daemon JVM:.*\(from org\.gradle\.java\.home\)'
+
+    if (-not ($launcherIs17 -or $legacyIs17)) {
+        throw "Gradle launcher is not using JDK 17."
+    }
+    if (-not $daemonUsesPinnedJdk) {
+        Write-Warning "Gradle launcher is JDK 17, but the daemon JDK source could not be confirmed."
+    }
+
     Write-Host "Gradle confirmed on JDK 17." -ForegroundColor Green
 }
 
 function Get-OnlineDevice([string]$Adb) {
     foreach ($line in (& $Adb devices)) {
-        if ($line -match '^([^\s]+)\s+device$' -and $Matches[1] -ne 'List') { return $Matches[1] }
+        if ($line -match '^([^\s]+)\s+device$' -and $Matches[1] -ne 'List') {
+            return $Matches[1]
+        }
     }
     return $null
 }
@@ -204,10 +227,10 @@ try {
     $ProjectPath = [System.IO.Path]::GetFullPath($ProjectPath)
     Set-Location $ProjectPath
 
-    $jdk = Ensure-CompatibleJdk
-    Force-ProjectGradleJdk $ProjectPath $jdk
+    $jdk = Ensure-Jdk17
+    Pin-GradleJdk $ProjectPath $jdk
     Stop-GradleDaemons $ProjectPath
-    Verify-GradleJdk $ProjectPath
+    Verify-GradleJdk17 $ProjectPath
 
     $sdk = Find-AndroidSdk
     $adb = Join-Path $sdk "platform-tools\adb.exe"
@@ -220,6 +243,7 @@ try {
     if (-not $device) {
         $avds = @(& $emulator -list-avds | Where-Object { $_.Trim() })
         if ($avds.Count -eq 0) { throw "No Android Virtual Device exists." }
+
         $selectedAvd = if ($AvdName) { $AvdName } else { $avds[0] }
         if ($avds -notcontains $selectedAvd) { throw "AVD not found: $selectedAvd" }
 
@@ -275,7 +299,8 @@ catch {
         if ($adb -and $device) {
             Save-CrashLog $adb $device (Join-Path $ProjectPath "android_crash_log.txt")
         }
-    } catch { }
+    }
+    catch { }
 }
 finally {
     Write-Host ""
