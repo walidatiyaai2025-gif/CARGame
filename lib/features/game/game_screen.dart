@@ -7,6 +7,7 @@ import '../../core/storage/progress_store.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/game_skin.dart';
 import '../../l10n/app_localizations.dart';
+import 'city_catalog.dart';
 import 'level_data.dart';
 
 class GameScreen extends StatefulWidget {
