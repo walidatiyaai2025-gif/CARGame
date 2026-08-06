@@ -6,6 +6,7 @@ param(
 $ErrorActionPreference = "Stop"
 $PSNativeCommandUseErrorActionPreference = $false
 $RepoUrl = "https://github.com/walidatiyaai2025-gif/CARGame.git"
+$MinimumDartVersion = [version]"3.10.0"
 
 function Step([int]$Number, [string]$Text) {
     Write-Host ""
@@ -26,6 +27,59 @@ function Run([string]$Command, [string[]]$Arguments, [string]$Folder = "") {
     }
     finally {
         if ($Folder) { Pop-Location }
+    }
+}
+
+function Get-FlutterInfo {
+    $jsonText = (& flutter --version --machine 2>$null) -join "`n"
+    $exitCode = $LASTEXITCODE
+    if ($exitCode -ne 0 -or [string]::IsNullOrWhiteSpace($jsonText)) {
+        throw "Could not read Flutter version information."
+    }
+
+    try {
+        return $jsonText | ConvertFrom-Json
+    }
+    catch {
+        throw "Flutter returned invalid version information: $($_.Exception.Message)"
+    }
+}
+
+function Ensure-CompatibleFlutter {
+    $info = Get-FlutterInfo
+    $dartVersionText = ([string]$info.dartSdkVersion).Split(' ')[0].Split('-')[0]
+    $flutterVersionText = ([string]$info.frameworkVersion).Split('-')[0]
+
+    try {
+        $dartVersion = [version]$dartVersionText
+    }
+    catch {
+        throw "Could not parse Dart SDK version: $dartVersionText"
+    }
+
+    Write-Host "Flutter: $flutterVersionText" -ForegroundColor Cyan
+    Write-Host "Dart:    $dartVersion" -ForegroundColor Cyan
+    Write-Host "Required Dart: $MinimumDartVersion or newer" -ForegroundColor Cyan
+
+    if ($dartVersion -ge $MinimumDartVersion) {
+        Write-Host "Flutter/Dart version is compatible." -ForegroundColor Green
+        return
+    }
+
+    Write-Host "Installed Dart is too old. Upgrading Flutter stable..." -ForegroundColor Yellow
+    Run "flutter" @("channel", "stable")
+    Run "flutter" @("upgrade")
+    Run "flutter" @("doctor", "-v")
+
+    $updatedInfo = Get-FlutterInfo
+    $updatedDartText = ([string]$updatedInfo.dartSdkVersion).Split(' ')[0].Split('-')[0]
+    $updatedDart = [version]$updatedDartText
+
+    Write-Host "Updated Flutter: $($updatedInfo.frameworkVersion)" -ForegroundColor Green
+    Write-Host "Updated Dart:    $updatedDart" -ForegroundColor Green
+
+    if ($updatedDart -lt $MinimumDartVersion) {
+        throw "Flutter upgrade completed, but Dart $updatedDart is still below required $MinimumDartVersion. Install Flutter 3.44.8 or newer, then run this script again."
     }
 }
 
@@ -90,11 +144,11 @@ try {
     if ($entered) { $TargetPath = $entered }
     $TargetPath = [System.IO.Path]::GetFullPath($TargetPath)
 
-    Step 2 "Check Git and Flutter"
+    Step 2 "Check Git, Flutter and Dart compatibility"
     if (-not (Get-Command git -ErrorAction SilentlyContinue)) { throw "Git is not available in PATH." }
     if (-not (Get-Command flutter -ErrorAction SilentlyContinue)) { throw "Flutter is not available in PATH." }
     Run "git" @("--version")
-    Run "flutter" @("--version")
+    Ensure-CompatibleFlutter
 
     Step 3 "Locate Android SDK"
     $sdk = AndroidSdkRoot
@@ -129,6 +183,7 @@ try {
     Run "flutter" @("doctor", "-v")
 
     Step 6 "Restore project packages"
+    Ensure-CompatibleFlutter
     $env:GRADLE_USER_HOME = Join-Path $TargetPath ".gradle-user-home-first-run"
     New-Item -ItemType Directory -Path $env:GRADLE_USER_HOME -Force | Out-Null
     Run "flutter" @("clean")
