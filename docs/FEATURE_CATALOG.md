@@ -55,7 +55,7 @@ Codex must not mark a feature complete merely because UI code exists.
 | ENG-011 | Developer tooling and documentation | P1 | PLANNED | ENG-001 | Setup, run, repair, dashboard, release, and troubleshooting workflows are reproducible on a clean machine. |
 | ENG-012 | Analytics event schema and privacy gating | P1 | PLANNED | ENG-005, PRIV-001 | Versioned event names/properties exist; collection is disabled until consent/config permits it. |
 | ENG-013 | Crash reporting and non-fatal diagnostics | P1 | PLANNED | ENG-004, PRIV-001 | Release-safe crash/non-fatal capture is privacy-gated, strips sensitive data, and supports symbol/version correlation. |
-| ENG-014 | Offline-first service isolation | P0 | PLANNED | ENG-005, ENG-008 | Core play/progress works without network; optional services fail independently and retry safely. |
+| ENG-014 | Offline-first service isolation | P0 | IMPLEMENTED | ENG-005, ENG-008 | Offline core opens before Mobile Ads; optional services use isolated timeout, deduplicated initialization, bounded attempts, lifecycle retry, observable failure state, and focused tests. Flutter/device offline verification remains. |
 
 # B. Shared 3D design system
 
