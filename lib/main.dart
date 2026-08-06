@@ -7,6 +7,7 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 import 'core/logging/app_logger.dart';
 import 'core/logging/log_viewer_screen.dart';
+import 'core/services/optional_service_coordinator.dart';
 import 'core/settings/app_settings_store.dart';
 import 'core/storage/progress_store.dart';
 import 'core/theme/app_theme.dart';
@@ -17,6 +18,7 @@ import 'l10n/app_localizations.dart';
 const String appVersion = '1.0.2';
 const String appBuildNumber = '3';
 const String appAuthor = 'Walid Atiya Ata - PMP';
+const String _adsServiceName = 'mobile_ads';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -35,9 +37,15 @@ class BootstrapApp extends StatefulWidget {
   State<BootstrapApp> createState() => _BootstrapAppState();
 }
 
-class _BootstrapAppState extends State<BootstrapApp> {
+class _BootstrapAppState extends State<BootstrapApp>
+    with WidgetsBindingObserver {
   final ProgressStore _store = ProgressStore();
   final AppSettingsStore _settings = AppSettingsStore();
+  final OptionalServiceCoordinator _optionalServices =
+      OptionalServiceCoordinator(
+    defaultTimeout: const Duration(seconds: 20),
+    maxAttempts: 3,
+  );
   String _status = 'Preparing your cargo journey...';
   bool _ready = false;
   bool _bootstrapStarted = false;
@@ -45,7 +53,23 @@ class _BootstrapAppState extends State<BootstrapApp> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     unawaited(_bootstrap());
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    unawaited(_optionalServices.dispose());
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed &&
+        _optionalServices.snapshot(_adsServiceName).canRetry) {
+      unawaited(_initializeAdsInBackground(forceRetry: true));
+    }
   }
 
   Future<void> _bootstrap() async {
@@ -76,8 +100,9 @@ class _BootstrapAppState extends State<BootstrapApp> {
 
     _setStatus('Loading player profile...');
 
-    // Storage initialization must never block the application indefinitely.
-    // A timed-out Future continues in the background and can still notify the UI.
+    // Local player data is the core dependency. A slow local plugin must not
+    // trap the user on the splash screen; safe defaults remain playable and
+    // the original load future can complete independently.
     await Future.wait<void>([
       _runOptionalStartupTask(
         'player profile',
@@ -96,6 +121,9 @@ class _BootstrapAppState extends State<BootstrapApp> {
 
     if (!mounted) return;
     setState(() => _ready = true);
+
+    // Network-backed and platform services begin only after the offline core
+    // experience is available. Failure is contained by the coordinator.
     unawaited(_initializeAdsInBackground());
   }
 
@@ -130,20 +158,39 @@ class _BootstrapAppState extends State<BootstrapApp> {
     }
   }
 
-  Future<void> _initializeAdsInBackground() async {
-    try {
-      await MobileAds.instance.initialize().timeout(const Duration(seconds: 20));
-      await AppLogger.instance.checkpoint('ADMOB_READY');
-    } catch (error, stackTrace) {
+  Future<void> _initializeAdsInBackground({bool forceRetry = false}) async {
+    final initialized = forceRetry
+        ? await _optionalServices.retry(
+            _adsServiceName,
+            _initializeMobileAds,
+          )
+        : await _optionalServices.initialize(
+            _adsServiceName,
+            _initializeMobileAds,
+          );
+
+    final snapshot = _optionalServices.snapshot(_adsServiceName);
+    if (initialized) {
       try {
-        await AppLogger.instance.info(
-          'Ads unavailable; game continues normally.',
-          details: '$error\n$stackTrace',
-        );
+        await AppLogger.instance.checkpoint('ADMOB_READY');
       } catch (_) {
-        debugPrint('Ads unavailable: $error');
+        // Logging must not affect service availability.
       }
+      return;
     }
+
+    try {
+      await AppLogger.instance.info(
+        'Ads unavailable; offline game continues normally.',
+        details: '${snapshot.lastError}',
+      );
+    } catch (_) {
+      debugPrint('Ads unavailable: ${snapshot.lastError}');
+    }
+  }
+
+  Future<void> _initializeMobileAds() async {
+    await MobileAds.instance.initialize();
   }
 
   void _setStatus(String value) {
