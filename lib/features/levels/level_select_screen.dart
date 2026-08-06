@@ -30,11 +30,7 @@ class LevelSelectScreen extends StatelessWidget {
             child: ListView(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
               children: [
-                _GlobalHeader(
-                  isArabic: isArabic,
-                  store: store,
-                  skin: skin,
-                ),
+                _GlobalHeader(isArabic: isArabic, store: store, skin: skin),
                 const SizedBox(height: 18),
                 for (final world in gameWorlds) ...[
                   _WorldSection(
@@ -84,17 +80,19 @@ class _GlobalHeader extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(Icons.public_rounded, color: skin.accent, size: 44),
-                const SizedBox(width: 14),
+                Icon(Icons.public_rounded, color: skin.accent, size: 42),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         isArabic ? 'رحلة المدن العالمية' : 'Global City Journey',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 22,
+                          fontSize: 21,
                           fontWeight: FontWeight.w900,
                         ),
                       ),
@@ -102,19 +100,26 @@ class _GlobalHeader extends StatelessWidget {
                         isArabic
                             ? '${store.completedLevels} مدينة مكتملة من ${ProgressStore.totalLevels}'
                             : '${store.completedLevels} of ${ProgressStore.totalLevels} cities completed',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                         style: const TextStyle(color: Colors.white70),
                       ),
                     ],
                   ),
                 ),
+                const SizedBox(width: 8),
                 Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(Icons.star_rounded, color: skin.accent),
-                    Text(
-                      '${store.totalStars}/${store.maximumStars}',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w900,
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        '${store.totalStars}/${store.maximumStars}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w900,
+                        ),
                       ),
                     ),
                   ],
@@ -185,24 +190,26 @@ class _WorldSection extends StatelessWidget {
             child: Row(
               children: [
                 Container(
-                  width: 58,
-                  height: 58,
+                  width: 54,
+                  height: 54,
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: .16),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(world.icon, color: Colors.white, size: 32),
+                  child: Icon(world.icon, color: Colors.white, size: 30),
                 ),
-                const SizedBox(width: 13),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         '${isArabic ? 'العالم' : 'World'} ${world.number}: ${world.name}',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 19,
+                          fontSize: 18,
                           fontWeight: FontWeight.w900,
                         ),
                       ),
@@ -212,11 +219,14 @@ class _WorldSection extends StatelessWidget {
                             : (isArabic
                                 ? 'أكمل العالم السابق لفتحه'
                                 : 'Complete the previous world to unlock'),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                         style: const TextStyle(color: Colors.white70),
                       ),
                     ],
                   ),
                 ),
+                const SizedBox(width: 8),
                 Icon(
                   unlocked ? Icons.map_rounded : Icons.lock_rounded,
                   color: Colors.white,
@@ -227,38 +237,52 @@ class _WorldSection extends StatelessWidget {
           if (unlocked)
             Padding(
               padding: const EdgeInsets.all(14),
-              child: GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: levels.length,
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
-                  crossAxisSpacing: 10,
-                  mainAxisSpacing: 10,
-                  childAspectRatio: .82,
-                ),
-                itemBuilder: (context, index) {
-                  final level = levels[index];
-                  final cityUnlocked = level.number <= store.highestUnlockedLevel;
-                  return _CityCard(
-                    level: level,
-                    unlocked: cityUnlocked,
-                    stars: store.starsForLevel(level.number),
-                    world: world,
-                    skin: skin,
-                    isArabic: isArabic,
-                    onTap: cityUnlocked
-                        ? () async {
-                            await Navigator.of(context).push(
-                              MaterialPageRoute<void>(
-                                builder: (_) => CityBriefingScreen(
-                                  level: level,
-                                  store: store,
-                                ),
-                              ),
-                            );
-                          }
-                        : null,
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final width = constraints.maxWidth;
+                  final columns = width >= 720
+                      ? 6
+                      : width >= 520
+                          ? 5
+                          : width >= 380
+                              ? 4
+                              : 3;
+                  final extent = width < 340 ? 112.0 : 118.0;
+
+                  return GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: levels.length,
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: columns,
+                      crossAxisSpacing: 10,
+                      mainAxisSpacing: 10,
+                      mainAxisExtent: extent,
+                    ),
+                    itemBuilder: (context, index) {
+                      final level = levels[index];
+                      final cityUnlocked = level.number <= store.highestUnlockedLevel;
+                      return _CityCard(
+                        level: level,
+                        unlocked: cityUnlocked,
+                        stars: store.starsForLevel(level.number),
+                        world: world,
+                        skin: skin,
+                        isArabic: isArabic,
+                        onTap: cityUnlocked
+                            ? () async {
+                                await Navigator.of(context).push(
+                                  MaterialPageRoute<void>(
+                                    builder: (_) => CityBriefingScreen(
+                                      level: level,
+                                      store: store,
+                                    ),
+                                  ),
+                                );
+                              }
+                            : null,
+                      );
+                    },
                   );
                 },
               ),
@@ -307,6 +331,7 @@ class _CityCard extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(20),
         child: Ink(
+          padding: const EdgeInsets.all(7),
           decoration: BoxDecoration(
             color: unlocked ? Colors.white : const Color(0xFFE0E3E8),
             borderRadius: BorderRadius.circular(20),
@@ -315,26 +340,18 @@ class _CityCard extends StatelessWidget {
               width: boss ? 2.5 : 1.5,
             ),
           ),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final compact = constraints.maxHeight < 102;
-              final padding = compact ? 6.0 : 9.0;
-              final iconBox = compact ? 36.0 : 42.0;
-              final iconSize = compact ? 21.0 : 24.0;
-              final gap = compact ? 4.0 : 7.0;
-              final cityFont = compact ? 10.0 : 11.0;
-              final levelFont = compact ? 8.0 : 9.0;
-              final starSize = compact ? 12.0 : 14.0;
-
-              return Padding(
-                padding: EdgeInsets.all(padding),
+          child: Center(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: SizedBox(
+                width: 88,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Container(
-                      width: iconBox,
-                      height: iconBox,
+                      width: 38,
+                      height: 38,
                       decoration: BoxDecoration(
                         color: unlocked ? accent : Colors.black26,
                         shape: BoxShape.circle,
@@ -346,36 +363,35 @@ class _CityCard extends StatelessWidget {
                                 : Icons.location_city_rounded
                             : Icons.lock_rounded,
                         color: Colors.white,
-                        size: iconSize,
+                        size: 22,
                       ),
                     ),
-                    SizedBox(height: gap),
-                    Flexible(
-                      child: Text(
-                        level.cityName,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: unlocked ? AppTheme.navy : Colors.black38,
-                          fontSize: cityFont,
-                          height: 1.0,
-                          fontWeight: FontWeight.w900,
-                        ),
+                    const SizedBox(height: 5),
+                    Text(
+                      level.cityName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: unlocked ? AppTheme.navy : Colors.black38,
+                        fontSize: 10,
+                        height: 1,
+                        fontWeight: FontWeight.w900,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 3),
                     Text(
                       '${isArabic ? 'مرحلة' : 'Level'} ${level.number}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
                         color: AppTheme.muted,
-                        fontSize: levelFont,
-                        height: 1.0,
+                        fontSize: 8.5,
+                        height: 1,
                       ),
                     ),
-                    SizedBox(height: compact ? 2 : 4),
+                    const SizedBox(height: 4),
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -383,15 +399,15 @@ class _CityCard extends StatelessWidget {
                         3,
                         (index) => Icon(
                           index < stars ? Icons.star_rounded : Icons.star_outline_rounded,
-                          size: starSize,
+                          size: 12,
                           color: index < stars ? skin.accent : Colors.black12,
                         ),
                       ),
                     ),
                   ],
                 ),
-              );
-            },
+              ),
+            ),
           ),
         ),
       ),
