@@ -6,6 +6,7 @@ import '../../core/ads/ad_service.dart';
 import '../../core/storage/progress_store.dart';
 import '../../core/theme/app_theme.dart';
 import '../../l10n/app_localizations.dart';
+import 'city_catalog.dart';
 import 'level_data.dart';
 
 class GameScreen extends StatefulWidget {
@@ -29,6 +30,13 @@ class _GameScreenState extends State<GameScreen> {
   double get _progress => widget.level.items.isEmpty
       ? 0
       : _matchedCount / widget.level.items.length;
+
+  int get _earnedStars {
+    final ratio = widget.level.moves == 0 ? 0 : _moves / widget.level.moves;
+    if (ratio >= .35) return 3;
+    if (_moves > 0) return 2;
+    return 1;
+  }
 
   @override
   void initState() {
@@ -64,21 +72,24 @@ class _GameScreenState extends State<GameScreen> {
 
     setState(() {
       _moves--;
-      if (selected.id == warehouse.id) {
-        _remaining.remove(selected);
-      }
+      if (selected.id == warehouse.id) _remaining.remove(selected);
       _selected = null;
     });
 
     if (_remaining.isEmpty) {
       _finished = true;
-      final reward = 25 + widget.level.number * 5;
-      await widget.store.completeLevel(widget.level.number, reward);
+      final stars = _earnedStars;
+      final reward = 25 + widget.level.number * 5 + (stars * 10);
+      await widget.store.completeLevel(
+        widget.level.number,
+        reward,
+        stars: stars,
+      );
       if (widget.level.number % 3 == 0) _ads.showInterstitial();
-      if (mounted) _showResult(true);
+      if (mounted) _showResult(true, stars: stars, reward: reward);
     } else if (_moves <= 0 && mounted) {
       await widget.store.loseHeart();
-      if (mounted) _showResult(false);
+      if (mounted) _showResult(false, stars: 0, reward: 0);
     }
   }
 
@@ -90,20 +101,13 @@ class _GameScreenState extends State<GameScreen> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.lightbulb_rounded, color: Colors.amber),
-            const SizedBox(width: 10),
-            Text('✓ ${selected.id}'),
-          ],
-        ),
+        content: Text('${selected.name} → ${selected.category} warehouse'),
       ),
     );
   }
 
-  void _showResult(bool won) {
+  void _showResult(bool won, {required int stars, required int reward}) {
     final l10n = AppLocalizations.of(context)!;
-    final reward = 25 + widget.level.number * 5;
 
     showModalBottomSheet<void>(
       context: context,
@@ -139,40 +143,62 @@ class _GameScreenState extends State<GameScreen> {
                         ? const [Color(0xFFFFC83D), Color(0xFFFF8A00)]
                         : const [Color(0xFFFF7B7B), Color(0xFFD93654)],
                   ),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x33000000),
-                      blurRadius: 20,
-                      offset: Offset(0, 10),
-                    ),
-                  ],
                 ),
                 child: Icon(
-                  won ? Icons.emoji_events_rounded : Icons.heart_broken_rounded,
+                  won ? Icons.location_city_rounded : Icons.heart_broken_rounded,
                   size: 50,
                   color: Colors.white,
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 14),
               Text(
-                won ? l10n.completed : l10n.failed,
+                widget.level.cityName,
                 style: const TextStyle(
                   color: AppTheme.navy,
-                  fontSize: 28,
+                  fontSize: 26,
                   fontWeight: FontWeight.w900,
                 ),
               ),
-              const SizedBox(height: 8),
               Text(
-                won
-                    ? '+$reward ${l10n.coins}'
-                    : '${l10n.moves}: 0',
-                style: TextStyle(
-                  color: won ? AppTheme.orange : Colors.redAccent,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w900,
-                ),
+                won ? l10n.completed : l10n.failed,
+                style: const TextStyle(color: AppTheme.muted),
               ),
+              if (won) ...[
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(
+                    3,
+                    (index) => Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: Icon(
+                        index < stars ? Icons.star_rounded : Icons.star_outline_rounded,
+                        color: index < stars ? AppTheme.yellow : Colors.black12,
+                        size: 40,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '+$reward ${l10n.coins}',
+                  style: const TextStyle(
+                    color: AppTheme.orange,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ] else ...[
+                const SizedBox(height: 10),
+                Text(
+                  '${l10n.moves}: 0',
+                  style: const TextStyle(
+                    color: Colors.redAccent,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ],
               const SizedBox(height: 20),
               if (!won)
                 SizedBox(
@@ -204,7 +230,7 @@ class _GameScreenState extends State<GameScreen> {
                     }
                   },
                   icon: Icon(
-                    won ? Icons.arrow_forward_rounded : Icons.restart_alt_rounded,
+                    won ? Icons.map_rounded : Icons.restart_alt_rounded,
                   ),
                   label: Text(won ? l10n.next : l10n.retry),
                 ),
@@ -225,10 +251,19 @@ class _GameScreenState extends State<GameScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final world = gameWorlds[widget.level.world - 1];
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('${l10n.level} ${widget.level.number}'),
+        title: Column(
+          children: [
+            Text(widget.level.cityName),
+            Text(
+              '${world.name} • ${l10n.level} ${widget.level.number}',
+              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+            ),
+          ],
+        ),
         centerTitle: true,
         actions: [
           IconButton(
@@ -239,11 +274,11 @@ class _GameScreenState extends State<GameScreen> {
         ],
       ),
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFFF7FAFF), Color(0xFFE8F1FB)],
+            colors: [world.startColor.withValues(alpha: .12), const Color(0xFFF7FAFF)],
           ),
         ),
         child: SafeArea(
@@ -260,22 +295,16 @@ class _GameScreenState extends State<GameScreen> {
                   coins: widget.store.coins,
                   hearts: widget.store.hearts,
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
                 Text(
-                  l10n.goal,
-                  style: const TextStyle(
-                    color: AppTheme.navy,
+                  widget.level.isBossCity ? 'BOSS CITY MISSION' : l10n.goal,
+                  style: TextStyle(
+                    color: widget.level.isBossCity ? AppTheme.orange : AppTheme.navy,
                     fontWeight: FontWeight.w900,
-                    fontSize: 18,
+                    fontSize: 17,
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  l10n.tapPackage,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.black54),
-                ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
                 Expanded(
                   flex: 3,
                   child: _CargoBoard(
@@ -322,11 +351,7 @@ class _GameScreenState extends State<GameScreen> {
 }
 
 class _CargoBoard extends StatelessWidget {
-  const _CargoBoard({
-    required this.items,
-    required this.selected,
-    required this.onTap,
-  });
+  const _CargoBoard({required this.items, required this.selected, required this.onTap});
 
   final List<CargoItem> items;
   final CargoItem? selected;
@@ -335,60 +360,56 @@ class _CargoBoard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: .94),
+        color: Colors.white.withValues(alpha: .95),
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: Colors.white, width: 2),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x22000000),
-            blurRadius: 20,
-            offset: Offset(0, 10),
-          ),
-        ],
+        boxShadow: const [BoxShadow(color: Color(0x22000000), blurRadius: 20, offset: Offset(0, 10))],
       ),
       child: GridView.builder(
         itemCount: items.length,
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 3,
-          crossAxisSpacing: 10,
-          mainAxisSpacing: 10,
+          crossAxisSpacing: 9,
+          mainAxisSpacing: 9,
+          childAspectRatio: .92,
         ),
         itemBuilder: (_, index) {
           final item = items[index];
           final isSelected = identical(item, selected);
           return InkWell(
             onTap: () => onTap(item),
-            borderRadius: BorderRadius.circular(22),
+            borderRadius: BorderRadius.circular(20),
             child: AnimatedScale(
-              scale: isSelected ? 1.08 : 1,
+              scale: isSelected ? 1.06 : 1,
               duration: const Duration(milliseconds: 160),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
+              child: Container(
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      item.color.withValues(alpha: .8),
-                      item.color,
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(22),
-                  border: Border.all(
-                    color: isSelected ? Colors.white : Colors.transparent,
-                    width: 4,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: item.color.withValues(alpha: .28),
-                      blurRadius: isSelected ? 18 : 9,
-                      offset: const Offset(0, 7),
+                  gradient: LinearGradient(colors: [item.accentColor, item.color]),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: isSelected ? Colors.white : Colors.transparent, width: 3),
+                  boxShadow: [BoxShadow(color: item.color.withValues(alpha: .28), blurRadius: 10, offset: const Offset(0, 6))],
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(item.icon, color: Colors.white, size: 34),
+                    const SizedBox(height: 5),
+                    Text(
+                      item.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900),
+                    ),
+                    Text(
+                      item.category,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: Colors.white70, fontSize: 8),
                     ),
                   ],
                 ),
-                child: Icon(item.icon, color: Colors.white, size: 38),
               ),
             ),
           );
@@ -410,43 +431,33 @@ class _WarehouseBoard extends StatelessWidget {
       itemCount: warehouses.length,
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: min(3, warehouses.length),
-        crossAxisSpacing: 10,
-        mainAxisSpacing: 10,
+        crossAxisSpacing: 9,
+        mainAxisSpacing: 9,
+        childAspectRatio: 1.05,
       ),
       itemBuilder: (_, index) {
         final item = warehouses[index];
         return InkWell(
           onTap: () => onTap(item),
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(20),
           child: Ink(
+            padding: const EdgeInsets.all(7),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(22),
+              borderRadius: BorderRadius.circular(20),
               border: Border.all(color: item.color, width: 3),
-              boxShadow: [
-                BoxShadow(
-                  color: item.color.withValues(alpha: .16),
-                  blurRadius: 12,
-                  offset: const Offset(0, 7),
-                ),
-              ],
+              boxShadow: [BoxShadow(color: item.color.withValues(alpha: .16), blurRadius: 12, offset: const Offset(0, 7))],
             ),
-            child: Stack(
-              alignment: Alignment.center,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.warehouse_rounded, color: item.color, size: 52),
-                Positioned(
-                  right: 10,
-                  bottom: 10,
-                  child: Container(
-                    width: 20,
-                    height: 20,
-                    decoration: BoxDecoration(
-                      color: item.color,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 2),
-                    ),
-                  ),
+                Icon(Icons.warehouse_rounded, color: item.color, size: 38),
+                const SizedBox(height: 3),
+                Text(
+                  item.category,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: item.color, fontSize: 9, fontWeight: FontWeight.w900),
                 ),
               ],
             ),
@@ -479,21 +490,10 @@ class _StatusPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(15),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF142A47), Color(0xFF2D5D8F)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(28),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x33142A47),
-            blurRadius: 22,
-            offset: Offset(0, 11),
-          ),
-        ],
+        gradient: const LinearGradient(colors: [Color(0xFF142A47), Color(0xFF2D5D8F)]),
+        borderRadius: BorderRadius.circular(26),
       ),
       child: Column(
         children: [
@@ -506,12 +506,12 @@ class _StatusPanel extends StatelessWidget {
               _Metric(icon: Icons.favorite_rounded, label: 'Lives', value: '$hearts'),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           ClipRRect(
             borderRadius: BorderRadius.circular(20),
             child: LinearProgressIndicator(
               value: progress,
-              minHeight: 9,
+              minHeight: 8,
               backgroundColor: Colors.white24,
               valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.orange),
             ),
@@ -533,17 +533,9 @@ class _Metric extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Icon(icon, color: AppTheme.orange, size: 23),
-        const SizedBox(height: 3),
-        Text(
-          value,
-          style: const TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w900,
-            fontSize: 16,
-          ),
-        ),
-        Text(label, style: const TextStyle(color: Colors.white60, fontSize: 10)),
+        Icon(icon, color: AppTheme.orange, size: 21),
+        Text(value, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 15)),
+        Text(label, style: const TextStyle(color: Colors.white60, fontSize: 9)),
       ],
     );
   }
