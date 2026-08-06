@@ -156,7 +156,7 @@ try {
         $deviceLines = & $adb devices
         $devices = @($deviceLines | Select-String -Pattern '^\S+\s+device$')
         if ($devices.Count -eq 0) {
-            throw 'No authorized Android phone was found. Enable Developer options and USB debugging, connect the Huawei phone, then accept the USB debugging prompt.'
+            throw 'No authorized Android phone was found. Enable Developer options and USB debugging, connect the phone, then accept the USB debugging prompt.'
         }
 
         Write-Step 'Removing old application from the phone'
@@ -170,23 +170,23 @@ try {
         Invoke-Checked $adb @('shell', 'am', 'start', '-n', "$PackageId/.MainActivity")
 
         Start-Sleep -Seconds 15
-        $pid = (& $adb shell pidof $PackageId 2>$null).Trim()
-        if ([string]::IsNullOrWhiteSpace($pid)) {
+        $appProcessId = (& $adb shell pidof $PackageId 2>$null).Trim()
+        if ([string]::IsNullOrWhiteSpace($appProcessId)) {
             $stamp = Get-Date -Format 'yyyyMMdd_HHmmss'
-            $fullLog = Join-Path $PSScriptRoot "huawei_release_crash_$stamp.log"
-            $filteredLog = Join-Path $PSScriptRoot "huawei_release_crash_filtered_$stamp.log"
+            $fullLog = Join-Path $PSScriptRoot "android_release_crash_$stamp.log"
+            $filteredLog = Join-Path $PSScriptRoot "android_release_crash_filtered_$stamp.log"
 
             & $adb logcat -d -v time | Set-Content $fullLog -Encoding UTF8
             & $adb logcat -d -v time |
                 Select-String -Pattern 'FATAL EXCEPTION|AndroidRuntime|Caused by|ClassNotFoundException|UnsatisfiedLinkError|flutter|Dart|com.walka.cargosort' |
                 Set-Content $filteredLog -Encoding UTF8
 
-            Write-Host "The application closed after launch." -ForegroundColor Red
+            Write-Host 'The application closed after launch.' -ForegroundColor Red
             Write-Host "Crash log: $filteredLog" -ForegroundColor Yellow
-            throw 'Huawei release application crashed. Send the filtered crash log for review.'
+            throw 'Release application crashed. Send the filtered crash log for review.'
         }
 
-        Write-Host "Application is running on the phone. PID: $pid" -ForegroundColor Green
+        Write-Host "Application is running on the phone. PID: $appProcessId" -ForegroundColor Green
     }
 
     Start-Process explorer.exe -ArgumentList "/select,`"$output`""
