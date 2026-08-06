@@ -1,5 +1,4 @@
 param(
-    [string]$AvdName = '',
     [string]$ProjectPath = $PSScriptRoot,
     [string]$PackageId = 'com.walka.cargosort'
 )
@@ -85,15 +84,18 @@ function Wait-ForAdbOnline([string]$Adb, [string]$DeviceId, [int]$TimeoutSeconds
     return $false
 }
 
-function Recover-AdbConnection([string]$Adb, [string]$DeviceId) {
-    Write-Warning "ADB connection to '$DeviceId' went offline. Attempting recovery..."
+function Restart-AdbServer([string]$Adb) {
     & $Adb reconnect offline 2>$null | Out-Null
-    Start-Sleep -Seconds 3
-    if (Wait-ForAdbOnline $Adb $DeviceId 25) { return $true }
-
+    Start-Sleep -Seconds 2
     & $Adb kill-server 2>$null | Out-Null
     Start-Sleep -Seconds 2
     & $Adb start-server | Out-Null
+    Start-Sleep -Seconds 3
+}
+
+function Recover-AdbConnection([string]$Adb, [string]$DeviceId) {
+    Write-Warning 'ADB connection went offline. Attempting recovery...'
+    Restart-AdbServer $Adb
     return (Wait-ForAdbOnline $Adb $DeviceId 60)
 }
 
@@ -117,7 +119,7 @@ function Run-DebugWithRecovery([string]$DeviceId) {
     if ($state -eq 'offline' -or $state -eq 'missing') {
         if (Recover-AdbConnection $tools.Adb $DeviceId) {
             if (Test-AppRunning $tools.Adb $DeviceId) {
-                Write-Host 'The emulator reconnected and Cargo Sort is still running.' -ForegroundColor Green
+                Write-Host 'The Android device reconnected and Cargo Sort is still running.' -ForegroundColor Green
                 return
             }
 
@@ -137,16 +139,22 @@ function Run-DebugWithRecovery([string]$DeviceId) {
     throw "Flutter debug session ended with exit code $runExitCode. Runtime log: $logPath"
 }
 
-function Get-OnlineAdbDevice([string]$Adb) {
-    foreach ($line in (& $Adb devices)) {
-        if ($line -match '^([^\s]+)\s+device$' -and $Matches[1] -ne 'List') { return $Matches[1] }
-    }
-    return $null
+function Select-Avd([string]$EmulatorExe) {
+    $avds = @(& $EmulatorExe -list-avds | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+    if ($avds.Count -eq 0) { throw 'No Android emulator exists. Create one in Android Studio Device Manager.' }
+
+    Write-Host ''; Write-Host 'Available AVDs:' -ForegroundColor Cyan
+    for ($i = 0; $i -lt $avds.Count; $i++) { Write-Host "[$($i + 1)] $($avds[$i])" }
+    $choice = Read-Host 'Choose an AVD number to start'
+    $index = 0
+    if (-not [int]::TryParse($choice, [ref]$index) -or $index -lt 1 -or $index -gt $avds.Count) { throw 'Invalid AVD selection.' }
+    return [string]$avds[$index - 1]
 }
 
 function Start-Device([switch]$ColdBoot) {
     $tools = Get-AndroidTools
     & $tools.Adb start-server | Out-Null
+
     $supported = Get-SupportedAndroidDeviceId
     if ($supported) {
         if (-not (Wait-ForAdbOnline $tools.Adb $supported 60)) {
@@ -155,41 +163,26 @@ function Start-Device([switch]$ColdBoot) {
         return $supported
     }
 
-    $onlineAdb = Get-OnlineAdbDevice $tools.Adb
-    if ($onlineAdb) {
-        Write-Warning "Android device '$onlineAdb' is connected but Flutter marks it as unsupported."
-        Write-Warning 'Use an emulator with Android API 35 or later.'
-    }
-
     if (-not (Test-Path $tools.Emulator)) { throw 'Android Emulator was not found.' }
-    $avds = @(& $tools.Emulator -list-avds | Where-Object { $_.Trim() })
-    if ($avds.Count -eq 0) { throw 'No Android emulator exists. Create an AVD with Android API 35 or later.' }
-
-    if ($AvdName) {
-        if ($avds -notcontains $AvdName) { throw "AVD not found: $AvdName" }
-        $selected = $AvdName
-    } else {
-        Write-Host ''; Write-Host 'Available AVDs:' -ForegroundColor Cyan
-        for ($i = 0; $i -lt $avds.Count; $i++) { Write-Host "[$($i + 1)] $($avds[$i])" }
-        $choice = Read-Host 'Choose an AVD number to start'
-        $index = 0
-        if (-not [int]::TryParse($choice, [ref]$index) -or $index -lt 1 -or $index -gt $avds.Count) { throw 'Invalid AVD selection.' }
-        $selected = $avds[$index - 1]
-    }
+    $selected = Select-Avd $tools.Emulator
 
     $args = @('-avd', $selected, '-no-boot-anim', '-no-snapshot-save')
     if ($ColdBoot) { $args += @('-no-snapshot-load', '-wipe-data') }
-    Write-Host "Starting emulator: $selected" -ForegroundColor Yellow
+    Write-Host "Starting selected emulator: $selected" -ForegroundColor Yellow
     Start-Process $tools.Emulator -ArgumentList $args | Out-Null
 
     $deadline = (Get-Date).AddMinutes(8)
     do {
         Start-Sleep -Seconds 3
         $supported = Get-SupportedAndroidDeviceId
+        if (-not $supported) {
+            $adbStates = @(& $tools.Adb devices)
+            if ($adbStates -match '\boffline\b') { Restart-AdbServer $tools.Adb }
+        }
         if ((Get-Date) -gt $deadline) { throw 'Timed out waiting for a Flutter-supported Android device.' }
     } until ($supported)
 
-    if (-not (Wait-ForAdbOnline $tools.Adb $supported 120)) { throw "Emulator '$supported' did not become stable in ADB." }
+    if (-not (Wait-ForAdbOnline $tools.Adb $supported 120)) { throw 'The selected emulator did not become stable in ADB.' }
     return $supported
 }
 
@@ -207,6 +200,7 @@ function Show-Menu {
     Write-Host '       CARGO SORT DEVELOPMENT TOOL' -ForegroundColor Green
     Write-Host '============================================================' -ForegroundColor Cyan
     Write-Host "Project: $ProjectPath"
+    Write-Host 'No device or emulator name is hardcoded.' -ForegroundColor Yellow
     Write-Host ''
     Write-Host ' 1  - Run Debug with ADB recovery'
     Write-Host ' 2  - Build Debug APK'
@@ -216,8 +210,8 @@ function Show-Menu {
     Write-Host ' 6  - Build + Install Release APK'
     Write-Host ' 7  - Repair Kotlin/Gradle caches only'
     Write-Host ' 8  - Flutter analyze'
-    Write-Host ' 9  - Start supported emulator only'
-    Write-Host '10  - Cold boot supported emulator'
+    Write-Host ' 9  - Select and start emulator only'
+    Write-Host '10  - Select and cold boot emulator'
     Write-Host '11  - Update project from GitHub'
     Write-Host '12  - Update + repair + run Debug'
     Write-Host ' 0  - Exit'
@@ -240,8 +234,8 @@ while ($true) {
             '6' { Invoke-FlutterBuildWithRetry $ProjectPath 'release'; Install-And-Run (Join-Path $ProjectPath 'build\app\outputs\flutter-apk\app-release.apk') }
             '7' { Repair-KotlinBuildCache $ProjectPath -Deep; Write-Host 'Cache repair completed.' -ForegroundColor Green }
             '8' { Invoke-NativeChecked 'flutter' @('analyze', '--no-fatal-infos', '--no-fatal-warnings') $ProjectPath }
-            '9' { [void](Start-Device); Write-Host 'Supported Android device is ready.' -ForegroundColor Green }
-            '10' { [void](Start-Device -ColdBoot); Write-Host 'Cold-boot supported emulator is ready.' -ForegroundColor Green }
+            '9' { [void](Start-Device); Write-Host 'Android device is ready.' -ForegroundColor Green }
+            '10' { [void](Start-Device -ColdBoot); Write-Host 'Cold-boot Android device is ready.' -ForegroundColor Green }
             '11' { Invoke-NativeChecked 'git' @('fetch', 'origin') $ProjectPath; Invoke-NativeChecked 'git' @('reset', '--hard', 'origin/main') $ProjectPath; Write-Host 'Project updated.' -ForegroundColor Green }
             '12' { Invoke-NativeChecked 'git' @('fetch', 'origin') $ProjectPath; Invoke-NativeChecked 'git' @('reset', '--hard', 'origin/main') $ProjectPath; $device = Start-Device; Repair-KotlinBuildCache $ProjectPath -Deep; Run-DebugWithRecovery $device }
             '0' { break }
