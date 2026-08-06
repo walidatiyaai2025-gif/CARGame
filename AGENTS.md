@@ -61,6 +61,21 @@ Codex must never:
 - silently remove or rename a tracked feature ID.
 - invent completed work that is not present in the repository.
 
+## Development dashboard
+
+`docs/dashboard/index.html` is the human-readable development dashboard.
+It parses `docs/FEATURE_CATALOG.md` at runtime and must not contain a second manually
+maintained copy of feature statuses.
+
+- Keep phase headings in `docs/FEATURE_CATALOG.md` in the form `# A. Phase name` so
+  the dashboard can render the execution roadmap.
+- Keep feature rows in the existing Markdown table schema.
+- Never hard-code aggregate counts or completion percentages in the HTML.
+- Any new feature must be added to the correct phase in the catalog before coding.
+- Any new execution phase must be added to both `docs/ROADMAP.md` and the catalog.
+- Verify the dashboard still parses after changing catalog structure.
+- The local launcher is `OPEN_DEVELOPMENT_DASHBOARD.ps1`.
+
 ## Operating mode
 
 - Inspect the repository before editing.
@@ -277,5 +292,6 @@ Maintain:
 - docs/TEST_MATRIX.md
 - docs/DECISIONS.md
 - docs/STATUS.md
+- docs/dashboard/index.html
 
 Update `docs/FEATURE_CATALOG.md` and `docs/STATUS.md` during every implementation task.
