@@ -11,93 +11,83 @@ Build a production-quality Flutter cargo sorting game with 150 levels, 6 worlds,
 | Field | Value |
 |---|---|
 | Current phase | A — Engineering foundation |
-| Active primary feature | `ENG-002` Stable Android build toolchain |
-| Coupled feature | `REL-001` Dynamic ADB/device scripts |
-| Status | IMPLEMENTED checkpoint; Windows verification pending |
+| Active primary feature | `ENG-014` Offline-first service isolation |
+| Status | IMPLEMENTED checkpoint; Flutter/device verification pending |
 | Branch | main |
-| Blocker | The GitHub execution environment cannot run Windows PowerShell, Android SDK, JDK, Gradle, Flutter builds, or an emulator. |
-| Completed checkpoint | Central JDK 17/SDK/Gradle initialization, Kotlin cache recovery, reproducible build entry points, and static toolchain self-test. |
-| Next checkpoint | Run the documented environment self-test plus Debug APK, Release APK, and AAB builds on Windows. |
+| Blocker | The GitHub execution environment cannot run Flutter, Android SDK, an emulator, or an offline/online device transition test. |
+| Completed checkpoint | Optional services are isolated behind timeout, deduplication, bounded retry, observable state, and lifecycle-safe retry; Mobile Ads starts after offline core UI. |
+| Next checkpoint | Run focused Flutter tests, analyze, debug build, and airplane-mode/device verification on Windows/Android. |
 
-## ENG-002 implementation evidence — 2026-08-07
+## ENG-014 implementation evidence — 2026-08-07
 
-- `BUILD_COMMON.ps1` dynamically resolves the Android SDK from environment variables or the standard Android Studio location.
-- JDK discovery validates a complete JDK 17 using both `java.exe` and `javac.exe`.
-- Java selection checks `JAVA_HOME`, `JDK_HOME`, PATH, Flutter configuration, and common vendor roots without committing a local machine path.
-- `JAVA_HOME`, `JDK_HOME`, `ANDROID_HOME`, and `ANDROID_SDK_ROOT` are applied to the current process.
-- `org.gradle.java.home` is normalized and written before Gradle execution.
-- Gradle caching, parallel execution, Kotlin incremental compilation, Kotlin daemon, and Kotlin caches remain disabled for the recurring Windows cache-lock defect.
-- Debug APK, Release APK, and Release AAB use one build/retry implementation.
-- A failed build triggers one deep Kotlin/Gradle cleanup and one deterministic retry.
-- `TEST_BUILD_TOOLCHAIN.ps1` checks PowerShell syntax and rejects fixed emulator IDs, fixed AVD/model names, local JDK paths, and PowerShell ISE usage.
-- Optional `-EnvironmentCheck` validates JDK 17, Android SDK, ADB, and the Gradle wrapper on the developer machine.
+- Added `OptionalServiceCoordinator` as a reusable boundary for network-backed and optional platform services.
+- Each service has independent `idle`, `running`, `ready`, and `unavailable` states.
+- Initialization failures and timeouts return `false` instead of throwing into the core gameplay/bootstrap flow.
+- Concurrent initialization of the same service is deduplicated to one Future and one side effect.
+- Retry attempts are bounded by a configurable maximum and cannot loop indefinitely on lifecycle resume.
+- Mobile Ads initialization now starts only after the local player profile/settings bootstrap and the offline application shell are available.
+- Ad timeout/failure is logged as optional-service unavailability and does not block levels, progress, economy, home navigation, RTL/LTR, or responsive UI.
+- A failed Ads initialization retries safely when the application resumes, while the coordinator prevents duplicate parallel attempts.
+- Coordinator resources and lifecycle observers are disposed.
+- Focused tests cover success, failure containment, timeout isolation, concurrent deduplication, successful retry, and maximum-attempt enforcement.
 
-## Reproducible commands
-
-Static repository audit:
+## Reproducible verification commands
 
 ```powershell
 cd "D:\Apps\CARGame"
-.\TEST_BUILD_TOOLCHAIN.ps1
+
+dart format lib test
+flutter analyze --no-fatal-infos --no-fatal-warnings
+flutter test test\core\services\optional_service_coordinator_test.dart
+flutter test
+flutter build apk --debug
 ```
 
-Local toolchain audit:
+Device/offline verification:
 
-```powershell
-.\TEST_BUILD_TOOLCHAIN.ps1 -EnvironmentCheck
-```
-
-Build verification through the unified menu:
-
-```powershell
-.\COLD_BOOT_AND_RUN.ps1
-# 2 = Debug APK
-# 3 = Release APK
-# 4 = Release AAB
-```
-
-Direct release verification:
-
-```powershell
-.\BUILD_RELEASE_V2.ps1
-```
+1. Launch the application with network disabled.
+2. Confirm Home, level map, mission briefing, gameplay, local rewards, and progress open normally.
+3. Re-enable network and resume the application.
+4. Confirm optional Ads retry occurs without duplicate startup, navigation interruption, or progress mutation.
+5. Disable network again and confirm repeated lifecycle resumes stop retrying after the configured attempt limit.
 
 ## Phase overview
 
 | Phase | Current evidence state |
 |---|---|
-| A Engineering foundation | ENG-002 implementation checkpoint completed; external Windows verification remains. |
-| B Shared 3D design system | Partial; no changes in this infrastructure checkpoint. |
-| C Motion and living interface | Planned; no changes in this infrastructure checkpoint. |
-| D 3D asset pipeline | Planned; no changes in this infrastructure checkpoint. |
-| E–S | No functional or status promotion performed by this checkpoint. |
+| A Engineering foundation | ENG-014 implementation checkpoint completed; external Flutter/device verification remains. ENG-002/REL-001 verification is still open. |
+| M Ads and monetization | ADS-001 now uses the shared optional-service isolation boundary; device verification remains. |
+| B–L, N–S | No unrelated functional or status promotion performed by this checkpoint. |
 
 ## Verification ledger
 
 | Date | Scope | Verification | Result | Commit |
 |---|---|---|---|---|
-| 2026-08-07 | ENG-002 static implementation review | Central JDK/SDK initialization, Gradle property pinning, Kotlin repair integration, deterministic retry, and self-test script added. | IMPLEMENTED | Current checkpoint |
-| 2026-08-07 | ENG-002 Windows parser/environment/build checks | `TEST_BUILD_TOOLCHAIN.ps1 -EnvironmentCheck`, Debug APK, Release APK, and AAB require Windows tooling. | BLOCKED by execution environment | - |
-| 2026-08-07 | Dashboard compatibility | Catalog table schema and statuses were not changed; existing parser contract remains intact. | PASSED — static compatibility | Current checkpoint |
+| 2026-08-07 | ENG-014 static implementation review | Confirmed offline UI is made ready before Mobile Ads starts; optional service exceptions/timeouts are contained; retry is deduplicated and bounded. | PASSED — static review | Current checkpoint |
+| 2026-08-07 | ENG-014 focused test design | Added six deterministic tests for success, failure, timeout, concurrency, retry, and attempt limit. | IMPLEMENTED; execution pending | Current checkpoint |
+| 2026-08-07 | Flutter analyze/test/debug build | Requires Flutter and Android environment. | BLOCKED by execution environment | - |
+| 2026-08-07 | Offline/online Android device test | Requires supported Android device/emulator and network state control. | BLOCKED by execution environment | - |
+| 2026-08-07 | Dashboard compatibility | Catalog retains phases A–S, the existing six-column table schema, a unique ENG-014 ID, and supported `IMPLEMENTED` status. | PASSED — static compatibility | Current checkpoint |
 
 ## Known high-priority risks
 
-1. `ENG-002` must not be promoted to `VERIFIED` until the documented Windows commands pass.
-2. Emulator/ADB instability can still end a debug attachment even when the application process remains alive.
-3. Kotlin cache behavior requires multi-machine verification.
-4. Existing implemented game features still need systematic regression evidence.
-5. Current 3D presentation remains primarily procedural and was not touched in this toolchain checkpoint.
+1. `ENG-014` must not be promoted to `VERIFIED` until focused tests, full tests, analyze, debug build, and a real offline/online device flow pass.
+2. Local storage startup still uses safe defaults after timeout; persistence/migration tests under ENG-008 remain necessary.
+3. Only Mobile Ads currently uses the new optional-service boundary; future analytics, crash reporting, remote configuration, social, and cloud services must use the same isolation pattern.
+4. ENG-005 architecture boundaries remain planned, so later service adoption should consolidate interfaces rather than creating feature-specific retry implementations.
+5. ENG-002 and REL-001 still need Windows/toolchain verification.
 
 ## Next ready work
 
-1. Execute the ENG-002 verification commands on Windows and record exact outputs.
-2. Converge `REL-001` to a clean evidence-based status after the repository-wide forbidden-pattern audit passes.
-3. Complete `ENG-001` baseline audit and capture format/analyze/test/debug-build results.
-4. Implement `MOT-001` shared motion tokens and lifecycle-safe primitives.
-5. Implement `AST-001` taxonomy and provenance rules.
+1. Execute the ENG-014 verification commands and offline device matrix; promote to VERIFIED only with evidence.
+2. Apply the coordinator boundary to future analytics, crash reporting, remote configuration, and cloud/social integrations as those tasks begin.
+3. Complete ENG-005 architecture boundaries so optional service interfaces and ownership are formally documented.
+4. Finish ENG-002 and REL-001 Windows verification.
+5. Complete ENG-001 baseline audit.
 
 ## Last update
 
-- Hardened the Android build toolchain without changing game UI, motion, RTL/LTR, responsive layouts, offline behavior, persistence, or gameplay.
-- Added a self-test for script syntax and forbidden hard-coded environment/device values.
-- Kept ENG-002 below `VERIFIED` because Windows execution evidence is not available in this environment.
+- Isolated Mobile Ads from the offline-first core application flow.
+- Added bounded, deduplicated, timeout-safe optional-service initialization and lifecycle retry.
+- Added focused regression tests without changing gameplay visuals, motion, localization, responsive layouts, or saved progress schemas.
+- Kept ENG-014 at IMPLEMENTED because executable Flutter and device evidence is unavailable in this environment.
