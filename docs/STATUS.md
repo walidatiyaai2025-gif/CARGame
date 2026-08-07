@@ -34,8 +34,8 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | 2026-08-07 | Action feedback focused tests | PASSED — 3/3 |
 | 2026-08-07 | Travel-motion regression tests | PASSED |
 | 2026-08-07 | Dashboard/catalog schema | PASSED — phases A–S and six-column task rows preserved |
-| 2026-08-07 | Full Flutter test suite | RUNNING in Flutter CI |
-| 2026-08-07 | Debug APK build | RUNNING in Flutter CI |
+| 2026-08-07 | Full Flutter test suite | PENDING in Flutter CI |
+| 2026-08-07 | Debug APK build | PENDING in Flutter CI |
 | 2026-08-07 | Physical Android motion/audio review | PENDING |
 
 ## Test locally
