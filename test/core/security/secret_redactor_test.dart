@@ -54,6 +54,12 @@ void main() {
       expect(output, contains(SecretRedactor.userPath));
     });
 
+    test('preserves relative feature paths containing a home segment', () {
+      const input = "import 'features/home/home_screen.dart';";
+
+      expect(SecretRedactor.redact(input), input);
+    });
+
     test('does not redact ordinary diagnostics or Google public test ad ids', () {
       const input =
           'level=42 status=ready ad=ca-app-pub-3940256099942544/6300978111 '
