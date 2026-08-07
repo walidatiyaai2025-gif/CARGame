@@ -330,7 +330,7 @@ Codex must not mark a feature complete merely because UI code exists.
 
 ## IN PROGRESS
 
-- None. The last checkpoint is clean and awaiting Flutter CI/device verification.
+- None. The verified repository baseline checkpoint is clean; the next ready feature is listed below.
 
 ## NEXT READY
 
