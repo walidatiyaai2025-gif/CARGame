@@ -57,6 +57,12 @@ void main() {
       await tester.pump(const Duration(milliseconds: 400));
     }
 
+    // Exercise the journey first because it owns a busy flag while its route
+    // future is active. The remaining destinations are stateless push actions.
+    await expectRoute(
+      find.byIcon(Icons.play_arrow_rounded),
+      GameRouteNames.worldMap,
+    );
     await expectRoute(
       find.byIcon(Icons.storefront_rounded),
       GameRouteNames.shop,
@@ -66,10 +72,6 @@ void main() {
       GameRouteNames.progress,
     );
     await expectRoute(find.byIcon(Icons.article_outlined), GameRouteNames.logs);
-    await expectRoute(
-      find.byIcon(Icons.play_arrow_rounded),
-      GameRouteNames.worldMap,
-    );
 
     expect(tester.takeException(), isNull);
   });
