@@ -15,82 +15,94 @@ void main() {
         InMemorySharedPreferencesAsync.empty();
   });
 
-  test('load clamps persisted wallet, hearts, boosters and level bounds', () async {
-    final prefs = SharedPreferencesAsync();
-    await prefs.setInt('coins', -500);
-    await prefs.setInt('hearts', 99);
-    await prefs.setInt('highest_unlocked_level', 999);
-    await prefs.setInt('booster_free_hints', -4);
-    await prefs.setInt('booster_extra_moves', -3);
-    await prefs.setInt('booster_combo_shields', -2);
+  test(
+    'load clamps persisted wallet, hearts, boosters and level bounds',
+    () async {
+      final prefs = SharedPreferencesAsync();
+      await prefs.setInt('coins', -500);
+      await prefs.setInt('hearts', 99);
+      await prefs.setInt('highest_unlocked_level', 999);
+      await prefs.setInt('booster_free_hints', -4);
+      await prefs.setInt('booster_extra_moves', -3);
+      await prefs.setInt('booster_combo_shields', -2);
 
-    final store = ProgressStore();
-    await store.load();
+      final store = ProgressStore();
+      await store.load();
 
-    expect(store.coins, 0);
-    expect(store.hearts, ProgressStore.maxHearts);
-    expect(store.highestUnlockedLevel, ProgressStore.totalLevels);
-    expect(store.freeHints, 0);
-    expect(store.extraMovesBoosters, 0);
-    expect(store.comboShields, 0);
-    expect(store.recoveryEvents, hasLength(6));
-  });
+      expect(store.coins, 0);
+      expect(store.hearts, ProgressStore.maxHearts);
+      expect(store.highestUnlockedLevel, ProgressStore.totalLevels);
+      expect(store.freeHints, 0);
+      expect(store.extraMovesBoosters, 0);
+      expect(store.comboShields, 0);
+      expect(store.recoveryEvents, hasLength(6));
+    },
+  );
 
-  test('wrong-type progress key is backed up and repaired independently', () async {
-    final prefs = SharedPreferencesAsync();
-    await prefs.setString('coins', 'not-an-int');
-    await prefs.setInt('stats_wins', 17);
+  test(
+    'wrong-type progress key is backed up and repaired independently',
+    () async {
+      final prefs = SharedPreferencesAsync();
+      await prefs.setString('coins', 'not-an-int');
+      await prefs.setInt('stats_wins', 17);
 
-    final store = ProgressStore();
-    await store.load();
+      final store = ProgressStore();
+      await store.load();
 
-    expect(store.coins, 100);
-    expect(store.wins, 17);
-    expect(store.recoveryEvents, hasLength(1));
-    expect(store.recoveryEvents.single.key, 'coins');
-    expect(await prefs.containsKey('coins'), isFalse);
+      expect(store.coins, 100);
+      expect(store.wins, 17);
+      expect(store.recoveryEvents, hasLength(1));
+      expect(store.recoveryEvents.single.key, 'coins');
+      expect(await prefs.containsKey('coins'), isFalse);
 
-    final backupText = await prefs.getString(RecoveringPreferences.backupKey);
-    expect(backupText, isNotNull);
-    final backup = jsonDecode(backupText!) as Map<String, dynamic>;
-    final values = backup['values'] as Map<String, dynamic>;
-    expect(values['coins'], 'not-an-int');
-    expect(values['stats_wins'], 17);
-  });
+      final backupText = await prefs.getString(RecoveringPreferences.backupKey);
+      expect(backupText, isNotNull);
+      final backup = jsonDecode(backupText!) as Map<String, dynamic>;
+      final values = backup['values'] as Map<String, dynamic>;
+      expect(values['coins'], 'not-an-int');
+      expect(values['stats_wins'], 17);
+    },
+  );
 
-  test('malformed heart timestamp is removed without resetting wallet', () async {
-    final prefs = SharedPreferencesAsync();
-    await prefs.setString('heart_refill_timestamp', 'definitely-not-a-date');
-    await prefs.setInt('hearts', 2);
-    await prefs.setInt('coins', 450);
+  test(
+    'malformed heart timestamp is removed without resetting wallet',
+    () async {
+      final prefs = SharedPreferencesAsync();
+      await prefs.setString('heart_refill_timestamp', 'definitely-not-a-date');
+      await prefs.setInt('hearts', 2);
+      await prefs.setInt('coins', 450);
 
-    final store = ProgressStore();
-    await store.load();
+      final store = ProgressStore();
+      await store.load();
 
-    expect(store.coins, 450);
-    expect(store.hearts, 2);
-    expect(
-      store.recoveryEvents.any(
-        (event) => event.key == 'heart_refill_timestamp',
-      ),
-      isTrue,
-    );
-    expect(await prefs.containsKey('heart_refill_timestamp'), isTrue);
-  });
+      expect(store.coins, 450);
+      expect(store.hearts, 2);
+      expect(
+        store.recoveryEvents.any(
+          (event) => event.key == 'heart_refill_timestamp',
+        ),
+        isTrue,
+      );
+      expect(await prefs.containsKey('heart_refill_timestamp'), isTrue);
+    },
+  );
 
-  test('spendCoins rejects non-positive amounts and insufficient funds', () async {
-    final store = ProgressStore();
-    await store.load();
-    final initialCoins = store.coins;
+  test(
+    'spendCoins rejects non-positive amounts and insufficient funds',
+    () async {
+      final store = ProgressStore();
+      await store.load();
+      final initialCoins = store.coins;
 
-    expect(await store.spendCoins(0), isFalse);
-    expect(await store.spendCoins(-10), isFalse);
-    expect(await store.spendCoins(initialCoins + 1), isFalse);
-    expect(store.coins, initialCoins);
+      expect(await store.spendCoins(0), isFalse);
+      expect(await store.spendCoins(-10), isFalse);
+      expect(await store.spendCoins(initialCoins + 1), isFalse);
+      expect(store.coins, initialCoins);
 
-    expect(await store.spendCoins(25), isTrue);
-    expect(store.coins, initialCoins - 25);
-  });
+      expect(await store.spendCoins(25), isTrue);
+      expect(store.coins, initialCoins - 25);
+    },
+  );
 
   test('booster purchase validates input before charging wallet', () async {
     final store = ProgressStore();
@@ -98,10 +110,7 @@ void main() {
     final initialCoins = store.coins;
     final initialHints = store.freeHints;
 
-    expect(
-      () => store.purchaseBooster('unknown', 1, 10),
-      throwsArgumentError,
-    );
+    expect(() => store.purchaseBooster('unknown', 1, 10), throwsArgumentError);
     expect(store.coins, initialCoins);
 
     expect(await store.purchaseBooster('hint', 0, 10), isFalse);
