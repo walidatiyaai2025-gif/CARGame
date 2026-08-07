@@ -25,8 +25,7 @@ void main() {
 
     await tester.tap(find.text('Open'));
     await tester.pump();
-    expect(find.text('Next screen'), findsOneWidget);
-    await tester.pumpAndSettle();
+    await tester.pump(GameRoute.forwardDuration);
     expect(find.text('Next screen'), findsOneWidget);
   });
 
@@ -57,10 +56,10 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(
-      MediaQuery(
-        data: const MediaQueryData(disableAnimations: true),
-        child: MaterialApp(
-          home: Builder(
+      MaterialApp(
+        home: MediaQuery(
+          data: const MediaQueryData(disableAnimations: true),
+          child: Builder(
             builder: (context) => TextButton(
               onPressed: () => Navigator.of(context).push(
                 GameRoute.build<void>(
@@ -77,8 +76,10 @@ void main() {
 
     await tester.tap(find.text('Open'));
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 120));
     expect(find.text('Reduced'), findsOneWidget);
     expect(find.byType(FadeTransition), findsWidgets);
+    expect(find.byType(SlideTransition), findsNothing);
   });
 
   testWidgets('supports RTL navigation without throwing', (tester) async {
