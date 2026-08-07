@@ -13,6 +13,16 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | Next recommended feature | `NAV-002` Adopt the shared route policy across Home, Shop, Progress, briefing/game/result routes |
 | Known blocker | No blocker to development. Re-run analyze/tests/release build after syncing the two analyzer-cleanup commits; local Gradle wrapper also warns that 8.13.0 should be upgraded to >=8.14.0. |
 
+## Setup Tool safe-directory repair — 2026-08-07
+
+- `SETUP_TOOL.ps1` upgraded to v2.6.1 after Option 14 failed on a Windows repository whose owner SID differed from the current user SID.
+- Git operations now call a centralized `Ensure-GitSafeDirectory` preflight before `git -C <project>` commands.
+- The tool adds only the current project path to global `safe.directory`; it does not use wildcard trust.
+- If Git still returns `dubious ownership`/`safe.directory`, the command is repaired and retried once.
+- Startup diagnostics now reports the Git safe-directory state and attempts automatic repair before reading remotes/branch data.
+- First clone also registers the newly cloned project path as safe before normal repository operations.
+- Fix commit: `1b56d3ba13ab4e413f7562bd01c77becbecd7df9`.
+
 ## Workstation release-build evidence — 2026-08-07
 
 - User workstation completed `flutter build apk --release --no-pub` successfully.
@@ -142,6 +152,7 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | 2026-08-07 | Dashboard/catalog structural compatibility after MOT-004 | PASSED BY REVIEW — phase headings and six-column feature table schema preserved; runtime dashboard/CI verification pending |
 | 2026-08-07 | Workstation Release APK | PASSED — `app-release.apk` built successfully, 53.3 MB, before analyzer-import cleanup commits |
 | 2026-08-07 | Workstation Flutter Analyze before import cleanup | PASSED WITH INFO — 2 unnecessary imports, no blocking errors; fixes committed and awaiting rerun |
+| 2026-08-07 | Setup Tool Git ownership recovery | IMPLEMENTED — v2.6.1 adds project-scoped `safe.directory` repair and one retry for dubious ownership; workstation rerun pending |
 
 ## Test locally
 
