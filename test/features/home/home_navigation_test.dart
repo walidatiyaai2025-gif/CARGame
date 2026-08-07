@@ -65,10 +65,7 @@ void main() {
       find.byIcon(Icons.insights_rounded),
       GameRouteNames.progress,
     );
-    await expectRoute(
-      find.byIcon(Icons.article_outlined),
-      GameRouteNames.logs,
-    );
+    await expectRoute(find.byIcon(Icons.article_outlined), GameRouteNames.logs);
     await expectRoute(
       find.byIcon(Icons.play_arrow_rounded),
       GameRouteNames.worldMap,
