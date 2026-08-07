@@ -1,0 +1,97 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-08-07",
+  "principles": {
+    "offlineFirst": true,
+    "analyticsEnabled": false,
+    "cloudSyncEnabled": false,
+    "adsFailClosedByConfig": true,
+    "diagnosticsRedactedBeforePersistence": true
+  },
+  "processors": [
+    {
+      "id": "local-device",
+      "name": "Local device storage",
+      "kind": "first_party_local",
+      "network": false
+    },
+    {
+      "id": "google-mobile-ads",
+      "name": "Google Mobile Ads SDK",
+      "kind": "third_party_sdk",
+      "network": true,
+      "dependency": "google_mobile_ads"
+    }
+  ],
+  "dataFlows": [
+    {
+      "id": "game-progress",
+      "category": "gameplay_progress",
+      "examples": ["unlocked level", "stars", "coins", "hearts", "XP", "boosters", "win/loss statistics", "daily mission state", "theme unlocks"],
+      "purpose": "Persist offline game progress and economy state",
+      "processor": "local-device",
+      "storage": "SharedPreferences",
+      "network": false,
+      "consent": "not_required_local_core_function",
+      "retention": "until app data is cleared, app is uninstalled, or an in-app reset/delete path removes it",
+      "deletion": "clear application data/uninstall; product deletion/reset UX is tracked by PRIV-003",
+      "source": "lib/core/storage/progress_store.dart"
+    },
+    {
+      "id": "app-settings",
+      "category": "preferences",
+      "examples": ["sound enabled", "music enabled", "vibration enabled"],
+      "purpose": "Remember user-selected game settings",
+      "processor": "local-device",
+      "storage": "SharedPreferences",
+      "network": false,
+      "consent": "not_required_local_preference",
+      "retention": "until app data is cleared, app is uninstalled, or reset",
+      "deletion": "clear application data/uninstall; product deletion/reset UX is tracked by PRIV-003",
+      "source": "lib/core/settings/app_settings_store.dart"
+    },
+    {
+      "id": "diagnostic-logs",
+      "category": "diagnostics",
+      "examples": ["error messages", "stack traces", "timestamps", "runtime checkpoints", "local log file path"],
+      "purpose": "Troubleshoot crashes and non-fatal runtime failures",
+      "processor": "local-device",
+      "storage": "application support directory/app_error.log and bounded in-memory entries",
+      "network": false,
+      "consent": "build_config_gate_ENABLE_DIAGNOSTICS; no remote upload exists",
+      "retention": "bounded to 300 in-memory entries; file persists locally until cleared/app data removed",
+      "deletion": "AppLogger.clear(), clear application data, or uninstall",
+      "safeguards": ["SecretRedactor before memory/file/debug output/runtime broadcast/clipboard"],
+      "source": "lib/core/logging/app_logger.dart"
+    },
+    {
+      "id": "ad-sdk-processing",
+      "category": "advertising",
+      "examples": ["SDK/device/network signals processed by Google Mobile Ads when ad requests are enabled"],
+      "purpose": "Load banner, rewarded, and interstitial advertisements",
+      "processor": "google-mobile-ads",
+      "storage": "controlled by Google Mobile Ads SDK/platform",
+      "network": true,
+      "consent": "requires ADS-007 consent implementation before production personalized/regulated-region use; ENABLE_ADS can disable requests entirely",
+      "retention": "third-party processor policy; must be reflected in PRIV-002/store disclosures",
+      "deletion": "no first-party server copy exists; SDK/processor controls third-party retention",
+      "source": "lib/core/ads/ad_service.dart"
+    }
+  ],
+  "explicitlyAbsent": [
+    "account registration",
+    "email address collection",
+    "phone number collection",
+    "contacts",
+    "precise location",
+    "photos/files upload",
+    "first-party analytics SDK",
+    "cloud save/backend account",
+    "remote diagnostic upload"
+  ],
+  "dependencyPolicy": {
+    "networkDataDependencies": ["google_mobile_ads"],
+    "localStorageDependencies": ["shared_preferences", "path_provider"],
+    "forbiddenUnlessInventoryUpdated": ["firebase_analytics", "firebase_crashlytics", "cloud_firestore", "firebase_auth", "sentry_flutter", "amplitude_flutter", "mixpanel_flutter"]
+  }
+}
