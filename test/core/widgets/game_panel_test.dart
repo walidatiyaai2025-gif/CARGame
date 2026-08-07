@@ -20,7 +20,13 @@ void main() {
     );
 
     expect(find.text('Reward'), findsOneWidget);
-    expect(find.bySemanticsLabel('Open reward'), findsOneWidget);
+    final semanticsFinder = find.byWidgetPredicate(
+      (widget) =>
+          widget is Semantics &&
+          widget.properties.label == 'Open reward' &&
+          widget.properties.button == true,
+    );
+    expect(semanticsFinder, findsOneWidget);
 
     await tester.tap(find.text('Reward'));
     await tester.pump(const Duration(milliseconds: 180));
