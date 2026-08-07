@@ -14,10 +14,8 @@ void main() {
 
   test('future heart timestamp is repaired to current time', () async {
     final delegate = SharedPreferencesAsync();
-    final future = DateTime.now()
-        .toUtc()
-        .add(const Duration(days: 30))
-        .toIso8601String();
+    final now = DateTime.now().toUtc();
+    final future = now.add(const Duration(days: 30)).toIso8601String();
     await delegate.setString('heart_refill_timestamp', future);
     await delegate.setInt('coins', 450);
 
@@ -27,19 +25,13 @@ void main() {
     expect(repaired, isNotNull);
     expect(repaired, isNot(future));
     expect(await delegate.getInt('coins'), 450);
-    expect(
-      prefs.recoveryEvents.any(
-        (event) =>
-            event.key == 'heart_refill_timestamp' &&
-            event.reason == 'future timestamp',
-      ),
-      isTrue,
-    );
-    expect(
-      DateTime.parse(repaired!).isAfter(
-        DateTime.now().toUtc().add(const Duration(minutes: 1)),
-      ),
-      isFalse,
-    );
+
+    final event = prefs.recoveryEvents.single;
+    expect(event.key, 'heart_refill_timestamp');
+    expect(event.reason, 'future timestamp');
+
+    final repairedAt = DateTime.parse(repaired!);
+    final tolerance = now.add(const Duration(minutes: 1));
+    expect(repairedAt.isAfter(tolerance), isFalse);
   });
 }
