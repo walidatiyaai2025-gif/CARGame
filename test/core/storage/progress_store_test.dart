@@ -87,6 +87,30 @@ void main() {
     },
   );
 
+  test('future heart timestamp is repaired without freezing refill', () async {
+    final prefs = SharedPreferencesAsync();
+    final future = DateTime.now().toUtc().add(const Duration(days: 2));
+    await prefs.setString('heart_refill_timestamp', future.toIso8601String());
+    await prefs.setInt('hearts', 2);
+
+    final store = ProgressStore();
+    await store.load();
+
+    expect(store.hearts, 2);
+    expect(
+      store.recoveryEvents.any(
+        (event) =>
+            event.key == 'heart_refill_timestamp' &&
+            event.reason == 'future heart refill timestamp',
+      ),
+      isTrue,
+    );
+    final repaired = DateTime.parse(
+      (await prefs.getString('heart_refill_timestamp'))!,
+    ).toUtc();
+    expect(repaired.isAfter(DateTime.now().toUtc()), isFalse);
+  });
+
   test(
     'spendCoins rejects non-positive amounts and insufficient funds',
     () async {
