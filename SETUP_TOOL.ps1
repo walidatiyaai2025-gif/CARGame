@@ -5,13 +5,14 @@ param(
     [string]$Branch = "main"
 )
 
-# CARGame Setup Tool v2.1.0
-# Windows PowerShell 5.1 compatible. Startup and diagnostics are intentionally
-# defensive: one failed check must never close the tool.
+# CARGame Setup Tool v2.2.0
+# Windows PowerShell 5.1 compatible.
+# Safe by default: destructive Git operations require explicit YES confirmation.
 
 $ErrorActionPreference = "Continue"
-$ToolVersion = "2.1.0"
+$ToolVersion = "2.2.0"
 $OriginalLocation = Get-Location
+$script:LastFailure = $null
 
 if ([string]::IsNullOrWhiteSpace($ProjectPath)) {
     if ($PSScriptRoot -and (Test-Path (Join-Path $PSScriptRoot ".git"))) {
@@ -22,8 +23,7 @@ if ([string]::IsNullOrWhiteSpace($ProjectPath)) {
 }
 
 $LogDirectory = Join-Path $ProjectPath "logs\setup_tool"
-$LogFile = $null
-$LastFailure = $null
+$script:LogFile = $null
 
 function Initialize-Log {
     try {
@@ -33,23 +33,23 @@ function Initialize-Log {
     } catch {
         $script:LogDirectory = Join-Path $env:TEMP "CARGame_SetupTool_Logs"
         New-Item -ItemType Directory -Path $script:LogDirectory -Force | Out-Null
+        $script:LogFile = Join-Path $script:LogDirectory ("setup_tool_{0}.log" -f (Get-Date -Format "yyyyMMdd_HHmmss"))
+        return
     }
-
-    $stamp = Get-Date -Format "yyyyMMdd_HHmmss"
-    $script:LogFile = Join-Path $script:LogDirectory "setup_tool_$stamp.log"
-    try {
-        "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] CARGame Setup Tool v$ToolVersion" | Set-Content -Path $script:LogFile -Encoding UTF8
-    } catch { }
+    $script:LogFile = Join-Path $LogDirectory ("setup_tool_{0}.log" -f (Get-Date -Format "yyyyMMdd_HHmmss"))
+    try { "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] CARGame Setup Tool v$ToolVersion" | Set-Content $script:LogFile -Encoding UTF8 } catch { }
 }
 
 function Write-ToolLog {
     param([string]$Message, [string]$Level = "INFO")
     $line = "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] [$Level] $Message"
     try { Add-Content -Path $script:LogFile -Value $line -Encoding UTF8 } catch { }
-    if ($Level -eq "OK") { Write-Host $line -ForegroundColor Green }
-    elseif ($Level -eq "WARN") { Write-Host $line -ForegroundColor Yellow }
-    elseif ($Level -eq "ERROR") { Write-Host $line -ForegroundColor Red }
-    else { Write-Host $line -ForegroundColor Cyan }
+    switch ($Level) {
+        "OK"    { Write-Host $line -ForegroundColor Green }
+        "WARN"  { Write-Host $line -ForegroundColor Yellow }
+        "ERROR" { Write-Host $line -ForegroundColor Red }
+        default { Write-Host $line -ForegroundColor Cyan }
+    }
 }
 
 function Pause-Tool {
@@ -111,17 +111,22 @@ function Invoke-External {
         foreach ($line in $output) { if ($null -ne $line) { Write-Host $line } }
     }
     try {
-        foreach ($line in $output) { if ($null -ne $line) { Add-Content -Path $script:LogFile -Value "    $line" -Encoding UTF8 } }
+        foreach ($line in $output) { if ($null -ne $line) { Add-Content $script:LogFile "    $line" -Encoding UTF8 } }
     } catch { }
 
     if ($exitCode -eq 0) {
         Write-ToolLog "$Step completed" "OK"
     } else {
-        $script:LastFailure = [pscustomobject]@{ Step=$Step; Command=$display; ExitCode=$exitCode; Output=($output -join [Environment]::NewLine) }
+        $script:LastFailure = [pscustomobject]@{
+            Step = $Step
+            Command = $display
+            ExitCode = $exitCode
+            Output = ($output -join [Environment]::NewLine)
+        }
         Write-ToolLog "$Step failed with exit code $exitCode" "ERROR"
         if (-not $AllowFailure) { throw "$Step failed with exit code $exitCode." }
     }
-    return [pscustomobject]@{ ExitCode=$exitCode; Output=$output }
+    return [pscustomobject]@{ ExitCode = $exitCode; Output = $output }
 }
 
 function Test-Repo {
@@ -133,159 +138,39 @@ function Enter-Project {
     Set-Location $ProjectPath
 }
 
-function Add-DiagnosticResult {
-    param([string]$Name, [bool]$Ok, [string]$Details, [bool]$WarningOnly = $false)
-    if ($Ok) {
-        Write-Host ("[OK]   {0,-20} {1}" -f $Name,$Details) -ForegroundColor Green
-        return 0
+function Ensure-Origin {
+    if (-not (Test-Repo)) { return }
+    Enter-Project
+    $r = Invoke-External "git" @("remote") "Read remotes" -AllowFailure -Quiet
+    if ($r.Output -notcontains "origin") {
+        Invoke-External "git" @("remote","add","origin",$RepositoryUrl) "Add origin" | Out-Null
+        return
     }
-    if ($WarningOnly) {
-        Write-Host ("[WARN] {0,-20} {1}" -f $Name,$Details) -ForegroundColor Yellow
-        return 1
+    $current = Invoke-External "git" @("remote","get-url","origin") "Read origin" -AllowFailure -Quiet
+    $url = $current.Output | Select-Object -First 1
+    if ($url -ne $RepositoryUrl) {
+        Write-ToolLog "Origin URL differs. Updating it to the configured repository." "WARN"
+        Invoke-External "git" @("remote","set-url","origin",$RepositoryUrl) "Fix origin" | Out-Null
     }
-    Write-Host ("[FAIL] {0,-20} {1}" -f $Name,$Details) -ForegroundColor Red
-    return 2
 }
 
-function Run-Diagnostics {
-    param([switch]$NoPause)
+function Get-LocalChanges {
+    if (-not (Test-Repo)) { return @() }
+    Enter-Project
+    $status = Invoke-External "git" @("status","--porcelain") "Check local changes" -AllowFailure -Quiet
+    return @($status.Output | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_) })
+}
 
+function Show-LocalChanges {
+    $changes = @(Get-LocalChanges)
+    if ($changes.Count -eq 0) {
+        Write-Host "Working tree is clean." -ForegroundColor Green
+        return $changes
+    }
     Write-Host ""
-    Write-Host "SYSTEM + PROJECT DIAGNOSTICS" -ForegroundColor Yellow
-    Write-Host "------------------------------------------------------------"
-    $score = 100
-    $problems = 0
-    $warnings = 0
-
-    try {
-        $os = [Environment]::OSVersion.VersionString
-        [void](Add-DiagnosticResult "Windows" $true $os)
-    } catch { $problems++; $score -= 8; [void](Add-DiagnosticResult "Windows" $false $_.Exception.Message) }
-
-    try {
-        [void](Add-DiagnosticResult "PowerShell" $true $PSVersionTable.PSVersion.ToString())
-    } catch { $warnings++; $score -= 2; [void](Add-DiagnosticResult "PowerShell" $false "Version unavailable" $true) }
-
-    foreach ($cmd in @("git","flutter","dart","java")) {
-        try {
-            $exists = Test-CommandExists $cmd
-            if ($exists) {
-                $src = (Get-Command $cmd -ErrorAction SilentlyContinue).Source
-                [void](Add-DiagnosticResult $cmd $true $src)
-            } else {
-                $problems++; $score -= 10
-                [void](Add-DiagnosticResult $cmd $false "NOT FOUND")
-            }
-        } catch {
-            $warnings++; $score -= 3
-            [void](Add-DiagnosticResult $cmd $false $_.Exception.Message $true)
-        }
-    }
-
-    try {
-        $javaHome = $env:JAVA_HOME
-        if ($javaHome -and (Test-Path (Join-Path $javaHome "bin\java.exe"))) {
-            [void](Add-DiagnosticResult "JAVA_HOME" $true $javaHome)
-        } else {
-            $warnings++; $score -= 3
-            [void](Add-DiagnosticResult "JAVA_HOME" $false "Missing or invalid" $true)
-        }
-    } catch { $warnings++; $score -= 2; [void](Add-DiagnosticResult "JAVA_HOME" $false "Check failed" $true) }
-
-    try {
-        $sdk = $env:ANDROID_SDK_ROOT
-        if (-not $sdk) { $sdk = $env:ANDROID_HOME }
-        if ($sdk -and (Test-Path $sdk)) {
-            [void](Add-DiagnosticResult "Android SDK" $true $sdk)
-        } else {
-            $warnings++; $score -= 4
-            [void](Add-DiagnosticResult "Android SDK" $false "ANDROID_SDK_ROOT/ANDROID_HOME not set" $true)
-        }
-    } catch { $warnings++; $score -= 2; [void](Add-DiagnosticResult "Android SDK" $false "Check failed" $true) }
-
-    try {
-        $tcp = Test-NetConnection github.com -Port 443 -WarningAction SilentlyContinue
-        if ($tcp.TcpTestSucceeded) { [void](Add-DiagnosticResult "GitHub HTTPS" $true "github.com:443 reachable") }
-        else { $problems++; $score -= 10; [void](Add-DiagnosticResult "GitHub HTTPS" $false "github.com:443 unreachable") }
-    } catch {
-        $warnings++; $score -= 3
-        [void](Add-DiagnosticResult "GitHub HTTPS" $false "Connectivity check unavailable" $true)
-    }
-
-    try {
-        if (Test-Path $ProjectPath) { [void](Add-DiagnosticResult "Project folder" $true $ProjectPath) }
-        else { $warnings++; $score -= 3; [void](Add-DiagnosticResult "Project folder" $false "Not downloaded yet" $true) }
-    } catch { $problems++; $score -= 5; [void](Add-DiagnosticResult "Project folder" $false $_.Exception.Message) }
-
-    try {
-        if (Test-Repo) {
-            [void](Add-DiagnosticResult "Git repository" $true ".git found")
-            Enter-Project
-            $origin = Invoke-External "git" @("remote","get-url","origin") "Read origin" -AllowFailure -Quiet
-            if ($origin.ExitCode -eq 0) {
-                $originText = ($origin.Output | Select-Object -First 1)
-                [void](Add-DiagnosticResult "Origin" $true $originText)
-            } else {
-                $warnings++; $score -= 4
-                [void](Add-DiagnosticResult "Origin" $false "origin missing" $true)
-            }
-
-            $branchResult = Invoke-External "git" @("branch","--show-current") "Read branch" -AllowFailure -Quiet
-            $branchText = ($branchResult.Output | Select-Object -First 1)
-            if ($branchResult.ExitCode -eq 0 -and $branchText) { [void](Add-DiagnosticResult "Branch" $true $branchText) }
-            else { $warnings++; $score -= 3; [void](Add-DiagnosticResult "Branch" $false "Unable to determine" $true) }
-
-            $status = Invoke-External "git" @("status","--porcelain") "Read working tree" -AllowFailure -Quiet
-            $count = @($status.Output | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_) }).Count
-            if ($count -eq 0) { [void](Add-DiagnosticResult "Working tree" $true "Clean") }
-            else { $warnings++; $score -= 3; [void](Add-DiagnosticResult "Working tree" $false "$count local change(s)" $true) }
-
-            $locks = @(".git\index.lock", ".git\shallow.lock") | Where-Object { Test-Path (Join-Path $ProjectPath $_) }
-            if (@($locks).Count -eq 0) { [void](Add-DiagnosticResult "Git locks" $true "None") }
-            else { $warnings++; $score -= 5; [void](Add-DiagnosticResult "Git locks" $false ($locks -join ", ") $true) }
-        } else {
-            $warnings++; $score -= 4
-            [void](Add-DiagnosticResult "Git repository" $false "Not initialized/downloaded" $true)
-        }
-    } catch {
-        $warnings++; $score -= 4
-        [void](Add-DiagnosticResult "Repository checks" $false $_.Exception.Message $true)
-    }
-
-    try {
-        if (Test-Path $ProjectPath) {
-            $root = [System.IO.Path]::GetPathRoot($ProjectPath)
-            $driveName = $root.Substring(0,1)
-            $drive = Get-PSDrive -Name $driveName -ErrorAction SilentlyContinue
-            if ($drive) {
-                $freeGb = [math]::Round($drive.Free / 1GB,1)
-                $ok = $freeGb -ge 5
-                if (-not $ok) { $warnings++; $score -= 5 }
-                [void](Add-DiagnosticResult "Free disk" $ok "$freeGb GB" (-not $ok))
-            }
-        }
-    } catch { $warnings++; $score -= 2; [void](Add-DiagnosticResult "Free disk" $false "Check failed" $true) }
-
-    try {
-        if (Test-CommandExists "flutter") {
-            $dev = Invoke-External "flutter" @("devices","--machine") "Discover devices" -AllowFailure -Quiet
-            if ($dev.ExitCode -eq 0) {
-                $text = $dev.Output -join "`n"
-                if ($text -match '"targetPlatform"\s*:\s*"android') { [void](Add-DiagnosticResult "Android device" $true "Detected by Flutter") }
-                else { $warnings++; $score -= 2; [void](Add-DiagnosticResult "Android device" $false "No supported Android device online" $true) }
-            }
-        }
-    } catch { $warnings++; $score -= 1; [void](Add-DiagnosticResult "Android device" $false "Check failed" $true) }
-
-    if ($score -lt 0) { $score = 0 }
-    Write-Host "------------------------------------------------------------"
-    Write-Host "Health Score : $score%" -ForegroundColor Cyan
-    Write-Host "Problems     : $problems"
-    Write-Host "Warnings     : $warnings"
-    Write-ToolLog "Diagnostics completed. Health=$score%, Problems=$problems, Warnings=$warnings" "OK"
-
-    try { Set-Location $OriginalLocation } catch { }
-    if (-not $NoPause) { Pause-Tool }
+    Write-Host "Local changes detected ($($changes.Count)):" -ForegroundColor Yellow
+    $changes | ForEach-Object { Write-Host "  $_" }
+    return $changes
 }
 
 function Remove-SafeCaches {
@@ -298,19 +183,158 @@ function Remove-SafeCaches {
     }
 }
 
-function Ensure-Origin {
-    if (-not (Test-Repo)) { return }
+function Undo-Local-And-SyncFromGit {
+    if (-not (Test-Repo)) { throw "Project is not a Git repository. Use First Download instead." }
+    Ensure-Origin
     Enter-Project
-    $r = Invoke-External "git" @("remote") "Read remotes" -AllowFailure -Quiet
-    if ($r.Output -notcontains "origin") {
-        Invoke-External "git" @("remote","add","origin",$RepositoryUrl) "Add origin" | Out-Null
-    } else {
-        $current = Invoke-External "git" @("remote","get-url","origin") "Read origin" -AllowFailure -Quiet
-        $url = $current.Output | Select-Object -First 1
-        if ($url -ne $RepositoryUrl) {
-            Invoke-External "git" @("remote","set-url","origin",$RepositoryUrl) "Fix origin" | Out-Null
-        }
+
+    Write-Host ""
+    Write-Host "============================================================" -ForegroundColor Red
+    Write-Host " DISCARD LOCAL CHANGES + APPLY GITHUB VERSION" -ForegroundColor Red
+    Write-Host "============================================================" -ForegroundColor Red
+    $changes = @(Show-LocalChanges)
+    Write-Host ""
+    Write-Host "This will:" -ForegroundColor Yellow
+    Write-Host "  1. Fetch origin/$Branch"
+    Write-Host "  2. Reset ALL tracked files to origin/$Branch"
+    Write-Host "  3. Delete untracked files/folders (logs are preserved)"
+    Write-Host "  4. Restore Flutter packages"
+    Write-Host ""
+    Write-Host "LOCAL WORK NOT COMMITTED TO GIT WILL BE LOST." -ForegroundColor Red
+    $confirm = Read-Host "Type YES to continue"
+    if ($confirm -cne "YES") {
+        Write-ToolLog "Discard/sync cancelled by user." "WARN"
+        return $false
     }
+
+    Remove-SafeCaches
+    Invoke-External "git" @("fetch","--prune","origin",$Branch) "Fetch origin/$Branch" | Out-Null
+    Invoke-External "git" @("reset","--hard","origin/$Branch") "Reset tracked files to GitHub" | Out-Null
+    Invoke-External "git" @("clean","-fd","-e","logs/") "Remove untracked files" | Out-Null
+
+    $checkout = Invoke-External "git" @("checkout",$Branch) "Checkout $Branch" -AllowFailure
+    if ($checkout.ExitCode -ne 0) {
+        Invoke-External "git" @("checkout","-B",$Branch,"origin/$Branch") "Recreate local branch" | Out-Null
+    }
+
+    if (Test-CommandExists "flutter") {
+        Invoke-External "flutter" @("pub","get") "Flutter pub get" -AllowFailure | Out-Null
+    }
+    Write-ToolLog "Local changes discarded and GitHub version applied successfully." "OK"
+    return $true
+}
+
+function Add-DiagnosticResult {
+    param([string]$Name, [bool]$Ok, [string]$Details, [bool]$WarningOnly = $false)
+    if ($Ok) {
+        Write-Host ("[OK]   {0,-20} {1}" -f $Name,$Details) -ForegroundColor Green
+        return
+    }
+    if ($WarningOnly) {
+        Write-Host ("[WARN] {0,-20} {1}" -f $Name,$Details) -ForegroundColor Yellow
+        return
+    }
+    Write-Host ("[FAIL] {0,-20} {1}" -f $Name,$Details) -ForegroundColor Red
+}
+
+function Run-Diagnostics {
+    param([switch]$NoPause)
+    Write-Host ""
+    Write-Host "SYSTEM + PROJECT DIAGNOSTICS" -ForegroundColor Yellow
+    Write-Host "------------------------------------------------------------"
+    $score = 100
+    $problems = 0
+    $warnings = 0
+
+    try { Add-DiagnosticResult "Windows" $true ([Environment]::OSVersion.VersionString) }
+    catch { $problems++; $score -= 8; Add-DiagnosticResult "Windows" $false $_.Exception.Message }
+
+    try { Add-DiagnosticResult "PowerShell" $true $PSVersionTable.PSVersion.ToString() }
+    catch { $warnings++; $score -= 2; Add-DiagnosticResult "PowerShell" $false "Version unavailable" $true }
+
+    foreach ($cmd in @("git","flutter","dart","java")) {
+        try {
+            $found = Get-Command $cmd -ErrorAction SilentlyContinue
+            if ($found) { Add-DiagnosticResult $cmd $true $found.Source }
+            else { $problems++; $score -= 8; Add-DiagnosticResult $cmd $false "NOT FOUND" }
+        } catch { $warnings++; $score -= 2; Add-DiagnosticResult $cmd $false "Check failed" $true }
+    }
+
+    try {
+        if ($env:JAVA_HOME -and (Test-Path (Join-Path $env:JAVA_HOME "bin\java.exe"))) {
+            Add-DiagnosticResult "JAVA_HOME" $true $env:JAVA_HOME
+        } else { $warnings++; $score -= 3; Add-DiagnosticResult "JAVA_HOME" $false "Missing or invalid" $true }
+    } catch { $warnings++; $score -= 2; Add-DiagnosticResult "JAVA_HOME" $false "Check failed" $true }
+
+    try {
+        $sdk = $env:ANDROID_SDK_ROOT
+        if (-not $sdk) { $sdk = $env:ANDROID_HOME }
+        if ($sdk -and (Test-Path $sdk)) { Add-DiagnosticResult "Android SDK" $true $sdk }
+        else { $warnings++; $score -= 3; Add-DiagnosticResult "Android SDK" $false "Environment variable not set" $true }
+    } catch { $warnings++; $score -= 2; Add-DiagnosticResult "Android SDK" $false "Check failed" $true }
+
+    try {
+        $tcp = Test-NetConnection github.com -Port 443 -WarningAction SilentlyContinue
+        if ($tcp.TcpTestSucceeded) { Add-DiagnosticResult "GitHub HTTPS" $true "github.com:443 reachable" }
+        else { $problems++; $score -= 10; Add-DiagnosticResult "GitHub HTTPS" $false "github.com:443 unreachable" }
+    } catch { $warnings++; $score -= 3; Add-DiagnosticResult "GitHub HTTPS" $false "Connectivity check unavailable" $true }
+
+    try {
+        if (Test-Path $ProjectPath) { Add-DiagnosticResult "Project folder" $true $ProjectPath }
+        else { $warnings++; $score -= 3; Add-DiagnosticResult "Project folder" $false "Not downloaded yet" $true }
+    } catch { $problems++; $score -= 4; Add-DiagnosticResult "Project folder" $false "Check failed" }
+
+    try {
+        if (Test-Repo) {
+            Add-DiagnosticResult "Git repository" $true ".git found"
+            Ensure-Origin
+            Enter-Project
+            $branchResult = Invoke-External "git" @("branch","--show-current") "Read branch" -AllowFailure -Quiet
+            $branchText = $branchResult.Output | Select-Object -First 1
+            if ($branchText) { Add-DiagnosticResult "Branch" $true $branchText }
+            else { $warnings++; $score -= 2; Add-DiagnosticResult "Branch" $false "Unable to determine" $true }
+
+            $changes = @(Get-LocalChanges)
+            if ($changes.Count -eq 0) { Add-DiagnosticResult "Working tree" $true "Clean" }
+            else { $warnings++; $score -= 3; Add-DiagnosticResult "Working tree" $false "$($changes.Count) local change(s)" $true }
+
+            $locks = @(".git\index.lock", ".git\shallow.lock") | Where-Object { Test-Path (Join-Path $ProjectPath $_) }
+            if (@($locks).Count -eq 0) { Add-DiagnosticResult "Git locks" $true "None" }
+            else { $warnings++; $score -= 4; Add-DiagnosticResult "Git locks" $false ($locks -join ", ") $true }
+        } else { $warnings++; $score -= 4; Add-DiagnosticResult "Git repository" $false "Not initialized/downloaded" $true }
+    } catch { $warnings++; $score -= 4; Add-DiagnosticResult "Repository checks" $false $_.Exception.Message $true }
+
+    try {
+        if (Test-Path $ProjectPath) {
+            $root = [System.IO.Path]::GetPathRoot($ProjectPath)
+            $drive = Get-PSDrive -Name $root.Substring(0,1) -ErrorAction SilentlyContinue
+            if ($drive) {
+                $freeGb = [math]::Round($drive.Free / 1GB,1)
+                $ok = $freeGb -ge 5
+                if (-not $ok) { $warnings++; $score -= 4 }
+                Add-DiagnosticResult "Free disk" $ok "$freeGb GB" (-not $ok)
+            }
+        }
+    } catch { $warnings++; $score -= 2; Add-DiagnosticResult "Free disk" $false "Check failed" $true }
+
+    try {
+        if (Test-CommandExists "flutter") {
+            $dev = Invoke-External "flutter" @("devices","--machine") "Discover devices" -AllowFailure -Quiet
+            $text = $dev.Output -join "`n"
+            if ($dev.ExitCode -eq 0 -and $text -match '"targetPlatform"\s*:\s*"android') {
+                Add-DiagnosticResult "Android device" $true "Detected by Flutter"
+            } else { $warnings++; $score -= 2; Add-DiagnosticResult "Android device" $false "No supported Android device online" $true }
+        }
+    } catch { $warnings++; $score -= 1; Add-DiagnosticResult "Android device" $false "Check failed" $true }
+
+    if ($score -lt 0) { $score = 0 }
+    Write-Host "------------------------------------------------------------"
+    Write-Host "Health Score : $score%" -ForegroundColor Cyan
+    Write-Host "Problems     : $problems"
+    Write-Host "Warnings     : $warnings"
+    Write-ToolLog "Diagnostics completed. Health=$score%, Problems=$problems, Warnings=$warnings" "OK"
+    try { Set-Location $OriginalLocation } catch { }
+    if (-not $NoPause) { Pause-Tool }
 }
 
 function Repair-Basic {
@@ -358,16 +382,22 @@ function Update-Project {
     Enter-Project
     Remove-SafeCaches
 
-    $status = Invoke-External "git" @("status","--porcelain") "Check local changes" -AllowFailure -Quiet
-    $changes = @($status.Output | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_) })
+    $changes = @(Get-LocalChanges)
     if ($changes.Count -gt 0) {
+        Show-LocalChanges | Out-Null
         Write-Host ""
-        Write-Host "Local source changes detected:" -ForegroundColor Yellow
-        $changes | ForEach-Object { Write-Host "  $_" }
-        Write-Host ""
-        Write-Host "Update stopped to protect your work." -ForegroundColor Yellow
-        Write-Host "Use option 3 to upload them, or commit/stash them manually, then run Update again." -ForegroundColor Yellow
-        throw "Local changes must be protected before update. No files were discarded."
+        Write-Host "Choose how to continue:" -ForegroundColor Cyan
+        Write-Host "  1 - Keep local changes and CANCEL update"
+        Write-Host "  2 - DISCARD local changes and apply GitHub version"
+        Write-Host "  3 - Cancel and return to menu"
+        $action = Read-Host "Choose [1/2/3]"
+        if ($action -eq "2") {
+            $synced = Undo-Local-And-SyncFromGit
+            if ($synced) { return }
+            throw "Update cancelled; local changes were preserved."
+        }
+        Write-ToolLog "Update cancelled to protect local changes." "WARN"
+        return
     }
 
     Invoke-External "git" @("fetch","--prune","origin",$Branch) "Fetch origin/$Branch" | Out-Null
@@ -382,22 +412,19 @@ function Upload-Changes {
     if (-not (Test-Repo)) { throw "Project is not a Git repository." }
     Ensure-Origin
     Enter-Project
-    $status = Invoke-External "git" @("status","--porcelain") "Check changes" -AllowFailure -Quiet
-    $changes = @($status.Output | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_) })
+    $changes = @(Get-LocalChanges)
     if ($changes.Count -eq 0) { Write-ToolLog "No local changes to upload." "OK"; return }
-    $changes | ForEach-Object { Write-Host "  $_" }
+    Show-LocalChanges | Out-Null
     $msg = Read-Host "Commit message [Update project]"
     if ([string]::IsNullOrWhiteSpace($msg)) { $msg = "Update project" }
     Invoke-External "git" @("add","-A") "Stage changes" | Out-Null
     Invoke-External "git" @("commit","-m",$msg) "Commit changes" | Out-Null
     $push = Invoke-External "git" @("push","origin",$Branch) "Push changes" -AllowFailure
-    if ($push.ExitCode -ne 0) {
-        throw "Push failed. Check authentication, branch protection, or remote changes in the log."
-    }
+    if ($push.ExitCode -ne 0) { throw "Push failed. Check authentication, branch protection, or remote changes in the log." }
 }
 
 function Build-Apk {
-    param([string]$Mode)
+    param([ValidateSet("debug","release")][string]$Mode)
     if (-not (Test-CommandExists "flutter")) { throw "Flutter is not installed or not in PATH." }
     Enter-Project
     Invoke-External "flutter" @("pub","get") "Flutter pub get" | Out-Null
@@ -497,14 +524,12 @@ function Invoke-SafeAction {
     }
 }
 
-# ---- Startup guard: nothing below this point is allowed to close silently. ----
 try {
     Initialize-Log
     Show-Header
     Write-Host "Startup safety check..." -ForegroundColor Yellow
     try { Run-Diagnostics -NoPause }
     catch {
-        Write-Host ""
         Write-Host "Diagnostics could not finish, but the Setup Tool will continue." -ForegroundColor Yellow
         Write-Host $_.Exception.Message -ForegroundColor Red
         try { Write-ToolLog "Startup diagnostics failed: $($_.Exception.Message)" "ERROR" } catch { }
@@ -525,6 +550,7 @@ try {
         Write-Host "11 - Build Release APK"
         Write-Host "12 - Run app on supported Android device"
         Write-Host "13 - Full repair + Build Release APK"
+        Write-Host "14 - UNDO local changes + apply GitHub version"
         Write-Host "0  - Exit"
         Write-Host ""
         $choice = Read-Host "Choose an option"
@@ -544,6 +570,7 @@ try {
             "11" { Invoke-SafeAction { Build-Apk "release" } }
             "12" { Invoke-SafeAction { Run-App } }
             "13" { Invoke-SafeAction { Repair-Basic; Build-Apk "release" } }
+            "14" { Invoke-SafeAction { Undo-Local-And-SyncFromGit } }
             default { Write-Host "Invalid option." -ForegroundColor Yellow; Start-Sleep -Seconds 1 }
         }
     }
