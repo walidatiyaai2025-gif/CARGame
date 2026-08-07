@@ -2,10 +2,12 @@ import 'package:cargo_sort_game/core/storage/progress_store.dart';
 import 'package:cargo_sort_game/features/progress/progress_hub_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
+import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 
 Future<ProgressStore> _store() async {
-  SharedPreferences.setMockInitialValues(<String, Object>{});
+  SharedPreferencesAsyncPlatform.instance =
+      InMemorySharedPreferencesAsync.empty();
   final store = ProgressStore();
   await store.load();
   return store;
@@ -18,6 +20,8 @@ Future<void> _pumpProgress(
   TextScaler textScaler = TextScaler.noScaling,
 }) async {
   await tester.binding.setSurfaceSize(size);
+  addTearDown(() => tester.binding.setSurfaceSize(null));
+
   final store = await _store();
   addTearDown(store.dispose);
 
@@ -35,9 +39,7 @@ Future<void> _pumpProgress(
 }
 
 void main() {
-  tearDown(() async {
-    await TestWidgetsFlutterBinding.ensureInitialized().setSurfaceSize(null);
-  });
+  TestWidgetsFlutterBinding.ensureInitialized();
 
   testWidgets('progress hub stays overflow-free on a narrow phone', (tester) async {
     await _pumpProgress(
