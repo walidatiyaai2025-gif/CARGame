@@ -23,14 +23,16 @@ void main() {
     await tester.pump();
 
     final list = find.byType(ListView);
+    final scrollable = find.byType(Scrollable);
     expect(list, findsOneWidget);
+    expect(scrollable, findsOneWidget);
     expect(find.text('Smart Hint Pack'), findsOneWidget);
     expect(find.text('Extra Moves Pack'), findsOneWidget);
 
     await tester.scrollUntilVisible(
       find.text('Combo Shield'),
       250,
-      scrollable: list,
+      scrollable: scrollable,
     );
     await tester.pumpAndSettle();
 
