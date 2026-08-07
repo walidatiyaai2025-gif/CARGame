@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - scripts/one_time_gamebutton_adoption.py
+      - .github/workflows/one_time_gamebutton_adoption.yml
 
 permissions:
   contents: write
