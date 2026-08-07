@@ -1,6 +1,5 @@
 import 'dart:collection';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
 import 'game_asset_registry.dart';
@@ -33,8 +32,8 @@ final class GameAssetCachePolicy extends ChangeNotifier {
 
   final int maxEntries;
 
-  final LinkedHashMap<String, AssetImage> _cached =
-      LinkedHashMap<String, AssetImage>();
+  final LinkedHashMap<String, ExactAssetImage> _cached =
+      LinkedHashMap<String, ExactAssetImage>();
   final Set<String> _inFlight = <String>{};
   final LinkedHashSet<String> _failed = LinkedHashSet<String>();
 
@@ -67,7 +66,13 @@ final class GameAssetCachePolicy extends ChangeNotifier {
     }
     if (_inFlight.contains(assetId)) return false;
 
-    final provider = AssetImage(descriptor.path);
+    // Registry descriptors already contain the exact governed runtime path. Using
+    // ExactAssetImage avoids a redundant AssetManifest.bin lookup and ensures
+    // precache resolves through the same DefaultAssetBundle as the current view.
+    final provider = ExactAssetImage(
+      descriptor.path,
+      bundle: DefaultAssetBundle.of(context),
+    );
     _inFlight.add(assetId);
     notifyListeners();
     try {
@@ -111,7 +116,7 @@ final class GameAssetCachePolicy extends ChangeNotifier {
 
   Future<void> clear() async {
     if (_cached.isEmpty && _failed.isEmpty && _inFlight.isEmpty) return;
-    final providers = List<AssetImage>.from(_cached.values);
+    final providers = List<ExactAssetImage>.from(_cached.values);
     _cached.clear();
     _failed.clear();
     _inFlight.clear();
