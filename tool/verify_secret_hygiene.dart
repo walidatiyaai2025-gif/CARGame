@@ -51,7 +51,7 @@ final _windowsUserPath = RegExp(
 );
 
 final _unixUserPath = RegExp(
-  r'/(?:Users|home)/[^/\s]+(?:/[^\s\r\n]*)?',
+  r'''(^|[\s"'=:(])/(?:Users|home)/[^/\s]+(?:/[^\s\r\n]*)?''',
 );
 
 const _placeholderFragments = <String>{
