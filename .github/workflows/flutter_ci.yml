@@ -40,6 +40,9 @@ jobs:
       - name: Verify secret hygiene
         run: dart run tool/verify_secret_hygiene.dart
 
+      - name: Verify privacy data inventory
+        run: dart run tool/verify_privacy_inventory.dart
+
       - name: Restore packages
         run: flutter pub get
 
