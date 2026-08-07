@@ -32,6 +32,9 @@ jobs:
       - name: Flutter version
         run: flutter --version
 
+      - name: Verify dynamic Android targets
+        run: dart run tool/verify_dynamic_android_targets.dart
+
       - name: Restore packages
         run: flutter pub get
 
@@ -39,7 +42,7 @@ jobs:
         run: flutter gen-l10n
 
       - name: Format Dart sources
-        run: dart format lib test
+        run: dart format lib test tool
 
       - name: Verify whitespace integrity
         run: git diff --check
