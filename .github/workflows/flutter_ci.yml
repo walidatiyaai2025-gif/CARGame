@@ -84,9 +84,10 @@ jobs:
             exit 0
           fi
 
-          printf 'Validating Dart formatting for %d changed file(s):\n' "${#dart_files[@]}"
+          printf 'Canonical Dart formatting for %d changed file(s):\n' "${#dart_files[@]}"
           printf ' - %s\n' "${dart_files[@]}"
-          dart format --output=none --set-exit-if-changed "${dart_files[@]}"
+          dart format --output=show "${dart_files[@]}"
+          exit 1
 
       - name: Verify whitespace integrity
         run: git diff --check
