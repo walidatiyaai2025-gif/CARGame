@@ -20,6 +20,30 @@ void main() {
     await tester.binding.setSurfaceSize(const Size(800, 1000));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
+    Future<void> pumpUntil(
+      Finder finder, {
+      Duration step = const Duration(milliseconds: 50),
+      int maxPumps = 40,
+    }) async {
+      for (var attempt = 0; attempt < maxPumps; attempt++) {
+        if (finder.evaluate().isNotEmpty) return;
+        await tester.pump(step);
+      }
+      expect(finder, findsWidgets);
+    }
+
+    Future<void> pumpUntilAbsent(
+      Finder finder, {
+      Duration step = const Duration(milliseconds: 50),
+      int maxPumps = 40,
+    }) async {
+      for (var attempt = 0; attempt < maxPumps; attempt++) {
+        if (finder.evaluate().isEmpty) return;
+        await tester.pump(step);
+      }
+      expect(finder, findsNothing);
+    }
+
     final observer = _GameRouteObserver();
     final cargo = productCatalog.first;
     final level = LevelData(
@@ -60,32 +84,8 @@ void main() {
     );
 
     await tester.tap(find.byKey(const ValueKey('open-game')));
-    await tester.pump(const Duration(milliseconds: 400));
+    await pumpUntil(find.byType(GameScreen));
     expect(find.byType(GameScreen), findsOneWidget);
-
-    Future<void> pumpUntil(
-      Finder finder, {
-      Duration step = const Duration(milliseconds: 50),
-      int maxPumps = 40,
-    }) async {
-      for (var attempt = 0; attempt < maxPumps; attempt++) {
-        if (finder.evaluate().isNotEmpty) return;
-        await tester.pump(step);
-      }
-      expect(finder, findsWidgets);
-    }
-
-    Future<void> pumpUntilAbsent(
-      Finder finder, {
-      Duration step = const Duration(milliseconds: 50),
-      int maxPumps = 40,
-    }) async {
-      for (var attempt = 0; attempt < maxPumps; attempt++) {
-        if (finder.evaluate().isEmpty) return;
-        await tester.pump(step);
-      }
-      expect(finder, findsNothing);
-    }
 
     Future<void> placeCargo() async {
       await tester.tap(find.byKey(const ValueKey('cargo-1-0')));
