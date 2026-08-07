@@ -100,7 +100,8 @@ class ProgressStore extends ChangeNotifier {
       1,
       totalLevels,
     );
-    coins = await _prefs.getInt(_coinsKey) ?? 100;
+    final savedCoins = await _prefs.getInt(_coinsKey);
+    coins = savedCoins == null ? 100 : (savedCoins < 0 ? 0 : savedCoins);
     hearts = (await _prefs.getInt(_heartsKey) ?? maxHearts).clamp(0, maxHearts);
     final heartTimestampText = await _prefs.getString(_heartTimestampKey);
     _heartRefillTimestamp = heartTimestampText == null
@@ -124,9 +125,12 @@ class ProgressStore extends ChangeNotifier {
       'classic',
     };
     if (!unlockedThemes.contains(selectedTheme)) selectedTheme = 'classic';
-    freeHints = await _prefs.getInt(_freeHintsKey) ?? 2;
-    extraMovesBoosters = await _prefs.getInt(_extraMovesKey) ?? 1;
-    comboShields = await _prefs.getInt(_comboShieldsKey) ?? 1;
+    final savedHints = await _prefs.getInt(_freeHintsKey);
+    final savedMoves = await _prefs.getInt(_extraMovesKey);
+    final savedShields = await _prefs.getInt(_comboShieldsKey);
+    freeHints = savedHints == null ? 2 : (savedHints < 0 ? 0 : savedHints);
+    extraMovesBoosters = savedMoves == null ? 1 : (savedMoves < 0 ? 0 : savedMoves);
+    comboShields = savedShields == null ? 1 : (savedShields < 0 ? 0 : savedShields);
 
     lastCompletionBonus = 0;
     lastCompletionBonusXp = 0;
@@ -244,7 +248,7 @@ class ProgressStore extends ChangeNotifier {
     }
 
     if (level >= highestUnlockedLevel && highestUnlockedLevel < totalLevels) {
-      highestUnlockedLevel = level + 1;
+      highestUnlockedLevel = (level + 1).clamp(1, totalLevels);
     }
 
     final safeStars = stars.clamp(1, maxStarsPerLevel);
@@ -306,7 +310,7 @@ class ProgressStore extends ChangeNotifier {
   }
 
   Future<bool> spendCoins(int amount) async {
-    if (coins < amount) return false;
+    if (amount <= 0 || coins < amount) return false;
     coins -= amount;
     await _prefs.setInt(_coinsKey, coins);
     notifyListeners();
@@ -327,6 +331,11 @@ class ProgressStore extends ChangeNotifier {
   }
 
   Future<bool> purchaseBooster(String boosterId, int amount, int price) async {
+    if (!const {'hint', 'moves', 'shield'}.contains(boosterId)) {
+      throw ArgumentError.value(boosterId, 'boosterId');
+    }
+    if (amount <= 0) return false;
+
     final paid = await spendCoins(price);
     if (!paid) return false;
     switch (boosterId) {
@@ -339,8 +348,6 @@ class ProgressStore extends ChangeNotifier {
       case 'shield':
         comboShields += amount;
         await _prefs.setInt(_comboShieldsKey, comboShields);
-      default:
-        throw ArgumentError.value(boosterId, 'boosterId');
     }
     notifyListeners();
     return true;
