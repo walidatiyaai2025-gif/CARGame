@@ -14,21 +14,22 @@ void main() {
         InMemorySharedPreferencesAsync.empty();
   });
 
-  testWidgets('progress hub adopts GamePanel while preserving long-form scrolling', (
-    tester,
-  ) async {
-    final store = ProgressStore();
+  testWidgets(
+    'progress hub adopts GamePanel while preserving long-form scrolling',
+    (tester) async {
+      final store = ProgressStore();
 
-    await tester.pumpWidget(
-      MaterialApp(home: ProgressHubScreen(store: store)),
-    );
-    await tester.pump();
+      await tester.pumpWidget(
+        MaterialApp(home: ProgressHubScreen(store: store)),
+      );
+      await tester.pump();
 
-    expect(find.byType(ListView), findsOneWidget);
-    expect(find.byType(GamePanel), findsAtLeastNWidgets(7));
-    expect(find.text('Daily Mission'), findsOneWidget);
-    expect(find.text('Win 3 cities'), findsOneWidget);
-    expect(find.text('Earn 6 stars'), findsOneWidget);
-    expect(find.text('Earn 150 coins'), findsOneWidget);
-  });
+      expect(find.byType(ListView), findsOneWidget);
+      expect(find.byType(GamePanel), findsAtLeastNWidgets(7));
+      expect(find.text('Daily Mission'), findsOneWidget);
+      expect(find.text('Win 3 cities'), findsOneWidget);
+      expect(find.text('Earn 6 stars'), findsOneWidget);
+      expect(find.text('Earn 150 coins'), findsOneWidget);
+    },
+  );
 }
