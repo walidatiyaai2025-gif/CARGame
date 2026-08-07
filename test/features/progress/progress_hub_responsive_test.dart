@@ -76,15 +76,18 @@ void main() {
     },
   );
 
-  testWidgets('progress hub survives large text on a tablet', (tester) async {
-    await _pumpProgress(
-      tester,
-      size: const Size(1024, 1366),
-      locale: const Locale('en'),
-      textScaler: const TextScaler.linear(1.8),
-    );
+  testWidgets(
+    'progress hub survives large text on a tablet',
+    (tester) async {
+      await _pumpProgress(
+        tester,
+        size: const Size(1024, 1366),
+        locale: const Locale('en'),
+        textScaler: const TextScaler.linear(1.8),
+      );
 
-    expect(tester.takeException(), isNull);
-    expect(find.text('Achievements'), findsOneWidget);
-  });
+      expect(tester.takeException(), isNull);
+      expect(find.text('Achievements'), findsOneWidget);
+    },
+  );
 }
