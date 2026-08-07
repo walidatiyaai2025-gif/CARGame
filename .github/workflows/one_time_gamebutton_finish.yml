@@ -1,0 +1,37 @@
+name: One-time GameButton finish
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - scripts/one_time_gamebutton_finish.py
+      - .github/workflows/one_time_gamebutton_finish.yml
+
+permissions:
+  contents: write
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.44.8
+          cache: true
+      - name: Apply final adoption patch
+        run: python scripts/one_time_gamebutton_finish.py
+      - name: Format and verify
+        run: |
+          dart format lib/features/game/game_screen.dart lib/features/shop/shop_screen.dart
+          git diff --check
+      - name: Commit checkpoint
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "feat(motion): complete major GameButton adoption [skip ci]"
+          git push
