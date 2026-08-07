@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:typed_data';
 
 import 'package:cargo_sort_game/core/assets/game_asset_manifest.dart';
 import 'package:flutter/services.dart';
@@ -41,7 +40,7 @@ final class _MemoryAssetBundle extends CachingAssetBundle {
     requestedKeys.add(key);
     final value = assets[key];
     if (value == null) {
-      throw FlutterError('Missing fake asset: $key');
+      throw StateError('Missing fake asset: $key');
     }
     final bytes = Uint8List.fromList(utf8.encode(value));
     return ByteData.sublistView(bytes);
