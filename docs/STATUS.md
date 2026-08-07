@@ -8,7 +8,8 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 |---|---|
 | Current phase | C — Motion and living interface |
 | Active checkpoint | `MOT-005` Ambient home/world motion |
-| Status | IN PROGRESS — Home implementation complete; CI, world-map adoption, and device review remain |
+| Status | IN PROGRESS — Home implementation complete; full CI, world-map adoption, and device review remain |
+| Implementation commit | `bfc16deb36bf3d675ca0c9f2b9df2b9713ebdd05` |
 | Previous checkpoint | `MOT-010` lifecycle-safe ticker boundaries |
 | Next checkpoint | Apply the shared ambient-motion layer to the world/city map |
 
@@ -26,10 +27,11 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 
 | Date | Verification | Result |
 |---|---|---|
-| 2026-08-07 | Patch anchors and Dart format | PASSED in implementation workflow |
-| 2026-08-07 | Home ambient focused tests | PENDING in Flutter CI |
-| 2026-08-07 | Flutter Analyze and full test suite | PENDING in Flutter CI |
-| 2026-08-07 | Debug APK build | PENDING in Flutter CI |
+| 2026-08-07 | Patch anchors and Dart format | PASSED |
+| 2026-08-07 | Flutter Analyze | PASSED — no issues found |
+| 2026-08-07 | Home ambient focused tests | PASSED — 2/2 |
+| 2026-08-07 | Full Flutter test suite | RUNNING in Flutter CI |
+| 2026-08-07 | Debug APK build | RUNNING in Flutter CI |
 | 2026-08-07 | Dashboard schema | PASSED — six-column tables and phases A–S preserved |
 
 ## Test locally
