@@ -66,7 +66,10 @@ final class GameAssetCachePolicy extends ChangeNotifier {
     }
     if (_inFlight.contains(assetId)) return false;
 
-    final provider = AssetImage(descriptor.path);
+    final provider = AssetImage(
+      descriptor.path,
+      bundle: DefaultAssetBundle.of(context),
+    );
     _inFlight.add(assetId);
     notifyListeners();
     try {
