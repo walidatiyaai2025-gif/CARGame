@@ -5,6 +5,7 @@ import '../../core/storage/progress_store.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/three_d_game_icon.dart';
 import '../../core/widgets/game_button.dart';
+import 'home_ambient_background.dart';
 import '../../l10n/app_localizations.dart';
 import '../game/city_catalog.dart';
 import '../game/level_data.dart';
@@ -103,110 +104,107 @@ class _HomeScreenState extends State<HomeScreen> {
           final world = gameWorlds[worldNumber - 1];
           final currentCity = levels[unlocked - 1].cityName;
 
-          return Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  world.startColor.withValues(alpha: .18),
-                  const Color(0xFFF6FAFF),
-                  AppTheme.cream,
-                ],
+          return Stack(
+            children: [
+              Positioned.fill(
+                child: HomeAmbientBackground(
+                  startColor: world.startColor,
+                  endColor: world.endColor,
+                ),
               ),
-            ),
-            child: SafeArea(
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final compact = constraints.maxWidth < 390;
-                  final horizontal = compact ? 12.0 : 18.0;
-                  return ListView(
-                    padding: EdgeInsets.fromLTRB(
-                      horizontal,
-                      10,
-                      horizontal,
-                      28,
-                    ),
-                    children: [
-                      _TopBar(
-                        ar: ar,
-                        compact: compact,
-                        onShop: _openShop,
-                        onProgress: _openProgress,
-                        onLogs: () => Navigator.of(context).push(
-                          MaterialPageRoute<void>(
-                            builder: (_) => const LogViewerScreen(),
+              SafeArea(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final compact = constraints.maxWidth < 390;
+                    final horizontal = compact ? 12.0 : 18.0;
+                    return ListView(
+                      padding: EdgeInsets.fromLTRB(
+                        horizontal,
+                        10,
+                        horizontal,
+                        28,
+                      ),
+                      children: [
+                        _TopBar(
+                          ar: ar,
+                          compact: compact,
+                          onShop: _openShop,
+                          onProgress: _openProgress,
+                          onLogs: () => Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) => const LogViewerScreen(),
+                            ),
+                          ),
+                          onLanguage: widget.onToggleLanguage,
+                        ),
+                        const SizedBox(height: 14),
+                        _ResourceStrip(
+                          compact: compact,
+                          hearts: '${store.hearts}/${ProgressStore.maxHearts}',
+                          heartLabel: _heartTimer(ar),
+                          coins: '${store.coins}',
+                          coinLabel: l10n.coins,
+                          stars: '${store.totalStars}',
+                          starLabel: ar ? 'النجوم' : 'Stars',
+                        ),
+                        const SizedBox(height: 18),
+                        _JourneyHero(
+                          ar: ar,
+                          compact: compact,
+                          title: l10n.appTitle,
+                          worldName: world.name,
+                          worldNumber: worldNumber,
+                          currentCity: currentCity,
+                          progress: store.completionProgress,
+                          completed: store.completedLevels,
+                          startColor: world.startColor,
+                          endColor: world.endColor,
+                        ),
+                        const SizedBox(height: 16),
+                        _QuickActions(
+                          compact: compact,
+                          ar: ar,
+                          dailyClaimed: !store.canClaimDailyReward,
+                          missionClaimed: store.missionClaimed,
+                          missionText:
+                              '${store.missionWins}/3 • ${store.missionStars}/6',
+                          onDaily: _claimDailyReward,
+                          onMission: _openProgress,
+                          onShop: _openShop,
+                        ),
+                        const SizedBox(height: 14),
+                        _StreakPanel(
+                          ar: ar,
+                          current: store.currentWinStreak,
+                          best: store.bestWinStreak,
+                          combo: store.bestCombo,
+                          onTap: _openProgress,
+                        ),
+                        const SizedBox(height: 20),
+                        _StartJourneyButton(
+                          ar: ar,
+                          compact: compact,
+                          busy: _openingJourney,
+                          enabled: store.hearts > 0,
+                          cityName: currentCity,
+                          onPressed: _openJourney,
+                        ),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'Walid Atiya Ata - PMP',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: AppTheme.muted,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: .2,
                           ),
                         ),
-                        onLanguage: widget.onToggleLanguage,
-                      ),
-                      const SizedBox(height: 14),
-                      _ResourceStrip(
-                        compact: compact,
-                        hearts: '${store.hearts}/${ProgressStore.maxHearts}',
-                        heartLabel: _heartTimer(ar),
-                        coins: '${store.coins}',
-                        coinLabel: l10n.coins,
-                        stars: '${store.totalStars}',
-                        starLabel: ar ? 'النجوم' : 'Stars',
-                      ),
-                      const SizedBox(height: 18),
-                      _JourneyHero(
-                        ar: ar,
-                        compact: compact,
-                        title: l10n.appTitle,
-                        worldName: world.name,
-                        worldNumber: worldNumber,
-                        currentCity: currentCity,
-                        progress: store.completionProgress,
-                        completed: store.completedLevels,
-                        startColor: world.startColor,
-                        endColor: world.endColor,
-                      ),
-                      const SizedBox(height: 16),
-                      _QuickActions(
-                        compact: compact,
-                        ar: ar,
-                        dailyClaimed: !store.canClaimDailyReward,
-                        missionClaimed: store.missionClaimed,
-                        missionText:
-                            '${store.missionWins}/3 • ${store.missionStars}/6',
-                        onDaily: _claimDailyReward,
-                        onMission: _openProgress,
-                        onShop: _openShop,
-                      ),
-                      const SizedBox(height: 14),
-                      _StreakPanel(
-                        ar: ar,
-                        current: store.currentWinStreak,
-                        best: store.bestWinStreak,
-                        combo: store.bestCombo,
-                        onTap: _openProgress,
-                      ),
-                      const SizedBox(height: 20),
-                      _StartJourneyButton(
-                        ar: ar,
-                        compact: compact,
-                        busy: _openingJourney,
-                        enabled: store.hearts > 0,
-                        cityName: currentCity,
-                        onPressed: _openJourney,
-                      ),
-                      const SizedBox(height: 16),
-                      const Text(
-                        'Walid Atiya Ata - PMP',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: AppTheme.muted,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: .2,
-                        ),
-                      ),
-                    ],
-                  );
-                },
+                      ],
+                    );
+                  },
+                ),
               ),
-            ),
+            ],
           );
         },
       ),

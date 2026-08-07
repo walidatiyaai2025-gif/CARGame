@@ -79,7 +79,7 @@ Codex must not mark a feature complete merely because UI code exists.
 | MOT-002 | Button press and release feedback primitive | P0 | IMPLEMENTED | UI3D-003 | `GameButton` responds within 100 ms, springs on release, and guards delayed or duplicate async taps; wider screen adoption remains under MOT-003. |
 | MOT-003 | Universal Button Motion System | P0 | IMPLEMENTED | UI3D-003, MOT-002 | Major Start, mission launch, Next, Retry, rewarded continuation, heart/booster/theme purchase, and settings actions use shared `GameButton`; focused tests and CI verification exist, while physical-device motion review remains. |
 | MOT-004 | Screen transitions | P1 | PLANNED | MOT-001 | Shared-axis/fade-through transitions are guarded, interruptible, and RTL-aware. |
-| MOT-005 | Ambient home/world motion | P1 | PLANNED | MOT-001, UI3D-007 | Low-density particles, parallax, and light sweeps pause off-screen. |
+| MOT-005 | Ambient home/world motion | P1 | IN PROGRESS | MOT-001, UI3D-007 | Home now uses a lifecycle-safe animated gradient, drifting clouds, glow parallax, and low-cost road depth with reduced-motion support; world-map adoption and physical-device review remain. |
 | MOT-006 | Product pickup, travel, placement, settle | P0 | PLANNED | GAME-003, MOT-001 | Every gameplay action shows cause/result while board state remains deterministic. |
 | MOT-007 | Correct/wrong/combo feedback | P0 | PLANNED | GAME-003, MOT-001 | Sparkle, bounce, recoil, capped combo escalation, audio, and haptics are synchronized. |
 | MOT-008 | Reward flight and reveal sequences | P1 | PLANNED | REW-001, MOT-001 | Coins fly to wallet, stars reveal, XP interpolates, and rewards remain idempotent. |
@@ -108,7 +108,7 @@ Codex must not mark a feature complete merely because UI code exists.
 
 | ID | Function | Priority | Status | Dependencies | Acceptance / evidence |
 |---|---|---:|---|---|---|
-| HOME-001 | Premium 3D home screen | P1 | IMPLEMENTED | UI3D-002 | Hero, resources, cards, and start CTA exist; final assets and motion remain. |
+| HOME-001 | Premium 3D home screen | P1 | IMPLEMENTED | UI3D-002 | Hero, resources, cards, and start CTA exist; a lifecycle-safe living backdrop with parallax glow and drifting cloud layers is integrated. Final authored assets and device polish remain. |
 | HOME-002 | Responsive Start button | P0 | IMPLEMENTED | HOME-001 | No overflow and repeated navigation is guarded; device matrix test remains. |
 | HOME-003 | Current world and next-city hero | P1 | IMPLEMENTED | WORLD-001 | Current journey/next target are shown; production city assets remain. |
 | HOME-004 | Daily reward entry | P1 | IMPLEMENTED | RET-001 | Entry reflects availability; animated claim flow remains. |

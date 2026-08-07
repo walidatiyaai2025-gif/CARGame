@@ -7,30 +7,29 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | Field | Value |
 |---|---|
 | Current phase | C — Motion and living interface |
-| Completed checkpoint | `MOT-010` Animation lifecycle and interruption safety |
-| Status | IMPLEMENTED — CI and physical-device lifecycle review pending |
-| Implementation commit | `09053eae70de3518f2baa45887f38a83cf960f0a` |
-| Previous checkpoint | `MOT-001` shared motion tokens; Analyze and full tests passed before MOT-010 |
-| Next recommended feature | `MOT-006` Product pickup, travel, placement, settle |
+| Active checkpoint | `MOT-005` Ambient home/world motion |
+| Status | IN PROGRESS — Home implementation complete; CI, world-map adoption, and device review remain |
+| Previous checkpoint | `MOT-010` lifecycle-safe ticker boundaries |
+| Next checkpoint | Apply the shared ambient-motion layer to the world/city map |
 
-## MOT-010 implementation evidence — 2026-08-07
+## MOT-005 home implementation evidence — 2026-08-07
 
-- Added `MotionLifecycleScope` as a reusable ticker lifecycle boundary.
-- Descendant tickers stop when the app is paused/inactive, an ancestor disables tickers, or reduced motion is requested.
-- Tickers resume once when the application returns to the resumed state.
-- The observer is registered and removed with widget lifecycle, preventing retained observers.
-- Integrated the boundary around the premium splash and the full authenticated game route tree.
-- Added focused widget tests for resumed, paused/resumed, reduced-motion, and ancestor ticker behavior.
+- Added `HomeAmbientBackground` with a low-cost custom painter and one shared ticker.
+- Added animated gradient lighting, two parallax glow fields, drifting cloud layers, and subtle road depth.
+- Wrapped painting in `RepaintBoundary` to isolate repaints from the Home content tree.
+- Reduced motion stops the ticker and renders a stable frame.
+- Existing `MotionLifecycleScope` pauses the ticker automatically when the app is backgrounded or hidden.
+- Integrated the backdrop behind the existing responsive, RTL/LTR-safe Home content without changing gameplay or persistence.
+- Added widget tests for rendering, reduced motion, disposal, and ticker-leak safety.
 
 ## Verification ledger
 
 | Date | Verification | Result |
 |---|---|---|
-| 2026-08-07 | Pre-checkpoint Flutter Analyze | PASSED |
-| 2026-08-07 | Pre-checkpoint full Flutter tests | PASSED |
-| 2026-08-07 | MOT-010 format and static integration | PASSED in implementation workflow |
-| 2026-08-07 | MOT-010 focused lifecycle tests | RUNNING in Flutter CI |
-| 2026-08-07 | Full test suite and Debug APK | RUNNING in Flutter CI |
+| 2026-08-07 | Patch anchors and Dart format | PASSED in implementation workflow |
+| 2026-08-07 | Home ambient focused tests | PENDING in Flutter CI |
+| 2026-08-07 | Flutter Analyze and full test suite | PENDING in Flutter CI |
+| 2026-08-07 | Debug APK build | PENDING in Flutter CI |
 | 2026-08-07 | Dashboard schema | PASSED — six-column tables and phases A–S preserved |
 
 ## Test locally
@@ -40,8 +39,8 @@ cd "D:\Apps\CARGame"
 git fetch origin
 git reset --hard origin/main
 flutter pub get
-flutter test test\core\motion\motion_lifecycle_scope_test.dart
-flutter analyze --no-fatal-infos --no-fatal-warnings
+flutter test test\features\home\home_ambient_background_test.dart
+flutter analyze
 flutter test
 flutter run
 ```
