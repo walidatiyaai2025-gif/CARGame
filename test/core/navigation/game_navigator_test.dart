@@ -46,32 +46,37 @@ void main() {
   });
 
   testWidgets('guardKey prevents duplicate concurrent pushes', (tester) async {
-    final firstStarted = Completer<void>();
     final firstCanClose = Completer<void>();
     var builds = 0;
+    Object? secondResult = Object();
 
     await tester.pumpWidget(
       MaterialApp(
         home: Builder(
-          builder: (context) => Column(
-            children: [
-              TextButton(
-                onPressed: () {
-                  unawaited(
-                    GameNavigator.push<void>(
-                      context,
-                      guardKey: 'journey',
-                      builder: (_) {
-                        builds++;
-                        if (!firstStarted.isCompleted) firstStarted.complete();
-                        return _HeldRoute(canClose: firstCanClose.future);
-                      },
-                    ),
-                  );
-                },
-                child: const Text('Open'),
-              ),
-            ],
+          builder: (context) => TextButton(
+            onPressed: () {
+              unawaited(
+                GameNavigator.push<void>(
+                  context,
+                  guardKey: 'journey',
+                  builder: (_) {
+                    builds++;
+                    return _HeldRoute(canClose: firstCanClose.future);
+                  },
+                ),
+              );
+              unawaited(
+                GameNavigator.push<void>(
+                  context,
+                  guardKey: 'journey',
+                  builder: (_) {
+                    builds++;
+                    return const Scaffold(body: Text('Duplicate'));
+                  },
+                ).then((value) => secondResult = value),
+              );
+            },
+            child: const Text('Open'),
           ),
         ),
       ),
@@ -79,11 +84,10 @@ void main() {
 
     await tester.tap(find.text('Open'));
     await tester.pump();
-    await firstStarted.future;
 
-    await tester.tap(find.text('Open'), warnIfMissed: false);
-    await tester.pump();
     expect(builds, 1);
+    expect(find.text('Duplicate'), findsNothing);
+    expect(secondResult, isNull);
 
     firstCanClose.complete();
     await tester.pumpAndSettle();
@@ -137,9 +141,11 @@ final class _HeldRouteState extends State<_HeldRoute> {
   @override
   void initState() {
     super.initState();
-    widget.canClose.then((_) {
-      if (mounted) Navigator.of(context).pop();
-    });
+    unawaited(
+      widget.canClose.then((_) {
+        if (mounted) Navigator.of(context).pop();
+      }),
+    );
   }
 
   @override
