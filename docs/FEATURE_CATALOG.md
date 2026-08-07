@@ -92,8 +92,8 @@ Codex must not mark a feature complete merely because UI code exists.
 | ID | Function | Priority | Status | Dependencies | Acceptance / evidence |
 |---|---|---:|---|---|---|
 | AST-001 | Asset folder taxonomy and naming standard | P0 | VERIFIED | ENG-001 | `docs/ASSET_CATALOG.md` and `assets/3d/README.md` define runtime/source/provenance paths, stable filename/ID grammar, four locked camera profiles, upper-left lighting/material rules, WebP export budgets, accessibility and provenance handoff; mechanical standard/dashboard checks passed 2026-08-07. |
-| AST-002 | Asset manifest and typed registry | P0 | READY | AST-001 | Stable IDs, path, category, semantics, fallback, dimensions, rarity, world, and profile are typed. |
-| AST-003 | Missing-asset fallback | P0 | PLANNED | AST-002 | Missing/corrupt assets never crash or leave invisible gameplay objects. |
+| AST-002 | Asset manifest and typed registry | P0 | IMPLEMENTED | AST-001 | `GameAsset`, `game_asset_manifest.dart`, and `GameAssetRegistry` provide typed stable IDs, runtime path, category, semantics, fallback, dimensions, rarity, world, and render profile metadata; focused manifest/registry tests are present. |
+| AST-003 | Missing-asset fallback | P0 | IMPLEMENTED | AST-002 | `GameAssetView` and `GameManifestAssetView` provide visible runtime fallbacks for missing/corrupt assets, with focused widget tests covering the fallback path. Full release/device validation remains before VERIFIED. |
 | AST-004 | Precache and memory policy | P1 | PLANNED | AST-002 | Only near-future assets are precached and caches are bounded/observable. |
 | AST-005 | 3D UI resource asset pack | P1 | PLANNED | AST-001 | Production heart, coin, star, XP, chest, gift, lock, and badge assets meet style/size rules. |
 | AST-006 | 3D booster asset pack | P1 | PLANNED | AST-001 | Hint, moves, shield, and future boosters use one visual direction. |
@@ -115,7 +115,7 @@ Codex must not mark a feature complete merely because UI code exists.
 | HOME-005 | Daily mission entry | P1 | IMPLEMENTED | RET-002 | Progress and claim state are visible; final design/motion remains. |
 | HOME-006 | Shop and progress navigation | P1 | IMPLEMENTED | SHOP-001, PROG-001 | Navigation exists and must adopt shared transitions. |
 | NAV-001 | Navigation guard framework | P0 | IMPLEMENTED | ENG-003 | Double push/pop and result action races are prevented; regression tests remain. |
-| NAV-002 | Unified animated route transitions | P1 | READY | MOT-004 | Shared transition primitive and navigator façade are available; remaining Home, Shop, Progress, briefing/game/result routes must adopt the policy with back-stack and RTL validation. |
+| NAV-002 | Unified animated route transitions | P1 | IMPLEMENTED | MOT-004 | Home/app-shell Journey, Shop, Progress, Logs, Settings, and runtime Log Viewer now use `GameNavigator` with stable names and duplicate-push guards; PR #62 merged after Flutter CI #433 passed full tests, debug APK build, and artifact upload. Briefing/game/result adoption plus complete RTL/back-stack validation remain. |
 | NAV-003 | Deep-link and notification route safety | P2 | PLANNED | NAV-001, RET-008 | External entry opens only allowed destinations and never duplicates navigation. |
 | HOME-007 | First-run onboarding and returning-player resume | P1 | PLANNED | GAME-013, ENG-008 | New players receive concise onboarding; returning players resume the correct journey safely. |
 
@@ -331,13 +331,13 @@ Codex must not mark a feature complete merely because UI code exists.
 
 ## IN PROGRESS
 
-- `UI3D-006` remains the only active catalog item from the responsive-shell work; current navigation checkpoint is clean and closed as `IMPLEMENTED`.
+- `UI3D-006` remains the sole active catalog item from the responsive-shell workstream.
 
 ## NEXT READY
 
-1. `NAV-002` Adopt `GameNavigator` across remaining main routes and validate back-stack/RTL behavior.
-2. `AST-002` Implement the asset manifest and typed registry.
-3. `TEST-001` Add progress/economy unit tests.
+1. `NAV-002` Continue the remaining briefing/game/result route adoption and complete RTL/back-stack validation.
+2. `TEST-001` Add progress/economy unit tests.
+3. `AST-004` Implement bounded asset precache and memory policy on top of the existing typed registry.
 
 ## BLOCKED
 
@@ -345,14 +345,13 @@ Codex must not mark a feature complete merely because UI code exists.
 
 ## Recently verified
 
-- `AST-001` Asset folder taxonomy and naming standard — production paths, stable
-  names/IDs, render profiles, lighting, export budgets, accessibility, and
-  provenance handoff are documented and mechanically validated.
+- `AST-001` Asset folder taxonomy and naming standard — production paths, stable names/IDs, render profiles, lighting, export budgets, accessibility, and provenance handoff are documented and mechanically validated.
 - `ENG-001` Repository audit and baseline — architecture, commands, tooling, assets, persistence keys, debt, and risks are recorded in human- and machine-readable evidence.
 
 ## Recently implemented
 
+- `NAV-002` Home/app-shell checkpoint — Journey, Shop, Progress, Logs, Settings, and runtime Log Viewer now use the shared guarded navigator; PR #62 merged after Flutter CI #433 passed the full suite, Debug APK build, and artifact upload. Remaining briefing/game/result adoption and full RTL/back-stack validation stay open under NAV-002.
+- `AST-002` Asset manifest and typed registry — typed asset metadata, manifest, and registry implementation plus focused tests are present; release/device verification remains before VERIFIED.
+- `AST-003` Missing-asset fallback — runtime asset views provide visible fallback behavior with focused widget coverage; release/device verification remains before VERIFIED.
 - `MOT-004` Screen transitions — shared RTL-aware route motion, Reduced Motion fallback, central navigator façade, duplicate-push guards, named World Map→Briefing integration, and focused navigation tests added; latest Flutter CI/device verification pending.
 - `UI3D-004` Reusable 3D card and panel system — shared panels adopted in Home, Shop, and Progress Hub with focused regression tests; latest Flutter CI/device verification pending.
-- `MOT-007` Correct/wrong/combo feedback — synchronized overlay, capped visual/haptic intensity, settings-aware hooks, localized semantics, deterministic completion, and focused tests added; Flutter CI/device verification pending.
-- `MOT-006` Product pickup, travel, placement, settle — shared causal travel motion, deterministic input lock, reduced-motion path, and focused tests added; Flutter CI/device verification pending.
