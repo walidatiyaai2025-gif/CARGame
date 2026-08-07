@@ -1,6 +1,4 @@
-import 'package:flutter/animation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/physics.dart';
 
 abstract final class GameMotionDurations {
   static const Duration tap = Duration(milliseconds: 90);
@@ -38,9 +36,12 @@ class GameMotionProfile {
   final bool reducedMotion;
 
   Duration duration(Duration value) {
-    if (!reducedMotion) return value;
-    if (value <= GameMotionDurations.fast)
+    if (!reducedMotion) {
+      return value;
+    }
+    if (value <= GameMotionDurations.fast) {
       return const Duration(milliseconds: 60);
+    }
     return const Duration(milliseconds: 100);
   }
 
