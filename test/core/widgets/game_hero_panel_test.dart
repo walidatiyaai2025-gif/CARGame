@@ -1,7 +1,7 @@
+import 'package:cargo_sort_game/core/widgets/game_hero_panel.dart';
+import 'package:cargo_sort_game/core/widgets/game_panel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:walka_cargo_sort/core/widgets/game_hero_panel.dart';
-import 'package:walka_cargo_sort/core/widgets/game_panel.dart';
 
 void main() {
   Widget host(Widget child) => MaterialApp(
