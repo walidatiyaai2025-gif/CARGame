@@ -1,4 +1,68 @@
 {
   "schemaVersion": 1,
-  "assets": []
+  "assets": [
+    {
+      "id": "ui.heart",
+      "path": "assets/3d/runtime/ui/cg_ui_heart_pui_v01.webp",
+      "category": "ui",
+      "semantics": {
+        "englishConcept": "Heart energy",
+        "localizationKey": "hearts",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "favorite"
+      },
+      "dimensions": {
+        "width": 256,
+        "height": 256
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pui"
+    },
+    {
+      "id": "ui.coin",
+      "path": "assets/3d/runtime/ui/cg_ui_coin_pui_v01.webp",
+      "category": "ui",
+      "semantics": {
+        "englishConcept": "Coin currency",
+        "localizationKey": "coins",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "paid"
+      },
+      "dimensions": {
+        "width": 256,
+        "height": 256
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pui"
+    },
+    {
+      "id": "ui.star",
+      "path": "assets/3d/runtime/ui/cg_ui_star_pui_v01.webp",
+      "category": "ui",
+      "semantics": {
+        "englishConcept": "Progress star",
+        "localizationKey": "stars",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "star"
+      },
+      "dimensions": {
+        "width": 256,
+        "height": 256
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pui"
+    }
+  ]
 }
