@@ -68,6 +68,25 @@ final class GameNavigator {
     );
   }
 
+  /// Replaces the active route with one of the stable named destinations.
+  ///
+  /// Replacement callers own their async action guard because keeping a global
+  /// navigation guard alive until the replacement route pops would block valid
+  /// re-entry flows such as retrying a mission after returning to briefing.
+  static Future<T?> replaceNamed<T, TO>(
+    BuildContext context, {
+    required String name,
+    required WidgetBuilder builder,
+    TO? result,
+  }) {
+    return replace<T, TO>(
+      context,
+      name: name,
+      builder: builder,
+      result: result,
+    );
+  }
+
   @visibleForTesting
   static void resetGuards() => _activeGuards.clear();
 }
