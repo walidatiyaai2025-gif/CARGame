@@ -1,6 +1,7 @@
 import 'package:cargo_sort_game/core/storage/progress_store.dart';
 import 'package:cargo_sort_game/features/progress/progress_hub_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
@@ -29,6 +30,7 @@ Future<void> _pumpProgress(
     MaterialApp(
       locale: locale,
       supportedLocales: const [Locale('en'), Locale('ar')],
+      localizationsDelegates: GlobalMaterialLocalizations.delegates,
       home: MediaQuery(
         data: MediaQueryData(size: size, textScaler: textScaler),
         child: ProgressHubScreen(store: store),
