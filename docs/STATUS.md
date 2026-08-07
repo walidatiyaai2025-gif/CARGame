@@ -6,12 +6,25 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 
 | Field | Value |
 |---|---|
-| Current phase | B — Shared 3D design system |
-| Completed checkpoint | `UI3D-004` Reusable 3D card and panel system |
-| Status | IMPLEMENTED — shared panel primitives are adopted in Home, Shop, and Progress Hub; Flutter CI/device verification pending |
-| Previous checkpoint | `AST-001` Asset folder taxonomy and naming standard |
-| Next recommended feature | `MOT-004` Unified screen transitions after CI confirms the UI3D checkpoint |
-| Known blocker | No production verification claim until format/analyze/widget tests/debug APK run against the latest shared-panel commits. |
+| Current phase | C — Motion and living interface |
+| Completed checkpoint | `MOT-004` Screen transitions |
+| Status | IMPLEMENTED — shared route motion and guarded navigator exist; World Map→Briefing is integrated; latest Flutter CI/device verification pending |
+| Previous checkpoint | `UI3D-004` Reusable 3D card and panel system |
+| Next recommended feature | `NAV-002` Adopt the shared route policy across Home, Shop, Progress, briefing/game/result routes |
+| Known blocker | No production verification claim until format/analyze/navigation tests/full tests/debug APK run against the latest navigation commits. |
+
+## MOT-004 implementation evidence — 2026-08-07
+
+- Added `GameRoute` as the single shared route-motion primitive with fade plus shared-axis slide.
+- Route direction automatically mirrors for Arabic RTL versus English LTR.
+- Reduced Motion removes the lateral slide and uses a bounded fade transition.
+- Added `GameNavigator` to centralize route names, replacement, and duplicate-push guards.
+- Guard keys are released in `finally`, so returning from a route cannot leave navigation permanently locked.
+- Added focused tests for route names/results, replacement, RTL/LTR motion, Reduced Motion, and concurrent duplicate-push rejection.
+- World Map city navigation now opens `CityBriefingScreen` through `GameNavigator` using `/briefing/level/<number>` route names and per-level guard keys.
+- Added a World Map regression test that verifies the first unlocked city opens through the named shared route without relying on `pumpAndSettle` while ambient motion is active.
+- Implementation commits include `c7244ac4b0934c6415d38b2638d4a9646e2cfa31`, `c209b3433b1750e11727b26f6f01254315cfefd9`, `aee4063b78f63064c1f2dba101db277134b6b9c4`, `c279f2648d39e406a11ce2dc1d767adea4152988`, and `94b7ecab2c76616a547699e19fbf13abb11420db`.
+- `MOT-004` is IMPLEMENTED rather than VERIFIED because GitHub combined status has not yet exposed checks for the latest commit; full-route adoption is intentionally tracked separately by `NAV-002`.
 
 ## UI3D-004 implementation evidence — 2026-08-07
 
@@ -115,6 +128,8 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | 2026-08-07 | AST-001 catalog/dashboard integrity | PASSED — 19 phases, 191 unique features, valid status/dependencies, zero active tasks, and inline Dashboard JavaScript syntax valid |
 | 2026-08-07 | Flutter format/analyze/tests/debug APK | NOT APPLICABLE — documentation and asset-governance files only; no Dart, platform, dependency, or binary asset changes |
 | 2026-08-07 | UI3D-004 latest combined GitHub status | PENDING — no check statuses exposed yet for `87923cddd7cb609c41d1bc22bb00baada9469a3d` |
+| 2026-08-07 | MOT-004 latest combined GitHub status | PENDING — no check statuses exposed yet for `94b7ecab2c76616a547699e19fbf13abb11420db` |
+| 2026-08-07 | Dashboard/catalog structural compatibility after MOT-004 | PASSED BY REVIEW — phase headings and six-column feature table schema preserved; runtime dashboard/CI verification pending |
 
 ## Test locally
 
@@ -125,11 +140,10 @@ git reset --hard origin/main
 flutter pub get
 dart format lib test
 flutter analyze --no-fatal-infos --no-fatal-warnings
+flutter test test\core\motion\game_route_test.dart
+flutter test test\core\navigation\game_navigator_test.dart
+flutter test test\features\levels\level_select_navigation_test.dart
 flutter test test\core\widgets\game_panel_test.dart
-flutter test test\core\widgets\game_resource_panel_test.dart
-flutter test test\core\widgets\game_action_panel_test.dart
-flutter test test\core\widgets\game_stat_panel_test.dart
-flutter test test\core\widgets\game_hero_panel_test.dart
 flutter test test\features\home\home_shared_panels_test.dart
 flutter test test\features\shop\shop_game_panel_test.dart
 flutter test test\features\progress\progress_hub_game_panel_test.dart
