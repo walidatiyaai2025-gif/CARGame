@@ -5,6 +5,10 @@ import 'package:flutter/widgets.dart';
 
 import 'game_asset_registry.dart';
 
+typedef GameAssetPrecacheLoader =
+    Future<void> Function(AssetImage provider, BuildContext context);
+typedef GameAssetEvictor = Future<void> Function(AssetImage provider);
+
 @immutable
 final class GameAssetCacheSnapshot {
   const GameAssetCacheSnapshot({
@@ -29,9 +33,17 @@ final class GameAssetCacheSnapshot {
 /// Domain/gameplay truth never depends on this cache. Precache failures are isolated
 /// and remembered for diagnostics, while UI fallbacks continue to render normally.
 final class GameAssetCachePolicy extends ChangeNotifier {
-  GameAssetCachePolicy({this.maxEntries = 24}) : assert(maxEntries > 0);
+  GameAssetCachePolicy({
+    this.maxEntries = 24,
+    GameAssetPrecacheLoader? precacheLoader,
+    GameAssetEvictor? evictor,
+  }) : assert(maxEntries > 0),
+       _precacheLoader = precacheLoader ?? _precacheWithFlutter,
+       _evictor = evictor ?? _evictWithFlutter;
 
   final int maxEntries;
+  final GameAssetPrecacheLoader _precacheLoader;
+  final GameAssetEvictor _evictor;
 
   final LinkedHashMap<String, AssetImage> _cached =
       LinkedHashMap<String, AssetImage>();
@@ -71,7 +83,7 @@ final class GameAssetCachePolicy extends ChangeNotifier {
     _inFlight.add(assetId);
     notifyListeners();
     try {
-      await precacheImage(provider, context);
+      await _precacheLoader(provider, context);
       _failed.remove(assetId);
       _cached[assetId] = provider;
       await _trimToBudget();
@@ -104,7 +116,7 @@ final class GameAssetCachePolicy extends ChangeNotifier {
     final provider = _cached.remove(assetId);
     final failedRemoved = _failed.remove(assetId);
     if (provider != null) {
-      await provider.evict(cache: PaintingBinding.instance.imageCache);
+      await _evictor(provider);
     }
     if (provider != null || failedRemoved) notifyListeners();
   }
@@ -116,7 +128,7 @@ final class GameAssetCachePolicy extends ChangeNotifier {
     _failed.clear();
     _inFlight.clear();
     for (final provider in providers) {
-      await provider.evict(cache: PaintingBinding.instance.imageCache);
+      await _evictor(provider);
     }
     notifyListeners();
   }
@@ -135,8 +147,19 @@ final class GameAssetCachePolicy extends ChangeNotifier {
       final evictedId = _cached.keys.first;
       final provider = _cached.remove(evictedId);
       if (provider != null) {
-        await provider.evict(cache: PaintingBinding.instance.imageCache);
+        await _evictor(provider);
       }
     }
+  }
+
+  static Future<void> _precacheWithFlutter(
+    AssetImage provider,
+    BuildContext context,
+  ) {
+    return precacheImage(provider, context);
+  }
+
+  static Future<void> _evictWithFlutter(AssetImage provider) async {
+    await provider.evict(cache: PaintingBinding.instance.imageCache);
   }
 }
