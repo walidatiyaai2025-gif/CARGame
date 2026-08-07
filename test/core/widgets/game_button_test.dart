@@ -5,13 +5,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  Widget host(Widget child, {TextDirection direction = TextDirection.ltr}) =>
-      MaterialApp(
-        home: Directionality(
-          textDirection: direction,
-          child: Scaffold(body: Center(child: child)),
-        ),
-      );
+  Widget host(
+    Widget child, {
+    TextDirection direction = TextDirection.ltr,
+    TextScaler textScaler = TextScaler.noScaling,
+  }) => MaterialApp(
+    home: MediaQuery(
+      data: MediaQueryData(textScaler: textScaler),
+      child: Directionality(
+        textDirection: direction,
+        child: Scaffold(body: Center(child: child)),
+      ),
+    ),
+  );
 
   testWidgets('runs async action only once while busy', (tester) async {
     final gate = Completer<void>();
@@ -120,5 +126,33 @@ void main() {
     await tester.tap(find.text('Play'));
     await tester.pumpAndSettle();
     expect(events, ['sound', 'action']);
+  });
+
+  testWidgets('configured height is a minimum and grows for large text', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      host(
+        GameButton(
+          height: 68,
+          expand: true,
+          hapticsEnabled: false,
+          onPressed: () {},
+          child: const Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('START MISSION'),
+              Text('A deliberately longer accessible destination label'),
+            ],
+          ),
+        ),
+        textScaler: const TextScaler.linear(1.8),
+      ),
+    );
+
+    expect(tester.takeException(), isNull);
+    final size = tester.getSize(find.byType(GameButton));
+    expect(size.height, greaterThanOrEqualTo(68));
+    expect(size.height, greaterThan(68));
   });
 }
