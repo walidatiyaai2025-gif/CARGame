@@ -48,7 +48,7 @@ void main() {
   testWidgets('guardKey prevents duplicate concurrent pushes', (tester) async {
     final firstCanClose = Completer<void>();
     var builds = 0;
-    Object? secondResult = Object();
+    var secondCompleted = false;
 
     await tester.pumpWidget(
       MaterialApp(
@@ -73,7 +73,9 @@ void main() {
                     builds++;
                     return const Scaffold(body: Text('Duplicate'));
                   },
-                ).then((value) => secondResult = value),
+                ).then((_) {
+                  secondCompleted = true;
+                }),
               );
             },
             child: const Text('Open'),
@@ -87,7 +89,7 @@ void main() {
 
     expect(builds, 1);
     expect(find.text('Duplicate'), findsNothing);
-    expect(secondResult, isNull);
+    expect(secondCompleted, isTrue);
 
     firstCanClose.complete();
     await tester.pumpAndSettle();
