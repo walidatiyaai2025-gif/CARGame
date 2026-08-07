@@ -23,20 +23,40 @@ final class GameAssetView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _buildById(context, assetId, <String>{});
+    final descriptor = registry.find(assetId);
+    final visual = _buildById(context, assetId, <String>{});
+
+    if (descriptor == null) {
+      return Semantics(
+        image: true,
+        label: semanticLabel ?? 'Game asset unavailable',
+        value: 'unregistered',
+        child: ExcludeSemantics(child: visual),
+      );
+    }
+
+    if (descriptor.semantics.decorative && semanticLabel == null) {
+      return ExcludeSemantics(child: visual);
+    }
+
+    return Semantics(
+      image: true,
+      label: semanticLabel ?? descriptor.semantics.englishConcept,
+      child: ExcludeSemantics(child: visual),
+    );
   }
 
   Widget _buildById(BuildContext context, String id, Set<String> visited) {
     if (!visited.add(id)) {
-      return _placeholder(context, 'fallback-cycle');
+      return _placeholder(context);
     }
 
     final descriptor = registry.find(id);
     if (descriptor == null) {
-      return _placeholder(context, 'unregistered');
+      return _placeholder(context);
     }
 
-    final image = Image.asset(
+    return Image.asset(
       descriptor.path,
       width: width,
       height: height,
@@ -45,16 +65,6 @@ final class GameAssetView extends StatelessWidget {
       errorBuilder: (context, error, stackTrace) {
         return _fallbackFor(context, descriptor, visited);
       },
-    );
-
-    if (descriptor.semantics.decorative) {
-      return ExcludeSemantics(child: image);
-    }
-
-    return Semantics(
-      image: true,
-      label: semanticLabel ?? descriptor.semantics.englishConcept,
-      child: image,
     );
   }
 
@@ -68,19 +78,15 @@ final class GameAssetView extends StatelessWidget {
       case GameAssetFallbackKind.asset:
         return _buildById(context, fallback.token, <String>{...visited});
       case GameAssetFallbackKind.icon:
-        return _iconFallback(context, fallback.token, descriptor);
+        return _iconFallback(context, fallback.token);
       case GameAssetFallbackKind.text:
-        return _textFallback(context, fallback.token, descriptor);
+        return _textFallback(context, fallback.token);
       case GameAssetFallbackKind.none:
-        return _placeholder(context, 'no-fallback', descriptor: descriptor);
+        return _placeholder(context);
     }
   }
 
-  Widget _iconFallback(
-    BuildContext context,
-    String token,
-    GameAssetDescriptor descriptor,
-  ) {
+  Widget _iconFallback(BuildContext context, String token) {
     final icon = switch (token) {
       'favorite' => Icons.favorite_rounded,
       'paid' => Icons.monetization_on_rounded,
@@ -93,89 +99,56 @@ final class GameAssetView extends StatelessWidget {
       _ => Icons.category_rounded,
     };
 
-    return _semanticFallback(
-      descriptor,
-      DecoratedBox(
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: SizedBox(
-          width: width,
-          height: height,
-          child: Center(child: Icon(icon, size: _fallbackIconSize)),
-        ),
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: SizedBox(
+        width: width,
+        height: height,
+        child: Center(child: Icon(icon, size: _fallbackIconSize)),
       ),
     );
   }
 
-  Widget _textFallback(
-    BuildContext context,
-    String token,
-    GameAssetDescriptor descriptor,
-  ) {
-    return _semanticFallback(
-      descriptor,
-      DecoratedBox(
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: SizedBox(
-          width: width,
-          height: height,
-          child: Center(
-            child: Text(
-              token,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-            ),
+  Widget _textFallback(BuildContext context, String token) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: SizedBox(
+        width: width,
+        height: height,
+        child: Center(
+          child: Text(
+            token,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
           ),
         ),
       ),
     );
   }
 
-  Widget _placeholder(
-    BuildContext context,
-    String reason, {
-    GameAssetDescriptor? descriptor,
-  }) {
-    return Semantics(
-      image: true,
-      label:
-          semanticLabel ??
-          descriptor?.semantics.englishConcept ??
-          'Game asset unavailable',
-      value: reason,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: SizedBox(
-          width: width,
-          height: height,
-          child: Center(
-            child: Icon(
-              Icons.image_not_supported_rounded,
-              size: _fallbackIconSize,
-            ),
+  Widget _placeholder(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: SizedBox(
+        width: width,
+        height: height,
+        child: Center(
+          child: Icon(
+            Icons.image_not_supported_rounded,
+            size: _fallbackIconSize,
           ),
         ),
       ),
-    );
-  }
-
-  Widget _semanticFallback(GameAssetDescriptor descriptor, Widget child) {
-    if (descriptor.semantics.decorative) {
-      return ExcludeSemantics(child: child);
-    }
-    return Semantics(
-      image: true,
-      label: semanticLabel ?? descriptor.semantics.englishConcept,
-      child: child,
     );
   }
 
