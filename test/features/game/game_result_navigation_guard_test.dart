@@ -107,17 +107,17 @@ void main() {
     await placeCargo();
     await placeCargo();
 
-    final next = find.text('NEXT — BACK TO MAP');
+    final next = find.bySemanticsLabel('Next and back to map');
     await pumpUntil(next);
     expect(next, findsOneWidget);
 
     await tester.ensureVisible(next);
     await tester.pump();
-    final nextTarget = tester.getCenter(next);
 
-    await tester.tapAt(nextTarget);
-    await tester.pump(const Duration(milliseconds: 1));
-    await tester.tapAt(nextTarget);
+    // Queue two activations before the widget can rebuild. This models the
+    // actual double-tap race while keeping both taps targeted at the CTA.
+    await tester.tap(next);
+    await tester.tap(next);
     await pumpUntilAbsent(find.byType(GameScreen));
 
     expect(observer.gameRouteExits, 1);
