@@ -1,12 +1,13 @@
 import 'package:flutter/foundation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+
+import '../storage/recovering_preferences.dart';
 
 class AppSettingsStore extends ChangeNotifier {
   static const _soundKey = 'settings_sound';
   static const _musicKey = 'settings_music';
   static const _vibrationKey = 'settings_vibration';
 
-  final SharedPreferencesAsync _prefs = SharedPreferencesAsync();
+  final RecoveringPreferences _prefs = RecoveringPreferences();
 
   bool soundEnabled = true;
   bool musicEnabled = true;
