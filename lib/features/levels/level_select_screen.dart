@@ -36,7 +36,9 @@ class LevelSelectScreen extends StatelessWidget {
                 for (final world in gameWorlds) ...[
                   _WorldSection(
                     world: world,
-                    levels: levels.where((level) => level.world == world.number).toList(),
+                    levels: levels
+                        .where((level) => level.world == world.number)
+                        .toList(),
                     store: store,
                     isArabic: isArabic,
                     skin: skin,
@@ -53,7 +55,11 @@ class LevelSelectScreen extends StatelessWidget {
 }
 
 class _GlobalHeader extends StatelessWidget {
-  const _GlobalHeader({required this.isArabic, required this.store, required this.skin});
+  const _GlobalHeader({
+    required this.isArabic,
+    required this.store,
+    required this.skin,
+  });
 
   final bool isArabic;
   final ProgressStore store;
@@ -61,97 +67,99 @@ class _GlobalHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          gradient: skin.heroGradient,
-          borderRadius: BorderRadius.circular(30),
-          boxShadow: [
-            BoxShadow(
-              color: skin.primary.withValues(alpha: .28),
-              blurRadius: 24,
-              offset: const Offset(0, 12),
-            ),
-          ],
+    padding: const EdgeInsets.all(20),
+    decoration: BoxDecoration(
+      gradient: skin.heroGradient,
+      borderRadius: BorderRadius.circular(30),
+      boxShadow: [
+        BoxShadow(
+          color: skin.primary.withValues(alpha: .28),
+          blurRadius: 24,
+          offset: const Offset(0, 12),
         ),
-        child: Stack(
+      ],
+    ),
+    child: Stack(
+      children: [
+        PositionedDirectional(
+          end: -18,
+          top: -15,
+          child: Opacity(
+            opacity: .13,
+            child: ThreeDGameIcon(type: ThreeDIconType.city, size: 150),
+          ),
+        ),
+        Column(
           children: [
-            PositionedDirectional(
-              end: -18,
-              top: -15,
-              child: Opacity(
-                opacity: .13,
-                child: ThreeDGameIcon(type: ThreeDIconType.city, size: 150),
-              ),
-            ),
-            Column(
+            Row(
               children: [
-                Row(
-                  children: [
-                    const ThreeDGameIcon(
-                      type: ThreeDIconType.city,
-                      size: 62,
-                      animate: true,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            isArabic ? 'رحلة المدن العالمية' : 'Global City Journey',
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 21,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                          Text(
-                            isArabic
-                                ? '${store.completedLevels} مدينة مكتملة من ${ProgressStore.totalLevels}'
-                                : '${store.completedLevels} of ${ProgressStore.totalLevels} cities completed',
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(color: Colors.white70),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const ThreeDGameIcon(type: ThreeDIconType.star, size: 38),
-                        FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text(
-                            '${store.totalStars}/${store.maximumStars}',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
+                const ThreeDGameIcon(
+                  type: ThreeDIconType.city,
+                  size: 62,
+                  animate: true,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        isArabic
+                            ? 'رحلة المدن العالمية'
+                            : 'Global City Journey',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 21,
+                          fontWeight: FontWeight.w900,
                         ),
-                      ],
+                      ),
+                      Text(
+                        isArabic
+                            ? '${store.completedLevels} مدينة مكتملة من ${ProgressStore.totalLevels}'
+                            : '${store.completedLevels} of ${ProgressStore.totalLevels} cities completed',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(color: Colors.white70),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const ThreeDGameIcon(type: ThreeDIconType.star, size: 38),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        '${store.totalStars}/${store.maximumStars}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
-                  child: LinearProgressIndicator(
-                    value: store.completionProgress,
-                    minHeight: 10,
-                    backgroundColor: Colors.white24,
-                    valueColor: AlwaysStoppedAnimation<Color>(skin.accent),
-                  ),
-                ),
               ],
+            ),
+            const SizedBox(height: 16),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: LinearProgressIndicator(
+                value: store.completionProgress,
+                minHeight: 10,
+                backgroundColor: Colors.white24,
+                valueColor: AlwaysStoppedAnimation<Color>(skin.accent),
+              ),
             ),
           ],
         ),
-      );
+      ],
+    ),
+  );
 }
 
 class _WorldSection extends StatelessWidget {
@@ -172,15 +180,24 @@ class _WorldSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final unlocked = store.highestUnlockedLevel >= levels.first.number;
-    final completed = levels.where((level) => level.number < store.highestUnlockedLevel).length;
-    final stars = levels.fold<int>(0, (sum, level) => sum + store.starsForLevel(level.number));
+    final completed = levels
+        .where((level) => level.number < store.highestUnlockedLevel)
+        .length;
+    final stars = levels.fold<int>(
+      0,
+      (sum, level) => sum + store.starsForLevel(level.number),
+    );
 
     return Container(
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: .95),
         borderRadius: BorderRadius.circular(30),
         boxShadow: const [
-          BoxShadow(color: Color(0x1F000000), blurRadius: 18, offset: Offset(0, 9)),
+          BoxShadow(
+            color: Color(0x1F000000),
+            blurRadius: 18,
+            offset: Offset(0, 9),
+          ),
         ],
       ),
       child: Column(
@@ -195,7 +212,9 @@ class _WorldSection extends StatelessWidget {
                   Color.lerp(world.endColor, skin.secondary, .20)!,
                 ],
               ),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(30),
+              ),
             ),
             child: Row(
               children: [
@@ -208,8 +227,15 @@ class _WorldSection extends StatelessWidget {
                     border: Border.all(color: Colors.white24),
                   ),
                   child: unlocked
-                      ? const ThreeDGameIcon(type: ThreeDIconType.city, size: 54)
-                      : const Icon(Icons.lock_rounded, color: Colors.white, size: 30),
+                      ? const ThreeDGameIcon(
+                          type: ThreeDIconType.city,
+                          size: 54,
+                        )
+                      : const Icon(
+                          Icons.lock_rounded,
+                          color: Colors.white,
+                          size: 30,
+                        ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -229,7 +255,9 @@ class _WorldSection extends StatelessWidget {
                       Text(
                         unlocked
                             ? '$completed/25 ${isArabic ? 'مدينة' : 'cities'} • $stars/75'
-                            : (isArabic ? 'أكمل العالم السابق لفتحه' : 'Complete the previous world to unlock'),
+                            : (isArabic
+                                  ? 'أكمل العالم السابق لفتحه'
+                                  : 'Complete the previous world to unlock'),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(color: Colors.white70),
@@ -253,10 +281,10 @@ class _WorldSection extends StatelessWidget {
                   final columns = width >= 720
                       ? 6
                       : width >= 520
-                          ? 5
-                          : width >= 380
-                              ? 4
-                              : 3;
+                      ? 5
+                      : width >= 380
+                      ? 4
+                      : 3;
                   final extent = width < 340 ? 118.0 : 124.0;
 
                   return GridView.builder(
@@ -271,7 +299,8 @@ class _WorldSection extends StatelessWidget {
                     ),
                     itemBuilder: (context, index) {
                       final level = levels[index];
-                      final cityUnlocked = level.number <= store.highestUnlockedLevel;
+                      final cityUnlocked =
+                          level.number <= store.highestUnlockedLevel;
                       return _CityCard(
                         level: level,
                         unlocked: cityUnlocked,
@@ -283,7 +312,10 @@ class _WorldSection extends StatelessWidget {
                             ? () async {
                                 await Navigator.of(context).push(
                                   MaterialPageRoute<void>(
-                                    builder: (_) => CityBriefingScreen(level: level, store: store),
+                                    builder: (_) => CityBriefingScreen(
+                                      level: level,
+                                      store: store,
+                                    ),
                                   ),
                                 );
                               }
@@ -298,8 +330,13 @@ class _WorldSection extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.all(22),
               child: Text(
-                isArabic ? 'هذا العالم ما زال مقفلاً' : 'This world is still locked',
-                style: const TextStyle(color: Colors.black45, fontWeight: FontWeight.w700),
+                isArabic
+                    ? 'هذا العالم ما زال مقفلاً'
+                    : 'This world is still locked',
+                style: const TextStyle(
+                  color: Colors.black45,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
         ],
@@ -330,7 +367,9 @@ class _CityCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final boss = level.isBossCity;
-    final accent = boss ? AppTheme.orange : Color.lerp(world.startColor, skin.primary, .18)!;
+    final accent = boss
+        ? AppTheme.orange
+        : Color.lerp(world.startColor, skin.primary, .18)!;
 
     return Material(
       color: Colors.transparent,
@@ -346,7 +385,9 @@ class _CityCard extends StatelessWidget {
                     end: Alignment.bottomRight,
                     colors: [Colors.white, accent.withValues(alpha: .10)],
                   )
-                : const LinearGradient(colors: [Color(0xFFE6E8EC), Color(0xFFD6D9DE)]),
+                : const LinearGradient(
+                    colors: [Color(0xFFE6E8EC), Color(0xFFD6D9DE)],
+                  ),
             borderRadius: BorderRadius.circular(22),
             border: Border.all(
               color: unlocked ? accent : Colors.black12,
@@ -386,7 +427,11 @@ class _CityCard extends StatelessWidget {
                           color: Colors.black26,
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.lock_rounded, color: Colors.white, size: 22),
+                        child: const Icon(
+                          Icons.lock_rounded,
+                          color: Colors.white,
+                          size: 22,
+                        ),
                       ),
                     const SizedBox(height: 5),
                     Text(
@@ -407,7 +452,11 @@ class _CityCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(color: AppTheme.muted, fontSize: 8.5, height: 1),
+                      style: const TextStyle(
+                        color: AppTheme.muted,
+                        fontSize: 8.5,
+                        height: 1,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Row(
@@ -417,8 +466,15 @@ class _CityCard extends StatelessWidget {
                         (index) => Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 1),
                           child: index < stars
-                              ? const ThreeDGameIcon(type: ThreeDIconType.star, size: 13)
-                              : Icon(Icons.star_outline_rounded, size: 12, color: Colors.black.withValues(alpha: .12)),
+                              ? const ThreeDGameIcon(
+                                  type: ThreeDIconType.star,
+                                  size: 13,
+                                )
+                              : Icon(
+                                  Icons.star_outline_rounded,
+                                  size: 12,
+                                  color: Colors.black.withValues(alpha: .12),
+                                ),
                         ),
                       ),
                     ),

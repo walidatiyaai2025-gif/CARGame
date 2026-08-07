@@ -46,7 +46,8 @@ class _MotionLifecycleScopeState extends State<MotionLifecycleScope>
     final ancestorEnabled = TickerMode.of(context);
     final reducedMotion =
         MediaQuery.maybeOf(context)?.disableAnimations ?? false;
-    final active = widget.enabled &&
+    final active =
+        widget.enabled &&
         ancestorEnabled &&
         !reducedMotion &&
         _lifecycleState == AppLifecycleState.resumed;

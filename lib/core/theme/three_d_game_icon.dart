@@ -85,9 +85,7 @@ class _ThreeDGameIconState extends State<ThreeDGameIcon>
         },
         child: SizedBox.square(
           dimension: widget.size,
-          child: CustomPaint(
-            painter: _ThreeDIconPainter(widget.type),
-          ),
+          child: CustomPaint(painter: _ThreeDIconPainter(widget.type)),
         ),
       ),
     );
@@ -149,10 +147,7 @@ class _ThreeDIconPainter extends CustomPainter {
       ),
       Paint()
         ..color = const Color(0x39000000)
-        ..maskFilter = MaskFilter.blur(
-          BlurStyle.normal,
-          rect.width * .07,
-        ),
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, rect.width * .07),
     );
   }
 
@@ -207,14 +202,11 @@ class _ThreeDIconPainter extends CustomPainter {
       ..close();
     canvas.drawPath(
       path,
-      _gradient(
-        rect,
-        const [
-          Color(0xFFFF6B75),
-          Color(0xFFE31845),
-          Color(0xFF9C0E2E),
-        ],
-      ),
+      _gradient(rect, const [
+        Color(0xFFFF6B75),
+        Color(0xFFE31845),
+        Color(0xFF9C0E2E),
+      ]),
     );
   }
 
@@ -230,14 +222,11 @@ class _ThreeDIconPainter extends CustomPainter {
     );
     canvas.drawOval(
       coin,
-      _gradient(
-        coin,
-        const [
-          Color(0xFFFFF18A),
-          Color(0xFFFFC107),
-          Color(0xFFE48900),
-        ],
-      ),
+      _gradient(coin, const [
+        Color(0xFFFFF18A),
+        Color(0xFFFFC107),
+        Color(0xFFE48900),
+      ]),
     );
     canvas.drawOval(
       coin.deflate(rect.width * .09),
@@ -254,7 +243,8 @@ class _ThreeDIconPainter extends CustomPainter {
     for (var i = 0; i < 10; i++) {
       final radius = i.isEven ? rect.width * .44 : rect.width * .20;
       final angle = -math.pi / 2 + i * math.pi / 5;
-      final point = rect.center + Offset(math.cos(angle), math.sin(angle)) * radius;
+      final point =
+          rect.center + Offset(math.cos(angle), math.sin(angle)) * radius;
       if (i == 0) {
         path.moveTo(point.dx, point.dy);
       } else {
@@ -268,14 +258,11 @@ class _ThreeDIconPainter extends CustomPainter {
     );
     canvas.drawPath(
       path,
-      _gradient(
-        rect,
-        const [
-          Color(0xFFFFF38B),
-          Color(0xFFFFC400),
-          Color(0xFFF28B00),
-        ],
-      ),
+      _gradient(rect, const [
+        Color(0xFFFFF38B),
+        Color(0xFFFFC400),
+        Color(0xFFF28B00),
+      ]),
     );
   }
 
@@ -310,10 +297,7 @@ class _ThreeDIconPainter extends CustomPainter {
   }
 
   void _paintBow(Canvas canvas, Rect rect) {
-    final paint = _gradient(
-      rect,
-      const [Color(0xFFFFF176), Color(0xFFFFB300)],
-    );
+    final paint = _gradient(rect, const [Color(0xFFFFF176), Color(0xFFFFB300)]);
     canvas.drawOval(
       Rect.fromLTWH(
         rect.width * .23,
@@ -347,14 +331,11 @@ class _ThreeDIconPainter extends CustomPainter {
     );
     canvas.drawOval(
       bulb,
-      _gradient(
-        bulb,
-        const [
-          Color(0xFFFFFFB0),
-          Color(0xFFFFD21F),
-          Color(0xFFFF8F00),
-        ],
-      ),
+      _gradient(bulb, const [
+        Color(0xFFFFFFB0),
+        Color(0xFFFFD21F),
+        Color(0xFFFF8F00),
+      ]),
     );
     canvas.drawRRect(
       RRect.fromRectAndRadius(
@@ -370,9 +351,11 @@ class _ThreeDIconPainter extends CustomPainter {
     );
     for (var i = 0; i < 3; i++) {
       final angle = i * math.pi / 2;
-      final start = rect.center +
+      final start =
+          rect.center +
           Offset(math.cos(angle), math.sin(angle)) * rect.width * .38;
-      final end = rect.center +
+      final end =
+          rect.center +
           Offset(math.cos(angle), math.sin(angle)) * rect.width * .48;
       canvas.drawLine(
         start,
@@ -397,14 +380,11 @@ class _ThreeDIconPainter extends CustomPainter {
     );
     canvas.drawRRect(
       ticket,
-      _gradient(
-        rect,
-        const [
-          Color(0xFFFFD54F),
-          Color(0xFFFF9800),
-          Color(0xFFE65100),
-        ],
-      ),
+      _gradient(rect, const [
+        Color(0xFFFFD54F),
+        Color(0xFFFF9800),
+        Color(0xFFE65100),
+      ]),
     );
     canvas.drawRRect(
       ticket,
@@ -436,14 +416,11 @@ class _ThreeDIconPainter extends CustomPainter {
       ..close();
     canvas.drawPath(
       path,
-      _gradient(
-        rect,
-        const [
-          Color(0xFFF5F7FA),
-          Color(0xFF90A4AE),
-          Color(0xFF263238),
-        ],
-      ),
+      _gradient(rect, const [
+        Color(0xFFF5F7FA),
+        Color(0xFF90A4AE),
+        Color(0xFF263238),
+      ]),
     );
     canvas.drawPath(
       path,
@@ -469,11 +446,7 @@ class _ThreeDIconPainter extends CustomPainter {
       _gradient(
         rect,
         boss
-            ? const [
-                Color(0xFFFFD54F),
-                Color(0xFFFF8F00),
-                Color(0xFF8D3B00),
-              ]
+            ? const [Color(0xFFFFD54F), Color(0xFFFF8F00), Color(0xFF8D3B00)]
             : const [Color(0xFFB87942), Color(0xFF6D3B1E)],
       ),
     );
@@ -502,8 +475,7 @@ class _ThreeDIconPainter extends CustomPainter {
         rect.width * .12,
         rect.height * .46,
       ),
-      Paint()
-        ..color = boss ? const Color(0xFFFFF59D) : const Color(0xFFFFC107),
+      Paint()..color = boss ? const Color(0xFFFFF59D) : const Color(0xFFFFC107),
     );
     if (boss) {
       _text(
@@ -517,10 +489,11 @@ class _ThreeDIconPainter extends CustomPainter {
   }
 
   void _paintCity(Canvas canvas, Rect rect) {
-    final paint = _gradient(
-      rect,
-      const [Color(0xFF7FDBFF), Color(0xFF3367D6), Color(0xFF17356D)],
-    );
+    final paint = _gradient(rect, const [
+      Color(0xFF7FDBFF),
+      Color(0xFF3367D6),
+      Color(0xFF17356D),
+    ]);
     final buildings = <Rect>[
       Rect.fromLTWH(
         rect.width * .12,
@@ -543,10 +516,7 @@ class _ThreeDIconPainter extends CustomPainter {
     ];
     for (final building in buildings) {
       canvas.drawRRect(
-        RRect.fromRectAndRadius(
-          building,
-          Radius.circular(rect.width * .04),
-        ),
+        RRect.fromRectAndRadius(building, Radius.circular(rect.width * .04)),
         paint,
       );
       for (var row = 0; row < 3; row++) {

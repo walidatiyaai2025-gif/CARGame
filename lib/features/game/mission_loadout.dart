@@ -12,7 +12,5 @@ class MissionLoadout {
   static const empty = MissionLoadout();
 
   int get selectedCount =>
-      (smartHint ? 1 : 0) +
-      (extraMoves ? 1 : 0) +
-      (comboShield ? 1 : 0);
+      (smartHint ? 1 : 0) + (extraMoves ? 1 : 0) + (comboShield ? 1 : 0);
 }

@@ -21,8 +21,9 @@ void main() {
     expect(enabled, isTrue);
   });
 
-  testWidgets('disables tickers when app is paused and resumes safely',
-      (tester) async {
+  testWidgets('disables tickers when app is paused and resumes safely', (
+    tester,
+  ) async {
     bool? enabled;
     await tester.pumpWidget(
       MaterialApp(
@@ -46,8 +47,9 @@ void main() {
     expect(enabled, isTrue);
   });
 
-  testWidgets('respects reduced motion and ancestor ticker mode',
-      (tester) async {
+  testWidgets('respects reduced motion and ancestor ticker mode', (
+    tester,
+  ) async {
     late bool enabled;
     await tester.pumpWidget(
       MaterialApp(

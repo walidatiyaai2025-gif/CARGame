@@ -17,12 +17,7 @@ void main() {
     final store = ProgressStore();
     final settings = AppSettingsStore();
 
-    await tester.pumpWidget(
-      CargoSortApp(
-        store: store,
-        settings: settings,
-      ),
-    );
+    await tester.pumpWidget(CargoSortApp(store: store, settings: settings));
 
     // The home screen intentionally contains ambient looping motion, so
     // pumpAndSettle would never complete. Pump a bounded startup window instead.

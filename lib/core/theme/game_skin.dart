@@ -20,16 +20,16 @@ class GameSkin {
   final Color backgroundBottom;
 
   LinearGradient get heroGradient => LinearGradient(
-        colors: [primary, secondary],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      );
+    colors: [primary, secondary],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
 
   LinearGradient get backgroundGradient => LinearGradient(
-        colors: [backgroundTop, backgroundBottom],
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-      );
+    colors: [backgroundTop, backgroundBottom],
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+  );
 }
 
 const gameSkins = <GameSkin>[
@@ -63,6 +63,6 @@ const gameSkins = <GameSkin>[
 ];
 
 GameSkin gameSkinById(String id) => gameSkins.firstWhere(
-      (skin) => skin.id == id,
-      orElse: () => gameSkins.first,
-    );
+  (skin) => skin.id == id,
+  orElse: () => gameSkins.first,
+);

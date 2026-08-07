@@ -55,14 +55,16 @@ class AppLogger extends ChangeNotifier {
 
     try {
       final directory = await getApplicationSupportDirectory();
-      final logsDirectory =
-          Directory('${directory.path}${Platform.pathSeparator}logs');
+      final logsDirectory = Directory(
+        '${directory.path}${Platform.pathSeparator}logs',
+      );
       if (!await logsDirectory.exists()) {
         await logsDirectory.create(recursive: true);
       }
 
-      _logFile =
-          File('${logsDirectory.path}${Platform.pathSeparator}app_error.log');
+      _logFile = File(
+        '${logsDirectory.path}${Platform.pathSeparator}app_error.log',
+      );
 
       if (await _logFile!.exists()) {
         final existing = await _logFile!.readAsString();
@@ -74,11 +76,7 @@ class AppLogger extends ChangeNotifier {
       await info('Logger initialized', details: 'File: ${_logFile!.path}');
     } catch (error, stackTrace) {
       _entries.add(
-        _format(
-          'LOGGER_INIT_ERROR',
-          error.toString(),
-          stackTrace.toString(),
-        ),
+        _format('LOGGER_INIT_ERROR', error.toString(), stackTrace.toString()),
       );
     }
     notifyListeners();
@@ -252,9 +250,9 @@ class AppErrorBoundary {
 
     PlatformDispatcher.instance.onError =
         (Object error, StackTrace stackTrace) {
-      unawaited(logger.platformError(error, stackTrace));
-      return true;
-    };
+          unawaited(logger.platformError(error, stackTrace));
+          return true;
+        };
 
     _isolateErrorPort = RawReceivePort((dynamic pair) {
       unawaited(logger.isolateError(pair));

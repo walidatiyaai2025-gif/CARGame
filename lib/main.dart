@@ -7,6 +7,7 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 import 'core/logging/app_logger.dart';
 import 'core/logging/log_viewer_screen.dart';
+import 'core/motion/motion_lifecycle_scope.dart';
 import 'core/services/optional_service_coordinator.dart';
 import 'core/settings/app_settings_store.dart';
 import 'core/storage/progress_store.dart';
@@ -22,12 +23,12 @@ const String _adsServiceName = 'mobile_ads';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  runZonedGuarded<void>(
-    () => runApp(const BootstrapApp()),
-    (Object error, StackTrace stackTrace) {
-      debugPrint('Uncaught zone error: $error\n$stackTrace');
-    },
-  );
+  runZonedGuarded<void>(() => runApp(const BootstrapApp()), (
+    Object error,
+    StackTrace stackTrace,
+  ) {
+    debugPrint('Uncaught zone error: $error\n$stackTrace');
+  });
 }
 
 class BootstrapApp extends StatefulWidget {
@@ -43,9 +44,9 @@ class _BootstrapAppState extends State<BootstrapApp>
   final AppSettingsStore _settings = AppSettingsStore();
   final OptionalServiceCoordinator _optionalServices =
       OptionalServiceCoordinator(
-    defaultTimeout: const Duration(seconds: 20),
-    maxAttempts: 3,
-  );
+        defaultTimeout: const Duration(seconds: 20),
+        maxAttempts: 3,
+      );
   String _status = 'Preparing your cargo journey...';
   bool _ready = false;
   bool _bootstrapStarted = false;
@@ -91,11 +92,14 @@ class _BootstrapAppState extends State<BootstrapApp>
       SystemChrome.setPreferredOrientations([
         DeviceOrientation.portraitUp,
         DeviceOrientation.portraitDown,
-      ]).timeout(const Duration(seconds: 3)).catchError(
-        (Object error, StackTrace stackTrace) {
-          debugPrint('Orientation configuration unavailable: $error\n$stackTrace');
-        },
-      ),
+      ]).timeout(const Duration(seconds: 3)).catchError((
+        Object error,
+        StackTrace stackTrace,
+      ) {
+        debugPrint(
+          'Orientation configuration unavailable: $error\n$stackTrace',
+        );
+      }),
     );
 
     _setStatus('Loading player profile...');
@@ -136,7 +140,9 @@ class _BootstrapAppState extends State<BootstrapApp>
       await action().timeout(timeout);
     } on TimeoutException catch (error, stackTrace) {
       debugPrint('$name startup timed out; continuing: $error\n$stackTrace');
-      unawaited(_logStartupWarning('$name startup timed out', error, stackTrace));
+      unawaited(
+        _logStartupWarning('$name startup timed out', error, stackTrace),
+      );
     } catch (error, stackTrace) {
       debugPrint('$name startup failed; continuing: $error\n$stackTrace');
       unawaited(_logStartupWarning('$name startup failed', error, stackTrace));
@@ -149,10 +155,7 @@ class _BootstrapAppState extends State<BootstrapApp>
     StackTrace stackTrace,
   ) async {
     try {
-      await AppLogger.instance.info(
-        message,
-        details: '$error\n$stackTrace',
-      );
+      await AppLogger.instance.info(message, details: '$error\n$stackTrace');
     } catch (_) {
       // Logging is optional during bootstrap.
     }
@@ -160,10 +163,7 @@ class _BootstrapAppState extends State<BootstrapApp>
 
   Future<void> _initializeAdsInBackground({bool forceRetry = false}) async {
     final initialized = forceRetry
-        ? await _optionalServices.retry(
-            _adsServiceName,
-            _initializeMobileAds,
-          )
+        ? await _optionalServices.retry(_adsServiceName, _initializeMobileAds)
         : await _optionalServices.initialize(
             _adsServiceName,
             _initializeMobileAds,
@@ -206,7 +206,7 @@ class _BootstrapAppState extends State<BootstrapApp>
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
-      home: _PremiumSplash(status: _status),
+      home: MotionLifecycleScope(child: _PremiumSplash(status: _status)),
     );
   }
 }
@@ -231,9 +231,10 @@ class _PremiumSplashState extends State<_PremiumSplash>
       vsync: this,
       duration: const Duration(milliseconds: 1100),
     )..repeat(reverse: true);
-    _scale = Tween<double>(begin: .96, end: 1.04).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _scale = Tween<double>(
+      begin: .96,
+      end: 1.04,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override
@@ -256,8 +257,16 @@ class _PremiumSplashState extends State<_PremiumSplash>
         child: SafeArea(
           child: Stack(
             children: [
-              const Positioned(top: -70, right: -55, child: _GlowOrb(size: 210)),
-              const Positioned(bottom: -90, left: -70, child: _GlowOrb(size: 250)),
+              const Positioned(
+                top: -70,
+                right: -55,
+                child: _GlowOrb(size: 210),
+              ),
+              const Positioned(
+                bottom: -90,
+                left: -70,
+                child: _GlowOrb(size: 250),
+              ),
               Center(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.all(28),
@@ -285,7 +294,11 @@ class _PremiumSplashState extends State<_PremiumSplash>
                           child: const Stack(
                             alignment: Alignment.center,
                             children: [
-                              Icon(Icons.warehouse_rounded, size: 88, color: Colors.white),
+                              Icon(
+                                Icons.warehouse_rounded,
+                                size: 88,
+                                color: Colors.white,
+                              ),
                               Positioned(
                                 right: 18,
                                 bottom: 18,
@@ -328,7 +341,9 @@ class _PremiumSplashState extends State<_PremiumSplash>
                         child: const LinearProgressIndicator(
                           minHeight: 9,
                           backgroundColor: Colors.white24,
-                          valueColor: AlwaysStoppedAnimation<Color>(AppTheme.yellow),
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            AppTheme.yellow,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 14),
@@ -379,21 +394,17 @@ class _GlowOrb extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: Colors.white.withValues(alpha: .055),
-        ),
-      );
+    width: size,
+    height: size,
+    decoration: BoxDecoration(
+      shape: BoxShape.circle,
+      color: Colors.white.withValues(alpha: .055),
+    ),
+  );
 }
 
 class CargoSortApp extends StatefulWidget {
-  const CargoSortApp({
-    super.key,
-    required this.store,
-    required this.settings,
-  });
+  const CargoSortApp({super.key, required this.store, required this.settings});
 
   final ProgressStore store;
   final AppSettingsStore settings;
@@ -469,9 +480,8 @@ class _CargoSortAppState extends State<CargoSortApp>
           ),
           actions: [
             TextButton.icon(
-              onPressed: () => Clipboard.setData(
-                ClipboardData(text: appError.fullText),
-              ),
+              onPressed: () =>
+                  Clipboard.setData(ClipboardData(text: appError.fullText)),
               icon: const Icon(Icons.copy),
               label: const Text('Copy'),
             ),
@@ -514,32 +524,31 @@ class _CargoSortAppState extends State<CargoSortApp>
         GlobalCupertinoLocalizations.delegate,
       ],
       theme: AppTheme.light,
-      home: Stack(
-        children: [
-          HomeScreen(
-            store: widget.store,
-            onToggleLanguage: _toggleLanguage,
-          ),
-          PositionedDirectional(
-            top: 66,
-            end: 16,
-            child: SafeArea(
-              child: Material(
-                color: Colors.white,
-                elevation: 5,
-                shape: const CircleBorder(),
-                child: IconButton(
-                  tooltip: 'Settings',
-                  onPressed: _openSettings,
-                  icon: const Icon(
-                    Icons.settings_rounded,
-                    color: AppTheme.navy,
+      home: MotionLifecycleScope(
+        child: Stack(
+          children: [
+            HomeScreen(store: widget.store, onToggleLanguage: _toggleLanguage),
+            PositionedDirectional(
+              top: 66,
+              end: 16,
+              child: SafeArea(
+                child: Material(
+                  color: Colors.white,
+                  elevation: 5,
+                  shape: const CircleBorder(),
+                  child: IconButton(
+                    tooltip: 'Settings',
+                    onPressed: _openSettings,
+                    icon: const Icon(
+                      Icons.settings_rounded,
+                      color: AppTheme.navy,
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

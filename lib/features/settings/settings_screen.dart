@@ -44,21 +44,27 @@ class SettingsScreen extends StatelessWidget {
                     _SwitchTile(
                       icon: Icons.volume_up_rounded,
                       title: ar ? 'المؤثرات الصوتية' : 'Sound effects',
-                      subtitle: ar ? 'أصوات الضغط والفوز والعملات' : 'Buttons, rewards and win sounds',
+                      subtitle: ar
+                          ? 'أصوات الضغط والفوز والعملات'
+                          : 'Buttons, rewards and win sounds',
                       value: settings.soundEnabled,
                       onChanged: settings.setSound,
                     ),
                     _SwitchTile(
                       icon: Icons.music_note_rounded,
                       title: ar ? 'الموسيقى' : 'Music',
-                      subtitle: ar ? 'موسيقى الخلفية داخل اللعبة' : 'Background game music',
+                      subtitle: ar
+                          ? 'موسيقى الخلفية داخل اللعبة'
+                          : 'Background game music',
                       value: settings.musicEnabled,
                       onChanged: settings.setMusic,
                     ),
                     _SwitchTile(
                       icon: Icons.vibration_rounded,
                       title: ar ? 'الاهتزاز' : 'Vibration',
-                      subtitle: ar ? 'اهتزاز خفيف عند التفاعل' : 'Light haptic feedback',
+                      subtitle: ar
+                          ? 'اهتزاز خفيف عند التفاعل'
+                          : 'Light haptic feedback',
                       value: settings.vibrationEnabled,
                       onChanged: settings.setVibration,
                     ),
@@ -71,7 +77,9 @@ class SettingsScreen extends StatelessWidget {
                     _ActionTile(
                       icon: Icons.language_rounded,
                       title: ar ? 'اللغة' : 'Language',
-                      subtitle: ar ? 'التبديل إلى الإنجليزية' : 'Switch to Arabic',
+                      subtitle: ar
+                          ? 'التبديل إلى الإنجليزية'
+                          : 'Switch to Arabic',
                       onTap: onToggleLanguage,
                       hapticsEnabled: settings.vibrationEnabled,
                     ),
@@ -79,7 +87,9 @@ class SettingsScreen extends StatelessWidget {
                     _ActionTile(
                       icon: Icons.privacy_tip_rounded,
                       title: ar ? 'الخصوصية' : 'Privacy',
-                      subtitle: ar ? 'سياسة الخصوصية والإعلانات' : 'Privacy and advertising information',
+                      subtitle: ar
+                          ? 'سياسة الخصوصية والإعلانات'
+                          : 'Privacy and advertising information',
                       onTap: () => _showInfo(context, ar),
                       hapticsEnabled: settings.vibrationEnabled,
                     ),
@@ -119,7 +129,9 @@ class SettingsScreen extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               ar ? 'الخصوصية والإعلانات' : 'Privacy & Ads',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
             ),
             const SizedBox(height: 10),
             Text(
@@ -141,64 +153,76 @@ class _HeroHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.all(22),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(colors: [Color(0xFF16375B), Color(0xFF2D6591)]),
-          borderRadius: BorderRadius.circular(30),
-          boxShadow: AppTheme.softShadow,
+    padding: const EdgeInsets.all(22),
+    decoration: BoxDecoration(
+      gradient: const LinearGradient(
+        colors: [Color(0xFF16375B), Color(0xFF2D6591)],
+      ),
+      borderRadius: BorderRadius.circular(30),
+      boxShadow: AppTheme.softShadow,
+    ),
+    child: Row(
+      children: [
+        Container(
+          width: 72,
+          height: 72,
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: .14),
+            borderRadius: BorderRadius.circular(24),
+          ),
+          child: const Icon(
+            Icons.tune_rounded,
+            color: AppTheme.yellow,
+            size: 42,
+          ),
         ),
-        child: Row(
-          children: [
-            Container(
-              width: 72,
-              height: 72,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: .14),
-                borderRadius: BorderRadius.circular(24),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                ar ? 'تجربة لعبك' : 'Your game experience',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w900,
+                ),
               ),
-              child: const Icon(Icons.tune_rounded, color: AppTheme.yellow, size: 42),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    ar ? 'تجربة لعبك' : 'Your game experience',
-                    style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    ar ? 'خصص الصوت واللغة وطريقة التفاعل' : 'Customize sound, language and feedback',
-                    style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w600),
-                  ),
-                ],
+              const SizedBox(height: 4),
+              Text(
+                ar
+                    ? 'خصص الصوت واللغة وطريقة التفاعل'
+                    : 'Customize sound, language and feedback',
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      );
+      ],
+    ),
+  );
 }
 
 class _SettingsCard extends StatelessWidget {
-  const _SettingsCard({
-    required this.children,
-    this.padding = EdgeInsets.zero,
-  });
+  const _SettingsCard({required this.children, this.padding = EdgeInsets.zero});
 
   final List<Widget> children;
   final EdgeInsetsGeometry padding;
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: padding,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(28),
-          boxShadow: AppTheme.softShadow,
-        ),
-        child: Column(children: children),
-      );
+    padding: padding,
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(28),
+      boxShadow: AppTheme.softShadow,
+    ),
+    child: Column(children: children),
+  );
 }
 
 class _SwitchTile extends StatelessWidget {
@@ -218,12 +242,15 @@ class _SwitchTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => SwitchListTile.adaptive(
-        secondary: _TileIcon(icon: icon),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w900, color: AppTheme.navy)),
-        subtitle: Text(subtitle),
-        value: value,
-        onChanged: onChanged,
-      );
+    secondary: _TileIcon(icon: icon),
+    title: Text(
+      title,
+      style: const TextStyle(fontWeight: FontWeight.w900, color: AppTheme.navy),
+    ),
+    subtitle: Text(subtitle),
+    value: value,
+    onChanged: onChanged,
+  );
 }
 
 class _ActionTile extends StatelessWidget {
@@ -243,43 +270,43 @@ class _ActionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => GameButton(
-        semanticLabel: title,
-        onPressed: onTap,
-        hapticsEnabled: hapticsEnabled,
-        expand: true,
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        backgroundColor: const Color(0xFFF8FBFF),
-        shadowColor: const Color(0x220A2945),
-        borderRadius: BorderRadius.circular(20),
-        child: Row(
-          children: [
-            _TileIcon(icon: icon),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w900,
-                      color: AppTheme.navy,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: AppTheme.muted),
-                  ),
-                ],
+    semanticLabel: title,
+    onPressed: onTap,
+    hapticsEnabled: hapticsEnabled,
+    expand: true,
+    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+    backgroundColor: const Color(0xFFF8FBFF),
+    shadowColor: const Color(0x220A2945),
+    borderRadius: BorderRadius.circular(20),
+    child: Row(
+      children: [
+        _TileIcon(icon: icon),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w900,
+                  color: AppTheme.navy,
+                ),
               ),
-            ),
-            const Icon(Icons.chevron_right_rounded, color: AppTheme.blue),
-          ],
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(color: AppTheme.muted),
+              ),
+            ],
+          ),
         ),
-      );
+        const Icon(Icons.chevron_right_rounded, color: AppTheme.blue),
+      ],
+    ),
+  );
 }
 
 class _TileIcon extends StatelessWidget {
@@ -288,12 +315,12 @@ class _TileIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        width: 44,
-        height: 44,
-        decoration: BoxDecoration(
-          color: AppTheme.blue.withValues(alpha: .11),
-          borderRadius: BorderRadius.circular(15),
-        ),
-        child: Icon(icon, color: AppTheme.blue),
-      );
+    width: 44,
+    height: 44,
+    decoration: BoxDecoration(
+      color: AppTheme.blue.withValues(alpha: .11),
+      borderRadius: BorderRadius.circular(15),
+    ),
+    child: Icon(icon, color: AppTheme.blue),
+  );
 }

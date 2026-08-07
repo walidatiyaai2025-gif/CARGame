@@ -25,11 +25,7 @@ class AppTheme {
   );
 
   static const softShadow = [
-    BoxShadow(
-      color: Color(0x1F102A43),
-      blurRadius: 24,
-      offset: Offset(0, 12),
-    ),
+    BoxShadow(color: Color(0x1F102A43), blurRadius: 24, offset: Offset(0, 12)),
   ];
 
   static ThemeData get light {
@@ -48,8 +44,14 @@ class AppTheme {
       scaffoldBackgroundColor: cream,
       fontFamily: 'Arial',
       textTheme: const TextTheme(
-        displaySmall: TextStyle(fontWeight: FontWeight.w900, letterSpacing: -1.2),
-        headlineSmall: TextStyle(fontWeight: FontWeight.w900, letterSpacing: -.5),
+        displaySmall: TextStyle(
+          fontWeight: FontWeight.w900,
+          letterSpacing: -1.2,
+        ),
+        headlineSmall: TextStyle(
+          fontWeight: FontWeight.w900,
+          letterSpacing: -.5,
+        ),
         titleLarge: TextStyle(fontWeight: FontWeight.w800),
         titleMedium: TextStyle(fontWeight: FontWeight.w700),
         bodyLarge: TextStyle(fontWeight: FontWeight.w600),
@@ -88,7 +90,9 @@ class AppTheme {
           elevation: 8,
           shadowColor: const Color(0x66FF8A00),
           textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(22),
+          ),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -97,7 +101,9 @@ class AppTheme {
           minimumSize: const Size.fromHeight(54),
           side: const BorderSide(color: Color(0xFFD9E2EC), width: 1.5),
           textStyle: const TextStyle(fontWeight: FontWeight.w800),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
         ),
       ),
       snackBarTheme: SnackBarThemeData(

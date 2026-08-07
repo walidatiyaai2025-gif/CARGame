@@ -79,7 +79,9 @@ void main() {
     expect(find.text('Save'), findsNothing);
   });
 
-  testWidgets('renders in RTL without changing child order contract', (tester) async {
+  testWidgets('renders in RTL without changing child order contract', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       host(
         GameButton(
@@ -96,7 +98,10 @@ void main() {
     );
 
     expect(find.text('ابدأ'), findsOneWidget);
-    expect(Directionality.of(tester.element(find.text('ابدأ'))), TextDirection.rtl);
+    expect(
+      Directionality.of(tester.element(find.text('ابدأ'))),
+      TextDirection.rtl,
+    );
   });
 
   testWidgets('invokes optional sound hook before action', (tester) async {

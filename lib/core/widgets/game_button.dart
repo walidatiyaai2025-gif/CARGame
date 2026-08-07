@@ -161,10 +161,7 @@ class _GameButtonState extends State<GameButton> {
                   color: widget.loadingIndicatorColor,
                 ),
               )
-            : KeyedSubtree(
-                key: const ValueKey('content'),
-                child: buttonChild,
-              ),
+            : KeyedSubtree(key: const ValueKey('content'), child: buttonChild),
       ),
     );
 

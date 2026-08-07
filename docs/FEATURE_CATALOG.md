@@ -84,7 +84,7 @@ Codex must not mark a feature complete merely because UI code exists.
 | MOT-007 | Correct/wrong/combo feedback | P0 | PLANNED | GAME-003, MOT-001 | Sparkle, bounce, recoil, capped combo escalation, audio, and haptics are synchronized. |
 | MOT-008 | Reward flight and reveal sequences | P1 | PLANNED | REW-001, MOT-001 | Coins fly to wallet, stars reveal, XP interpolates, and rewards remain idempotent. |
 | MOT-009 | Boss/world completion cinematic | P2 | PLANNED | WORLD-006, MOT-008 | Sequence lasts 1.2–2.5 seconds, is skippable after first view, and never duplicates rewards. |
-| MOT-010 | Animation lifecycle and interruption safety | P0 | PLANNED | MOT-001 | Controllers dispose correctly; background, route changes, pause, and app lifecycle do not leak or corrupt state. |
+| MOT-010 | Animation lifecycle and interruption safety | P0 | IMPLEMENTED | MOT-001 | `MotionLifecycleScope` disables descendant tickers during background, ancestor-hidden, or reduced-motion states and resumes once when active; splash and app routes are integrated with focused lifecycle tests. Physical-device review remains. |
 | MOT-011 | Resource value interpolation and pulse | P1 | PLANNED | MOT-001, UI3D-005 | Coins, hearts, XP, and stars animate accurately from old to new values without changing wallet truth or duplicating rewards. |
 
 # D. 3D asset pipeline

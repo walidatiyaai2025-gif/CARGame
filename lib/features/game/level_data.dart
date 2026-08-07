@@ -262,7 +262,10 @@ LevelData _generateLevel(int number) {
   final levelInWorld = ((number - 1) % 25) + 1;
 
   final availableProducts = min(6 + world * 2, productCatalog.length);
-  final typeCount = min(2 + ((levelInWorld - 1) ~/ 5), min(6, availableProducts));
+  final typeCount = min(
+    2 + ((levelInWorld - 1) ~/ 5),
+    min(6, availableProducts),
+  );
   final pairCount = min(2 + ((number - 1) ~/ 12), 8);
 
   final shuffledProducts = List<CargoItem>.of(

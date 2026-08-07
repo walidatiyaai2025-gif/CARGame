@@ -30,9 +30,9 @@ class LogViewerScreen extends StatelessWidget {
             onPressed: () async {
               await logger.clear();
               if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Logs cleared')),
-                );
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(const SnackBar(content: Text('Logs cleared')));
               }
             },
             icon: const Icon(Icons.delete_outline_rounded),
@@ -116,7 +116,11 @@ class FatalErrorScreen extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           child: Column(
             children: [
-              const Icon(Icons.error_outline_rounded, size: 64, color: Colors.red),
+              const Icon(
+                Icons.error_outline_rounded,
+                size: 64,
+                color: Colors.red,
+              ),
               const SizedBox(height: 12),
               const Text(
                 'The application could not start. Copy the message below and send it for review.',

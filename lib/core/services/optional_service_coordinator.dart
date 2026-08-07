@@ -1,11 +1,6 @@
 import 'dart:async';
 
-enum OptionalServiceStatus {
-  idle,
-  running,
-  ready,
-  unavailable,
-}
+enum OptionalServiceStatus { idle, running, ready, unavailable }
 
 class OptionalServiceSnapshot {
   const OptionalServiceSnapshot({
@@ -60,11 +55,7 @@ class OptionalServiceCoordinator {
     final existing = _running[name];
     if (existing != null) return existing;
 
-    final future = _run(
-      name,
-      action,
-      timeout: timeout ?? defaultTimeout,
-    );
+    final future = _run(name, action, timeout: timeout ?? defaultTimeout);
     _running[name] = future;
     unawaited(future.whenComplete(() => _running.remove(name)));
     return future;
@@ -74,8 +65,7 @@ class OptionalServiceCoordinator {
     String name,
     Future<void> Function() action, {
     Duration? timeout,
-  }) =>
-      initialize(name, action, timeout: timeout);
+  }) => initialize(name, action, timeout: timeout);
 
   Future<bool> _run(
     String name,

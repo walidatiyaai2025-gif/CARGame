@@ -70,7 +70,8 @@ class ProgressStore extends ChangeNotifier {
   int get maximumStars => totalLevels * maxStarsPerLevel;
   int get worldsCompleted => completedLevels ~/ 25;
   double get winRate => gamesPlayed == 0 ? 0 : wins / gamesPlayed;
-  bool get dailyMissionComplete => missionWins >= 3 && missionStars >= 6 && missionCoins >= 150;
+  bool get dailyMissionComplete =>
+      missionWins >= 3 && missionStars >= 6 && missionCoins >= 150;
   int get playerLevel => 1 + (playerXp ~/ 500);
   int get xpIntoCurrentLevel => playerXp % 500;
   double get playerLevelProgress => xpIntoCurrentLevel / 500;
@@ -86,18 +87,24 @@ class ProgressStore extends ChangeNotifier {
   bool get canClaimDailyReward => _lastDailyRewardDate != _today;
 
   Duration get timeUntilNextHeart {
-    if (hearts >= maxHearts || _heartRefillTimestamp == null) return Duration.zero;
+    if (hearts >= maxHearts || _heartRefillTimestamp == null)
+      return Duration.zero;
     final elapsed = DateTime.now().difference(_heartRefillTimestamp!);
     final remaining = heartRefillInterval - elapsed;
     return remaining.isNegative ? Duration.zero : remaining;
   }
 
   Future<void> load() async {
-    highestUnlockedLevel = (await _prefs.getInt(_levelKey) ?? 1).clamp(1, totalLevels);
+    highestUnlockedLevel = (await _prefs.getInt(_levelKey) ?? 1).clamp(
+      1,
+      totalLevels,
+    );
     coins = await _prefs.getInt(_coinsKey) ?? 100;
     hearts = (await _prefs.getInt(_heartsKey) ?? maxHearts).clamp(0, maxHearts);
     final heartTimestampText = await _prefs.getString(_heartTimestampKey);
-    _heartRefillTimestamp = heartTimestampText == null ? null : DateTime.tryParse(heartTimestampText);
+    _heartRefillTimestamp = heartTimestampText == null
+        ? null
+        : DateTime.tryParse(heartTimestampText);
     await refreshHearts();
 
     _lastDailyRewardDate = await _prefs.getString(_dailyRewardKey);
@@ -111,7 +118,10 @@ class ProgressStore extends ChangeNotifier {
     bestWinStreak = await _prefs.getInt(_bestWinStreakKey) ?? 0;
     playerXp = await _prefs.getInt(_xpKey) ?? 0;
     selectedTheme = await _prefs.getString(_selectedThemeKey) ?? 'classic';
-    unlockedThemes = {...?await _prefs.getStringList(_unlockedThemesKey), 'classic'};
+    unlockedThemes = {
+      ...?await _prefs.getStringList(_unlockedThemesKey),
+      'classic',
+    };
     if (!unlockedThemes.contains(selectedTheme)) selectedTheme = 'classic';
     freeHints = await _prefs.getInt(_freeHintsKey) ?? 2;
     extraMovesBoosters = await _prefs.getInt(_extraMovesKey) ?? 1;
@@ -133,7 +143,10 @@ class ProgressStore extends ChangeNotifier {
 
     _levelStars.clear();
     for (var level = 1; level <= totalLevels; level++) {
-      final stars = (await _prefs.getInt('$_starsPrefix$level') ?? 0).clamp(0, maxStarsPerLevel);
+      final stars = (await _prefs.getInt('$_starsPrefix$level') ?? 0).clamp(
+        0,
+        maxStarsPerLevel,
+      );
       if (stars > 0) _levelStars[level] = stars;
     }
     notifyListeners();
@@ -160,7 +173,10 @@ class ProgressStore extends ChangeNotifier {
       _heartRefillTimestamp = _heartRefillTimestamp!.add(
         Duration(minutes: recovered * heartRefillInterval.inMinutes),
       );
-      await _prefs.setString(_heartTimestampKey, _heartRefillTimestamp!.toIso8601String());
+      await _prefs.setString(
+        _heartTimestampKey,
+        _heartRefillTimestamp!.toIso8601String(),
+      );
     }
     await _prefs.setInt(_heartsKey, hearts);
     notifyListeners();
@@ -359,7 +375,10 @@ class ProgressStore extends ChangeNotifier {
     hearts--;
     _heartRefillTimestamp ??= DateTime.now();
     await _prefs.setInt(_heartsKey, hearts);
-    await _prefs.setString(_heartTimestampKey, _heartRefillTimestamp!.toIso8601String());
+    await _prefs.setString(
+      _heartTimestampKey,
+      _heartRefillTimestamp!.toIso8601String(),
+    );
     notifyListeners();
     return true;
   }
