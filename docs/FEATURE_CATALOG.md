@@ -103,3 +103,255 @@ Codex must not mark a feature complete merely because UI code exists.
 | AST-010 | Asset performance validation | P1 | PLANNED | AST-004 | Compression, dimensions, memory, decode, and load-time budgets pass. |
 | AST-011 | Asset licensing and provenance | P0 | PLANNED | AST-001 | Every external/generated asset has source, license, authoring prompt/file, and commercial-use record. |
 | AST-012 | Asset build validation | P1 | PLANNED | AST-002, AST-011 | CI detects missing manifest entries, duplicate IDs, oversized files, and unsupported formats. |
+
+# E. Home and navigation
+
+| ID | Function | Priority | Status | Dependencies | Acceptance / evidence |
+|---|---|---:|---|---|---|
+| HOME-001 | Premium 3D home screen | P1 | IMPLEMENTED | UI3D-002 | Hero, resources, cards, and start CTA exist; a lifecycle-safe living backdrop with parallax glow and drifting cloud layers is integrated. Final authored assets and device polish remain. |
+| HOME-002 | Responsive Start button | P0 | IMPLEMENTED | HOME-001 | Home is fit-to-screen without a scroll container on 360x640 and 412x915 regression sizes; compact resources/hero preserve the guarded Start action; physical-device matrix remains. |
+| HOME-003 | Current world and next-city hero | P1 | IMPLEMENTED | WORLD-001 | Current journey/next target are shown; production city assets remain. |
+| HOME-004 | Daily reward entry | P1 | IMPLEMENTED | RET-001 | Entry reflects availability; animated claim flow remains. |
+| HOME-005 | Daily mission entry | P1 | IMPLEMENTED | RET-002 | Progress and claim state are visible; final design/motion remains. |
+| HOME-006 | Shop and progress navigation | P1 | IMPLEMENTED | SHOP-001, PROG-001 | Navigation exists and must adopt shared transitions. |
+| NAV-001 | Navigation guard framework | P0 | IMPLEMENTED | ENG-003 | Double push/pop and result action races are prevented; regression tests remain. |
+| NAV-002 | Unified animated route transitions | P1 | PLANNED | MOT-004 | All main routes use one transition policy with back-stack and RTL validation. |
+| NAV-003 | Deep-link and notification route safety | P2 | PLANNED | NAV-001, RET-008 | External entry opens only allowed destinations and never duplicates navigation. |
+| HOME-007 | First-run onboarding and returning-player resume | P1 | PLANNED | GAME-013, ENG-008 | New players receive concise onboarding; returning players resume the correct journey safely. |
+
+# F. Worlds, cities, and level map
+
+| ID | Function | Priority | Status | Dependencies | Acceptance / evidence |
+|---|---|---:|---|---|---|
+| WORLD-001 | Six-world data model | P0 | IMPLEMENTED | ENG-008 | Six worlds and 25 cities per world are represented. |
+| WORLD-002 | Responsive world/city map | P0 | IMPLEMENTED | WORLD-001 | Dynamic columns/extents prevent overflows; device verification remains. |
+| WORLD-003 | Locked/open/completed city states | P1 | IMPLEMENTED | WORLD-001 | States and star progress are visible. |
+| WORLD-004 | 3D city nodes | P1 | IMPLEMENTED | UI3D-002 | Procedural 3D-style nodes exist; production asset integration remains. |
+| WORLD-005 | Boss city presentation | P1 | IMPLEMENTED | WORLD-001 | Every 25th level has boss visual treatment. |
+| WORLD-006 | World unlock and completion flow | P1 | PLANNED | REW-003, MOT-009 | New world opens once with persistent state and animated reveal. |
+| WORLD-007 | Preserve map scroll position | P2 | PLANNED | WORLD-002 | Returning from gameplay restores the relevant world/city position. |
+| WORLD-008 | World content versioning and migration | P1 | PLANNED | WORLD-001, ENG-008 | Updates can add/rebalance content without invalidating unlocked progress or rewards. |
+
+# G. Mission briefing and loadout
+
+| ID | Function | Priority | Status | Dependencies | Acceptance / evidence |
+|---|---|---:|---|---|---|
+| BRIEF-001 | Mission briefing screen | P0 | IMPLEMENTED | WORLD-002 | City, objective, moves, difficulty, previous stars, and wallet are visible. |
+| BRIEF-002 | Responsive 3D booster selection | P0 | IMPLEMENTED | UI3D-002 | Hint, extra moves, and shield selection work on narrow screens. |
+| BRIEF-003 | Atomic booster consumption | P0 | IMPLEMENTED | ENG-008 | Boosters are consumed only after mission launch succeeds; transaction tests remain. |
+| BRIEF-004 | No-hearts handling | P0 | IMPLEMENTED | ECON-002 | Start is disabled and state is clear; recovery/offer flow remains. |
+| BRIEF-005 | Animated briefing-to-game transition | P1 | PLANNED | MOT-004 | Selected city/loadout visually carries into gameplay without duplicate launch. |
+| BRIEF-006 | Mission preview and accessibility summary | P2 | PLANNED | BRIEF-001, A11Y-001 | Objectives, hazards, boosters, and rewards are understandable without color or animation alone. |
+
+# H. Core gameplay
+
+| ID | Function | Priority | Status | Dependencies | Acceptance / evidence |
+|---|---|---:|---|---|---|
+| GAME-001 | Deterministic level model | P0 | IMPLEMENTED | WORLD-001 | Same level number produces stable valid content; design audit remains. |
+| GAME-002 | Cargo product domain model | P0 | IMPLEMENTED | GAME-001 | Stable product IDs and categories are supported; 100-asset integration remains. |
+| GAME-003 | Core sorting interaction | P0 | IMPLEMENTED | GAME-001 | Player can sort cargo and win/lose; production interaction polish remains. |
+| GAME-004 | Moves and objective tracking | P0 | IMPLEMENTED | GAME-003 | HUD and end conditions operate; tests remain. |
+| GAME-005 | Combo system | P1 | IMPLEMENTED | GAME-003 | Combo count/best combo work; visual/audio escalation remains. |
+| GAME-006 | Smart Hint | P1 | IMPLEMENTED | GAME-003 | Free/loadout hints work without invalid consumption; tests remain. |
+| GAME-007 | Extra Moves | P1 | IMPLEMENTED | GAME-004 | Starts with +5 moves only when selected and consumed. |
+| GAME-008 | Combo Shield | P1 | IMPLEMENTED | GAME-005 | Protects first mistake and cannot be re-granted on restart. |
+| GAME-009 | Pause and resume | P1 | PLANNED | GAME-003 | Timers, animation, audio, and app lifecycle pause/resume consistently. |
+| GAME-010 | Restart safety | P0 | IMPLEMENTED | GAME-003 | No duplicate booster grant or completion; regression test remains. |
+| GAME-011 | Action and result guards | P0 | IMPLEMENTED | NAV-001 | No input after result and result cannot execute/open twice; tests remain. |
+| GAME-012 | 3D board, crates, shelves, products | P0 | PLANNED | AST-007, UI3D-004 | Primary gameplay contains no production emoji/flat placeholders. |
+| GAME-013 | Gameplay tutorial | P1 | PLANNED | GAME-003 | Interactive first-level tutorial and contextual onboarding are skippable/replayable. |
+| GAME-014 | Accessibility feedback | P2 | PLANNED | GAME-003, A11Y-001 | Semantics, non-color cues, scalable text, and reduced motion cover the core loop. |
+| GAME-015 | App interruption and recovery | P0 | PLANNED | GAME-009, ENG-008 | Backgrounding, phone interruptions, process restart, and route loss cannot corrupt/duplicate a run. |
+| GAME-016 | Input determinism and anti-spam state machine | P0 | PLANNED | GAME-003, GAME-011 | Rapid taps/gestures during resolution are ignored or queued deterministically and tested. |
+
+# I. Level design and content
+
+| ID | Function | Priority | Status | Dependencies | Acceptance / evidence |
+|---|---|---:|---|---|---|
+| LEVEL-001 | 150 playable levels | P0 | IMPLEMENTED | GAME-001 | 150 generated level entries exist; validation and balancing remain. |
+| LEVEL-002 | Difficulty curve | P0 | PLANNED | LEVEL-001 | Tutorial/easy/medium/hard/expert bands meet documented quantitative targets. |
+| LEVEL-003 | Level solvability validator | P0 | PLANNED | LEVEL-001 | Automated checks reject impossible, invalid, or degenerate configurations. |
+| LEVEL-004 | Boss mechanics | P1 | PLANNED | LEVEL-002 | Each world boss has a distinct mechanic, tutorial cue, and validated difficulty. |
+| LEVEL-005 | Milestone levels | P1 | IMPLEMENTED | LEVEL-001 | Every fifth city grants a one-time milestone reward; tests remain. |
+| LEVEL-006 | Content balancing telemetry model | P2 | PLANNED | LEVEL-002, ENG-012 | Completion, fail reason, moves left, duration, and booster use can be measured safely. |
+| LEVEL-007 | Level content schema and authoring validation | P1 | PLANNED | LEVEL-001 | Versioned schema, authoring rules, validation errors, and deterministic export are documented. |
+| LEVEL-008 | Content regression and compatibility policy | P1 | PLANNED | LEVEL-007, WORLD-008 | Updating levels preserves completed progress/rewards and records intentional balance changes. |
+
+# J. Results and rewards
+
+| ID | Function | Priority | Status | Dependencies | Acceptance / evidence |
+|---|---|---:|---|---|---|
+| REW-001 | Victory result flow | P0 | IMPLEMENTED | GAME-011 | Stars, coins, XP, replay/map actions exist; final 3D animation remains. |
+| REW-002 | Failure result flow | P0 | IMPLEMENTED | GAME-011 | Retry/return flow exists and heart loss cannot duplicate; final design remains. |
+| REW-003 | One-time world reward | P0 | IMPLEMENTED | WORLD-005 | Boss/world reward is granted once and persisted; regression tests remain. |
+| REW-004 | Milestone reward | P1 | IMPLEMENTED | LEVEL-005 | Every fifth first-clear reward is granted once; tests remain. |
+| REW-005 | Next City action | P0 | IMPLEMENTED | NAV-001 | Guarded action returns to updated map without navigation lock; device test remains. |
+| REW-006 | 3D reward animation | P1 | PLANNED | MOT-008, AST-009 | Chest, stars, coins, XP, and boosters animate coherently. |
+| REW-007 | Reward transaction ledger and reconciliation | P0 | PLANNED | ENG-008, REW-001 | Every grant has stable reason/idempotency key and can be audited/reconciled after interruption. |
+| REW-008 | Reward table configuration and probability disclosure | P1 | PLANNED | REW-007, RET-005 | Reward tables are versioned, testable, and odds are disclosed where legally/product required. |
+
+# K. Economy, progress, and shop
+
+| ID | Function | Priority | Status | Dependencies | Acceptance / evidence |
+|---|---|---:|---|---|---|
+| ECON-001 | Coin wallet | P0 | IMPLEMENTED | ENG-008 | Cannot become negative and persists; transaction tests remain. |
+| ECON-002 | Heart system and refill | P0 | IMPLEMENTED | ENG-008 | Maximum, spend, refill timer, and persistence exist; lifecycle tests remain. |
+| ECON-003 | XP and player level | P1 | IMPLEMENTED | ENG-008 | XP/level calculation exists; animated presentation/tests remain. |
+| ECON-004 | Booster inventory | P0 | IMPLEMENTED | ENG-008 | Hint, moves, and shield persist and cannot become negative; tests remain. |
+| ECON-005 | Versioned economy configuration and balance rules | P0 | PLANNED | ECON-001, REW-007 | Prices, rewards, sinks, sources, caps, and migrations are versioned and validated. |
+| SHOP-001 | 3D shop screen | P1 | IMPLEMENTED | UI3D-002 | Hearts, boosters, and themes use 3D-style components; final asset/motion pass remains. |
+| SHOP-002 | Safe purchase transaction | P0 | IMPLEMENTED | ECON-001 | Insufficient funds and duplicate actions are handled; atomicity tests remain. |
+| SHOP-003 | Theme purchase and selection | P1 | IMPLEMENTED | SHOP-002 | Owned themes persist and selected theme applies; consistency pass remains. |
+| SHOP-004 | Purchase history/audit | P2 | PLANNED | SHOP-002 | Local transaction records support debugging and reconciliation. |
+| SHOP-005 | Optional in-app purchase abstraction | P3 | PLANNED | ENG-009, PRIV-001 | Store billing can be added without coupling core economy; restore/verification/error states are specified. |
+| PROG-001 | Progress hub | P1 | IMPLEMENTED | ECON-003, WORLD-001 | Core statistics/progress screen exists; 3D redesign remains. |
+| PROG-002 | Achievement system | P2 | PLANNED | PROG-001 | Stable IDs, progress, one-time rewards, and animated completion exist. |
+| PROG-003 | Cloud-save-ready synchronization boundary | P3 | PLANNED | ENG-005, ENG-008, PRIV-001 | Local data remains authoritative offline; future sync supports conflict/version policy without embedded credentials. |
+
+# L. Retention and live content
+
+| ID | Function | Priority | Status | Dependencies | Acceptance / evidence |
+|---|---|---:|---|---|---|
+| RET-001 | Daily reward | P1 | IMPLEMENTED | ECON-001 | One claim per date persists; calendar UI/tests remain. |
+| RET-002 | Daily mission | P1 | IMPLEMENTED | PROG-001 | Wins/stars/coins progress and one-time claim work; final UI/tests remain. |
+| RET-003 | Weekly missions | P2 | PLANNED | RET-002 | Reset-safe weekly goals and claims are time-zone tested. |
+| RET-004 | Login streak | P2 | PLANNED | RET-001 | Time-zone-safe streak rules, grace/recovery, and clock changes are tested. |
+| RET-005 | Mystery chest | P2 | PLANNED | REW-006, REW-008 | Transparent reward table, one-time claim rules, and animated reveal exist. |
+| RET-006 | Event architecture | P3 | PLANNED | AST-002, RET-002 | Seasonal content can be configured/versioned without rewriting core gameplay. |
+| RET-007 | Remote/live configuration boundary | P2 | PLANNED | ENG-014, ENG-009 | Cached signed/versioned configuration fails closed and never blocks offline play. |
+| RET-008 | Local notification and deep-link readiness | P2 | PLANNED | NAV-003, PRIV-001 | Opt-in reminders use localized schedules, permission states, and safe routes. |
+| RET-009 | Leaderboard/social readiness | P3 | PLANNED | ENG-012, PRIV-001 | Optional identity/social layer has privacy, moderation, offline, and failure boundaries documented. |
+| RET-010 | Device-clock and claim abuse safeguards | P1 | PLANNED | RET-001, RET-003 | Backward/forward clock changes cannot duplicate claims or corrupt streaks. |
+
+# M. Ads and monetization
+
+| ID | Function | Priority | Status | Dependencies | Acceptance / evidence |
+|---|---|---:|---|---|---|
+| ADS-001 | Non-blocking Mobile Ads startup | P0 | IMPLEMENTED | ENG-003 | SDK failure/timeout never blocks startup; device verification remains. |
+| ADS-002 | Debug test IDs and release configuration | P0 | PLANNED | ADS-001, ENG-009 | Test ads run in debug and production IDs are injected safely in release. |
+| ADS-003 | Rewarded extra moves | P1 | PLANNED | ADS-002, REW-002 | Reward grants only once after verified completion callback. |
+| ADS-004 | Rewarded double reward | P2 | PLANNED | ADS-002, REW-001 | One-time doubling uses an idempotency key and survives interruption. |
+| ADS-005 | Rewarded booster | P2 | PLANNED | ADS-002, ECON-004 | Inventory updates only after verified completion. |
+| ADS-006 | Interstitial pacing | P2 | PLANNED | ADS-002 | Never appears during gameplay; frequency/session caps are configurable/tested. |
+| ADS-007 | Consent/privacy integration | P1 | PLANNED | ADS-002, PRIV-001 | Consent state controls personalized ads/analytics and is re-openable. |
+| ADS-008 | Ad placement analytics and quality safeguards | P2 | PLANNED | ADS-006, ENG-012 | Impression, completion, failure, churn signals are measured without sensitive data. |
+| ADS-009 | Ad-free failure and fallback UX | P1 | PLANNED | ADS-001 | Unavailable/no-fill/network errors return immediately to a valid non-blocking UI state. |
+| ADS-010 | Home banner ad footer | P1 | IMPLEMENTED | ADS-001, ENG-014 | Home uses a Google banner footer with official debug test ID; it reserves no space until loaded and no-fill/offline leaves core play usable. Production ID injection remains governed by ADS-002. |
+
+# N. Audio and haptics
+
+| ID | Function | Priority | Status | Dependencies | Acceptance / evidence |
+|---|---|---:|---|---|---|
+| AV-001 | Audio service and preload policy | P1 | PLANNED | ENG-005 | Sounds are cached selectively, lifecycle-aware, and disposed safely. |
+| AV-002 | Gameplay sound effects | P1 | PLANNED | AV-001, GAME-003 | Pickup, correct, wrong, combo, coin, star, win, and loss profiles exist. |
+| AV-003 | World music system | P2 | PLANNED | AV-001, WORLD-001 | Per-world loops, crossfade, focus loss, background, and resume are handled. |
+| AV-004 | Haptic feedback service | P1 | PLANNED | MOT-001 | Event-strength mapping and unsupported-device fallback exist. |
+| AV-005 | Sound/music/haptics settings | P1 | PLANNED | AV-001, AV-004 | Persisted toggles and immediate application work. |
+| AV-006 | Motion-audio-haptic synchronization | P1 | PLANNED | MOT-007, AV-002, AV-004 | Same event has one coordinated feedback profile. |
+| AV-007 | Audio licensing, loudness, and accessibility validation | P1 | PLANNED | AV-001 | Commercial rights, loudness targets, captions/non-audio cues, and headphone safety are documented. |
+
+# O. Localization
+
+| ID | Function | Priority | Status | Dependencies | Acceptance / evidence |
+|---|---|---:|---|---|---|
+| LOC-001 | English localization | P0 | IMPLEMENTED | ENG-001 | Core ARB/localization framework exists; hard-coded text audit remains. |
+| LOC-002 | Arabic localization and RTL | P0 | IMPLEMENTED | LOC-001 | Core language toggle/RTL exist; complete translation audit remains. |
+| LOC-003 | No hard-coded user-facing text | P1 | PLANNED | LOC-001 | All visible strings, errors, notifications, and semantics are localized. |
+| LOC-004 | City/world name localization | P1 | PLANNED | WORLD-001, LOC-001 | All journey content translates consistently. |
+| LOC-005 | Locale-aware numbers, dates, plurals, and fonts | P1 | PLANNED | LOC-001 | Numbers, timers, dates, plural rules, font fallback, and bidi text pass EN/AR tests. |
+| LOC-006 | Translation QA and fallback policy | P1 | PLANNED | LOC-003 | Missing keys fail visibly in test, fall back safely in release, and glossary/terminology are documented. |
+
+# P. Accessibility
+
+| ID | Function | Priority | Status | Dependencies | Acceptance / evidence |
+|---|---|---:|---|---|---|
+| A11Y-001 | Semantic labels for 3D assets | P1 | PLANNED | AST-002, LOC-003 | Interactive/meaningful assets have localized semantics and decorative assets are excluded. |
+| A11Y-002 | Large text and screen-reader validation | P1 | PLANNED | UI3D-006 | Core flow has no overflow at supported scaling and is operable with screen reader. |
+| A11Y-003 | Reduced motion | P1 | PLANNED | UI3D-007 | Setting affects all shared animation primitives and skips nonessential cinematics. |
+| A11Y-004 | Contrast, touch targets, focus, and non-color cues | P1 | PLANNED | UI3D-001 | Text/controls meet target contrast, touch targets, focus order, and state is never color-only. |
+| A11Y-005 | Accessibility test matrix and statement | P2 | PLANNED | A11Y-001, A11Y-004 | Manual/automated matrix and known limitations are documented for release. |
+
+# Q. Performance and reliability
+
+| ID | Function | Priority | Status | Dependencies | Acceptance / evidence |
+|---|---|---:|---|---|---|
+| PERF-001 | Frame performance budget | P0 | PLANNED | MOT-001, AST-004 | Core gameplay meets documented frame targets with graceful fallback. |
+| PERF-002 | Memory and image budget | P0 | PLANNED | AST-004 | No unbounded cache and large assets decode near display size. |
+| PERF-003 | Pause off-screen animations | P1 | PLANNED | MOT-005 | TickerMode/lifecycle prevents hidden animation work. |
+| PERF-004 | Startup time budget | P0 | IMPLEMENTED | ENG-003 | Main UI opens with defaults when optional services are slow; profiling remains. |
+| PERF-005 | Low-end device mode | P2 | PLANNED | UI3D-007 | Particles, blur, shadows, and simultaneous animations reduce predictably. |
+| PERF-006 | Network and battery efficiency | P1 | PLANNED | ENG-014, RET-007 | Background work, retries, telemetry, ads, and downloads use bounded policies. |
+| PERF-007 | App size and asset delivery budget | P1 | PLANNED | AST-010, REL-008 | APK/AAB size, native libs, fonts, and assets meet documented thresholds. |
+| REL-001 | ADB/device scripts remain dynamic | P0 | READY | ENG-002 | No hard-coded device/AVD name exists in any script. |
+| REL-002 | Kotlin incremental-cache recovery | P0 | IMPLEMENTED | ENG-002 | Shared build repair performs cleanup/retry; multi-machine verification remains. |
+| REL-003 | Runtime resilience and watchdog policy | P1 | PLANNED | ENG-004, ENG-014 | Recoverable failures surface actionable UI/logs without restart loops or data loss. |
+| REL-004 | Storage corruption backup/recovery | P0 | PLANNED | ENG-008 | Invalid local data is detected, backed up when possible, migrated/reset safely, and diagnosed. |
+
+# R. Testing and quality gates
+
+| ID | Function | Priority | Status | Dependencies | Acceptance / evidence |
+|---|---|---:|---|---|---|
+| TEST-001 | Progress/economy unit tests | P0 | PLANNED | ENG-008 | Hearts, coins, boosters, milestones, worlds, duplicate guards, and migrations are covered. |
+| TEST-002 | Level generator and solvability tests | P0 | PLANNED | LEVEL-003 | Levels 1, 25, 26, 150 and every generated configuration validate. |
+| TEST-003 | Core screen widget tests | P1 | PLANNED | UI3D-006 | Home, map, briefing, game, result, and shop pass key sizes/languages. |
+| TEST-004 | Navigation race regression tests | P0 | PLANNED | NAV-001 | Repeated Next/Retry/Start and external entry cannot duplicate actions/routes. |
+| TEST-005 | Missing asset tests | P1 | PLANNED | AST-003 | Missing/corrupt asset fallback remains visible and functional. |
+| TEST-006 | Golden visual tests | P2 | PLANNED | UI3D-004 | Critical screens have stable EN/AR snapshots at representative sizes. |
+| TEST-007 | Integration and end-to-end critical path | P0 | PLANNED | TEST-001, TEST-003 | First run through level completion, reward, shop, restart, and restore passes. |
+| TEST-008 | Coverage thresholds and flaky-test policy | P1 | PLANNED | ENG-007 | Coverage targets, retries, quarantine rules, and failure ownership are enforced. |
+| TEST-009 | Device/API compatibility matrix | P0 | PLANNED | ENG-002, PERF-001 | Supported Android API/ABI, phone/tablet, low/mid/high tiers, and physical-device smoke tests are recorded. |
+| TEST-010 | Dashboard/catalog parser validation | P1 | PLANNED | ENG-007 | CI confirms phases A–S, table schema, unique IDs, valid statuses/dependencies, and dashboard rendering. |
+| TEST-011 | Privacy, consent, and security verification | P0 | PLANNED | PRIV-001, SEC-001 | Consent, data deletion, redaction, secret scan, dependency scan, and network policy pass. |
+| TEST-012 | Release candidate smoke and soak tests | P0 | PLANNED | REL-008, TEST-007 | Signed candidate installs/updates, survives repeated sessions, offline/online changes, and backgrounding. |
+
+# S. Release, privacy, security, and store readiness
+
+| ID | Function | Priority | Status | Dependencies | Acceptance / evidence |
+|---|---|---:|---|---|---|
+| PRIV-001 | Privacy inventory, consent, and data minimization | P0 | PLANNED | ENG-001 | Every collected datum, purpose, retention, consent, processor, and deletion path is documented. |
+| PRIV-002 | Privacy policy and Play Data safety mapping | P0 | PLANNED | PRIV-001, ADS-007 | Published policy and store disclosures match actual SDK/data behavior. |
+| PRIV-003 | User data export/deletion readiness | P1 | PLANNED | PRIV-001, ENG-008 | Local/remote data handling includes deletion/reset/export procedures where applicable. |
+| SEC-001 | Mobile security baseline and threat model | P0 | PLANNED | ENG-010 | Threats, trust boundaries, secure storage, network rules, tamper risks, and mitigations are documented. |
+| SEC-002 | Dependency, secret, and artifact security scans | P0 | PLANNED | ENG-006, ENG-010, ENG-007 | CI blocks committed secrets, critical vulnerable dependencies, and sensitive build artifacts. |
+| SEC-003 | App integrity, obfuscation, and release hardening | P1 | PLANNED | SEC-001, REL-008 | R8/obfuscation/integrity choices are tested without breaking ads, logging, or stack traces. |
+| LEGAL-001 | Open-source notices and content rights | P0 | PLANNED | ENG-006, AST-011, AV-007 | Third-party licenses, asset/audio rights, notices, trademarks, and age-rating inputs are complete. |
+| REL-005 | Versioning and release notes | P1 | PLANNED | ENG-007 | Version/build are updated consistently and release notes/changelog are generated. |
+| REL-006 | Android signing and key-management procedure | P0 | PLANNED | ENG-002, ENG-010 | Secure local/CI signing, backup, rotation, access, and recovery are documented without committed keys. |
+| REL-007 | Release APK | P0 | PLANNED | TEST-012, REL-006 | Signed candidate installs, launches, upgrades, and passes smoke checks. |
+| REL-008 | Release AAB | P0 | PLANNED | REL-006, PERF-007 | Bundle builds, validates, and supports required ABI/API targets. |
+| REL-009 | Play Store listing and asset readiness | P1 | PLANNED | REL-008, PRIV-002, LEGAL-001 | Listing copy, screenshots, feature graphic, icon, localization, category, rating, and contact are complete. |
+| REL-010 | Internal/closed/open testing tracks | P1 | PLANNED | REL-008 | Tester groups, staged rollout, feedback, crash/ANR review, and promotion criteria are documented. |
+| REL-011 | Production monitoring and rollback | P0 | PLANNED | ENG-013, REL-010 | Crash/ANR/ratings/ads/retention monitoring, rollback/stop rules, and hotfix ownership are documented. |
+| REL-012 | Backup, disaster recovery, and release archive | P1 | PLANNED | REL-006, REL-011 | Signing keys, source tag, mapping files, symbols, artifacts, notices, and release evidence are archived securely. |
+| REL-013 | Final go/no-go checklist | P0 | PLANNED | All P0 release blockers | All P0 tasks are VERIFIED, known risks accepted, and release owner signs the checklist. |
+
+---
+
+# Active work queue
+
+## IN PROGRESS
+
+- `UI3D-006` Responsive screen shell and safe areas — existing team workstream remains active; do not open a competing primary feature until it reaches a clean checkpoint.
+
+## NEXT READY
+
+1. Continue `UI3D-006` to its clean checkpoint.
+2. `AST-003` Add missing/corrupt asset fallback after `UI3D-006` closes.
+3. `TEST-001` Add progress/economy unit tests.
+4. `PRIV-001` Complete privacy/data inventory before analytics, ads consent, or cloud features.
+
+## BLOCKED
+
+- Binary runtime asset admission remains blocked until `AST-003` and `AST-011` are complete.
+
+## Recently verified
+
+- `AST-001` Asset folder taxonomy and naming standard — production paths, stable
+  names/IDs, render profiles, lighting, export budgets, accessibility, and
+  provenance handoff are documented and mechanically validated.
+- `ENG-001` Repository audit and baseline — architecture, commands, tooling, assets, persistence keys, debt, and risks are recorded in human- and machine-readable evidence.
+## Recently implemented
+
+- `AST-002` Asset manifest and typed registry — typed descriptors, validation, bundle loading, versioned manifest, and focused tests are present; full Flutter CI/build evidence remains pending.
+- `MOT-007` Correct/wrong/combo feedback — synchronized overlay, capped visual/haptic intensity, settings-aware hooks, localized semantics, deterministic completion, and focused tests added; Flutter CI/device verification pending.
+- `MOT-006` Product pickup, travel, placement, settle — shared causal travel motion, deterministic input lock, reduced-motion path, and focused tests added; Flutter CI/device verification pending.
