@@ -50,7 +50,7 @@ void main() {
       final output = SecretRedactor.redact(input);
 
       expect(output, isNot(contains('Example')));
-      expect(output, isNot(contains('/home/example')));
+      expect(output, isNot(contains('/home/example'))); // secret-scan: allow
       expect(output, contains(SecretRedactor.userPath));
     });
 
