@@ -33,18 +33,19 @@ final class GameAssetCachePolicy extends ChangeNotifier {
 
   final int maxEntries;
 
-  final LinkedHashSet<String> _cached = LinkedHashSet<String>();
+  final LinkedHashMap<String, AssetImage> _cached =
+      LinkedHashMap<String, AssetImage>();
   final Set<String> _inFlight = <String>{};
   final LinkedHashSet<String> _failed = LinkedHashSet<String>();
 
   GameAssetCacheSnapshot get snapshot => GameAssetCacheSnapshot(
-    cachedIds: List.unmodifiable(_cached),
+    cachedIds: List.unmodifiable(_cached.keys),
     inFlightIds: List.unmodifiable(_inFlight),
     failedIds: List.unmodifiable(_failed),
     maxEntries: maxEntries,
   );
 
-  bool isCached(String assetId) => _cached.contains(assetId);
+  bool isCached(String assetId) => _cached.containsKey(assetId);
   bool isInFlight(String assetId) => _inFlight.contains(assetId);
   bool hasFailed(String assetId) => _failed.contains(assetId);
 
@@ -59,18 +60,20 @@ final class GameAssetCachePolicy extends ChangeNotifier {
       return false;
     }
 
-    if (_cached.remove(assetId)) {
-      _cached.add(assetId);
+    final existing = _cached.remove(assetId);
+    if (existing != null) {
+      _cached[assetId] = existing;
       return true;
     }
     if (_inFlight.contains(assetId)) return false;
 
+    final provider = AssetImage(descriptor.path);
     _inFlight.add(assetId);
     notifyListeners();
     try {
-      await precacheImage(AssetImage(descriptor.path), context);
+      await precacheImage(provider, context);
       _failed.remove(assetId);
-      _cached.add(assetId);
+      _cached[assetId] = provider;
       _trimToBudget();
       return true;
     } catch (_) {
@@ -97,16 +100,24 @@ final class GameAssetCachePolicy extends ChangeNotifier {
     }
   }
 
-  void forget(String assetId) {
-    final changed = _cached.remove(assetId) | _failed.remove(assetId);
+  Future<void> forget(String assetId) async {
+    final provider = _cached.remove(assetId);
+    final changed = provider != null | _failed.remove(assetId);
+    if (provider != null) {
+      await provider.evict(cache: PaintingBinding.instance.imageCache);
+    }
     if (changed) notifyListeners();
   }
 
-  void clear() {
+  Future<void> clear() async {
     if (_cached.isEmpty && _failed.isEmpty && _inFlight.isEmpty) return;
+    final providers = List<AssetImage>.from(_cached.values);
     _cached.clear();
     _failed.clear();
     _inFlight.clear();
+    for (final provider in providers) {
+      await provider.evict(cache: PaintingBinding.instance.imageCache);
+    }
     notifyListeners();
   }
 
@@ -121,12 +132,11 @@ final class GameAssetCachePolicy extends ChangeNotifier {
 
   void _trimToBudget() {
     while (_cached.length > maxEntries) {
-      final evicted = _cached.first;
-      _cached.remove(evicted);
-      PaintingBinding.instance.imageCache.evict(
-        const AssetImage(''),
-        includeLive: false,
-      );
+      final evictedId = _cached.keys.first;
+      final provider = _cached.remove(evictedId);
+      if (provider != null) {
+        provider.evict(cache: PaintingBinding.instance.imageCache);
+      }
     }
   }
 }
