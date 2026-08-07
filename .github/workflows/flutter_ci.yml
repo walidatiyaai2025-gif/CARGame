@@ -41,7 +41,7 @@ jobs:
         run: dart run tool/verify_secret_hygiene.dart
 
       - name: Verify privacy data inventory
-        run: dart run tool/verify_privacy_inventory.dart
+        run: python3 tool/verify_privacy_inventory.py
 
       - name: Restore packages
         run: flutter pub get
