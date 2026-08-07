@@ -94,6 +94,18 @@ void main() {
     );
   });
 
+  test('rejects duplicate runtime paths', () {
+    final duplicate = validManifest.replaceFirst(
+      'assets/3d/runtime/cities/harbor/cg_city_harbor_gate_locked_pcity_v01.webp',
+      'assets/3d/runtime/cargo/beverage/cg_cargo_orange_juice_closed_pcargo_v01.webp',
+    );
+
+    expect(
+      () => GameAssetRegistry.fromJsonString(duplicate),
+      throwsA(isA<FormatException>()),
+    );
+  });
+
   test('rejects paths outside the governed runtime taxonomy', () {
     final invalid = validManifest.replaceFirst(
       'assets/3d/runtime/cargo/beverage/',
@@ -122,6 +134,18 @@ void main() {
     final invalid = validManifest.replaceFirst(
       '"localizationKey": "assetOrangeJuice"',
       '"localizationKey": ""',
+    );
+
+    expect(
+      () => GameAssetRegistry.fromJsonString(invalid),
+      throwsA(isA<FormatException>()),
+    );
+  });
+
+  test('rejects missing asset fallback references', () {
+    final invalid = validManifest.replaceFirst(
+      '"kind": "icon",\n        "token": "local_drink"',
+      '"kind": "asset",\n        "token": "cargo.missing.fallback"',
     );
 
     expect(
