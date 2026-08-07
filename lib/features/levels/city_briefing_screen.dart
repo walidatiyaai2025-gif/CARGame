@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/storage/progress_store.dart';
 import '../../core/theme/game_skin.dart';
 import '../../core/theme/three_d_game_icon.dart';
+import '../../core/widgets/game_button.dart';
 import '../game/city_catalog.dart';
 import '../game/game_screen.dart';
 import '../game/level_data.dart';
@@ -59,9 +60,9 @@ class _CityBriefingScreenState extends State<CityBriefingScreen> {
       );
     } on StateError catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.message.toString())),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.message.toString())));
     } finally {
       if (mounted) setState(() => _starting = false);
     }
@@ -111,7 +112,12 @@ class _CityBriefingScreenState extends State<CityBriefingScreen> {
                   ),
                   Expanded(
                     child: ListView(
-                      padding: EdgeInsets.fromLTRB(horizontal, 12, horizontal, 28),
+                      padding: EdgeInsets.fromLTRB(
+                        horizontal,
+                        12,
+                        horizontal,
+                        28,
+                      ),
                       children: [
                         _HeroCard(
                           level: level,
@@ -127,24 +133,36 @@ class _CityBriefingScreenState extends State<CityBriefingScreen> {
                           level: level,
                           accent: skin.primary,
                           selectedCount:
-                              (_hint ? 1 : 0) + (_moves ? 1 : 0) + (_shield ? 1 : 0),
+                              (_hint ? 1 : 0) +
+                              (_moves ? 1 : 0) +
+                              (_shield ? 1 : 0),
                         ),
                         const SizedBox(height: 20),
                         Text(
-                          isArabic ? 'اختر تجهيزات المهمة' : 'Choose Mission Loadout',
-                          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+                          isArabic
+                              ? 'اختر تجهيزات المهمة'
+                              : 'Choose Mission Loadout',
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w900,
+                          ),
                         ),
                         const SizedBox(height: 5),
                         Text(
                           isArabic
                               ? 'يتم استهلاك الأدوات فقط عند بدء المهمة.'
                               : 'Boosters are consumed only when the mission starts.',
-                          style: const TextStyle(color: Colors.black54, fontWeight: FontWeight.w600),
+                          style: const TextStyle(
+                            color: Colors.black54,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                         const SizedBox(height: 12),
                         LayoutBuilder(
                           builder: (context, loadoutConstraints) {
-                            final columns = loadoutConstraints.maxWidth < 360 ? 1 : 3;
+                            final columns = loadoutConstraints.maxWidth < 360
+                                ? 1
+                                : 3;
                             final gap = 10.0;
                             final width = columns == 1
                                 ? loadoutConstraints.maxWidth
@@ -157,8 +175,12 @@ class _CityBriefingScreenState extends State<CityBriefingScreen> {
                                   width: width,
                                   child: _SelectableBoosterCard(
                                     type: ThreeDIconType.hint,
-                                    title: isArabic ? 'تلميح ذكي' : 'Smart Hint',
-                                    subtitle: isArabic ? 'تلميح مجاني داخل الجولة' : 'One free in-game hint',
+                                    title: isArabic
+                                        ? 'تلميح ذكي'
+                                        : 'Smart Hint',
+                                    subtitle: isArabic
+                                        ? 'تلميح مجاني داخل الجولة'
+                                        : 'One free in-game hint',
                                     count: store.freeHints,
                                     selected: _hint,
                                     color: const Color(0xFFFFB300),
@@ -171,28 +193,39 @@ class _CityBriefingScreenState extends State<CityBriefingScreen> {
                                   width: width,
                                   child: _SelectableBoosterCard(
                                     type: ThreeDIconType.extraMoves,
-                                    title: isArabic ? 'حركات إضافية' : 'Extra Moves',
-                                    subtitle: isArabic ? '+5 حركات عند البداية' : '+5 starting moves',
+                                    title: isArabic
+                                        ? 'حركات إضافية'
+                                        : 'Extra Moves',
+                                    subtitle: isArabic
+                                        ? '+5 حركات عند البداية'
+                                        : '+5 starting moves',
                                     count: store.extraMovesBoosters,
                                     selected: _moves,
                                     color: const Color(0xFF2D6CDF),
                                     onTap: store.extraMovesBoosters <= 0
                                         ? null
-                                        : () => setState(() => _moves = !_moves),
+                                        : () =>
+                                              setState(() => _moves = !_moves),
                                   ),
                                 ),
                                 SizedBox(
                                   width: width,
                                   child: _SelectableBoosterCard(
                                     type: ThreeDIconType.shield,
-                                    title: isArabic ? 'درع الكومبو' : 'Combo Shield',
-                                    subtitle: isArabic ? 'يحمي أول خطأ' : 'Protects first mistake',
+                                    title: isArabic
+                                        ? 'درع الكومبو'
+                                        : 'Combo Shield',
+                                    subtitle: isArabic
+                                        ? 'يحمي أول خطأ'
+                                        : 'Protects first mistake',
                                     count: store.comboShields,
                                     selected: _shield,
                                     color: const Color(0xFF7B3FF2),
                                     onTap: store.comboShields <= 0
                                         ? null
-                                        : () => setState(() => _shield = !_shield),
+                                        : () => setState(
+                                            () => _shield = !_shield,
+                                          ),
                                   ),
                                 ),
                               ],
@@ -229,13 +262,13 @@ class _GlassBackButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Material(
-        color: Colors.white.withValues(alpha: .88),
-        shape: const CircleBorder(),
-        child: IconButton(
-          onPressed: enabled ? onTap : null,
-          icon: const Icon(Icons.arrow_back_rounded),
-        ),
-      );
+    color: Colors.white.withValues(alpha: .88),
+    shape: const CircleBorder(),
+    child: IconButton(
+      onPressed: enabled ? onTap : null,
+      icon: const Icon(Icons.arrow_back_rounded),
+    ),
+  );
 }
 
 class _WalletChip extends StatelessWidget {
@@ -251,21 +284,27 @@ class _WalletChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: .94),
-          borderRadius: BorderRadius.circular(22),
-          boxShadow: const [BoxShadow(color: Color(0x19000000), blurRadius: 14, offset: Offset(0, 6))],
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+    decoration: BoxDecoration(
+      color: Colors.white.withValues(alpha: .94),
+      borderRadius: BorderRadius.circular(22),
+      boxShadow: const [
+        BoxShadow(
+          color: Color(0x19000000),
+          blurRadius: 14,
+          offset: Offset(0, 6),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ThreeDGameIcon(type: type, size: 27, semanticLabel: semanticLabel),
-            const SizedBox(width: 5),
-            Text(value, style: const TextStyle(fontWeight: FontWeight.w900)),
-          ],
-        ),
-      );
+      ],
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        ThreeDGameIcon(type: type, size: 27, semanticLabel: semanticLabel),
+        const SizedBox(width: 5),
+        Text(value, style: const TextStyle(fontWeight: FontWeight.w900)),
+      ],
+    ),
+  );
 }
 
 class _HeroCard extends StatelessWidget {
@@ -287,85 +326,95 @@ class _HeroCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: EdgeInsets.all(compact ? 18 : 22),
-        decoration: BoxDecoration(
-          gradient: skin.heroGradient,
-          borderRadius: BorderRadius.circular(34),
-          boxShadow: [
-            BoxShadow(
-              color: skin.primary.withValues(alpha: .32),
-              blurRadius: 30,
-              offset: const Offset(0, 16),
-            ),
-          ],
+    padding: EdgeInsets.all(compact ? 18 : 22),
+    decoration: BoxDecoration(
+      gradient: skin.heroGradient,
+      borderRadius: BorderRadius.circular(34),
+      boxShadow: [
+        BoxShadow(
+          color: skin.primary.withValues(alpha: .32),
+          blurRadius: 30,
+          offset: const Offset(0, 16),
         ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: .14),
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                    child: Text(
-                      level.isBossCity
-                          ? (isArabic ? 'مدينة الزعيم' : 'BOSS CITY')
-                          : (isArabic ? 'المهمة التالية' : 'NEXT MISSION'),
-                      style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w900),
-                    ),
+      ],
+    ),
+    child: Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: .14),
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: Text(
+                  level.isBossCity
+                      ? (isArabic ? 'مدينة الزعيم' : 'BOSS CITY')
+                      : (isArabic ? 'المهمة التالية' : 'NEXT MISSION'),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
                   ),
-                  const SizedBox(height: 10),
-                  Text(
-                    level.cityName,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: compact ? 28 : 34,
-                      height: 1,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                  const SizedBox(height: 7),
-                  Text(
-                    '$worldName • ${isArabic ? 'المرحلة' : 'Level'} ${level.number}',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w700),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: List.generate(
-                      3,
-                      (index) => Padding(
-                        padding: const EdgeInsetsDirectional.only(end: 5),
-                        child: Opacity(
-                          opacity: index < previousStars ? 1 : .25,
-                          child: ThreeDGameIcon(
-                            type: ThreeDIconType.star,
-                            size: compact ? 27 : 31,
-                          ),
-                        ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                level.cityName,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: compact ? 28 : 34,
+                  height: 1,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 7),
+              Text(
+                '$worldName • ${isArabic ? 'المرحلة' : 'Level'} ${level.number}',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: List.generate(
+                  3,
+                  (index) => Padding(
+                    padding: const EdgeInsetsDirectional.only(end: 5),
+                    child: Opacity(
+                      opacity: index < previousStars ? 1 : .25,
+                      child: ThreeDGameIcon(
+                        type: ThreeDIconType.star,
+                        size: compact ? 27 : 31,
                       ),
                     ),
                   ),
-                ],
+                ),
               ),
-            ),
-            const SizedBox(width: 12),
-            ThreeDGameIcon(
-              type: level.isBossCity ? ThreeDIconType.boss : ThreeDIconType.city,
-              size: compact ? 94 : 118,
-              animate: true,
-              semanticLabel: level.cityName,
-            ),
-          ],
+            ],
+          ),
         ),
-      );
+        const SizedBox(width: 12),
+        ThreeDGameIcon(
+          type: level.isBossCity ? ThreeDIconType.boss : ThreeDIconType.city,
+          size: compact ? 94 : 118,
+          animate: true,
+          semanticLabel: level.cityName,
+        ),
+      ],
+    ),
+  );
 }
 
 class _MissionCard extends StatelessWidget {
@@ -383,40 +432,70 @@ class _MissionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: .95),
-          borderRadius: BorderRadius.circular(28),
-          border: Border.all(color: accent.withValues(alpha: .18)),
-          boxShadow: const [BoxShadow(color: Color(0x12000000), blurRadius: 18, offset: Offset(0, 8))],
+    padding: const EdgeInsets.all(18),
+    decoration: BoxDecoration(
+      color: Colors.white.withValues(alpha: .95),
+      borderRadius: BorderRadius.circular(28),
+      border: Border.all(color: accent.withValues(alpha: .18)),
+      boxShadow: const [
+        BoxShadow(
+          color: Color(0x12000000),
+          blurRadius: 18,
+          offset: Offset(0, 8),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      ],
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          level.isBossCity
+              ? (isArabic ? 'تفاصيل مهمة الزعيم' : 'Boss Mission Brief')
+              : (isArabic ? 'تفاصيل المهمة' : 'Mission Brief'),
+          style: TextStyle(
+            color: accent,
+            fontSize: 18,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
           children: [
-            Text(
-              level.isBossCity
-                  ? (isArabic ? 'تفاصيل مهمة الزعيم' : 'Boss Mission Brief')
-                  : (isArabic ? 'تفاصيل المهمة' : 'Mission Brief'),
-              style: TextStyle(color: accent, fontSize: 18, fontWeight: FontWeight.w900),
+            _MissionMetric(
+              icon: Icons.inventory_2_rounded,
+              value: '${level.items.length}',
+              label: isArabic ? 'شحنات' : 'Cargo',
             ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                _MissionMetric(icon: Icons.inventory_2_rounded, value: '${level.items.length}', label: isArabic ? 'شحنات' : 'Cargo'),
-                _MissionMetric(icon: Icons.touch_app_rounded, value: '${level.moves}', label: isArabic ? 'حركات' : 'Moves'),
-                _MissionMetric(icon: Icons.speed_rounded, value: '${level.difficulty}', label: isArabic ? 'صعوبة' : 'Difficulty'),
-                _MissionMetric(icon: Icons.backpack_rounded, value: '$selectedCount', label: isArabic ? 'أدوات' : 'Boosters'),
-              ],
+            _MissionMetric(
+              icon: Icons.touch_app_rounded,
+              value: '${level.moves}',
+              label: isArabic ? 'حركات' : 'Moves',
+            ),
+            _MissionMetric(
+              icon: Icons.speed_rounded,
+              value: '${level.difficulty}',
+              label: isArabic ? 'صعوبة' : 'Difficulty',
+            ),
+            _MissionMetric(
+              icon: Icons.backpack_rounded,
+              value: '$selectedCount',
+              label: isArabic ? 'أدوات' : 'Boosters',
             ),
           ],
         ),
-      );
+      ],
+    ),
+  );
 }
 
 class _MissionMetric extends StatelessWidget {
-  const _MissionMetric({required this.icon, required this.value, required this.label});
+  const _MissionMetric({
+    required this.icon,
+    required this.value,
+    required this.label,
+  });
 
   final IconData icon;
   final String value;
@@ -424,20 +503,23 @@ class _MissionMetric extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF5F7FB),
-          borderRadius: BorderRadius.circular(18),
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+    decoration: BoxDecoration(
+      color: const Color(0xFFF5F7FB),
+      borderRadius: BorderRadius.circular(18),
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 19, color: Colors.black54),
+        const SizedBox(width: 6),
+        Text(
+          '$value $label',
+          style: const TextStyle(fontWeight: FontWeight.w800),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 19, color: Colors.black54),
-            const SizedBox(width: 6),
-            Text('$value $label', style: const TextStyle(fontWeight: FontWeight.w800)),
-          ],
-        ),
-      );
+      ],
+    ),
+  );
 }
 
 class _SelectableBoosterCard extends StatelessWidget {
@@ -461,76 +543,101 @@ class _SelectableBoosterCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Opacity(
-        opacity: onTap == null ? .42 : 1,
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: onTap,
+    opacity: onTap == null ? .42 : 1,
+    child: Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(24),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 190),
+          constraints: const BoxConstraints(minHeight: 158),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
+          decoration: BoxDecoration(
+            gradient: selected
+                ? LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Colors.white, color.withValues(alpha: .20)],
+                  )
+                : null,
+            color: selected ? null : Colors.white,
             borderRadius: BorderRadius.circular(24),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 190),
-              constraints: const BoxConstraints(minHeight: 158),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
-              decoration: BoxDecoration(
-                gradient: selected
-                    ? LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [Colors.white, color.withValues(alpha: .20)],
-                      )
-                    : null,
-                color: selected ? null : Colors.white,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(
-                  color: selected ? color : color.withValues(alpha: .24),
-                  width: selected ? 2.5 : 1.2,
-                ),
-                boxShadow: selected
-                    ? [BoxShadow(color: color.withValues(alpha: .22), blurRadius: 18, offset: const Offset(0, 8))]
-                    : const [BoxShadow(color: Color(0x10000000), blurRadius: 12, offset: Offset(0, 6))],
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+            border: Border.all(
+              color: selected ? color : color.withValues(alpha: .24),
+              width: selected ? 2.5 : 1.2,
+            ),
+            boxShadow: selected
+                ? [
+                    BoxShadow(
+                      color: color.withValues(alpha: .22),
+                      blurRadius: 18,
+                      offset: const Offset(0, 8),
+                    ),
+                  ]
+                : const [
+                    BoxShadow(
+                      color: Color(0x10000000),
+                      blurRadius: 12,
+                      offset: Offset(0, 6),
+                    ),
+                  ],
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Stack(
+                clipBehavior: Clip.none,
                 children: [
-                  Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      ThreeDGameIcon(type: type, size: 58, animate: selected),
-                      if (selected)
-                        Positioned(
-                          right: -4,
-                          top: -4,
-                          child: Container(
-                            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-                            padding: const EdgeInsets.all(3),
-                            child: const Icon(Icons.check_rounded, color: Colors.white, size: 15),
-                          ),
+                  ThreeDGameIcon(type: type, size: 58, animate: selected),
+                  if (selected)
+                    Positioned(
+                      right: -4,
+                      top: -4,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: color,
+                          shape: BoxShape.circle,
                         ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    title,
-                    maxLines: 2,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    subtitle,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 9, color: Colors.black54),
-                  ),
-                  const SizedBox(height: 6),
-                  Text('x$count', style: TextStyle(color: color, fontWeight: FontWeight.w900)),
+                        padding: const EdgeInsets.all(3),
+                        child: const Icon(
+                          Icons.check_rounded,
+                          color: Colors.white,
+                          size: 15,
+                        ),
+                      ),
+                    ),
                 ],
               ),
-            ),
+              const SizedBox(height: 8),
+              Text(
+                title,
+                maxLines: 2,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                subtitle,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 9, color: Colors.black54),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'x$count',
+                style: TextStyle(color: color, fontWeight: FontWeight.w900),
+              ),
+            ],
           ),
         ),
-      );
+      ),
+    ),
+  );
 }
 
 class _StartMissionButton extends StatelessWidget {
@@ -551,51 +658,54 @@ class _StartMissionButton extends StatelessWidget {
   final VoidCallback onPressed;
 
   @override
-  Widget build(BuildContext context) => SizedBox(
-        height: 68,
-        child: FilledButton(
-          style: FilledButton.styleFrom(
-            backgroundColor: skinColor,
-            disabledBackgroundColor: skinColor.withValues(alpha: .35),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-            elevation: enabled ? 7 : 0,
-          ),
-          onPressed: enabled ? onPressed : null,
-          child: Row(
+  Widget build(BuildContext context) => GameButton(
+    semanticLabel: enabled
+        ? (isArabic ? 'ابدأ مهمة $cityName' : 'Start mission $cityName')
+        : (isArabic ? 'لا توجد قلوب' : 'No hearts'),
+    onPressed: enabled ? onPressed : null,
+    enabled: enabled,
+    loading: loading,
+    expand: true,
+    height: 68,
+    borderRadius: BorderRadius.circular(24),
+    backgroundColor: skinColor,
+    disabledColor: skinColor.withValues(alpha: .35),
+    shadowColor: skinColor.withValues(alpha: .42),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Icon(Icons.play_arrow_rounded, size: 34, color: Colors.white),
+        const SizedBox(width: 9),
+        Flexible(
+          child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              if (loading)
-                const SizedBox.square(
-                  dimension: 24,
-                  child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
-                )
-              else
-                const Icon(Icons.play_arrow_rounded, size: 34),
-              const SizedBox(width: 9),
-              Flexible(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      enabled
-                          ? (isArabic ? 'ابدأ المهمة' : 'START MISSION')
-                          : (isArabic ? 'لا توجد قلوب' : 'NO HEARTS'),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900),
-                    ),
-                    if (!loading)
-                      Text(
-                        cityName,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 10, color: Colors.white70, fontWeight: FontWeight.w700),
-                      ),
-                  ],
+              Text(
+                enabled
+                    ? (isArabic ? 'ابدأ المهمة' : 'START MISSION')
+                    : (isArabic ? 'لا توجد قلوب' : 'NO HEARTS'),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 17,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              Text(
+                cityName,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 10,
+                  color: Colors.white70,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ],
           ),
         ),
-      );
+      ],
+    ),
+  );
 }

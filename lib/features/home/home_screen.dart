@@ -4,6 +4,7 @@ import '../../core/logging/log_viewer_screen.dart';
 import '../../core/storage/progress_store.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/three_d_game_icon.dart';
+import '../../core/widgets/game_button.dart';
 import '../../l10n/app_localizations.dart';
 import '../game/city_catalog.dart';
 import '../game/level_data.dart';
@@ -52,7 +53,9 @@ class _HomeScreenState extends State<HomeScreen> {
       SnackBar(
         content: Text(
           reward == null
-              ? (ar ? 'تم استلام مكافأة اليوم بالفعل' : 'Daily reward already claimed')
+              ? (ar
+                    ? 'تم استلام مكافأة اليوم بالفعل'
+                    : 'Daily reward already claimed')
               : (ar ? 'حصلت على $reward عملة' : 'You earned $reward coins'),
         ),
       ),
@@ -62,18 +65,26 @@ class _HomeScreenState extends State<HomeScreen> {
   String _heartTimer(bool ar) {
     final remaining = store.timeUntilNextHeart;
     if (remaining == Duration.zero) return ar ? 'القلوب مكتملة' : 'Hearts full';
-    final minutes = remaining.inMinutes.remainder(60).toString().padLeft(2, '0');
-    final seconds = remaining.inSeconds.remainder(60).toString().padLeft(2, '0');
-    return ar ? 'القلب التالي $minutes:$seconds' : 'Next heart $minutes:$seconds';
+    final minutes = remaining.inMinutes
+        .remainder(60)
+        .toString()
+        .padLeft(2, '0');
+    final seconds = remaining.inSeconds
+        .remainder(60)
+        .toString()
+        .padLeft(2, '0');
+    return ar
+        ? 'القلب التالي $minutes:$seconds'
+        : 'Next heart $minutes:$seconds';
   }
 
-  void _openShop() => Navigator.of(context).push(
-        MaterialPageRoute<void>(builder: (_) => ShopScreen(store: store)),
-      );
+  void _openShop() => Navigator.of(
+    context,
+  ).push(MaterialPageRoute<void>(builder: (_) => ShopScreen(store: store)));
 
   void _openProgress() => Navigator.of(context).push(
-        MaterialPageRoute<void>(builder: (_) => ProgressHubScreen(store: store)),
-      );
+    MaterialPageRoute<void>(builder: (_) => ProgressHubScreen(store: store)),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -85,7 +96,10 @@ class _HomeScreenState extends State<HomeScreen> {
         animation: store,
         builder: (context, _) {
           final unlocked = store.highestUnlockedLevel.clamp(1, levels.length);
-          final worldNumber = ((unlocked - 1) ~/ 25 + 1).clamp(1, gameWorlds.length);
+          final worldNumber = ((unlocked - 1) ~/ 25 + 1).clamp(
+            1,
+            gameWorlds.length,
+          );
           final world = gameWorlds[worldNumber - 1];
           final currentCity = levels[unlocked - 1].cityName;
 
@@ -107,7 +121,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   final compact = constraints.maxWidth < 390;
                   final horizontal = compact ? 12.0 : 18.0;
                   return ListView(
-                    padding: EdgeInsets.fromLTRB(horizontal, 10, horizontal, 28),
+                    padding: EdgeInsets.fromLTRB(
+                      horizontal,
+                      10,
+                      horizontal,
+                      28,
+                    ),
                     children: [
                       _TopBar(
                         ar: ar,
@@ -115,7 +134,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         onShop: _openShop,
                         onProgress: _openProgress,
                         onLogs: () => Navigator.of(context).push(
-                          MaterialPageRoute<void>(builder: (_) => const LogViewerScreen()),
+                          MaterialPageRoute<void>(
+                            builder: (_) => const LogViewerScreen(),
+                          ),
                         ),
                         onLanguage: widget.onToggleLanguage,
                       ),
@@ -148,7 +169,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         ar: ar,
                         dailyClaimed: !store.canClaimDailyReward,
                         missionClaimed: store.missionClaimed,
-                        missionText: '${store.missionWins}/3 • ${store.missionStars}/6',
+                        missionText:
+                            '${store.missionWins}/3 • ${store.missionStars}/6',
                         onDaily: _claimDailyReward,
                         onMission: _openProgress,
                         onShop: _openShop,
@@ -211,40 +233,42 @@ class _TopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  ar ? 'مرحبًا أيها المستخدم' : 'Welcome, player',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: AppTheme.navy,
-                    fontSize: compact ? 22 : 27,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                Text(
-                  ar ? 'جهّز شحنتك وابدأ المغامرة' : 'Prepare your cargo and start the adventure',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: AppTheme.muted,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
+    children: [
+      Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              ar ? 'مرحبًا أيها المستخدم' : 'Welcome, player',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: AppTheme.navy,
+                fontSize: compact ? 22 : 27,
+                fontWeight: FontWeight.w900,
+              ),
             ),
-          ),
-          const SizedBox(width: 8),
-          _TopAction(icon: Icons.storefront_rounded, onTap: onShop),
-          _TopAction(icon: Icons.insights_rounded, onTap: onProgress),
-          _TopAction(icon: Icons.article_outlined, onTap: onLogs),
-          _TopAction(icon: Icons.language_rounded, onTap: onLanguage),
-        ],
-      );
+            Text(
+              ar
+                  ? 'جهّز شحنتك وابدأ المغامرة'
+                  : 'Prepare your cargo and start the adventure',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: AppTheme.muted,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+      ),
+      const SizedBox(width: 8),
+      _TopAction(icon: Icons.storefront_rounded, onTap: onShop),
+      _TopAction(icon: Icons.insights_rounded, onTap: onProgress),
+      _TopAction(icon: Icons.article_outlined, onTap: onLogs),
+      _TopAction(icon: Icons.language_rounded, onTap: onLanguage),
+    ],
+  );
 }
 
 class _TopAction extends StatelessWidget {
@@ -255,23 +279,23 @@ class _TopAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsetsDirectional.only(start: 5),
-        child: Material(
-          color: Colors.white.withValues(alpha: .90),
-          borderRadius: BorderRadius.circular(16),
-          elevation: 2,
-          shadowColor: Colors.black12,
-          child: InkWell(
-            borderRadius: BorderRadius.circular(16),
-            onTap: onTap,
-            child: SizedBox(
-              width: 40,
-              height: 40,
-              child: Icon(icon, color: AppTheme.navy, size: 21),
-            ),
-          ),
+    padding: const EdgeInsetsDirectional.only(start: 5),
+    child: Material(
+      color: Colors.white.withValues(alpha: .90),
+      borderRadius: BorderRadius.circular(16),
+      elevation: 2,
+      shadowColor: Colors.black12,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: SizedBox(
+          width: 40,
+          height: 40,
+          child: Icon(icon, color: AppTheme.navy, size: 21),
         ),
-      );
+      ),
+    ),
+  );
 }
 
 class _ResourceStrip extends StatelessWidget {
@@ -295,35 +319,35 @@ class _ResourceStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Row(
-        children: [
-          Expanded(
-            child: _ResourceCard(
-              icon: ThreeDIconType.heart,
-              value: hearts,
-              label: heartLabel,
-              compact: compact,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: _ResourceCard(
-              icon: ThreeDIconType.coin,
-              value: coins,
-              label: coinLabel,
-              compact: compact,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: _ResourceCard(
-              icon: ThreeDIconType.star,
-              value: stars,
-              label: starLabel,
-              compact: compact,
-            ),
-          ),
-        ],
-      );
+    children: [
+      Expanded(
+        child: _ResourceCard(
+          icon: ThreeDIconType.heart,
+          value: hearts,
+          label: heartLabel,
+          compact: compact,
+        ),
+      ),
+      const SizedBox(width: 8),
+      Expanded(
+        child: _ResourceCard(
+          icon: ThreeDIconType.coin,
+          value: coins,
+          label: coinLabel,
+          compact: compact,
+        ),
+      ),
+      const SizedBox(width: 8),
+      Expanded(
+        child: _ResourceCard(
+          icon: ThreeDIconType.star,
+          value: stars,
+          label: starLabel,
+          compact: compact,
+        ),
+      ),
+    ],
+  );
 }
 
 class _ResourceCard extends StatelessWidget {
@@ -341,41 +365,45 @@ class _ResourceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: EdgeInsets.symmetric(horizontal: compact ? 7 : 10, vertical: 9),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: .92),
-          borderRadius: BorderRadius.circular(22),
-          border: Border.all(color: Colors.white),
-          boxShadow: AppTheme.softShadow,
+    padding: EdgeInsets.symmetric(horizontal: compact ? 7 : 10, vertical: 9),
+    decoration: BoxDecoration(
+      color: Colors.white.withValues(alpha: .92),
+      borderRadius: BorderRadius.circular(22),
+      border: Border.all(color: Colors.white),
+      boxShadow: AppTheme.softShadow,
+    ),
+    child: Column(
+      children: [
+        ThreeDGameIcon(
+          type: icon,
+          size: compact ? 34 : 42,
+          animate: icon == ThreeDIconType.heart,
         ),
-        child: Column(
-          children: [
-            ThreeDGameIcon(type: icon, size: compact ? 34 : 42, animate: icon == ThreeDIconType.heart),
-            const SizedBox(height: 2),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
-                value,
-                style: TextStyle(
-                  color: AppTheme.navy,
-                  fontSize: compact ? 15 : 18,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
+        const SizedBox(height: 2),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            value,
+            style: TextStyle(
+              color: AppTheme.navy,
+              fontSize: compact ? 15 : 18,
+              fontWeight: FontWeight.w900,
             ),
-            Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: AppTheme.muted,
-                fontSize: compact ? 9 : 10,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ],
+          ),
         ),
-      );
+        Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            color: AppTheme.muted,
+            fontSize: compact ? 9 : 10,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
 class _JourneyHero extends StatelessWidget {
@@ -405,138 +433,143 @@ class _JourneyHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: EdgeInsets.all(compact ? 18 : 24),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [startColor, endColor],
-          ),
-          borderRadius: BorderRadius.circular(34),
-          boxShadow: [
-            BoxShadow(
-              color: startColor.withValues(alpha: .38),
-              blurRadius: 28,
-              offset: const Offset(0, 15),
-            ),
-          ],
+    padding: EdgeInsets.all(compact ? 18 : 24),
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [startColor, endColor],
+      ),
+      borderRadius: BorderRadius.circular(34),
+      boxShadow: [
+        BoxShadow(
+          color: startColor.withValues(alpha: .38),
+          blurRadius: 28,
+          offset: const Offset(0, 15),
         ),
-        child: Stack(
-          children: [
-            PositionedDirectional(
-              end: -12,
-              top: -6,
-              child: Opacity(
-                opacity: .16,
-                child: ThreeDGameIcon(
-                  type: ThreeDIconType.city,
-                  size: compact ? 150 : 185,
-                ),
-              ),
+      ],
+    ),
+    child: Stack(
+      children: [
+        PositionedDirectional(
+          end: -12,
+          top: -6,
+          child: Opacity(
+            opacity: .16,
+            child: ThreeDGameIcon(
+              type: ThreeDIconType.city,
+              size: compact ? 150 : 185,
             ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          ),
+        ),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            title,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: compact ? 27 : 34,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                          const SizedBox(height: 3),
-                          Text(
-                            ar ? 'العالم $worldNumber — $worldName' : 'World $worldNumber — $worldName',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: Colors.white70,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: .16),
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: Colors.white24),
-                            ),
-                            child: Text(
-                              currentCity,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: AppTheme.yellow,
-                                fontWeight: FontWeight.w900,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    ThreeDGameIcon(
-                      type: ThreeDIconType.city,
-                      size: compact ? 82 : 108,
-                      animate: true,
-                      semanticLabel: currentCity,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 18),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        ar ? 'التقدم العالمي' : 'Global progress',
-                        style: const TextStyle(
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
                           color: Colors.white,
+                          fontSize: compact ? 27 : 34,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        ar
+                            ? 'العالم $worldNumber — $worldName'
+                            : 'World $worldNumber — $worldName',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white70,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
-                    ),
-                    Text(
-                      '${(progress * 100).round()}%',
-                      style: const TextStyle(
-                        color: AppTheme.yellow,
-                        fontWeight: FontWeight.w900,
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 11,
+                          vertical: 7,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: .16),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.white24),
+                        ),
+                        child: Text(
+                          currentCity,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: AppTheme.yellow,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: LinearProgressIndicator(
-                    value: progress,
-                    minHeight: 11,
-                    backgroundColor: Colors.white24,
-                    valueColor: const AlwaysStoppedAnimation(AppTheme.yellow),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(width: 12),
+                ThreeDGameIcon(
+                  type: ThreeDIconType.city,
+                  size: compact ? 82 : 108,
+                  animate: true,
+                  semanticLabel: currentCity,
+                ),
+              ],
+            ),
+            const SizedBox(height: 18),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    ar ? 'التقدم العالمي' : 'Global progress',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
                 Text(
-                  '$completed/${ProgressStore.totalLevels} ${ar ? 'مدينة مكتملة' : 'cities completed'}',
+                  '${(progress * 100).round()}%',
                   style: const TextStyle(
-                    color: Colors.white70,
-                    fontWeight: FontWeight.w700,
+                    color: AppTheme.yellow,
+                    fontWeight: FontWeight.w900,
                   ),
                 ),
               ],
             ),
+            const SizedBox(height: 8),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: LinearProgressIndicator(
+                value: progress,
+                minHeight: 11,
+                backgroundColor: Colors.white24,
+                valueColor: const AlwaysStoppedAnimation(AppTheme.yellow),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '$completed/${ProgressStore.totalLevels} ${ar ? 'مدينة مكتملة' : 'cities completed'}',
+              style: const TextStyle(
+                color: Colors.white70,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ],
         ),
-      );
+      ],
+    ),
+  );
 }
 
 class _QuickActions extends StatelessWidget {
@@ -620,51 +653,55 @@ class _ActionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Material(
-        color: Colors.white.withValues(alpha: .94),
-        borderRadius: BorderRadius.circular(24),
-        elevation: 2,
-        shadowColor: Colors.black12,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(24),
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: Row(
-              children: [
-                ThreeDGameIcon(type: icon, size: 52, animate: icon == ThreeDIconType.gift),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: AppTheme.navy,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        subtitle,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: AppTheme.orange,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+    color: Colors.white.withValues(alpha: .94),
+    borderRadius: BorderRadius.circular(24),
+    elevation: 2,
+    shadowColor: Colors.black12,
+    child: InkWell(
+      borderRadius: BorderRadius.circular(24),
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          children: [
+            ThreeDGameIcon(
+              type: icon,
+              size: 52,
+              animate: icon == ThreeDIconType.gift,
             ),
-          ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: AppTheme.navy,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: AppTheme.orange,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
-      );
+      ),
+    ),
+  );
 }
 
 class _StreakPanel extends StatelessWidget {
@@ -684,55 +721,62 @@ class _StreakPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Material(
-        color: const Color(0xFFF2ECFF),
-        borderRadius: BorderRadius.circular(24),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(24),
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            child: Row(
-              children: [
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF9C5CFF), Color(0xFF5D2BA8)],
-                    ),
-                    borderRadius: BorderRadius.circular(17),
-                  ),
-                  child: const Icon(Icons.local_fire_department_rounded, color: Colors.white, size: 29),
+    color: const Color(0xFFF2ECFF),
+    borderRadius: BorderRadius.circular(24),
+    child: InkWell(
+      borderRadius: BorderRadius.circular(24),
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF9C5CFF), Color(0xFF5D2BA8)],
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        ar ? 'سلسلة الانتصارات' : 'Win streak',
-                        style: const TextStyle(
-                          color: AppTheme.navy,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                      Text(
-                        ar
-                            ? '$current حاليًا • الأفضل $best • Combo $combo'
-                            : '$current current • best $best • combo $combo',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(color: AppTheme.muted, fontWeight: FontWeight.w700),
-                      ),
-                    ],
-                  ),
-                ),
-                const Icon(Icons.chevron_right_rounded, color: Color(0xFF7B43C6)),
-              ],
+                borderRadius: BorderRadius.circular(17),
+              ),
+              child: const Icon(
+                Icons.local_fire_department_rounded,
+                color: Colors.white,
+                size: 29,
+              ),
             ),
-          ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    ar ? 'سلسلة الانتصارات' : 'Win streak',
+                    style: const TextStyle(
+                      color: AppTheme.navy,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  Text(
+                    ar
+                        ? '$current حاليًا • الأفضل $best • Combo $combo'
+                        : '$current current • best $best • combo $combo',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: AppTheme.muted,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right_rounded, color: Color(0xFF7B43C6)),
+          ],
         ),
-      );
+      ),
+    ),
+  );
 }
 
 class _StartJourneyButton extends StatelessWidget {
@@ -754,94 +798,77 @@ class _StartJourneyButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 620),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: enabled && !busy ? onPressed : null,
-              borderRadius: BorderRadius.circular(28),
-              child: Ink(
-                height: compact ? 70 : 78,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: enabled
-                        ? const [Color(0xFFFFB62E), Color(0xFFF06419)]
-                        : const [Color(0xFFB8BEC7), Color(0xFF8C939D)],
-                  ),
-                  borderRadius: BorderRadius.circular(28),
-                  boxShadow: enabled
-                      ? const [
-                          BoxShadow(
-                            color: Color(0x66E76B17),
-                            blurRadius: 22,
-                            offset: Offset(0, 12),
-                          ),
-                        ]
-                      : null,
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 18),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 52,
-                        height: 52,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: .18),
-                          shape: BoxShape.circle,
-                        ),
-                        child: busy
-                            ? const Padding(
-                                padding: EdgeInsets.all(14),
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 3,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 36),
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              enabled
-                                  ? (ar ? 'ابدأ المرحلة التالية' : 'START NEXT CITY')
-                                  : (ar ? 'لا توجد قلوب' : 'NO HEARTS'),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: compact ? 17 : 20,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: .3,
-                              ),
-                            ),
-                            Text(
-                              cityName,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: Colors.white70,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const ThreeDGameIcon(
-                        type: ThreeDIconType.chest,
-                        size: 52,
-                      ),
-                    ],
-                  ),
-                ),
+    child: ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 620),
+      child: GameButton(
+        semanticLabel: enabled
+            ? (ar
+                  ? 'ابدأ المرحلة التالية: $cityName'
+                  : 'Start next city: $cityName')
+            : (ar ? 'لا توجد قلوب' : 'No hearts'),
+        onPressed: enabled ? onPressed : null,
+        enabled: enabled,
+        loading: busy,
+        expand: true,
+        height: compact ? 70 : 78,
+        borderRadius: BorderRadius.circular(28),
+        padding: const EdgeInsets.symmetric(horizontal: 18),
+        gradient: LinearGradient(
+          colors: enabled
+              ? const [Color(0xFFFFB62E), Color(0xFFF06419)]
+              : const [Color(0xFFB8BEC7), Color(0xFF8C939D)],
+        ),
+        shadowColor: const Color(0x66E76B17),
+        child: Row(
+          children: [
+            Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: .18),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.play_arrow_rounded,
+                color: Colors.white,
+                size: 36,
               ),
             ),
-          ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    enabled
+                        ? (ar ? 'ابدأ المرحلة التالية' : 'START NEXT CITY')
+                        : (ar ? 'لا توجد قلوب' : 'NO HEARTS'),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: compact ? 17 : 20,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: .3,
+                    ),
+                  ),
+                  Text(
+                    cityName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const ThreeDGameIcon(type: ThreeDIconType.chest, size: 52),
+          ],
         ),
-      );
+      ),
+    ),
+  );
 }
