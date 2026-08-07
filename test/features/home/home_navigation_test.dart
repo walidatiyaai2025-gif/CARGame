@@ -1,6 +1,7 @@
 import 'package:cargo_sort_game/core/navigation/game_route_names.dart';
 import 'package:cargo_sort_game/core/settings/app_settings_store.dart';
 import 'package:cargo_sort_game/core/storage/progress_store.dart';
+import 'package:cargo_sort_game/core/widgets/game_button.dart';
 import 'package:cargo_sort_game/features/home/home_screen.dart';
 import 'package:cargo_sort_game/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
@@ -58,11 +59,9 @@ void main() {
     }
 
     // Exercise the journey first because it owns a busy flag while its route
-    // future is active. The remaining destinations are stateless push actions.
-    await expectRoute(
-      find.byIcon(Icons.play_arrow_rounded),
-      GameRouteNames.worldMap,
-    );
+    // future is active. Target the actual GameButton instead of a child icon so
+    // the test follows the same activation contract as GameButton's own tests.
+    await expectRoute(find.byType(GameButton), GameRouteNames.worldMap);
     await expectRoute(
       find.byIcon(Icons.storefront_rounded),
       GameRouteNames.shop,
