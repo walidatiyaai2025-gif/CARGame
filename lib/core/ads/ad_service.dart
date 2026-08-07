@@ -2,29 +2,32 @@ import 'dart:io';
 
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
+import '../config/app_build_config.dart';
+
 class AdService {
-  // Official Google test IDs. Never use real IDs during development.
   static String get bannerId => Platform.isAndroid
-      ? 'ca-app-pub-3940256099942544/6300978111'
-      : 'ca-app-pub-3940256099942544/2934735716';
+      ? AppBuildConfig.current.adMob.androidBanner
+      : AppBuildConfig.current.adMob.iosBanner;
 
   static String get rewardedId => Platform.isAndroid
-      ? 'ca-app-pub-3940256099942544/5224354917'
-      : 'ca-app-pub-3940256099942544/1712485313';
+      ? AppBuildConfig.current.adMob.androidRewarded
+      : AppBuildConfig.current.adMob.iosRewarded;
 
   static String get interstitialId => Platform.isAndroid
-      ? 'ca-app-pub-3940256099942544/1033173712'
-      : 'ca-app-pub-3940256099942544/4411468910';
+      ? AppBuildConfig.current.adMob.androidInterstitial
+      : AppBuildConfig.current.adMob.iosInterstitial;
 
   RewardedAd? _rewarded;
   InterstitialAd? _interstitial;
 
   void preload() {
+    if (!AppBuildConfig.current.enableAds) return;
     _loadRewarded();
     _loadInterstitial();
   }
 
   void _loadRewarded() {
+    if (!AppBuildConfig.current.enableAds) return;
     RewardedAd.load(
       adUnitId: rewardedId,
       request: const AdRequest(),
@@ -36,6 +39,7 @@ class AdService {
   }
 
   void _loadInterstitial() {
+    if (!AppBuildConfig.current.enableAds) return;
     InterstitialAd.load(
       adUnitId: interstitialId,
       request: const AdRequest(),
@@ -47,6 +51,11 @@ class AdService {
   }
 
   void showRewarded({required void Function() onReward}) {
+    if (!AppBuildConfig.current.enableAds) {
+      onReward();
+      return;
+    }
+
     final ad = _rewarded;
     if (ad == null) {
       onReward(); // Keeps the MVP testable without ad inventory.
@@ -70,6 +79,8 @@ class AdService {
   }
 
   void showInterstitial() {
+    if (!AppBuildConfig.current.enableAds) return;
+
     final ad = _interstitial;
     if (ad == null) {
       _loadInterstitial();
