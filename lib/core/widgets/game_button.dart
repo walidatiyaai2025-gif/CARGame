@@ -123,7 +123,9 @@ class _GameButtonState extends State<GameButton> {
     final content = AnimatedContainer(
       duration: motion.duration(GameMotionDurations.fast),
       curve: motion.curve(GameMotionCurves.enter),
-      height: widget.height,
+      constraints: widget.height == null
+          ? null
+          : BoxConstraints(minHeight: widget.height!),
       width: widget.expand ? double.infinity : null,
       padding: widget.padding,
       decoration: BoxDecoration(
