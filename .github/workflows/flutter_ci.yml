@@ -41,6 +41,9 @@ jobs:
       - name: Restore packages
         run: flutter pub get
 
+      - name: Validate 3D asset registry and provenance
+        run: dart run tool/validate_asset_pipeline.dart
+
       - name: Generate localization
         run: flutter gen-l10n
 
