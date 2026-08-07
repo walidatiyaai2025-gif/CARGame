@@ -54,6 +54,11 @@ void main() {
 
     expect(tester.takeException(), isNull);
     expect(find.text('Player Progress'), findsOneWidget);
+
+    await tester.drag(find.byType(ListView), const Offset(0, -600));
+    await tester.pump();
+
+    expect(tester.takeException(), isNull);
     expect(find.text('Daily Mission'), findsOneWidget);
   });
 
