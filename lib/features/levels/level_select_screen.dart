@@ -7,6 +7,7 @@ import '../../core/theme/three_d_game_icon.dart';
 import '../game/city_catalog.dart';
 import '../game/level_data.dart';
 import 'city_briefing_screen.dart';
+import 'world_map_ambient_background.dart';
 
 class LevelSelectScreen extends StatelessWidget {
   const LevelSelectScreen({super.key, required this.store});
@@ -26,27 +27,34 @@ class LevelSelectScreen extends StatelessWidget {
             title: Text(isArabic ? 'خريطة العالم' : 'World Map'),
             centerTitle: true,
           ),
-          body: Container(
-            decoration: BoxDecoration(gradient: skin.backgroundGradient),
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-              children: [
-                _GlobalHeader(isArabic: isArabic, store: store, skin: skin),
-                const SizedBox(height: 18),
-                for (final world in gameWorlds) ...[
-                  _WorldSection(
-                    world: world,
-                    levels: levels
-                        .where((level) => level.world == world.number)
-                        .toList(),
-                    store: store,
-                    isArabic: isArabic,
-                    skin: skin,
-                  ),
+          body: Stack(
+            children: [
+              Positioned.fill(
+                child: WorldMapAmbientBackground(
+                  startColor: skin.primary,
+                  endColor: skin.secondary,
+                ),
+              ),
+              ListView(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+                children: [
+                  _GlobalHeader(isArabic: isArabic, store: store, skin: skin),
                   const SizedBox(height: 18),
+                  for (final world in gameWorlds) ...[
+                    _WorldSection(
+                      world: world,
+                      levels: levels
+                          .where((level) => level.world == world.number)
+                          .toList(),
+                      store: store,
+                      isArabic: isArabic,
+                      skin: skin,
+                    ),
+                    const SizedBox(height: 18),
+                  ],
                 ],
-              ],
-            ),
+              ),
+            ],
           ),
         );
       },
