@@ -2,14 +2,16 @@
   "schemaVersion": 1,
   "capturedAt": "2026-08-07",
   "source": "docs/BASELINE_AUDIT.md",
-  "sourceRevision": "b5952de97f1fc0512c1e2577d26fe0e8966756c5",
+  "sourceRevision": "e6e42f0845afd66e8cf91304f8dade8945dd5df4",
+  "checkpoint": "AST-001",
   "inventory": {
-    "trackedFiles": 111,
+    "trackedFiles": 116,
     "libDartFiles": 30,
     "testDartFiles": 11,
     "powerShellFiles": 21,
     "batchFiles": 13,
     "trackedAssetFiles": 0,
+    "assetPolicyFiles": 1,
     "storageKeyFamilies": 28
   },
   "toolchain": {

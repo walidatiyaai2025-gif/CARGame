@@ -5,7 +5,7 @@
 | Field | Baseline |
 |---|---|
 | Captured | 2026-08-07 |
-| Source revision | `b5952de97f1fc0512c1e2577d26fe0e8966756c5` |
+| Base revision | `e6e42f0845afd66e8cf91304f8dade8945dd5df4` |
 | Scope | Tracked source, platform configuration, tooling, assets, persistence, tests, and delivery risks |
 | Catalog feature | `ENG-001` |
 
@@ -17,12 +17,12 @@ the machine-readable inventory from `docs/dashboard/baseline.json` separately.
 
 | Area | Evidence | Baseline |
 |---|---|---|
-| Repository | `git ls-files` | 111 tracked files after this checkpoint |
+| Repository | `git ls-files` | 116 tracked files after the `AST-001` checkpoint |
 | Flutter source | `lib/**/*.dart` | 30 files |
 | Flutter tests | `test/**/*.dart` | 11 files |
 | Tooling | Root `*.ps1` and `*.bat` | 21 PowerShell and 13 batch files |
 | Localization | `lib/l10n/*.arb` | English and Arabic ARB files; generated Dart output is tracked |
-| Binary assets | `pubspec.yaml`, `git ls-files assets` | No declared asset bundles and no tracked asset files |
+| 3D assets | `pubspec.yaml`, `assets/3d` | Policy root and taxonomy are tracked; no declared runtime bundle or binary art |
 | Dashboard | `docs/dashboard/index.html` | Catalog-derived progress plus non-progress baseline inventory |
 | Platform hosts | tracked Android/iOS paths | Partial hosts; generated wrapper/project files are not tracked |
 
@@ -92,12 +92,13 @@ Direct runtime packages are Flame 1.38.0, Google Mobile Ads 9.0.0,
 Shared Preferences 2.5.5, Path Provider 2.1.6, and Cupertino Icons 1.0.9 as resolved
 in `pubspec.lock`. Flame is declared but the current game flow uses Flutter widgets.
 Dependency review, license inventory, update policy, and removal of unused packages
-remain under `ENG-006` and `LEGAL-004`.
+remain under `ENG-006` and `LEGAL-001`.
 
-There is no `assets/` tree and no `flutter.assets` declaration. Current premium
-visuals are code-rendered widgets and custom painters. Phase D must establish the
-asset taxonomy, typed registry, fallbacks, provenance, memory budgets, and production
-packs before binary art is introduced.
+`assets/3d/README.md` now establishes the policy root and
+`docs/ASSET_CATALOG.md` defines the production taxonomy, stable naming, camera,
+lighting, export, and handoff contract. There is still no `flutter.assets`
+declaration or binary art. Phase D must implement the typed registry, fallbacks,
+provenance, memory budgets, and production packs before runtime art is introduced.
 
 ## Persistence inventory
 
@@ -116,23 +117,23 @@ and three boolean settings keys in `AppSettingsStore`.
 
 No schema-version key, transaction journal, corruption quarantine, or migration runner
 exists. Writes spanning multiple keys are not atomic. These gaps remain acceptance
-work for `ENG-008`, `ECON-009`, `PERF-016`, and `TEST-004`; existing keys must remain
-readable while those features are implemented.
+work for `ENG-008`, `REW-007`, `ECON-005`, `REL-004`, and `TEST-001`; existing keys
+must remain readable while those features are implemented.
 
 ## Debt and risk register
 
 | Severity | Finding | Evidence | Owning feature |
 |---|---|---|---|
 | P0 | Android Gradle wrapper and full iOS host project are not tracked; clean checkout build reproducibility depends on regeneration. | `git ls-files android ios` | `ENG-002`, `ENG-011` |
-| P0 | Android release currently uses the debug signing configuration. | `android/app/build.gradle.kts` | `REL-002`, `REL-003` |
-| P0 | Rewarded flow grants the reward when inventory is absent or presentation fails, allowing an economy bypass. | `lib/core/ads/ad_service.dart` | `ADS-002`, `ECON-004` |
-| P0 | Persistence has no schema version or atomic multi-key transaction boundary. | `ProgressStore`, `AppSettingsStore` | `ENG-008`, `ECON-009` |
+| P0 | Android release currently uses the debug signing configuration. | `android/app/build.gradle.kts` | `REL-006`, `REL-007`, `REL-008` |
+| P0 | Rewarded flow grants the reward when inventory is absent or presentation fails, allowing an economy bypass. | `lib/core/ads/ad_service.dart` | `ADS-002`, `ADS-003`, `ADS-009` |
+| P0 | Persistence has no schema version or atomic multi-key transaction boundary. | `ProgressStore`, `AppSettingsStore` | `ENG-008`, `REW-007`, `ECON-005` |
 | P1 | Domain, application, repository, and platform boundaries are incomplete. | Stores and `GameScreen` construct concrete dependencies | `ENG-005` |
-| P1 | No binary asset registry, fallbacks, provenance records, or tracked production assets exist. | `pubspec.yaml`, tracked files | Phase D |
+| P1 | Taxonomy exists, but no typed registry, fallbacks, provenance records, or tracked production assets exist. | `docs/ASSET_CATALOG.md`, `pubspec.yaml` | `AST-002`, `AST-003`, `AST-011` |
 | P1 | Root tooling has 34 PowerShell/batch entry files with overlapping legacy/V2 behavior. | Root script inventory | `ENG-011` |
 | P1 | Full build/test evidence depends on CI because this audit environment has no Flutter/Dart SDK. | command discovery | `ENG-002`, `ENG-007` |
-| P2 | Runtime app version constants can drift from `pubspec.yaml`. | `lib/main.dart`, `pubspec.yaml` | `REL-001` |
-| P2 | Logger bounds in-memory entries but not the on-disk append-only file. | `lib/core/logging/app_logger.dart` | `PERF-012`, `OBS-003` |
+| P2 | Runtime app version constants can drift from `pubspec.yaml`. | `lib/main.dart`, `pubspec.yaml` | `ENG-009`, `REL-005` |
+| P2 | Logger bounds in-memory entries but not the on-disk append-only file. | `lib/core/logging/app_logger.dart` | `ENG-013`, `PERF-002`, `REL-003` |
 
 ## Baseline conclusion
 

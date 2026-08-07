@@ -6,12 +6,31 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 
 | Field | Value |
 |---|---|
-| Current phase | A — Engineering foundation |
-| Completed checkpoint | `ENG-001` Repository audit and baseline |
-| Status | VERIFIED — documentation and machine-readable inventory checks passed |
-| Previous checkpoint | `MOT-007` Correct/wrong/combo feedback |
-| Next recommended feature | `AST-001` 3D asset taxonomy and naming standard |
-| Known blocker | Local environment has no Flutter/Dart SDK; physical Android review and Windows toolchain verification require configured devices |
+| Current phase | D — 3D asset pipeline |
+| Completed checkpoint | `AST-001` Asset folder taxonomy and naming standard |
+| Status | VERIFIED — documentation, naming grammar, inventory, and dashboard checks passed |
+| Previous checkpoint | `ENG-001` Repository audit and baseline |
+| Next recommended feature | `AST-002` Asset manifest and typed registry |
+| Known blocker | No binary asset may enter the runtime bundle until `AST-002`, `AST-003`, and `AST-011` provide registry, fallback, and provenance gates. |
+
+## AST-001 verification evidence — 2026-08-07
+
+- Added the production `assets/3d` taxonomy separating runtime, provenance, and
+  reproducible source responsibilities.
+- Defined stable lowercase filename grammar and registry-ID derivation that exclude
+  locale, screen, dimensions, author, and revision from identity.
+- Locked `pui`, `pcargo`, `pcity`, and `phero` camera/framing profiles with zero roll,
+  reproducible pivots, safety padding, and consistent perceived scale.
+- Standardized upper-left key lighting, fill/rim behavior, contact shadows,
+  materials, alpha edges, and rules against baked text/interface effects.
+- Established initial sRGB WebP canvas and encoded-size budgets for UI, boosters,
+  cargo, cities, heroes, environments, and effects.
+- Added accessibility, localization, animation-state, commercial provenance, and
+  batch-review handoff requirements linked to their owning catalog gates.
+- Created the guarded `assets/3d` policy root without declaring or adding binary
+  runtime art before registry/fallback/provenance controls exist.
+- Updated the repository baseline and Dashboard JSON to 116 tracked files, one asset
+  policy file, and zero tracked binary assets; added a direct Dashboard catalog link.
 
 ## ENG-001 verification evidence — 2026-08-07
 
@@ -68,6 +87,11 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | 2026-08-07 | Dart parse/format regression | PASSED — all 41 tracked Dart files parsed with zero formatter drift using the local WASM formatter |
 | 2026-08-07 | Flutter analyze, tests, and debug APK | NOT APPLICABLE to documentation-only behavior; regression execution remains BLOCKED locally because Flutter/Dart SDK is unavailable |
 | 2026-08-07 | Windows PowerShell toolchain self-test | BLOCKED locally — `pwsh` and Android workstation dependencies are unavailable |
+| 2026-08-07 | AST-001 asset standard contract | PASSED — required taxonomy/render/export/provenance sections, four camera profiles, and six filename examples validated |
+| 2026-08-07 | Asset admission gate | PASSED — `assets/3d` contains policy only and zero binary runtime assets before dependent controls |
+| 2026-08-07 | AST-001 dashboard baseline JSON | PASSED — JSON parses and matches 116 tracked files, zero binary assets, and checkpoint identity |
+| 2026-08-07 | AST-001 catalog/dashboard integrity | PASSED — 19 phases, 191 unique features, valid status/dependencies, zero active tasks, and inline Dashboard JavaScript syntax valid |
+| 2026-08-07 | Flutter format/analyze/tests/debug APK | NOT APPLICABLE — documentation and asset-governance files only; no Dart, platform, dependency, or binary asset changes |
 
 ## Test locally
 

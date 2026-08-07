@@ -91,8 +91,8 @@ Codex must not mark a feature complete merely because UI code exists.
 
 | ID | Function | Priority | Status | Dependencies | Acceptance / evidence |
 |---|---|---:|---|---|---|
-| AST-001 | Asset folder taxonomy and naming standard | P0 | READY | ENG-001 | `assets/3d` structure, naming, camera, lighting, and export conventions are documented. |
-| AST-002 | Asset manifest and typed registry | P0 | PLANNED | AST-001 | Stable IDs, path, category, semantics, fallback, dimensions, rarity, world, and profile are typed. |
+| AST-001 | Asset folder taxonomy and naming standard | P0 | VERIFIED | ENG-001 | `docs/ASSET_CATALOG.md` and `assets/3d/README.md` define runtime/source/provenance paths, stable filename/ID grammar, four locked camera profiles, upper-left lighting/material rules, WebP export budgets, accessibility and provenance handoff; mechanical standard/dashboard checks passed 2026-08-07. |
+| AST-002 | Asset manifest and typed registry | P0 | READY | AST-001 | Stable IDs, path, category, semantics, fallback, dimensions, rarity, world, and profile are typed. |
 | AST-003 | Missing-asset fallback | P0 | PLANNED | AST-002 | Missing/corrupt assets never crash or leave invisible gameplay objects. |
 | AST-004 | Precache and memory policy | P1 | PLANNED | AST-002 | Only near-future assets are precached and caches are bounded/observable. |
 | AST-005 | 3D UI resource asset pack | P1 | PLANNED | AST-001 | Production heart, coin, star, XP, chest, gift, lock, and badge assets meet style/size rules. |
@@ -330,11 +330,11 @@ Codex must not mark a feature complete merely because UI code exists.
 
 ## IN PROGRESS
 
-- None. The verified repository baseline checkpoint is clean; the next ready feature is listed below.
+- None. `AST-001` closed at a clean asset-governance checkpoint.
 
 ## NEXT READY
 
-1. `AST-001` Create 3D asset taxonomy and naming standard.
+1. `AST-002` Implement the asset manifest and typed registry.
 2. `TEST-001` Add progress/economy unit tests.
 3. `PRIV-001` Complete privacy/data inventory before analytics, ads consent, or cloud features.
 
@@ -344,6 +344,9 @@ Codex must not mark a feature complete merely because UI code exists.
 
 ## Recently verified
 
+- `AST-001` Asset folder taxonomy and naming standard — production paths, stable
+  names/IDs, render profiles, lighting, export budgets, accessibility, and
+  provenance handoff are documented and mechanically validated.
 - `ENG-001` Repository audit and baseline — architecture, commands, tooling, assets, persistence keys, debt, and risks are recorded in human- and machine-readable evidence.
 ## Recently implemented
 

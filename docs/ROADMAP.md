@@ -75,3 +75,8 @@ Phase A repository baseline `ENG-001` was audited on 2026-08-07. Architecture,
 tooling, assets, persistence keys, technical debt, and release risks are evidenced in
 `docs/BASELINE_AUDIT.md`; phase progress continues to be calculated only from the
 feature catalog.
+
+Phase D asset-governance checkpoint `AST-001` was verified on 2026-08-07.
+`docs/ASSET_CATALOG.md` now controls taxonomy, stable naming, camera, lighting,
+export budgets, accessibility, and provenance handoff. Binary art remains excluded
+until the typed registry, fallback, and provenance gates are implemented.
