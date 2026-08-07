@@ -43,6 +43,9 @@ jobs:
       - name: Verify privacy data inventory
         run: python3 tool/verify_privacy_inventory.py
 
+      - name: Verify security baseline
+        run: python3 tool/verify_security_baseline.py
+
       - name: Restore packages
         run: flutter pub get
 
