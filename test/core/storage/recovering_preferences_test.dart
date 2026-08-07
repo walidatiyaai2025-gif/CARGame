@@ -25,6 +25,7 @@ void main() {
     expect(repaired, isNotNull);
     expect(repaired, isNot(future));
     expect(await delegate.getInt('coins'), 450);
+    expect(prefs.recovered, isTrue);
 
     final event = prefs.recoveryEvents.single;
     expect(event.key, 'heart_refill_timestamp');
