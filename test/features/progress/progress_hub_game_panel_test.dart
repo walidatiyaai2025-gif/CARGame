@@ -35,6 +35,14 @@ void main() {
       expect(find.byType(GamePanel), findsAtLeastNWidgets(6));
       expect(find.text('Player Level'), findsOneWidget);
       expect(find.text('Performance Summary'), findsOneWidget);
+
+      await tester.scrollUntilVisible(
+        find.text('Daily Mission'),
+        250,
+        scrollable: scrollable,
+      );
+      await tester.pump();
+
       expect(find.text('Daily Mission'), findsOneWidget);
       expect(find.text('Win 3 cities'), findsOneWidget);
 
