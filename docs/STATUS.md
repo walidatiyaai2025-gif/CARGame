@@ -6,12 +6,32 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 
 | Field | Value |
 |---|---|
-| Current phase | C — Motion and living interface |
-| Completed checkpoint | `MOT-007` Correct/wrong/combo feedback |
-| Status | IMPLEMENTED — Flutter CI verified; physical-device review pending |
-| Previous checkpoint | `MOT-006` Product pickup, measured travel, placement, and settle |
-| Next recommended feature | `ENG-001` Repository audit and baseline |
-| Known blocker | Local environment has no Flutter/Dart SDK; centralized audio integration depends on `AV-001` and `AV-006` |
+| Current phase | A — Engineering foundation |
+| Completed checkpoint | `ENG-001` Repository audit and baseline |
+| Status | VERIFIED — documentation and machine-readable inventory checks passed |
+| Previous checkpoint | `MOT-007` Correct/wrong/combo feedback |
+| Next recommended feature | `AST-001` 3D asset taxonomy and naming standard |
+| Known blocker | Local environment has no Flutter/Dart SDK; physical Android review and Windows toolchain verification require configured devices |
+
+## ENG-001 verification evidence — 2026-08-07
+
+- Added `docs/BASELINE_AUDIT.md` as the canonical human-readable snapshot for
+  architecture, module boundaries, baseline commands, tooling, dependencies, assets,
+  persistence keys, debt, and delivery risk.
+- Added `docs/dashboard/baseline.json` with a schema-versioned inventory that is
+  deliberately separate from catalog-derived progress.
+- Measured 111 tracked files, 30 production Dart files, 11 Dart test files, 21
+  PowerShell scripts, 13 batch files, zero tracked binary assets, and 28 persistence
+  key families.
+- Reconciled the documented developer baseline with CI at Flutter 3.44.8, Dart
+  3.10+, JDK 17, Android minSdk 23, AGP 8.11.1, and Kotlin 2.3.20.
+- Recorded ten prioritized risks with existing catalog owners, including incomplete
+  tracked platform wrappers, debug release signing, rewarded-ad fallback grants,
+  migration/atomicity gaps, architecture boundaries, and asset-pipeline absence.
+- Updated the Developer Portal to render baseline inventory and risk counts without
+  hard-coding or altering project progress percentages.
+- Updated the roadmap checkpoint, README baseline link, feature evidence, active
+  queue, and this operational status.
 
 ## MOT-007 implementation evidence — 2026-08-07
 
@@ -42,6 +62,12 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | 2026-08-07 | Post-hardening Dart syntax/formatting | PASSED — 41 `lib`/`test` files parsed with zero formatting drift |
 | 2026-08-07 | Post-hardening Flutter Analyze, focused/full tests, and debug APK | PASSED — GitHub Actions job `92756421170` |
 | 2026-08-07 | Dashboard/catalog integrity | PASSED — phases A–S, priorities, statuses, unique IDs, dependencies, and active-task rule validated |
+| 2026-08-07 | ENG-001 repository inventory | PASSED — dashboard JSON matches 111 tracked files and measured source/test/tooling/asset counts |
+| 2026-08-07 | Dashboard JSON and inline JavaScript syntax | PASSED — JSON parsed and dashboard script compiled |
+| 2026-08-07 | ENG-001 catalog/dashboard integrity | PASSED — 19 phases, 191 features, valid IDs/statuses/priorities/dependencies, zero active tasks |
+| 2026-08-07 | Dart parse/format regression | PASSED — all 41 tracked Dart files parsed with zero formatter drift using the local WASM formatter |
+| 2026-08-07 | Flutter analyze, tests, and debug APK | NOT APPLICABLE to documentation-only behavior; regression execution remains BLOCKED locally because Flutter/Dart SDK is unavailable |
+| 2026-08-07 | Windows PowerShell toolchain self-test | BLOCKED locally — `pwsh` and Android workstation dependencies are unavailable |
 
 ## Test locally
 

@@ -42,7 +42,7 @@ Codex must not mark a feature complete merely because UI code exists.
 
 | ID | Function | Priority | Status | Dependencies | Acceptance / evidence |
 |---|---|---:|---|---|---|
-| ENG-001 | Repository audit and baseline | P0 | READY | None | Architecture, debt, baseline commands, scripts, assets, storage keys, and risks are documented. |
+| ENG-001 | Repository audit and baseline | P0 | VERIFIED | None | `docs/BASELINE_AUDIT.md` and dashboard baseline JSON evidence architecture, 111 tracked files, commands/tooling, zero binary assets, 28 storage-key families, and a prioritized risk register; catalog/dashboard integrity passed 2026-08-07. |
 | ENG-002 | Stable Android build toolchain | P0 | IMPLEMENTED | ENG-001 | Shared scripts provide dynamic device discovery, JDK validation, Kotlin cache recovery, and reproducible debug/release commands; final Windows device verification remains. |
 | ENG-003 | Startup resilience | P0 | IMPLEMENTED | ENG-001 | App opens when ads, logger, orientation, or storage is slow; final device verification remains. |
 | ENG-004 | Error logging and copyable diagnostics | P0 | IMPLEMENTED | ENG-003 | Runtime errors are logged and can be viewed/copied without blocking normal use. |
@@ -334,10 +334,9 @@ Codex must not mark a feature complete merely because UI code exists.
 
 ## NEXT READY
 
-1. `ENG-001` Complete baseline audit and documentation.
-2. `AST-001` Create 3D asset taxonomy and naming standard.
-3. `TEST-001` Add progress/economy unit tests.
-4. `PRIV-001` Complete privacy/data inventory before analytics, ads consent, or cloud features.
+1. `AST-001` Create 3D asset taxonomy and naming standard.
+2. `TEST-001` Add progress/economy unit tests.
+3. `PRIV-001` Complete privacy/data inventory before analytics, ads consent, or cloud features.
 
 ## BLOCKED
 
@@ -345,7 +344,7 @@ Codex must not mark a feature complete merely because UI code exists.
 
 ## Recently verified
 
-- None recorded yet. Existing implemented features require systematic verification against this catalog.
+- `ENG-001` Repository audit and baseline — architecture, commands, tooling, assets, persistence keys, debt, and risks are recorded in human- and machine-readable evidence.
 ## Recently implemented
 
 - `MOT-007` Correct/wrong/combo feedback — synchronized overlay, capped visual/haptic intensity, settings-aware hooks, localized semantics, deterministic completion, and focused tests added; Flutter CI/device verification pending.

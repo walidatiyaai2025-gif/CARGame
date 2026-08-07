@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "capturedAt": "2026-08-07",
+  "source": "docs/BASELINE_AUDIT.md",
+  "sourceRevision": "b5952de97f1fc0512c1e2577d26fe0e8966756c5",
+  "inventory": {
+    "trackedFiles": 111,
+    "libDartFiles": 30,
+    "testDartFiles": 11,
+    "powerShellFiles": 21,
+    "batchFiles": 13,
+    "trackedAssetFiles": 0,
+    "storageKeyFamilies": 28
+  },
+  "toolchain": {
+    "flutterCi": "3.44.8",
+    "dartConstraint": ">=3.10.0 <4.0.0",
+    "jdk": 17,
+    "androidMinSdk": 23,
+    "androidGradlePlugin": "8.11.1",
+    "kotlin": "2.3.20"
+  },
+  "riskCounts": {
+    "P0": 4,
+    "P1": 4,
+    "P2": 2
+  }
+}

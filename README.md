@@ -3,7 +3,7 @@
 Flutter MVP game with five playable levels, Arabic/English localization, offline progress, coins, hints, rewarded ads, and interstitial ads.
 
 ## Requirements
-- Flutter 3.38.1 or newer
+- Flutter 3.44.8 (the version pinned by CI) or a compatible newer stable release
 - Dart 3.10 or newer
 - Android Studio or VS Code with Flutter extension
 
@@ -47,3 +47,6 @@ The project uses Google's official test App ID and test ad units. Do not click p
 
 ## Notes
 The `flame` dependency is included for the next phase (animations, particles, game loop, sound, and sprite-based mechanics). The MVP uses Flutter widgets for a reliable first playable build.
+
+Repository architecture, tooling, persistence keys, asset inventory, and tracked
+delivery risks are recorded in [`docs/BASELINE_AUDIT.md`](docs/BASELINE_AUDIT.md).

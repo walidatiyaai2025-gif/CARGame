@@ -68,3 +68,10 @@ These gates are tracked in the catalog and apply across phases rather than only 
 ## Execution rule
 
 Codex must select work from `docs/FEATURE_CATALOG.md`, not from prose alone. It must register missing work before implementation, keep one primary feature `IN PROGRESS`, update evidence and `docs/STATUS.md`, validate the dashboard parser, and stop only at a committed checkpoint. A phase is complete only when every required non-deferred feature is `VERIFIED`.
+
+## Current execution checkpoint
+
+Phase A repository baseline `ENG-001` was audited on 2026-08-07. Architecture,
+tooling, assets, persistence keys, technical debt, and release risks are evidenced in
+`docs/BASELINE_AUDIT.md`; phase progress continues to be calculated only from the
+feature catalog.
