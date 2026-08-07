@@ -2,6 +2,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../assets/game_manifest_asset_view.dart';
+
 enum ThreeDIconType {
   heart,
   coin,
@@ -66,8 +68,33 @@ class _ThreeDGameIconState extends State<ThreeDGameIcon>
     super.dispose();
   }
 
+  String? get _manifestAssetId => switch (widget.type) {
+    ThreeDIconType.heart => 'ui.heart',
+    ThreeDIconType.coin => 'ui.coin',
+    ThreeDIconType.star => 'ui.star',
+    _ => null,
+  };
+
+  Widget _proceduralIcon() => SizedBox.square(
+    dimension: widget.size,
+    child: CustomPaint(painter: _ThreeDIconPainter(widget.type)),
+  );
+
   @override
   Widget build(BuildContext context) {
+    final procedural = _proceduralIcon();
+    final assetId = _manifestAssetId;
+    final visual = assetId == null
+        ? procedural
+        : GameManifestAssetView(
+            assetId: assetId,
+            width: widget.size,
+            height: widget.size,
+            semanticLabel: widget.semanticLabel ?? widget.type.name,
+            fallback: procedural,
+            errorFallback: procedural,
+          );
+
     return Semantics(
       label: widget.semanticLabel ?? widget.type.name,
       image: true,
@@ -83,10 +110,7 @@ class _ThreeDGameIconState extends State<ThreeDGameIcon>
             child: Transform.scale(scale: scale, child: child),
           );
         },
-        child: SizedBox.square(
-          dimension: widget.size,
-          child: CustomPaint(painter: _ThreeDIconPainter(widget.type)),
-        ),
+        child: ExcludeSemantics(child: visual),
       ),
     );
   }
