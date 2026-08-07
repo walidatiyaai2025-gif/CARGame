@@ -1,0 +1,209 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-08-07",
+  "securityPrinciples": {
+    "clientIsUntrusted": true,
+    "privilegedSecretsInClient": false,
+    "offlineCoreAvailable": true,
+    "diagnosticsRedacted": true,
+    "cleartextNetworkPermitted": false
+  },
+  "trustBoundaries": [
+    {
+      "id": "mobile-client",
+      "description": "Flutter/Dart application code, bundled resources, and runtime memory on a user-controlled device",
+      "trusted": false
+    },
+    {
+      "id": "local-storage",
+      "description": "SharedPreferences and application-support files on the local device",
+      "trusted": false
+    },
+    {
+      "id": "google-mobile-ads",
+      "description": "Third-party Google Mobile Ads SDK and its network endpoints",
+      "trusted": false
+    },
+    {
+      "id": "ci-secret-store",
+      "description": "Approved CI/external secret store for future signing and release credentials",
+      "trusted": true
+    },
+    {
+      "id": "future-backend",
+      "description": "Future first-party backend boundary; no backend is currently integrated",
+      "trusted": true,
+      "active": false
+    }
+  ],
+  "protectedAssets": [
+    {
+      "id": "release-signing-material",
+      "classification": "secret",
+      "location": "ci-secret-store",
+      "repositoryAllowed": false
+    },
+    {
+      "id": "game-progress",
+      "classification": "local-integrity",
+      "location": "local-storage",
+      "repositoryAllowed": false
+    },
+    {
+      "id": "diagnostic-logs",
+      "classification": "sensitive-local-diagnostics",
+      "location": "local-storage",
+      "repositoryAllowed": false
+    },
+    {
+      "id": "ad-unit-ids",
+      "classification": "public-client-configuration",
+      "location": "mobile-client",
+      "repositoryAllowed": true
+    }
+  ],
+  "networkPolicy": {
+    "declaredNetworkProcessors": ["google-mobile-ads"],
+    "requireTls": true,
+    "allowCleartext": false,
+    "certificatePinningRequired": false,
+    "certificatePinningRationale": "No first-party authenticated backend exists yet; revisit when one is introduced.",
+    "futureBackendRules": [
+      "HTTPS/TLS only",
+      "no reusable privileged secret embedded in the client",
+      "server-side authorization for privileged actions",
+      "scoped and expiring client tokens",
+      "privacy inventory update before enabling new data flows"
+    ]
+  },
+  "threats": [
+    {
+      "id": "SEC-T01",
+      "category": "client-extraction",
+      "scenario": "Attacker decompiles or inspects APK/AAB/IPA resources and Dart/native code to recover configuration or logic.",
+      "severity": "high",
+      "mitigations": [
+        "Treat all shipped client configuration as public",
+        "Never embed reusable privileged secrets",
+        "Inject signing/service credentials only from approved secret stores"
+      ],
+      "residualRisk": "Game logic and public identifiers remain inspectable by design.",
+      "owner": "ENG-010",
+      "followUp": "SEC-003"
+    },
+    {
+      "id": "SEC-T02",
+      "category": "local-tampering",
+      "scenario": "User or malware alters SharedPreferences/local files to change coins, progress, boosters, settings, or diagnostics.",
+      "severity": "medium",
+      "mitigations": [
+        "Validate and clamp persisted values on load",
+        "Keep economy/progression mutations bounded and tested",
+        "Do not treat client-side values as authoritative for future server rewards"
+      ],
+      "residualRisk": "Offline single-player progress can be modified on rooted/jailbroken devices.",
+      "owner": "ENG-008",
+      "followUp": "REL-004"
+    },
+    {
+      "id": "SEC-T03",
+      "category": "repackaging-tamper",
+      "scenario": "Attacker modifies and redistributes a repackaged build or hooks runtime behavior.",
+      "severity": "high",
+      "mitigations": [
+        "Release signing keys remain outside source control",
+        "Official distribution relies on platform signature verification",
+        "No client-side integrity check is treated as an authorization boundary"
+      ],
+      "residualRisk": "Unofficial modified builds remain possible outside trusted distribution channels.",
+      "owner": "REL-006",
+      "followUp": "SEC-003"
+    },
+    {
+      "id": "SEC-T04",
+      "category": "network-interception",
+      "scenario": "Network attacker observes or modifies traffic to third-party or future first-party services.",
+      "severity": "high",
+      "mitigations": [
+        "Require TLS for declared network communication",
+        "Disallow application cleartext traffic",
+        "Use scoped/expiring tokens for any future authenticated backend"
+      ],
+      "residualRisk": "Third-party SDK endpoint security remains partly controlled by the processor/platform.",
+      "owner": "SEC-001",
+      "followUp": "SEC-003"
+    },
+    {
+      "id": "SEC-T05",
+      "category": "secret-leakage",
+      "scenario": "Credentials leak through source, build config, logs, screenshots, diagnostics, CI output, or artifacts.",
+      "severity": "critical",
+      "mitigations": [
+        "Repository secret-hygiene CI guard",
+        "SecretRedactor before diagnostic persistence/copy",
+        "No signing/private credentials in Dart defines or source",
+        "Rotation required after suspected exposure"
+      ],
+      "residualRisk": "Unknown credential formats may evade pattern-based redaction; callers must avoid logging secrets.",
+      "owner": "ENG-010",
+      "followUp": "SEC-002"
+    },
+    {
+      "id": "SEC-T06",
+      "category": "diagnostic-privacy",
+      "scenario": "Runtime errors expose tokens, user-specific paths, private keys, or sensitive context.",
+      "severity": "high",
+      "mitigations": [
+        "Central redaction before memory/file/debug/clipboard/runtime broadcasts",
+        "Diagnostics remain local-only in the current product",
+        "Privacy inventory and future crash reporting require explicit gates"
+      ],
+      "residualRisk": "Unexpected sensitive formats may appear in third-party exception text.",
+      "owner": "ENG-010",
+      "followUp": "ENG-013"
+    },
+    {
+      "id": "SEC-T07",
+      "category": "dependency-supply-chain",
+      "scenario": "A Flutter/native dependency introduces vulnerable code, unexpected data collection, or malicious build behavior.",
+      "severity": "high",
+      "mitigations": [
+        "Dependencies remain explicit in pubspec and lockfile",
+        "Privacy inventory blocks selected unreviewed analytics/cloud SDK additions",
+        "Secret and asset CI guards run before build"
+      ],
+      "residualRisk": "Automated vulnerability/license scanning is not yet complete.",
+      "owner": "ENG-006",
+      "followUp": "SEC-002"
+    },
+    {
+      "id": "SEC-T08",
+      "category": "malicious-input-state",
+      "scenario": "Malformed persisted values, asset metadata, route actions, or repeated UI events produce crashes or duplicate state mutation.",
+      "severity": "high",
+      "mitigations": [
+        "Typed asset/config registries validate inputs",
+        "ProgressStore clamps and validates economy/progression values",
+        "Navigation and gameplay actions use duplicate/race guards",
+        "Missing/corrupt assets have bounded fallbacks"
+      ],
+      "residualRisk": "Future external/deep-link inputs require dedicated validation as they are introduced.",
+      "owner": "ENG-003",
+      "followUp": "TEST-004"
+    },
+    {
+      "id": "SEC-T09",
+      "category": "advertising-boundary",
+      "scenario": "Advertising SDK processing occurs without required consent or is mistaken for first-party offline behavior.",
+      "severity": "high",
+      "mitigations": [
+        "Ads can be disabled globally by build configuration",
+        "Google Mobile Ads is explicitly declared in privacy inventory",
+        "Production consent remains a blocking ADS-007 responsibility"
+      ],
+      "residualRisk": "Production consent and regional behavior are not complete until ADS-007 is verified.",
+      "owner": "ADS-007",
+      "followUp": "PRIV-002"
+    }
+  ]
+}
