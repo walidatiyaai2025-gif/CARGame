@@ -299,51 +299,50 @@ class _OfferCard extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) => Material(
-    color: Colors.white,
+  Widget build(BuildContext context) => GameButton(
+    semanticLabel: 'Buy $title, $subtitle',
+    onPressed: onTap,
+    expand: true,
     borderRadius: BorderRadius.circular(24),
-    child: InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(24),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
+    backgroundColor: Colors.white,
+    foregroundColor: AppTheme.navy,
+    shadowColor: Colors.black12,
+    padding: const EdgeInsets.all(16),
+    child: Column(
+      children: [
+        ThreeDGameIcon(
+          type: iconType,
+          size: 54,
+          animate: true,
+          semanticLabel: title,
+        ),
+        const SizedBox(height: 8),
+        Text(
+          title,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            color: AppTheme.navy,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            ThreeDGameIcon(
-              type: iconType,
-              size: 54,
-              animate: true,
-              semanticLabel: title,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: AppTheme.navy,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const ThreeDGameIcon(type: ThreeDIconType.coin, size: 24),
-                const SizedBox(width: 4),
-                Flexible(
-                  child: Text(
-                    subtitle.replaceAll(' coins', ''),
-                    style: const TextStyle(
-                      color: AppTheme.orange,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
+            const ThreeDGameIcon(type: ThreeDIconType.coin, size: 24),
+            const SizedBox(width: 4),
+            Flexible(
+              child: Text(
+                subtitle.replaceAll(' coins', ''),
+                style: const TextStyle(
+                  color: AppTheme.orange,
+                  fontWeight: FontWeight.w900,
                 ),
-              ],
+              ),
             ),
           ],
         ),
-      ),
+      ],
     ),
   );
 }
@@ -423,89 +422,91 @@ class _ThemeTile extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) => Material(
-    color: Colors.white,
+  Widget build(BuildContext context) => GameButton(
+    semanticLabel: selected
+        ? '${offer.name}, selected'
+        : unlocked
+        ? 'Use ${offer.name}'
+        : 'Buy ${offer.name} for ${offer.price} coins',
+    onPressed: selected ? null : onTap,
+    enabled: !selected,
+    expand: true,
     borderRadius: BorderRadius.circular(24),
-    child: InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(24),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Row(
-          children: [
-            Container(
-              width: 64,
-              height: 64,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(colors: [offer.start, offer.end]),
-                borderRadius: BorderRadius.circular(20),
+    backgroundColor: Colors.white,
+    disabledColor: Colors.white,
+    foregroundColor: AppTheme.navy,
+    shadowColor: Colors.black12,
+    padding: const EdgeInsets.all(14),
+    child: Row(
+      children: [
+        Container(
+          width: 64,
+          height: 64,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(colors: [offer.start, offer.end]),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Icon(offer.icon, color: Colors.white, size: 34),
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                offer.name,
+                style: const TextStyle(
+                  color: AppTheme.navy,
+                  fontWeight: FontWeight.w900,
+                ),
               ),
-              child: Icon(offer.icon, color: Colors.white, size: 34),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    offer.name,
-                    style: const TextStyle(
-                      color: AppTheme.navy,
-                      fontWeight: FontWeight.w900,
-                    ),
+              Text(
+                offer.subtitle,
+                style: const TextStyle(color: AppTheme.muted, fontSize: 12),
+              ),
+            ],
+          ),
+        ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+          decoration: BoxDecoration(
+            color: selected
+                ? AppTheme.green.withValues(alpha: .13)
+                : AppTheme.orange.withValues(alpha: .12),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: selected
+              ? const Text(
+                  'Selected',
+                  style: TextStyle(
+                    color: AppTheme.green,
+                    fontWeight: FontWeight.w900,
                   ),
-                  Text(
-                    offer.subtitle,
-                    style: const TextStyle(color: AppTheme.muted, fontSize: 12),
+                )
+              : unlocked
+              ? const Text(
+                  'Use',
+                  style: TextStyle(
+                    color: AppTheme.orange,
+                    fontWeight: FontWeight.w900,
                   ),
-                ],
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
-              decoration: BoxDecoration(
-                color: selected
-                    ? AppTheme.green.withValues(alpha: .13)
-                    : AppTheme.orange.withValues(alpha: .12),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: selected
-                  ? const Text(
-                      'Selected',
-                      style: TextStyle(
-                        color: AppTheme.green,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    )
-                  : unlocked
-                  ? const Text(
-                      'Use',
-                      style: TextStyle(
+                )
+              : Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const ThreeDGameIcon(type: ThreeDIconType.coin, size: 20),
+                    const SizedBox(width: 3),
+                    Text(
+                      '${offer.price}',
+                      style: const TextStyle(
                         color: AppTheme.orange,
                         fontWeight: FontWeight.w900,
                       ),
-                    )
-                  : Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const ThreeDGameIcon(
-                          type: ThreeDIconType.coin,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 3),
-                        Text(
-                          '${offer.price}',
-                          style: const TextStyle(
-                            color: AppTheme.orange,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                      ],
                     ),
-            ),
-          ],
+                  ],
+                ),
         ),
-      ),
+      ],
     ),
   );
 }

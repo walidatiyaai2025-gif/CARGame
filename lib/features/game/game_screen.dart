@@ -6,6 +6,7 @@ import '../../core/ads/ad_service.dart';
 import '../../core/storage/progress_store.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/game_skin.dart';
+import '../../core/widgets/game_button.dart';
 import 'city_catalog.dart';
 import 'level_data.dart';
 import 'mission_loadout.dart';
@@ -67,7 +68,8 @@ class _GameScreenState extends State<GameScreen> {
   void _reset({bool applyLoadout = false}) {
     _remaining = [...widget.level.items]
       ..shuffle(Random(widget.level.number * 41));
-    _moves = widget.level.moves +
+    _moves =
+        widget.level.moves +
         (applyLoadout && widget.loadout.extraMoves ? 5 : 0);
     _preparedHints = applyLoadout && widget.loadout.smartHint ? 1 : 0;
     _selected = null;
@@ -293,8 +295,8 @@ class _GameScreenState extends State<GameScreen> {
                       child: Icon(
                         won
                             ? worldReward
-                                ? Icons.card_giftcard_rounded
-                                : Icons.location_city_rounded
+                                  ? Icons.card_giftcard_rounded
+                                  : Icons.location_city_rounded
                             : Icons.heart_broken_rounded,
                         size: 46,
                         color: Colors.white,
@@ -313,8 +315,8 @@ class _GameScreenState extends State<GameScreen> {
                     Text(
                       won
                           ? worldReward
-                              ? (ar ? 'تم فتح عالم جديد' : 'WORLD COMPLETE')
-                              : (ar ? 'تم إكمال المدينة' : 'CITY CLEARED')
+                                ? (ar ? 'تم فتح عالم جديد' : 'WORLD COMPLETE')
+                                : (ar ? 'تم إكمال المدينة' : 'CITY CLEARED')
                           : (ar ? 'انتهت الحركات' : 'MISSION FAILED'),
                       textAlign: TextAlign.center,
                       style: TextStyle(
@@ -332,7 +334,9 @@ class _GameScreenState extends State<GameScreen> {
                             index < stars
                                 ? Icons.star_rounded
                                 : Icons.star_outline_rounded,
-                            color: index < stars ? AppTheme.yellow : Colors.black12,
+                            color: index < stars
+                                ? AppTheme.yellow
+                                : Colors.black12,
                             size: 38,
                           ),
                         ),
@@ -347,7 +351,10 @@ class _GameScreenState extends State<GameScreen> {
                             icon: Icons.monetization_on_rounded,
                             text: '+$reward',
                           ),
-                          _ResultChip(icon: Icons.bolt_rounded, text: '+$xp XP'),
+                          _ResultChip(
+                            icon: Icons.bolt_rounded,
+                            text: '+$xp XP',
+                          ),
                           _ResultChip(
                             icon: Icons.local_fire_department_rounded,
                             text: 'x$_bestCombo',
@@ -367,60 +374,104 @@ class _GameScreenState extends State<GameScreen> {
                     ],
                     const SizedBox(height: 20),
                     if (!won) ...[
-                      SizedBox(
-                        width: double.infinity,
-                        child: OutlinedButton.icon(
-                          onPressed: _resultActionBusy
-                              ? null
-                              : () {
-                                  Navigator.of(sheetContext).pop();
-                                  _ads.showRewarded(
-                                    onReward: () {
-                                      if (!mounted) return;
-                                      setState(() {
-                                        _finished = false;
-                                        _resultVisible = false;
-                                        _moves += 5;
-                                      });
-                                    },
-                                  );
-                                },
-                          icon: const Icon(Icons.ondemand_video_rounded),
-                          label: Text(ar ? 'شاهد إعلانًا وخذ 5 حركات' : 'Watch ad for 5 moves'),
+                      GameButton(
+                        semanticLabel: ar
+                            ? 'شاهد إعلانًا وخذ خمس حركات'
+                            : 'Watch ad for five moves',
+                        onPressed: _resultActionBusy
+                            ? null
+                            : () {
+                                Navigator.of(sheetContext).pop();
+                                _ads.showRewarded(
+                                  onReward: () {
+                                    if (!mounted) return;
+                                    setState(() {
+                                      _finished = false;
+                                      _resultVisible = false;
+                                      _moves += 5;
+                                    });
+                                  },
+                                );
+                              },
+                        enabled: !_resultActionBusy,
+                        expand: true,
+                        height: 52,
+                        borderRadius: BorderRadius.circular(18),
+                        backgroundColor: Colors.white,
+                        foregroundColor: skin.primary,
+                        border: Border.all(
+                          color: skin.primary.withValues(alpha: .35),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.ondemand_video_rounded),
+                            const SizedBox(width: 8),
+                            Flexible(
+                              child: Text(
+                                ar
+                                    ? 'شاهد إعلانًا وخذ 5 حركات'
+                                    : 'Watch ad for 5 moves',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                       const SizedBox(height: 10),
                     ],
-                    SizedBox(
-                      width: double.infinity,
+                    GameButton(
+                      semanticLabel: won
+                          ? (ar
+                                ? 'التالي والعودة للخريطة'
+                                : 'Next and back to map')
+                          : (ar ? 'إعادة المحاولة' : 'Retry'),
+                      onPressed: _resultActionBusy
+                          ? null
+                          : () async {
+                              if (won) {
+                                await _closeResultAndReturnToMap(sheetContext);
+                              } else {
+                                await _retryFromResult(sheetContext);
+                              }
+                            },
+                      enabled: !_resultActionBusy,
+                      loading: _resultActionBusy,
+                      expand: true,
                       height: 56,
-                      child: FilledButton.icon(
-                        onPressed: _resultActionBusy
-                            ? null
-                            : () async {
-                                if (won) {
-                                  await _closeResultAndReturnToMap(sheetContext);
-                                } else {
-                                  await _retryFromResult(sheetContext);
-                                }
-                              },
-                        icon: _resultActionBusy
-                            ? const SizedBox(
-                                width: 22,
-                                height: 22,
-                                child: CircularProgressIndicator(strokeWidth: 2.5),
-                              )
-                            : Icon(won ? Icons.navigate_next_rounded : Icons.restart_alt_rounded),
-                        label: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text(
+                      borderRadius: BorderRadius.circular(20),
+                      backgroundColor: skin.primary,
+                      shadowColor: skin.primary.withValues(alpha: .38),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
                             won
-                                ? (ar ? 'التالي — العودة للخريطة' : 'NEXT — BACK TO MAP')
-                                : (ar ? 'إعادة المحاولة' : 'RETRY'),
-                            maxLines: 1,
-                            style: const TextStyle(fontWeight: FontWeight.w900),
+                                ? Icons.navigate_next_rounded
+                                : Icons.restart_alt_rounded,
+                            color: Colors.white,
                           ),
-                        ),
+                          const SizedBox(width: 8),
+                          Flexible(
+                            child: Text(
+                              won
+                                  ? (ar
+                                        ? 'التالي — العودة للخريطة'
+                                        : 'NEXT — BACK TO MAP')
+                                  : (ar ? 'إعادة المحاولة' : 'RETRY'),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -458,7 +509,10 @@ class _GameScreenState extends State<GameScreen> {
               Text(widget.level.cityName),
               Text(
                 '${world.name} • ${ar ? 'المرحلة' : 'Level'} ${widget.level.number}',
-                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ],
           ),
@@ -478,7 +532,8 @@ class _GameScreenState extends State<GameScreen> {
           child: SafeArea(
             child: LayoutBuilder(
               builder: (context, constraints) {
-                final compact = constraints.maxHeight < 690 || constraints.maxWidth < 370;
+                final compact =
+                    constraints.maxHeight < 690 || constraints.maxWidth < 370;
                 return Padding(
                   padding: EdgeInsets.fromLTRB(
                     compact ? 9 : 14,
@@ -505,7 +560,9 @@ class _GameScreenState extends State<GameScreen> {
                             ? (ar ? 'مهمة مدينة الزعيم' : 'BOSS CITY MISSION')
                             : (ar ? 'رتّب كل الشحنات' : 'SORT ALL CARGO'),
                         style: TextStyle(
-                          color: widget.level.isBossCity ? skin.accent : skin.primary,
+                          color: widget.level.isBossCity
+                              ? skin.accent
+                              : skin.primary,
                           fontWeight: FontWeight.w900,
                           fontSize: compact ? 14 : 17,
                         ),
@@ -537,7 +594,9 @@ class _GameScreenState extends State<GameScreen> {
                               icon: Icons.lightbulb_rounded,
                               count: widget.store.freeHints + _preparedHints,
                               active: _selected != null,
-                              onPressed: _selected == null || _finished ? null : _useHint,
+                              onPressed: _selected == null || _finished
+                                  ? null
+                                  : _useHint,
                             ),
                           ),
                           const SizedBox(width: 7),
@@ -578,9 +637,9 @@ class _ResultChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Chip(
-        avatar: Icon(icon, size: 18, color: AppTheme.orange),
-        label: Text(text, style: const TextStyle(fontWeight: FontWeight.w900)),
-      );
+    avatar: Icon(icon, size: 18, color: AppTheme.orange),
+    label: Text(text, style: const TextStyle(fontWeight: FontWeight.w900)),
+  );
 }
 
 class _BoosterButton extends StatelessWidget {
@@ -598,22 +657,22 @@ class _BoosterButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => FilledButton.tonal(
-        onPressed: onPressed,
-        style: FilledButton.styleFrom(
-          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 10),
-        ),
-        child: FittedBox(
-          fit: BoxFit.scaleDown,
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(active ? Icons.check_circle_rounded : icon, size: 20),
-              const SizedBox(width: 5),
-              Text('$count', style: const TextStyle(fontWeight: FontWeight.w900)),
-            ],
-          ),
-        ),
-      );
+    onPressed: onPressed,
+    style: FilledButton.styleFrom(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 10),
+    ),
+    child: FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(active ? Icons.check_circle_rounded : icon, size: 20),
+          const SizedBox(width: 5),
+          Text('$count', style: const TextStyle(fontWeight: FontWeight.w900)),
+        ],
+      ),
+    ),
+  );
 }
 
 class _CargoBoard extends StatelessWidget {
@@ -631,64 +690,70 @@ class _CargoBoard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: EdgeInsets.all(compact ? 7 : 10),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: .95),
-          borderRadius: BorderRadius.circular(26),
-          boxShadow: const [
-            BoxShadow(color: Color(0x22000000), blurRadius: 20, offset: Offset(0, 10)),
-          ],
+    padding: EdgeInsets.all(compact ? 7 : 10),
+    decoration: BoxDecoration(
+      color: Colors.white.withValues(alpha: .95),
+      borderRadius: BorderRadius.circular(26),
+      boxShadow: const [
+        BoxShadow(
+          color: Color(0x22000000),
+          blurRadius: 20,
+          offset: Offset(0, 10),
         ),
-        child: GridView.builder(
-          itemCount: items.length,
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3,
-            crossAxisSpacing: compact ? 6 : 9,
-            mainAxisSpacing: compact ? 6 : 9,
-            childAspectRatio: compact ? 1.0 : .92,
-          ),
-          itemBuilder: (_, index) {
-            final item = items[index];
-            final selectedItem = identical(item, selected);
-            return InkWell(
-              onTap: () => onTap(item),
-              borderRadius: BorderRadius.circular(18),
-              child: AnimatedScale(
-                scale: selectedItem ? 1.05 : 1,
-                duration: const Duration(milliseconds: 150),
-                child: Container(
-                  padding: EdgeInsets.all(compact ? 5 : 8),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(colors: [item.accentColor, item.color]),
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(
-                      color: selectedItem ? Colors.white : Colors.transparent,
-                      width: 3,
-                    ),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(item.icon, color: Colors.white, size: compact ? 26 : 34),
-                      const SizedBox(height: 4),
-                      Text(
-                        item.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: compact ? 8 : 10,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                    ],
-                  ),
+      ],
+    ),
+    child: GridView.builder(
+      itemCount: items.length,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        crossAxisSpacing: compact ? 6 : 9,
+        mainAxisSpacing: compact ? 6 : 9,
+        childAspectRatio: compact ? 1.0 : .92,
+      ),
+      itemBuilder: (_, index) {
+        final item = items[index];
+        final selectedItem = identical(item, selected);
+        return InkWell(
+          onTap: () => onTap(item),
+          borderRadius: BorderRadius.circular(18),
+          child: AnimatedScale(
+            scale: selectedItem ? 1.05 : 1,
+            duration: const Duration(milliseconds: 150),
+            child: Container(
+              padding: EdgeInsets.all(compact ? 5 : 8),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [item.accentColor, item.color],
+                ),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(
+                  color: selectedItem ? Colors.white : Colors.transparent,
+                  width: 3,
                 ),
               ),
-            );
-          },
-        ),
-      );
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(item.icon, color: Colors.white, size: compact ? 26 : 34),
+                  const SizedBox(height: 4),
+                  Text(
+                    item.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: compact ? 8 : 10,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    ),
+  );
 }
 
 class _WarehouseBoard extends StatelessWidget {
@@ -704,46 +769,50 @@ class _WarehouseBoard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => GridView.builder(
-        itemCount: warehouses.length,
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: min(3, warehouses.length),
-          crossAxisSpacing: compact ? 6 : 9,
-          mainAxisSpacing: compact ? 6 : 9,
-          childAspectRatio: compact ? 1.2 : 1.05,
-        ),
-        itemBuilder: (_, index) {
-          final item = warehouses[index];
-          return InkWell(
-            onTap: () => onTap(item),
+    itemCount: warehouses.length,
+    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+      crossAxisCount: min(3, warehouses.length),
+      crossAxisSpacing: compact ? 6 : 9,
+      mainAxisSpacing: compact ? 6 : 9,
+      childAspectRatio: compact ? 1.2 : 1.05,
+    ),
+    itemBuilder: (_, index) {
+      final item = warehouses[index];
+      return InkWell(
+        onTap: () => onTap(item),
+        borderRadius: BorderRadius.circular(18),
+        child: Ink(
+          padding: EdgeInsets.all(compact ? 5 : 7),
+          decoration: BoxDecoration(
+            color: Colors.white,
             borderRadius: BorderRadius.circular(18),
-            child: Ink(
-              padding: EdgeInsets.all(compact ? 5 : 7),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: item.color, width: 3),
+            border: Border.all(color: item.color, width: 3),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.warehouse_rounded,
+                color: item.color,
+                size: compact ? 28 : 38,
               ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.warehouse_rounded, color: item.color, size: compact ? 28 : 38),
-                  const SizedBox(height: 3),
-                  Text(
-                    item.category,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: item.color,
-                      fontSize: compact ? 8 : 9,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ],
+              const SizedBox(height: 3),
+              Text(
+                item.category,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: item.color,
+                  fontSize: compact ? 8 : 9,
+                  fontWeight: FontWeight.w900,
+                ),
               ),
-            ),
-          );
-        },
+            ],
+          ),
+        ),
       );
+    },
+  );
 }
 
 class _StatusPanel extends StatelessWidget {
@@ -771,59 +840,77 @@ class _StatusPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: EdgeInsets.all(compact ? 10 : 14),
-        decoration: BoxDecoration(
-          gradient: skin.heroGradient,
-          borderRadius: BorderRadius.circular(24),
-        ),
-        child: Column(
+    padding: EdgeInsets.all(compact ? 10 : 14),
+    decoration: BoxDecoration(
+      gradient: skin.heroGradient,
+      borderRadius: BorderRadius.circular(24),
+    ),
+    child: Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _Metric(icon: Icons.touch_app_rounded, value: '$moves', compact: compact),
-                _Metric(icon: Icons.inventory_2_rounded, value: '$matched/$total', compact: compact),
-                _Metric(icon: Icons.local_fire_department_rounded, value: 'x$combo', compact: compact),
-                _Metric(
-                  icon: shieldActive ? Icons.shield_rounded : Icons.favorite_rounded,
-                  value: shieldActive ? 'ON' : '$hearts',
-                  compact: compact,
-                ),
-              ],
+            _Metric(
+              icon: Icons.touch_app_rounded,
+              value: '$moves',
+              compact: compact,
             ),
-            const SizedBox(height: 8),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(20),
-              child: LinearProgressIndicator(
-                value: progress,
-                minHeight: compact ? 6 : 8,
-                backgroundColor: Colors.white24,
-                valueColor: AlwaysStoppedAnimation<Color>(skin.accent),
-              ),
+            _Metric(
+              icon: Icons.inventory_2_rounded,
+              value: '$matched/$total',
+              compact: compact,
+            ),
+            _Metric(
+              icon: Icons.local_fire_department_rounded,
+              value: 'x$combo',
+              compact: compact,
+            ),
+            _Metric(
+              icon: shieldActive
+                  ? Icons.shield_rounded
+                  : Icons.favorite_rounded,
+              value: shieldActive ? 'ON' : '$hearts',
+              compact: compact,
             ),
           ],
         ),
-      );
+        const SizedBox(height: 8),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: LinearProgressIndicator(
+            value: progress,
+            minHeight: compact ? 6 : 8,
+            backgroundColor: Colors.white24,
+            valueColor: AlwaysStoppedAnimation<Color>(skin.accent),
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
 class _Metric extends StatelessWidget {
-  const _Metric({required this.icon, required this.value, required this.compact});
+  const _Metric({
+    required this.icon,
+    required this.value,
+    required this.compact,
+  });
   final IconData icon;
   final String value;
   final bool compact;
 
   @override
   Widget build(BuildContext context) => Column(
-        children: [
-          Icon(icon, color: Colors.white, size: compact ? 18 : 21),
-          Text(
-            value,
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w900,
-              fontSize: compact ? 13 : 15,
-            ),
-          ),
-        ],
-      );
+    children: [
+      Icon(icon, color: Colors.white, size: compact ? 18 : 21),
+      Text(
+        value,
+        style: TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.w900,
+          fontSize: compact ? 13 : 15,
+        ),
+      ),
+    ],
+  );
 }

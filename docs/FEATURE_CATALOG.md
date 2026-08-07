@@ -77,7 +77,7 @@ Codex must not mark a feature complete merely because UI code exists.
 |---|---|---:|---|---|---|
 | MOT-001 | Motion tokens and reusable animation primitives | P0 | READY | UI3D-001 | Central durations, curves, springs, stagger, amplitude, and reduced-motion behavior exist. |
 | MOT-002 | Button press and release feedback primitive | P0 | IMPLEMENTED | UI3D-003 | `GameButton` responds within 100 ms, springs on release, and guards delayed or duplicate async taps; wider screen adoption remains under MOT-003. |
-| MOT-003 | Universal Button Motion System | P0 | IN PROGRESS | UI3D-003, MOT-002 | All major Start, launch, Next, Retry, purchase, and settings actions use shared `GameButton` behavior with no duplicated button-motion implementation; Settings adoption and 5 focused tests are complete. |
+| MOT-003 | Universal Button Motion System | P0 | IMPLEMENTED | UI3D-003, MOT-002 | Major Start, mission launch, Next, Retry, rewarded continuation, heart/booster/theme purchase, and settings actions use shared `GameButton`; focused tests and CI verification exist, while physical-device motion review remains. |
 | MOT-004 | Screen transitions | P1 | PLANNED | MOT-001 | Shared-axis/fade-through transitions are guarded, interruptible, and RTL-aware. |
 | MOT-005 | Ambient home/world motion | P1 | PLANNED | MOT-001, UI3D-007 | Low-density particles, parallax, and light sweeps pause off-screen. |
 | MOT-006 | Product pickup, travel, placement, settle | P0 | PLANNED | GAME-003, MOT-001 | Every gameplay action shows cause/result while board state remains deterministic. |
