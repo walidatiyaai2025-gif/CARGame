@@ -21,9 +21,25 @@ const String appBuildNumber = '3';
 const String appAuthor = 'Walid Atiya Ata - PMP';
 const String _adsServiceName = 'mobile_ads';
 
+Future<void> _applyImmersiveFullscreen() async {
+  try {
+    await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+  } catch (error, stackTrace) {
+    debugPrint('Immersive fullscreen unavailable: $error\n$stackTrace');
+  }
+}
+
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  unawaited(SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky));
+  unawaited(_applyImmersiveFullscreen());
+  SystemChrome.setSystemUIChangeCallback((systemOverlaysAreVisible) async {
+    if (!systemOverlaysAreVisible) return;
+    await Future<void>.delayed(const Duration(milliseconds: 900));
+    await _applyImmersiveFullscreen();
+  });
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    unawaited(_applyImmersiveFullscreen());
+  });
   runZonedGuarded<void>(() => runApp(const BootstrapApp()), (
     Object error,
     StackTrace stackTrace,
@@ -68,8 +84,10 @@ class _BootstrapAppState extends State<BootstrapApp>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed &&
-        _optionalServices.snapshot(_adsServiceName).canRetry) {
+    if (state != AppLifecycleState.resumed) return;
+
+    unawaited(_applyImmersiveFullscreen());
+    if (_optionalServices.snapshot(_adsServiceName).canRetry) {
       unawaited(_initializeAdsInBackground(forceRetry: true));
     }
   }
