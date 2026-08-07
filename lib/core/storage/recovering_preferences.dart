@@ -78,8 +78,10 @@ final class RecoveringPreferences {
     if (value == null) return null;
 
     if (key == 'heart_refill_timestamp' && DateTime.tryParse(value) == null) {
-      await _repairByRemoval(key, 'invalid ISO-8601 timestamp');
-      return null;
+      await _recordRepair(key, 'invalid ISO-8601 timestamp');
+      final repaired = DateTime.now().toUtc().toIso8601String();
+      await _delegate.setString(key, repaired);
+      return repaired;
     }
     return value;
   }
