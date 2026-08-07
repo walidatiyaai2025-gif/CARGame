@@ -8,6 +8,8 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'core/logging/app_logger.dart';
 import 'core/logging/log_viewer_screen.dart';
 import 'core/motion/motion_lifecycle_scope.dart';
+import 'core/navigation/game_navigator.dart';
+import 'core/navigation/game_route_names.dart';
 import 'core/services/optional_service_coordinator.dart';
 import 'core/settings/app_settings_store.dart';
 import 'core/storage/progress_store.dart';
@@ -469,8 +471,12 @@ class _CargoSortAppState extends State<CargoSortApp>
   }
 
   void _openSettings() {
-    _navigatorKey.currentState?.push(
-      MaterialPageRoute<void>(
+    final context = _navigatorKey.currentContext;
+    if (context == null) return;
+    unawaited(
+      GameNavigator.pushNamed<void>(
+        context,
+        name: GameRouteNames.settings,
         builder: (_) => SettingsScreen(
           settings: widget.settings,
           onToggleLanguage: _toggleLanguage,
@@ -507,8 +513,12 @@ class _CargoSortAppState extends State<CargoSortApp>
             TextButton.icon(
               onPressed: () {
                 Navigator.of(dialogContext).pop();
-                _navigatorKey.currentState?.push(
-                  MaterialPageRoute<void>(
+                final navigatorContext = _navigatorKey.currentContext;
+                if (navigatorContext == null) return;
+                unawaited(
+                  GameNavigator.pushNamed<void>(
+                    navigatorContext,
+                    name: GameRouteNames.logs,
                     builder: (_) => const LogViewerScreen(),
                   ),
                 );
