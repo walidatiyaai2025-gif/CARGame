@@ -60,18 +60,31 @@ void main() {
     );
 
     await tester.tap(find.byKey(const ValueKey('open-game')));
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.byType(GameScreen), findsOneWidget);
 
     Future<void> pumpUntil(
       Finder finder, {
       Duration step = const Duration(milliseconds: 50),
-      int maxPumps = 30,
+      int maxPumps = 40,
     }) async {
       for (var attempt = 0; attempt < maxPumps; attempt++) {
         if (finder.evaluate().isNotEmpty) return;
         await tester.pump(step);
       }
       expect(finder, findsWidgets);
+    }
+
+    Future<void> pumpUntilAbsent(
+      Finder finder, {
+      Duration step = const Duration(milliseconds: 50),
+      int maxPumps = 40,
+    }) async {
+      for (var attempt = 0; attempt < maxPumps; attempt++) {
+        if (finder.evaluate().isEmpty) return;
+        await tester.pump(step);
+      }
+      expect(finder, findsNothing);
     }
 
     Future<void> placeCargo() async {
@@ -86,25 +99,19 @@ void main() {
       await tester.tapAt(target.center);
       await pumpUntil(find.byType(GameActionFeedback));
       expect(find.byType(GameActionFeedback), findsOneWidget);
-
-      for (var attempt = 0; attempt < 30; attempt++) {
-        if (find.byType(GameActionFeedback).evaluate().isEmpty) break;
-        await tester.pump(const Duration(milliseconds: 50));
-      }
-      expect(find.byType(GameActionFeedback), findsNothing);
+      await pumpUntilAbsent(find.byType(GameActionFeedback));
     }
 
     await placeCargo();
     await placeCargo();
-    await tester.pumpAndSettle();
 
     final next = find.text('NEXT — BACK TO MAP');
+    await pumpUntil(next);
     expect(next, findsOneWidget);
 
     await tester.tap(next);
     await tester.tap(next, warnIfMissed: false);
-    await tester.pump(const Duration(milliseconds: 300));
-    await tester.pumpAndSettle();
+    await pumpUntilAbsent(find.byType(GameScreen));
 
     expect(observer.gameRoutePops, 1);
     expect(find.byType(GameScreen), findsNothing);
