@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/settings/app_settings_store.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/game_button.dart';
+import '../../core/widgets/game_fit_view.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({
@@ -34,81 +35,84 @@ class SettingsScreen extends StatelessWidget {
         child: SafeArea(
           child: AnimatedBuilder(
             animation: settings,
-            builder: (context, _) => ListView(
-              padding: const EdgeInsets.all(18),
-              children: [
-                _HeroHeader(ar: ar),
-                const SizedBox(height: 18),
-                _SettingsCard(
-                  children: [
-                    _SwitchTile(
-                      icon: Icons.volume_up_rounded,
-                      title: ar ? 'المؤثرات الصوتية' : 'Sound effects',
-                      subtitle: ar
-                          ? 'أصوات الضغط والفوز والعملات'
-                          : 'Buttons, rewards and win sounds',
-                      value: settings.soundEnabled,
-                      onChanged: settings.setSound,
-                    ),
-                    _SwitchTile(
-                      icon: Icons.music_note_rounded,
-                      title: ar ? 'الموسيقى' : 'Music',
-                      subtitle: ar
-                          ? 'موسيقى الخلفية داخل اللعبة'
-                          : 'Background game music',
-                      value: settings.musicEnabled,
-                      onChanged: settings.setMusic,
-                    ),
-                    _SwitchTile(
-                      icon: Icons.vibration_rounded,
-                      title: ar ? 'الاهتزاز' : 'Vibration',
-                      subtitle: ar
-                          ? 'اهتزاز خفيف عند التفاعل'
-                          : 'Light haptic feedback',
-                      value: settings.vibrationEnabled,
-                      onChanged: settings.setVibration,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                _SettingsCard(
-                  padding: const EdgeInsets.all(10),
-                  children: [
-                    _ActionTile(
-                      icon: Icons.language_rounded,
-                      title: ar ? 'اللغة' : 'Language',
-                      subtitle: ar
-                          ? 'التبديل إلى الإنجليزية'
-                          : 'Switch to Arabic',
-                      onTap: onToggleLanguage,
-                      hapticsEnabled: settings.vibrationEnabled,
-                    ),
-                    const SizedBox(height: 8),
-                    _ActionTile(
-                      icon: Icons.privacy_tip_rounded,
-                      title: ar ? 'الخصوصية' : 'Privacy',
-                      subtitle: ar
-                          ? 'سياسة الخصوصية والإعلانات'
-                          : 'Privacy and advertising information',
-                      onTap: () => _showInfo(context, ar),
-                      hapticsEnabled: settings.vibrationEnabled,
-                    ),
-                    const SizedBox(height: 8),
-                    _ActionTile(
-                      icon: Icons.info_rounded,
-                      title: ar ? 'حول اللعبة' : 'About',
-                      subtitle: 'Cargo Sort • Version 1.0.1 (2)',
-                      onTap: () => showAboutDialog(
-                        context: context,
-                        applicationName: 'Cargo Sort',
-                        applicationVersion: '1.0.1 (2)',
-                        applicationLegalese: 'Walid Atiya Ata - PMP',
+            builder: (context, _) => GameFitView(
+              padding: const EdgeInsets.fromLTRB(14, 8, 14, 12),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _HeroHeader(ar: ar),
+                  const SizedBox(height: 10),
+                  _SettingsCard(
+                    children: [
+                      _SwitchTile(
+                        icon: Icons.volume_up_rounded,
+                        title: ar ? 'المؤثرات الصوتية' : 'Sound effects',
+                        subtitle: ar
+                            ? 'أصوات الضغط والفوز والعملات'
+                            : 'Buttons, rewards and win sounds',
+                        value: settings.soundEnabled,
+                        onChanged: settings.setSound,
                       ),
-                      hapticsEnabled: settings.vibrationEnabled,
-                    ),
-                  ],
-                ),
-              ],
+                      _SwitchTile(
+                        icon: Icons.music_note_rounded,
+                        title: ar ? 'الموسيقى' : 'Music',
+                        subtitle: ar
+                            ? 'موسيقى الخلفية داخل اللعبة'
+                            : 'Background game music',
+                        value: settings.musicEnabled,
+                        onChanged: settings.setMusic,
+                      ),
+                      _SwitchTile(
+                        icon: Icons.vibration_rounded,
+                        title: ar ? 'الاهتزاز' : 'Vibration',
+                        subtitle: ar
+                            ? 'اهتزاز خفيف عند التفاعل'
+                            : 'Light haptic feedback',
+                        value: settings.vibrationEnabled,
+                        onChanged: settings.setVibration,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  _SettingsCard(
+                    padding: const EdgeInsets.all(8),
+                    children: [
+                      _ActionTile(
+                        icon: Icons.language_rounded,
+                        title: ar ? 'اللغة' : 'Language',
+                        subtitle: ar
+                            ? 'التبديل إلى الإنجليزية'
+                            : 'Switch to Arabic',
+                        onTap: onToggleLanguage,
+                        hapticsEnabled: settings.vibrationEnabled,
+                      ),
+                      const SizedBox(height: 6),
+                      _ActionTile(
+                        icon: Icons.privacy_tip_rounded,
+                        title: ar ? 'الخصوصية' : 'Privacy',
+                        subtitle: ar
+                            ? 'سياسة الخصوصية والإعلانات'
+                            : 'Privacy and advertising information',
+                        onTap: () => _showInfo(context, ar),
+                        hapticsEnabled: settings.vibrationEnabled,
+                      ),
+                      const SizedBox(height: 6),
+                      _ActionTile(
+                        icon: Icons.info_rounded,
+                        title: ar ? 'حول اللعبة' : 'About',
+                        subtitle: 'Cargo Sort • Version 1.0.1 (2)',
+                        onTap: () => showAboutDialog(
+                          context: context,
+                          applicationName: 'Cargo Sort',
+                          applicationVersion: '1.0.1 (2)',
+                          applicationLegalese: 'Walid Atiya Ata - PMP',
+                        ),
+                        hapticsEnabled: settings.vibrationEnabled,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -149,53 +153,59 @@ class SettingsScreen extends StatelessWidget {
 
 class _HeroHeader extends StatelessWidget {
   const _HeroHeader({required this.ar});
+
   final bool ar;
 
   @override
   Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(22),
+    padding: const EdgeInsets.all(16),
     decoration: BoxDecoration(
       gradient: const LinearGradient(
         colors: [Color(0xFF16375B), Color(0xFF2D6591)],
       ),
-      borderRadius: BorderRadius.circular(30),
+      borderRadius: BorderRadius.circular(24),
       boxShadow: AppTheme.softShadow,
     ),
     child: Row(
       children: [
         Container(
-          width: 72,
-          height: 72,
+          width: 56,
+          height: 56,
           decoration: BoxDecoration(
             color: Colors.white.withValues(alpha: .14),
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(18),
           ),
           child: const Icon(
             Icons.tune_rounded,
             color: AppTheme.yellow,
-            size: 42,
+            size: 32,
           ),
         ),
-        const SizedBox(width: 16),
+        const SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 ar ? 'تجربة لعبك' : 'Your game experience',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   color: Colors.white,
-                  fontSize: 20,
+                  fontSize: 18,
                   fontWeight: FontWeight.w900,
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 2),
               Text(
                 ar
                     ? 'خصص الصوت واللغة وطريقة التفاعل'
                     : 'Customize sound, language and feedback',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   color: Colors.white70,
+                  fontSize: 12,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -218,7 +228,7 @@ class _SettingsCard extends StatelessWidget {
     padding: padding,
     decoration: BoxDecoration(
       color: Colors.white,
-      borderRadius: BorderRadius.circular(28),
+      borderRadius: BorderRadius.circular(24),
       boxShadow: AppTheme.softShadow,
     ),
     child: Column(children: children),
@@ -242,12 +252,26 @@ class _SwitchTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => SwitchListTile.adaptive(
+    dense: true,
+    visualDensity: const VisualDensity(vertical: -2),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 1),
     secondary: _TileIcon(icon: icon),
     title: Text(
       title,
-      style: const TextStyle(fontWeight: FontWeight.w900, color: AppTheme.navy),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: const TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.w900,
+        color: AppTheme.navy,
+      ),
     ),
-    subtitle: Text(subtitle),
+    subtitle: Text(
+      subtitle,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: const TextStyle(fontSize: 11),
+    ),
     value: value,
     onChanged: onChanged,
   );
@@ -274,36 +298,39 @@ class _ActionTile extends StatelessWidget {
     onPressed: onTap,
     hapticsEnabled: hapticsEnabled,
     expand: true,
-    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
     backgroundColor: const Color(0xFFF8FBFF),
     shadowColor: const Color(0x220A2945),
-    borderRadius: BorderRadius.circular(20),
+    borderRadius: BorderRadius.circular(18),
     child: Row(
       children: [
         _TileIcon(icon: icon),
-        const SizedBox(width: 12),
+        const SizedBox(width: 10),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
+                  fontSize: 14,
                   fontWeight: FontWeight.w900,
                   color: AppTheme.navy,
                 ),
               ),
-              const SizedBox(height: 2),
+              const SizedBox(height: 1),
               Text(
                 subtitle,
-                maxLines: 2,
+                maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(color: AppTheme.muted),
+                style: const TextStyle(fontSize: 11, color: AppTheme.muted),
               ),
             ],
           ),
         ),
-        const Icon(Icons.chevron_right_rounded, color: AppTheme.blue),
+        const Icon(Icons.chevron_right_rounded, color: AppTheme.blue, size: 20),
       ],
     ),
   );
@@ -311,16 +338,17 @@ class _ActionTile extends StatelessWidget {
 
 class _TileIcon extends StatelessWidget {
   const _TileIcon({required this.icon});
+
   final IconData icon;
 
   @override
   Widget build(BuildContext context) => Container(
-    width: 44,
-    height: 44,
+    width: 38,
+    height: 38,
     decoration: BoxDecoration(
       color: AppTheme.blue.withValues(alpha: .11),
-      borderRadius: BorderRadius.circular(15),
+      borderRadius: BorderRadius.circular(13),
     ),
-    child: Icon(icon, color: AppTheme.blue),
+    child: Icon(icon, color: AppTheme.blue, size: 21),
   );
 }
