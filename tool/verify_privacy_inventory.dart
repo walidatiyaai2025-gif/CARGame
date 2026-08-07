@@ -7,6 +7,13 @@ Never _fail(String message) {
   throw StateError(message);
 }
 
+Set<String> _stringSet(Object? value) {
+  if (value is! List) {
+    return <String>{};
+  }
+  return value.whereType<String>().toSet();
+}
+
 void main() {
   final inventoryFile = File('docs/privacy/data_inventory.json');
   if (!inventoryFile.existsSync()) {
@@ -31,10 +38,16 @@ void main() {
 
   final processorIds = <String>{};
   for (final item in processors) {
-    if (item is! Map<String, dynamic>) _fail('Processor entries must be objects.');
+    if (item is! Map<String, dynamic>) {
+      _fail('Processor entries must be objects.');
+    }
     final id = item['id'];
-    if (id is! String || id.trim().isEmpty) _fail('Processor id is required.');
-    if (!processorIds.add(id)) _fail('Duplicate processor id: $id');
+    if (id is! String || id.trim().isEmpty) {
+      _fail('Processor id is required.');
+    }
+    if (!processorIds.add(id)) {
+      _fail('Duplicate processor id: $id');
+    }
   }
 
   final requiredFlowIds = <String>{
@@ -45,10 +58,16 @@ void main() {
   };
   final flowIds = <String>{};
   for (final item in flows) {
-    if (item is! Map<String, dynamic>) _fail('Data-flow entries must be objects.');
+    if (item is! Map<String, dynamic>) {
+      _fail('Data-flow entries must be objects.');
+    }
     final id = item['id'];
-    if (id is! String || id.trim().isEmpty) _fail('Data-flow id is required.');
-    if (!flowIds.add(id)) _fail('Duplicate data-flow id: $id');
+    if (id is! String || id.trim().isEmpty) {
+      _fail('Data-flow id is required.');
+    }
+    if (!flowIds.add(id)) {
+      _fail('Duplicate data-flow id: $id');
+    }
 
     for (final key in <String>[
       'category',
@@ -83,29 +102,28 @@ void main() {
   }
 
   final pubspec = File('pubspec.yaml').readAsStringSync();
-  final networkDependencies = (policy['networkDataDependencies'] as List?)
-          ?.whereType<String>()
-          .toSet() ??
-      <String>{};
-  final localDependencies = (policy['localStorageDependencies'] as List?)
-          ?.whereType<String>()
-          .toSet() ??
-      <String>{};
-  final forbiddenUnlessUpdated = (policy['forbiddenUnlessInventoryUpdated'] as List?)
-          ?.whereType<String>()
-          .toSet() ??
-      <String>{};
+  final networkDependencies = _stringSet(policy['networkDataDependencies']);
+  final localDependencies = _stringSet(policy['localStorageDependencies']);
+  final forbiddenUnlessUpdated = _stringSet(
+    policy['forbiddenUnlessInventoryUpdated'],
+  );
 
   for (final dependency in {...networkDependencies, ...localDependencies}) {
-    if (!RegExp('^  ${RegExp.escape(dependency)}:', multiLine: true)
-        .hasMatch(pubspec)) {
+    final dependencyPattern = RegExp(
+      '^  ${RegExp.escape(dependency)}:',
+      multiLine: true,
+    );
+    if (!dependencyPattern.hasMatch(pubspec)) {
       _fail('Inventory declares dependency $dependency but pubspec does not.');
     }
   }
 
   for (final dependency in forbiddenUnlessUpdated) {
-    if (RegExp('^  ${RegExp.escape(dependency)}:', multiLine: true)
-        .hasMatch(pubspec)) {
+    final dependencyPattern = RegExp(
+      '^  ${RegExp.escape(dependency)}:',
+      multiLine: true,
+    );
+    if (dependencyPattern.hasMatch(pubspec)) {
       _fail(
         'Dependency $dependency was added but the privacy inventory still marks it '
         'as forbidden-until-reviewed.',
@@ -118,7 +136,9 @@ void main() {
       principles['analyticsEnabled'] != false ||
       principles['cloudSyncEnabled'] != false ||
       principles['offlineFirst'] != true) {
-    _fail('Current offline/analytics/cloud privacy principles changed unexpectedly.');
+    _fail(
+      'Current offline/analytics/cloud privacy principles changed unexpectedly.',
+    );
   }
 
   stdout.writeln(
