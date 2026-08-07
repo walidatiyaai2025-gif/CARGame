@@ -1,0 +1,48 @@
+name: Finalize fullscreen home banner
+on:
+  push:
+    paths:
+      - scripts/finalize_fullscreen_home_banner.py
+      - .github/workflows/finalize_fullscreen_home_banner.yml
+permissions:
+  contents: write
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.8'
+          channel: stable
+          cache: true
+      - run: python scripts/finalize_fullscreen_home_banner.py
+      - run: flutter pub get
+      - run: dart format lib test
+      - run: flutter analyze --no-fatal-infos --no-fatal-warnings
+      - run: flutter test test/widget_test.dart
+      - name: Validate dashboard catalog
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          text = Path('docs/FEATURE_CATALOG.md').read_text(encoding='utf-8')
+          ids = re.findall(r'^\| ([A-Z0-9-]+) \|', text, re.M)
+          assert len(ids) == len(set(ids)), 'duplicate feature IDs'
+          assert '| ADS-010 | Home banner ad footer |' in text
+          assert text.count('| IN PROGRESS |') <= 1
+          print(f'catalog IDs: {len(ids)}')
+          PY
+      - name: Remove temporary patch tooling
+        run: |
+          rm -f scripts/apply_fullscreen_home_banner.py
+          rm -f scripts/finalize_fullscreen_home_banner.py
+          rm -f .github/workflows/apply_fullscreen_home_banner.yml
+          rm -f .github/workflows/finalize_fullscreen_home_banner.yml
+      - name: Commit finalization
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add docs test scripts .github/workflows
+          git commit -m "docs(home): finalize fullscreen banner checkpoint [skip ci]" || exit 0
+          git push
