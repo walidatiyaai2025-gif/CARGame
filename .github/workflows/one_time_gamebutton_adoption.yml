@@ -1,0 +1,374 @@
+name: One-time GameButton adoption
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/one_time_gamebutton_adoption.yml
+
+permissions:
+  contents: write
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Adopt GameButton in major CTAs
+        shell: python
+        run: |
+          from pathlib import Path
+
+          def replace_once(path, old, new):
+              p = Path(path)
+              text = p.read_text(encoding='utf-8')
+              if old not in text:
+                  raise SystemExit(f'Expected text not found in {path}')
+              p.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+          replace_once(
+              'lib/features/home/home_screen.dart',
+              "import '../../core/theme/three_d_game_icon.dart';\n",
+              "import '../../core/theme/three_d_game_icon.dart';\nimport '../../core/widgets/game_button.dart';\n",
+          )
+
+          old_home = '''  @override
+  Widget build(BuildContext context) => Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 620),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: enabled && !busy ? onPressed : null,
+              borderRadius: BorderRadius.circular(28),
+              child: Ink(
+                height: compact ? 70 : 78,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: enabled
+                        ? const [Color(0xFFFFB62E), Color(0xFFF06419)]
+                        : const [Color(0xFFB8BEC7), Color(0xFF8C939D)],
+                  ),
+                  borderRadius: BorderRadius.circular(28),
+                  boxShadow: enabled
+                      ? const [
+                          BoxShadow(
+                            color: Color(0x66E76B17),
+                            blurRadius: 22,
+                            offset: Offset(0, 12),
+                          ),
+                        ]
+                      : null,
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 18),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 52,
+                        height: 52,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: .18),
+                          shape: BoxShape.circle,
+                        ),
+                        child: busy
+                            ? const Padding(
+                                padding: EdgeInsets.all(14),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 3,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 36),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              enabled
+                                  ? (ar ? 'ابدأ المرحلة التالية' : 'START NEXT CITY')
+                                  : (ar ? 'لا توجد قلوب' : 'NO HEARTS'),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: compact ? 17 : 20,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: .3,
+                              ),
+                            ),
+                            Text(
+                              cityName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const ThreeDGameIcon(
+                        type: ThreeDIconType.chest,
+                        size: 52,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );'''
+
+          new_home = '''  @override
+  Widget build(BuildContext context) => Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 620),
+          child: GameButton(
+            semanticLabel: enabled
+                ? (ar ? 'ابدأ المرحلة التالية: $cityName' : 'Start next city: $cityName')
+                : (ar ? 'لا توجد قلوب' : 'No hearts'),
+            onPressed: enabled ? onPressed : null,
+            enabled: enabled,
+            loading: busy,
+            expand: true,
+            height: compact ? 70 : 78,
+            borderRadius: BorderRadius.circular(28),
+            padding: const EdgeInsets.symmetric(horizontal: 18),
+            gradient: LinearGradient(
+              colors: enabled
+                  ? const [Color(0xFFFFB62E), Color(0xFFF06419)]
+                  : const [Color(0xFFB8BEC7), Color(0xFF8C939D)],
+            ),
+            shadowColor: const Color(0x66E76B17),
+            child: Row(
+              children: [
+                Container(
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: .18),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 36),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        enabled
+                            ? (ar ? 'ابدأ المرحلة التالية' : 'START NEXT CITY')
+                            : (ar ? 'لا توجد قلوب' : 'NO HEARTS'),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: compact ? 17 : 20,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: .3,
+                        ),
+                      ),
+                      Text(
+                        cityName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const ThreeDGameIcon(type: ThreeDIconType.chest, size: 52),
+              ],
+            ),
+          ),
+        ),
+      );'''
+          replace_once('lib/features/home/home_screen.dart', old_home, new_home)
+
+          replace_once(
+              'lib/features/levels/city_briefing_screen.dart',
+              "import '../../core/theme/three_d_game_icon.dart';\n",
+              "import '../../core/theme/three_d_game_icon.dart';\nimport '../../core/widgets/game_button.dart';\n",
+          )
+
+          old_brief = '''  @override
+  Widget build(BuildContext context) => SizedBox(
+        height: 68,
+        child: FilledButton(
+          style: FilledButton.styleFrom(
+            backgroundColor: skinColor,
+            disabledBackgroundColor: skinColor.withValues(alpha: .35),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            elevation: enabled ? 7 : 0,
+          ),
+          onPressed: enabled ? onPressed : null,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (loading)
+                const SizedBox.square(
+                  dimension: 24,
+                  child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
+                )
+              else
+                const Icon(Icons.play_arrow_rounded, size: 34),
+              const SizedBox(width: 9),
+              Flexible(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      enabled
+                          ? (isArabic ? 'ابدأ المهمة' : 'START MISSION')
+                          : (isArabic ? 'لا توجد قلوب' : 'NO HEARTS'),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900),
+                    ),
+                    if (!loading)
+                      Text(
+                        cityName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 10, color: Colors.white70, fontWeight: FontWeight.w700),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );'''
+
+          new_brief = '''  @override
+  Widget build(BuildContext context) => GameButton(
+        semanticLabel: enabled
+            ? (isArabic ? 'ابدأ مهمة $cityName' : 'Start mission $cityName')
+            : (isArabic ? 'لا توجد قلوب' : 'No hearts'),
+        onPressed: enabled ? onPressed : null,
+        enabled: enabled,
+        loading: loading,
+        expand: true,
+        height: 68,
+        borderRadius: BorderRadius.circular(24),
+        backgroundColor: skinColor,
+        disabledColor: skinColor.withValues(alpha: .35),
+        shadowColor: skinColor.withValues(alpha: .42),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.play_arrow_rounded, size: 34, color: Colors.white),
+            const SizedBox(width: 9),
+            Flexible(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    enabled
+                        ? (isArabic ? 'ابدأ المهمة' : 'START MISSION')
+                        : (isArabic ? 'لا توجد قلوب' : 'NO HEARTS'),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w900),
+                  ),
+                  Text(
+                    cityName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 10, color: Colors.white70, fontWeight: FontWeight.w700),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );'''
+          replace_once('lib/features/levels/city_briefing_screen.dart', old_brief, new_brief)
+
+          replace_once(
+              'lib/features/shop/shop_screen.dart',
+              "import '../../core/theme/three_d_game_icon.dart';\n",
+              "import '../../core/theme/three_d_game_icon.dart';\nimport '../../core/widgets/game_button.dart';\n",
+          )
+
+          old_shop = '''          trailing: FilledButton(
+            onPressed: onTap,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const ThreeDGameIcon(
+                  type: ThreeDIconType.coin,
+                  size: 22,
+                ),
+                const SizedBox(width: 4),
+                Text('$price'),
+              ],
+            ),
+          ),'''
+
+          new_shop = '''          trailing: GameButton(
+            semanticLabel: 'Buy $title for $price coins',
+            onPressed: onTap,
+            height: 46,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            borderRadius: BorderRadius.circular(16),
+            backgroundColor: Theme.of(context).colorScheme.primary,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const ThreeDGameIcon(type: ThreeDIconType.coin, size: 22),
+                const SizedBox(width: 4),
+                Text(
+                  '$price',
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900),
+                ),
+              ],
+            ),
+          ),'''
+          replace_once('lib/features/shop/shop_screen.dart', old_shop, new_shop)
+
+          status = Path('docs/STATUS.md')
+          text = status.read_text(encoding='utf-8')
+          text = text.replace(
+              '| Integrated screen | Settings |',
+              '| Integrated screens | Settings, Home Start, Mission Start, Shop booster purchase |',
+          )
+          text = text.replace(
+              '| Next checkpoint | Adopt `GameButton` in Home Start, mission launch, result Next/Retry, and shop purchase flows after the current CI run passes. |',
+              '| Next checkpoint | Adopt `GameButton` in result Next/Retry and remaining theme/heart purchase flows, then close MOT-003 after device verification. |',
+          )
+          marker = '- Settings language, privacy, and about actions now use the shared component.\n'
+          addition = marker + '- Home Start, Mission Start, and booster purchase CTAs now use the same shared motion, loading, semantics, and async guard.\n'
+          if marker in text and addition not in text:
+              text = text.replace(marker, addition, 1)
+          status.write_text(text, encoding='utf-8')
+
+          workflow = Path('.github/workflows/one_time_gamebutton_adoption.yml')
+          workflow.unlink()
+
+      - name: Format and verify changed Dart files
+        run: |
+          dart format lib/features/home/home_screen.dart lib/features/levels/city_briefing_screen.dart lib/features/shop/shop_screen.dart
+          git diff --check
+
+      - name: Commit adoption checkpoint
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add lib/features/home/home_screen.dart lib/features/levels/city_briefing_screen.dart lib/features/shop/shop_screen.dart docs/STATUS.md .github/workflows/one_time_gamebutton_adoption.yml
+          git commit -m "feat(motion): adopt GameButton in major CTAs [skip ci]"
+          git push
