@@ -92,8 +92,8 @@ Codex must not mark a feature complete merely because UI code exists.
 | ID | Function | Priority | Status | Dependencies | Acceptance / evidence |
 |---|---|---:|---|---|---|
 | AST-001 | Asset folder taxonomy and naming standard | P0 | VERIFIED | ENG-001 | `docs/ASSET_CATALOG.md` and `assets/3d/README.md` define runtime/source/provenance paths, stable filename/ID grammar, four locked camera profiles, upper-left lighting/material rules, WebP export budgets, accessibility and provenance handoff; mechanical standard/dashboard checks passed 2026-08-07. |
-| AST-002 | Asset manifest and typed registry | P0 | READY | AST-001 | Stable IDs, path, category, semantics, fallback, dimensions, rarity, world, and profile are typed. |
-| AST-003 | Missing-asset fallback | P0 | PLANNED | AST-002 | Missing/corrupt assets never crash or leave invisible gameplay objects. |
+| AST-002 | Asset manifest and typed registry | P0 | IMPLEMENTED | AST-001 | Typed asset model, manifest, and registry are present in `lib/core/assets/game_asset.dart`, `game_asset_manifest.dart`, and `game_asset_registry.dart`, with focused manifest/registry tests; full latest-head CI/device verification remains before VERIFIED. |
+| AST-003 | Missing-asset fallback | P0 | IMPLEMENTED | AST-002 | `GameAssetView` and `GameManifestAssetView` provide visible runtime fallbacks for missing/corrupt assets, with focused fallback widget tests; full latest-head CI/device verification remains before VERIFIED. |
 | AST-004 | Precache and memory policy | P1 | PLANNED | AST-002 | Only near-future assets are precached and caches are bounded/observable. |
 | AST-005 | 3D UI resource asset pack | P1 | PLANNED | AST-001 | Production heart, coin, star, XP, chest, gift, lock, and badge assets meet style/size rules. |
 | AST-006 | 3D booster asset pack | P1 | PLANNED | AST-001 | Hint, moves, shield, and future boosters use one visual direction. |
@@ -331,13 +331,13 @@ Codex must not mark a feature complete merely because UI code exists.
 
 ## IN PROGRESS
 
-- `UI3D-006` remains the only active catalog item from the responsive-shell work; current navigation checkpoint is clean and closed as `IMPLEMENTED`.
+- `UI3D-006` remains the only active catalog item from the responsive-shell work.
 
 ## NEXT READY
 
-1. `NAV-002` Adopt `GameNavigator` across remaining main routes and validate back-stack/RTL behavior.
-2. `AST-002` Implement the asset manifest and typed registry.
-3. `TEST-001` Add progress/economy unit tests.
+1. `NAV-002` Complete/merge the ready unified-navigation checkpoint after review of PR #62.
+2. `TEST-001` Add progress/economy unit tests.
+3. `REL-001` Verify dynamic ADB/device scripts on a supported workstation/device matrix.
 
 ## BLOCKED
 
@@ -352,6 +352,8 @@ Codex must not mark a feature complete merely because UI code exists.
 
 ## Recently implemented
 
+- `AST-002` Asset manifest and typed registry — typed model, manifest, registry, and focused tests are present; latest-head verification remains.
+- `AST-003` Missing-asset fallback — runtime fallback views and focused widget tests are present; latest-head verification remains.
 - `MOT-004` Screen transitions — shared RTL-aware route motion, Reduced Motion fallback, central navigator façade, duplicate-push guards, named World Map→Briefing integration, and focused navigation tests added; latest Flutter CI/device verification pending.
 - `UI3D-004` Reusable 3D card and panel system — shared panels adopted in Home, Shop, and Progress Hub with focused regression tests; latest Flutter CI/device verification pending.
 - `MOT-007` Correct/wrong/combo feedback — synchronized overlay, capped visual/haptic intensity, settings-aware hooks, localized semantics, deterministic completion, and focused tests added; Flutter CI/device verification pending.

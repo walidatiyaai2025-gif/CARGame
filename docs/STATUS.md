@@ -6,12 +6,23 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 
 | Field | Value |
 |---|---|
-| Current phase | C — Motion and living interface |
-| Completed checkpoint | `MOT-004` Screen transitions |
-| Status | IMPLEMENTED — shared route motion and guarded navigator exist; World Map→Briefing is integrated; workstation Release APK build passed before the latest analyzer-warning cleanup |
-| Previous checkpoint | `UI3D-004` Reusable 3D card and panel system |
-| Next recommended feature | `NAV-002` Adopt the shared route policy across Home, Shop, Progress, briefing/game/result routes |
-| Known blocker | No blocker to development. Re-run analyze/tests/release build after syncing the two analyzer-cleanup commits; local Gradle wrapper also warns that 8.13.0 should be upgraded to >=8.14.0. |
+| Current phase | B — Shared 3D design system |
+| Completed checkpoint | `UI3D-004` Reusable 3D card and panel system |
+| Status | IN PROGRESS — `UI3D-006` remains the sole active catalog feature; `GameFitView` is adopted by Home and Mission Briefing, with remaining short-screen and device/accessibility matrix work still open |
+| Previous checkpoint | `MOT-004` Screen transitions |
+| Next recommended feature | `NAV-002` Complete review/merge of the unified main-route adoption in PR #62, then continue the highest-priority unblocked queue |
+| Known blocker | No blocker to development. `NAV-002` is implemented on its PR branch with green CI but remains `READY` on `main` until merge; `UI3D-006` remains active and must not be overwritten by tracking cleanup. |
+
+## Tracking reconciliation checkpoint — 2026-08-07
+
+- Reconciled catalog state against current `main` implementation without changing runtime code.
+- `AST-002` is now `IMPLEMENTED`: typed asset model, manifest, registry, and focused manifest/registry tests exist under `lib/core/assets` and `test/core/assets`.
+- `AST-003` is now `IMPLEMENTED`: `GameAssetView` / `GameManifestAssetView` provide runtime missing/corrupt-asset fallbacks with focused widget coverage.
+- Neither AST item is marked `VERIFIED`; latest-head CI/device evidence remains required before that promotion.
+- `UI3D-006` remains the sole `IN PROGRESS` catalog item, preserving ownership of the responsive-shell workstream.
+- `NAV-002` remains `READY` in the `main` catalog until PR #62 merges even though that PR has a successful full CI run and is Ready for Review.
+- Active queue text was refreshed to remove AST-002/003 from future implementation work and to avoid claiming unmerged branch state as mainline state.
+- This reconciliation is documentation/tracking-only; dashboard/catalog integrity and normal PR CI remain the acceptance gate.
 
 ## Setup Tool safe-directory repair — 2026-08-07
 
@@ -125,6 +136,7 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 
 | Date | Verification | Result |
 |---|---|---|
+| 2026-08-07 | Tracking reconciliation evidence review | PASSED — AST-002/003 implementation and tests confirmed; UI3D-006 preserved as sole IN PROGRESS; PR CI/catalog-dashboard integrity still required |
 | 2026-08-07 | Dart format | PASSED |
 | 2026-08-07 | Flutter Analyze | PASSED — no issues found |
 | 2026-08-07 | Action feedback focused tests | PASSED — 3/3 |
