@@ -8,10 +8,20 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 |---|---|
 | Current phase | C — Motion and living interface |
 | Completed checkpoint | `MOT-004` Screen transitions |
-| Status | IMPLEMENTED — shared route motion and guarded navigator exist; World Map→Briefing is integrated; latest Flutter CI/device verification pending |
+| Status | IMPLEMENTED — shared route motion and guarded navigator exist; World Map→Briefing is integrated; workstation Release APK build passed before the latest analyzer-warning cleanup |
 | Previous checkpoint | `UI3D-004` Reusable 3D card and panel system |
 | Next recommended feature | `NAV-002` Adopt the shared route policy across Home, Shop, Progress, briefing/game/result routes |
-| Known blocker | No production verification claim until format/analyze/navigation tests/full tests/debug APK run against the latest navigation commits. |
+| Known blocker | No blocker to development. Re-run analyze/tests/release build after syncing the two analyzer-cleanup commits; local Gradle wrapper also warns that 8.13.0 should be upgraded to >=8.14.0. |
+
+## Workstation release-build evidence — 2026-08-07
+
+- User workstation completed `flutter build apk --release --no-pub` successfully.
+- Release artifact reported at `build/app/outputs/flutter-apk/app-release.apk` with size 53.3 MB.
+- Build completed in approximately 39.6 seconds after dependency resolution.
+- Flutter Analyze completed with only two informational unnecessary-import findings and no errors or warnings blocking the build.
+- Removed the redundant `flutter/foundation.dart` import from `game_asset_cache_policy.dart` and redundant `dart:typed_data` import from `game_asset_view_test.dart` in follow-up commits.
+- A fresh analyze/build is required after syncing those cleanup commits before claiming a zero-issue latest-head verification.
+- Flutter reported Gradle 8.13.0 as nearing end of support and recommends >=8.14.0. The wrapper file used on the workstation is not currently tracked in the repository, so the toolchain fix must be made reproducible rather than silently changing only one machine.
 
 ## MOT-004 implementation evidence — 2026-08-07
 
@@ -130,6 +140,8 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | 2026-08-07 | UI3D-004 latest combined GitHub status | PENDING — no check statuses exposed yet for `87923cddd7cb609c41d1bc22bb00baada9469a3d` |
 | 2026-08-07 | MOT-004 latest combined GitHub status | PENDING — no check statuses exposed yet for `94b7ecab2c76616a547699e19fbf13abb11420db` |
 | 2026-08-07 | Dashboard/catalog structural compatibility after MOT-004 | PASSED BY REVIEW — phase headings and six-column feature table schema preserved; runtime dashboard/CI verification pending |
+| 2026-08-07 | Workstation Release APK | PASSED — `app-release.apk` built successfully, 53.3 MB, before analyzer-import cleanup commits |
+| 2026-08-07 | Workstation Flutter Analyze before import cleanup | PASSED WITH INFO — 2 unnecessary imports, no blocking errors; fixes committed and awaiting rerun |
 
 ## Test locally
 
@@ -148,7 +160,7 @@ flutter test test\features\home\home_shared_panels_test.dart
 flutter test test\features\shop\shop_game_panel_test.dart
 flutter test test\features\progress\progress_hub_game_panel_test.dart
 flutter test
-flutter build apk --debug
+flutter build apk --release --no-pub
 flutter run
 ```
 
