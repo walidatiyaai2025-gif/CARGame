@@ -6,6 +6,9 @@ void main() {
   testWidgets('ready interactive panel exposes button semantics and taps once', (
     tester,
   ) async {
+    final semantics = tester.ensureSemantics();
+    addTearDown(semantics.dispose);
+
     var taps = 0;
     await tester.pumpWidget(
       MaterialApp(
