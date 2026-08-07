@@ -6,12 +6,34 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 
 | Field | Value |
 |---|---|
-| Current phase | D — 3D asset pipeline |
-| Completed checkpoint | `AST-001` Asset folder taxonomy and naming standard |
-| Status | VERIFIED — documentation, naming grammar, inventory, and dashboard checks passed |
-| Previous checkpoint | `ENG-001` Repository audit and baseline |
-| Next recommended feature | `AST-002` Asset manifest and typed registry |
-| Known blocker | No binary asset may enter the runtime bundle until `AST-002`, `AST-003`, and `AST-011` provide registry, fallback, and provenance gates. |
+| Current phase | B — Shared 3D design system |
+| Completed checkpoint | `UI3D-004` Reusable 3D card and panel system |
+| Status | IMPLEMENTED — shared panel primitives are adopted in Home, Shop, and Progress Hub; Flutter CI/device verification pending |
+| Previous checkpoint | `AST-001` Asset folder taxonomy and naming standard |
+| Next recommended feature | `MOT-004` Unified screen transitions after CI confirms the UI3D checkpoint |
+| Known blocker | No production verification claim until format/analyze/widget tests/debug APK run against the latest shared-panel commits. |
+
+## UI3D-004 implementation evidence — 2026-08-07
+
+- Added reusable `GamePanel` with unified depth, highlight, border, clipping,
+  press/hover interaction, loading skeleton, error state, semantics, and reduced-motion handling.
+- Added `GameResourcePanel`, `GameActionPanel`, `GameStatPanel`, and `GameHeroPanel`
+  so resource cards, actions, metrics, and hero summaries share one visual contract.
+- Home resource cards now use `GameResourcePanel`; Daily Reward, Daily Mission, and
+  Cargo Shop entries use `GameActionPanel`; Win Streak uses `GamePanel` while the
+  existing `GameFitView` no-scroll composition is preserved.
+- Shop booster cards now use `GamePanel` without changing prices, inventory, or purchase logic.
+- Progress Hub was refactored onto `GameHeroPanel`, `GameStatPanel`, `GamePanel`, and
+  `GameButton` while preserving its intentionally scrollable long-form layout,
+  mission claim behavior, achievements, hearts, XP, streaks, and statistics.
+- Progress Hero and Performance Summary no longer own duplicate gradient/shadow card
+  implementations; shared panel primitives own the depth and interaction contract.
+- Added focused widget/regression tests for panel ready/loading/error states,
+  interactions, Home no-scroll adoption, Shop booster adoption, Progress long-form
+  scrolling, shared hero/stat adoption, and dynamic 3D asset fallbacks.
+- Latest implementation commits include `1faea8a1f1388fc8b2a6a2fdfb1d8915227f7cda`
+  and `87923cddd7cb609c41d1bc22bb00baada9469a3d`; GitHub combined status has not yet
+  exposed checks for the latest commit, so this checkpoint is not marked VERIFIED.
 
 ## AST-001 verification evidence — 2026-08-07
 
@@ -92,6 +114,7 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | 2026-08-07 | AST-001 dashboard baseline JSON | PASSED — JSON parses and matches 116 tracked files, zero binary assets, and checkpoint identity |
 | 2026-08-07 | AST-001 catalog/dashboard integrity | PASSED — 19 phases, 191 unique features, valid status/dependencies, zero active tasks, and inline Dashboard JavaScript syntax valid |
 | 2026-08-07 | Flutter format/analyze/tests/debug APK | NOT APPLICABLE — documentation and asset-governance files only; no Dart, platform, dependency, or binary asset changes |
+| 2026-08-07 | UI3D-004 latest combined GitHub status | PENDING — no check statuses exposed yet for `87923cddd7cb609c41d1bc22bb00baada9469a3d` |
 
 ## Test locally
 
@@ -100,10 +123,16 @@ cd "D:\Apps\CARGame"
 git fetch origin
 git reset --hard origin/main
 flutter pub get
+dart format lib test
 flutter analyze --no-fatal-infos --no-fatal-warnings
-flutter test test\core\motion\game_action_feedback_test.dart
-flutter test test\core\motion\game_travel_motion_test.dart
-flutter test test\features\game\game_screen_motion_test.dart
+flutter test test\core\widgets\game_panel_test.dart
+flutter test test\core\widgets\game_resource_panel_test.dart
+flutter test test\core\widgets\game_action_panel_test.dart
+flutter test test\core\widgets\game_stat_panel_test.dart
+flutter test test\core\widgets\game_hero_panel_test.dart
+flutter test test\features\home\home_shared_panels_test.dart
+flutter test test\features\shop\shop_game_panel_test.dart
+flutter test test\features\progress\progress_hub_game_panel_test.dart
 flutter test
 flutter build apk --debug
 flutter run
