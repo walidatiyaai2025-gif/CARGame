@@ -1,4 +1,4 @@
-﻿# Flutter / Dart
+# Flutter / Dart
 .dart_tool/
 .flutter-plugins
 .flutter-plugins-dependencies
@@ -15,7 +15,7 @@ ios/Flutter/flutter_export_environment.sh
 ios/Runner/GeneratedPluginRegistrant.h
 ios/Runner/GeneratedPluginRegistrant.m
 
-# Android
+# Android signing and local SDK configuration
 android/.gradle/
 android/local.properties
 android/app/debug/
@@ -23,7 +23,20 @@ android/app/profile/
 android/app/release/
 *.jks
 *.keystore
+*.pem
+*.p12
+*.pfx
 key.properties
+
+# Local secrets and environment overrides
+.env
+.env.*
+!.env.example
+secrets/
+**/secrets/
+dart-defines.local.json
+dart_defines.local.json
+*.credentials.local.json
 
 # IntelliJ / Android Studio
 .idea/
