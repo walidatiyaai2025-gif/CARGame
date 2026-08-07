@@ -21,14 +21,24 @@ class GameFitView extends StatelessWidget {
       padding: padding,
       child: LayoutBuilder(
         builder: (context, constraints) {
+          final width = constraints.hasBoundedWidth
+              ? constraints.maxWidth
+              : MediaQuery.sizeOf(context).width;
+          final height = constraints.hasBoundedHeight
+              ? constraints.maxHeight
+              : MediaQuery.sizeOf(context).height;
+
           return SizedBox(
-            width: constraints.maxWidth,
-            height: constraints.maxHeight,
+            width: width,
+            height: height,
             child: FittedBox(
               fit: BoxFit.scaleDown,
               alignment: alignment,
               child: ConstrainedBox(
-                constraints: BoxConstraints(maxWidth: constraints.maxWidth),
+                constraints: BoxConstraints(
+                  maxWidth: width,
+                  maxHeight: height,
+                ),
                 child: child,
               ),
             ),
