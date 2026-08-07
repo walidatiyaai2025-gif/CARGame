@@ -38,10 +38,16 @@ void main() {
       ),
     );
 
-    expect(await policy.precache(context, registry, 'ui.heart'), isTrue);
+    final heartCached = await tester.runAsync(
+      () => policy.precache(context, registry, 'ui.heart'),
+    );
+    expect(heartCached, isTrue);
     expect(policy.snapshot.cachedIds, ['ui.heart']);
 
-    expect(await policy.precache(context, registry, 'ui.coin'), isTrue);
+    final coinCached = await tester.runAsync(
+      () => policy.precache(context, registry, 'ui.coin'),
+    );
+    expect(coinCached, isTrue);
     expect(policy.snapshot.cachedIds, ['ui.coin']);
     expect(policy.snapshot.cachedCount, 1);
     expect(policy.snapshot.inFlightCount, 0);
