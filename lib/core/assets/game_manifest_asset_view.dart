@@ -52,6 +52,7 @@ final class GameManifestAssetView extends StatelessWidget {
           height: height,
           fit: fit,
           semanticLabel: semanticLabel,
+          errorFallback: fallback,
         );
       },
     );
