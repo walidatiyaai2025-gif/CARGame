@@ -5,6 +5,7 @@ import 'package:cargo_sort_game/core/widgets/game_button.dart';
 import 'package:cargo_sort_game/features/home/home_screen.dart';
 import 'package:cargo_sort_game/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
@@ -16,6 +17,13 @@ void main() {
   setUp(() {
     SharedPreferencesAsyncPlatform.instance =
         InMemorySharedPreferencesAsync.empty();
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(SystemChannels.platform, (call) async => null);
+  });
+
+  tearDown(() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(SystemChannels.platform, null);
   });
 
   testWidgets('Home uses stable shared route names for main destinations', (
@@ -65,9 +73,6 @@ void main() {
       await tester.pump(const Duration(milliseconds: 400));
     }
 
-    // Exercise the journey first because it owns a busy flag while its route
-    // future is active. Target the actual GameButton instead of a child icon so
-    // the test follows the same activation contract as GameButton's own tests.
     await expectRoute(find.byType(GameButton), GameRouteNames.worldMap);
     await expectRoute(
       find.byIcon(Icons.storefront_rounded),
