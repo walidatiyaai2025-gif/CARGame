@@ -74,7 +74,7 @@ final class GameAssetCachePolicy extends ChangeNotifier {
       await precacheImage(provider, context);
       _failed.remove(assetId);
       _cached[assetId] = provider;
-      _trimToBudget();
+      await _trimToBudget();
       return true;
     } catch (_) {
       _recordFailure(assetId, notify: false);
@@ -102,11 +102,11 @@ final class GameAssetCachePolicy extends ChangeNotifier {
 
   Future<void> forget(String assetId) async {
     final provider = _cached.remove(assetId);
-    final changed = provider != null | _failed.remove(assetId);
+    final failedRemoved = _failed.remove(assetId);
     if (provider != null) {
       await provider.evict(cache: PaintingBinding.instance.imageCache);
     }
-    if (changed) notifyListeners();
+    if (provider != null || failedRemoved) notifyListeners();
   }
 
   Future<void> clear() async {
@@ -130,12 +130,12 @@ final class GameAssetCachePolicy extends ChangeNotifier {
     if (notify) notifyListeners();
   }
 
-  void _trimToBudget() {
+  Future<void> _trimToBudget() async {
     while (_cached.length > maxEntries) {
       final evictedId = _cached.keys.first;
       final provider = _cached.remove(evictedId);
       if (provider != null) {
-        provider.evict(cache: PaintingBinding.instance.imageCache);
+        await provider.evict(cache: PaintingBinding.instance.imageCache);
       }
     }
   }
