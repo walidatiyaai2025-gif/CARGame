@@ -5,6 +5,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/theme/game_skin.dart';
 import '../../core/theme/three_d_game_icon.dart';
 import '../../core/widgets/game_button.dart';
+import '../../core/widgets/game_panel.dart';
 
 class ShopScreen extends StatelessWidget {
   const ShopScreen({super.key, required this.store});
@@ -365,44 +366,80 @@ class _BoosterTile extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) => Card(
-    margin: const EdgeInsets.only(bottom: 10),
-    child: ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-      leading: SizedBox.square(
-        dimension: 56,
-        child: ThreeDGameIcon(type: iconType, size: 54, semanticLabel: title),
-      ),
-      title: Text(
-        title,
-        style: const TextStyle(
-          color: AppTheme.navy,
-          fontWeight: FontWeight.w900,
-        ),
-      ),
-      subtitle: Text('$description\nOwned: $inventory'),
-      isThreeLine: true,
-      trailing: GameButton(
-        semanticLabel: 'Buy $title for $price coins',
-        onPressed: onTap,
-        height: 46,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        borderRadius: BorderRadius.circular(16),
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const ThreeDGameIcon(type: ThreeDIconType.coin, size: 22),
-            const SizedBox(width: 4),
-            Text(
-              '$price',
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w900,
-              ),
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(bottom: 10),
+    child: GamePanel(
+      semanticLabel: '$title. $description. Owned $inventory.',
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      borderRadius: BorderRadius.circular(24),
+      backgroundColor: Colors.white.withValues(alpha: .96),
+      child: Row(
+        children: [
+          SizedBox.square(
+            dimension: 56,
+            child: ThreeDGameIcon(
+              type: iconType,
+              size: 54,
+              semanticLabel: title,
             ),
-          ],
-        ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: AppTheme.navy,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  description,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: AppTheme.muted),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Owned: $inventory',
+                  style: const TextStyle(
+                    color: AppTheme.navyLight,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          GameButton(
+            semanticLabel: 'Buy $title for $price coins',
+            onPressed: onTap,
+            height: 46,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            borderRadius: BorderRadius.circular(16),
+            backgroundColor: Theme.of(context).colorScheme.primary,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const ThreeDGameIcon(type: ThreeDIconType.coin, size: 22),
+                const SizedBox(width: 4),
+                Text(
+                  '$price',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     ),
   );
