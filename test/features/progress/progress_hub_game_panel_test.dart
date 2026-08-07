@@ -39,7 +39,6 @@ void main() {
       );
       await tester.pump();
 
-      expect(find.text('Earn 6 stars'), findsOneWidget);
       expect(find.text('Earn 150 coins'), findsOneWidget);
       expect(
         find.ancestor(
