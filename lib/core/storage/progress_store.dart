@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+
+import 'recovering_preferences.dart';
 
 class ProgressStore extends ChangeNotifier {
   static const int totalLevels = 150;
@@ -33,7 +34,7 @@ class ProgressStore extends ChangeNotifier {
   static const _extraMovesKey = 'booster_extra_moves';
   static const _comboShieldsKey = 'booster_combo_shields';
 
-  final SharedPreferencesAsync _prefs = SharedPreferencesAsync();
+  final RecoveringPreferences _prefs = RecoveringPreferences();
   final Map<int, int> _levelStars = <int, int>{};
 
   int highestUnlockedLevel = 1;
@@ -75,6 +76,7 @@ class ProgressStore extends ChangeNotifier {
   int get playerLevel => 1 + (playerXp ~/ 500);
   int get xpIntoCurrentLevel => playerXp % 500;
   double get playerLevelProgress => xpIntoCurrentLevel / 500;
+  List<StorageRecoveryEvent> get recoveryEvents => _prefs.recoveryEvents;
 
   int starsForLevel(int level) => _levelStars[level] ?? 0;
   bool isThemeUnlocked(String themeId) => unlockedThemes.contains(themeId);
@@ -129,8 +131,12 @@ class ProgressStore extends ChangeNotifier {
     final savedMoves = await _prefs.getInt(_extraMovesKey);
     final savedShields = await _prefs.getInt(_comboShieldsKey);
     freeHints = savedHints == null ? 2 : (savedHints < 0 ? 0 : savedHints);
-    extraMovesBoosters = savedMoves == null ? 1 : (savedMoves < 0 ? 0 : savedMoves);
-    comboShields = savedShields == null ? 1 : (savedShields < 0 ? 0 : savedShields);
+    extraMovesBoosters = savedMoves == null
+        ? 1
+        : (savedMoves < 0 ? 0 : savedMoves);
+    comboShields = savedShields == null
+        ? 1
+        : (savedShields < 0 ? 0 : savedShields);
 
     lastCompletionBonus = 0;
     lastCompletionBonusXp = 0;
