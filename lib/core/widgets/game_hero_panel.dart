@@ -103,10 +103,7 @@ final class GameHeroPanel extends StatelessWidget {
               ],
             ],
           ),
-          if (body != null) ...[
-            SizedBox(height: compact ? 10 : 14),
-            body!,
-          ],
+          if (body != null) ...[SizedBox(height: compact ? 10 : 14), body!],
           if (progress != null) ...[
             SizedBox(height: compact ? 10 : 14),
             Row(
@@ -146,9 +143,7 @@ final class GameHeroPanel extends StatelessWidget {
                     ? theme.colorScheme.surfaceContainerHighest
                     : Colors.white24,
                 valueColor: AlwaysStoppedAnimation<Color>(
-                  gradient == null
-                      ? theme.colorScheme.primary
-                      : Colors.white,
+                  gradient == null ? theme.colorScheme.primary : Colors.white,
                 ),
               ),
             ),
