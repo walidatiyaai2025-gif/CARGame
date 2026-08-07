@@ -27,7 +27,13 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
-    expect(find.byType(CustomPaint), findsWidgets);
+    expect(
+      find.descendant(
+        of: find.byType(ThreeDGameIcon),
+        matching: find.byType(CustomPaint),
+      ),
+      findsOneWidget,
+    );
     expect(find.bySemanticsLabel('Energy'), findsOneWidget);
   });
 
@@ -45,7 +51,13 @@ void main() {
     );
 
     expect(tester.takeException(), isNull);
-    expect(find.byType(CustomPaint), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(ThreeDGameIcon),
+        matching: find.byType(CustomPaint),
+      ),
+      findsOneWidget,
+    );
     expect(find.bySemanticsLabel('city'), findsOneWidget);
   });
 }
