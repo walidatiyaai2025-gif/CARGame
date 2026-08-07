@@ -56,7 +56,9 @@ void main() {
     await disposeSplash(tester);
   });
 
-  testWidgets('startup splash survives large text on a tablet', (tester) async {
+  testWidgets('startup splash survives large text on a tablet', (
+    tester,
+  ) async {
     await pumpSplash(
       tester,
       size: const Size(1024, 1366),
