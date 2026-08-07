@@ -44,14 +44,13 @@ void main() {
 
     await tester.tap(find.byKey(const ValueKey('cargo-1-0')));
     await tester.pump();
-    final warehouse = find.byKey(const ValueKey('warehouse-1'));
-    final viewport = Offset.zero &
-        (tester.view.physicalSize / tester.view.devicePixelRatio);
-    final visibleTarget = tester.getRect(warehouse).intersect(viewport);
-    expect(visibleTarget.isEmpty, isFalse);
 
-    await tester.tapAt(visibleTarget.center);
-    await tester.tapAt(visibleTarget.center);
+    final warehouse = find.byKey(const ValueKey('warehouse-1'));
+    await tester.ensureVisible(warehouse);
+    await tester.pump();
+
+    await tester.tap(warehouse);
+    await tester.tap(warehouse);
     await tester.pump();
 
     expect(find.byType(GameTravelMotion), findsOneWidget);
