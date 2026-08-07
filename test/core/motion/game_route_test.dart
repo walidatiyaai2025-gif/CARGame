@@ -55,20 +55,28 @@ void main() {
   testWidgets('removes slide transition when animations are disabled', (
     tester,
   ) async {
+    PageRouteBuilder<void>? route;
+    BuildContext? routeContext;
+
     await tester.pumpWidget(
       MaterialApp(
         home: MediaQuery(
           data: const MediaQueryData(disableAnimations: true),
           child: Builder(
-            builder: (context) => TextButton(
-              onPressed: () => Navigator.of(context).push(
-                GameRoute.build<void>(
-                  context: context,
-                  builder: (_) => const Scaffold(body: Text('Reduced')),
-                ),
-              ),
-              child: const Text('Open'),
-            ),
+            builder: (context) {
+              routeContext = context;
+              return TextButton(
+                onPressed: () {
+                  final builtRoute = GameRoute.build<void>(
+                    context: context,
+                    builder: (_) => const Scaffold(body: Text('Reduced')),
+                  );
+                  route = builtRoute as PageRouteBuilder<void>;
+                  Navigator.of(context).push(builtRoute);
+                },
+                child: const Text('Open'),
+              );
+            },
           ),
         ),
       ),
@@ -76,10 +84,20 @@ void main() {
 
     await tester.tap(find.text('Open'));
     await tester.pump();
+
+    expect(route, isNotNull);
+    expect(route!.transitionDuration, const Duration(milliseconds: 120));
+    final transition = route!.transitionsBuilder(
+      routeContext!,
+      const AlwaysStoppedAnimation<double>(0.5),
+      const AlwaysStoppedAnimation<double>(0),
+      const SizedBox(),
+    );
+    expect(transition, isA<FadeTransition>());
+    expect(transition, isNot(isA<SlideTransition>()));
+
     await tester.pump(const Duration(milliseconds: 120));
     expect(find.text('Reduced'), findsOneWidget);
-    expect(find.byType(FadeTransition), findsWidgets);
-    expect(find.byType(SlideTransition), findsNothing);
   });
 
   testWidgets('supports RTL navigation without throwing', (tester) async {
