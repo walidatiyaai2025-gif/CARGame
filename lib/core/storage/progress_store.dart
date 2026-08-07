@@ -131,8 +131,12 @@ class ProgressStore extends ChangeNotifier {
     final savedMoves = await _prefs.getInt(_extraMovesKey);
     final savedShields = await _prefs.getInt(_comboShieldsKey);
     freeHints = savedHints == null ? 2 : (savedHints < 0 ? 0 : savedHints);
-    extraMovesBoosters = savedMoves == null ? 1 : (savedMoves < 0 ? 0 : savedMoves);
-    comboShields = savedShields == null ? 1 : (savedShields < 0 ? 0 : savedShields);
+    extraMovesBoosters = savedMoves == null
+        ? 1
+        : (savedMoves < 0 ? 0 : savedMoves);
+    comboShields = savedShields == null
+        ? 1
+        : (savedShields < 0 ? 0 : savedShields);
 
     lastCompletionBonus = 0;
     lastCompletionBonusXp = 0;
