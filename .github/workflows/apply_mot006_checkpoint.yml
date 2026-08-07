@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - scripts/apply_mot006_checkpoint.py
+      - test/features/levels/world_map_ambient_background_test.dart
       - .github/workflows/apply_mot006_checkpoint.yml
 
 permissions:
