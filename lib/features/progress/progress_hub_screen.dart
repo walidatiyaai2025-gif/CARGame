@@ -4,7 +4,9 @@ import '../../core/storage/progress_store.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/three_d_game_icon.dart';
 import '../../core/widgets/game_button.dart';
+import '../../core/widgets/game_hero_panel.dart';
 import '../../core/widgets/game_panel.dart';
+import '../../core/widgets/game_stat_panel.dart';
 
 class ProgressHubScreen extends StatelessWidget {
   const ProgressHubScreen({super.key, required this.store});
@@ -58,83 +60,9 @@ class ProgressHubScreen extends StatelessWidget {
             const SizedBox(height: 14),
             _HeroStats(store: store, ar: ar),
             const SizedBox(height: 14),
-            Row(
-              children: [
-                Expanded(
-                  child: _CompactMetric(
-                    icon: Icons.local_fire_department_rounded,
-                    label: ar ? 'السلسلة الحالية' : 'Current streak',
-                    value: '${store.currentWinStreak}',
-                    accent: AppTheme.orange,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _CompactMetric(
-                    icon: Icons.emoji_events_rounded,
-                    label: ar ? 'أفضل سلسلة' : 'Best streak',
-                    value: '${store.bestWinStreak}',
-                    accent: AppTheme.green,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _CompactMetric(
-                    icon: Icons.bolt_rounded,
-                    label: ar ? 'أفضل Combo' : 'Best combo',
-                    value: '${store.bestCombo}',
-                    accent: const Color(0xFF7B43C6),
-                  ),
-                ),
-              ],
-            ),
+            _StreakMetrics(store: store, ar: ar),
             const SizedBox(height: 14),
-            GamePanel(
-              semanticLabel:
-                  '${store.hearts}/${ProgressStore.maxHearts} ${ar ? 'قلوب' : 'hearts'}',
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              child: Row(
-                children: [
-                  const ThreeDGameIcon(
-                    type: ThreeDIconType.heart,
-                    size: 42,
-                    animate: true,
-                    semanticLabel: 'Hearts',
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '${store.hearts}/${ProgressStore.maxHearts} ${ar ? 'قلوب' : 'hearts'}',
-                          style: const TextStyle(
-                            color: AppTheme.navy,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          _heartTimer(ar),
-                          style: const TextStyle(
-                            color: AppTheme.muted,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Icon(
-                    store.hearts < ProgressStore.maxHearts
-                        ? Icons.timer_outlined
-                        : Icons.check_circle_rounded,
-                    color: store.hearts < ProgressStore.maxHearts
-                        ? AppTheme.orange
-                        : AppTheme.green,
-                  ),
-                ],
-              ),
-            ),
+            _HeartPanel(store: store, timer: _heartTimer(ar), ar: ar),
             const SizedBox(height: 18),
             Text(
               ar ? 'مهمة اليوم' : 'Daily Mission',
@@ -176,7 +104,11 @@ class ProgressHubScreen extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.redeem_rounded, color: Colors.white),
+                  const ThreeDGameIcon(
+                    type: ThreeDIconType.gift,
+                    size: 28,
+                    semanticLabel: 'Mission reward',
+                  ),
                   const SizedBox(width: 8),
                   Flexible(
                     child: Text(
@@ -232,7 +164,7 @@ class ProgressHubScreen extends StatelessWidget {
             ),
             _Achievement(
               title: ar ? 'سيد العالم' : 'World Master',
-              unlocked: store.completedLevels >= 150,
+              unlocked: store.completedLevels >= ProgressStore.totalLevels,
               icon: Icons.public_rounded,
             ),
           ],
@@ -244,129 +176,94 @@ class ProgressHubScreen extends StatelessWidget {
 
 class _LevelHero extends StatelessWidget {
   const _LevelHero({required this.store, required this.ar});
+
   final ProgressStore store;
   final bool ar;
 
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(18),
-    decoration: BoxDecoration(
-      gradient: const LinearGradient(
-        colors: [Color(0xFF7B43C6), Color(0xFFB778F2)],
-      ),
-      borderRadius: BorderRadius.circular(28),
-      boxShadow: AppTheme.softShadow,
+  Widget build(BuildContext context) => GameHeroPanel(
+    title: ar ? 'مستوى اللاعب' : 'Player Level',
+    subtitle: '${store.xpIntoCurrentLevel}/500 XP',
+    semanticLabel: ar
+        ? 'مستوى اللاعب ${store.playerLevel}'
+        : 'Player level ${store.playerLevel}',
+    gradient: const LinearGradient(
+      colors: [Color(0xFF7B43C6), Color(0xFFB778F2)],
     ),
-    child: Row(
-      children: [
-        Container(
-          width: 72,
-          height: 72,
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: .16),
-            shape: BoxShape.circle,
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            '${store.playerLevel}',
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 28,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
+    progress: store.playerLevelProgress,
+    progressLabel: ar ? 'تقدم المستوى' : 'Level progress',
+    leading: Container(
+      width: 64,
+      height: 64,
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: .16),
+        shape: BoxShape.circle,
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        '${store.playerLevel}',
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 27,
+          fontWeight: FontWeight.w900,
         ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                ar ? 'مستوى اللاعب' : 'Player Level',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w900,
-                  fontSize: 18,
-                ),
-              ),
-              const SizedBox(height: 6),
-              LinearProgressIndicator(
-                value: store.playerLevelProgress,
-                minHeight: 9,
-                borderRadius: BorderRadius.circular(9),
-                backgroundColor: Colors.white24,
-                valueColor: const AlwaysStoppedAnimation(AppTheme.yellow),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                '${store.xpIntoCurrentLevel}/500 XP',
-                style: const TextStyle(
-                  color: Colors.white70,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
+      ),
     ),
   );
 }
 
 class _HeroStats extends StatelessWidget {
   const _HeroStats({required this.store, required this.ar});
+
   final ProgressStore store;
   final bool ar;
 
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(18),
-    decoration: BoxDecoration(
-      gradient: AppTheme.heroGradient,
-      borderRadius: BorderRadius.circular(28),
-      boxShadow: AppTheme.softShadow,
-    ),
-    child: Column(
+  Widget build(BuildContext context) => GameHeroPanel(
+    title: ar ? 'ملخص الأداء' : 'Performance Summary',
+    subtitle: ar ? 'إحصائيات رحلتك الحالية' : 'Your current journey statistics',
+    gradient: AppTheme.heroGradient,
+    body: Column(
       children: [
         Row(
           children: [
             Expanded(
-              child: _Stat(
+              child: _HeroStat(
                 label: ar ? 'مباريات' : 'Games',
                 value: '${store.gamesPlayed}',
               ),
             ),
             Expanded(
-              child: _Stat(
+              child: _HeroStat(
                 label: ar ? 'انتصارات' : 'Wins',
                 value: '${store.wins}',
               ),
             ),
             Expanded(
-              child: _Stat(
+              child: _HeroStat(
                 label: ar ? 'خسائر' : 'Losses',
                 value: '${store.losses}',
               ),
             ),
           ],
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
         Row(
           children: [
             Expanded(
-              child: _Stat(
+              child: _HeroStat(
                 label: ar ? 'نسبة الفوز' : 'Win Rate',
                 value: '${(store.winRate * 100).round()}%',
               ),
             ),
             Expanded(
-              child: _Stat(
+              child: _HeroStat(
                 label: ar ? 'النجوم' : 'Stars',
                 value: '${store.totalStars}',
               ),
             ),
             Expanded(
-              child: _Stat(
+              child: _HeroStat(
                 label: ar ? 'عملات مكتسبة' : 'Coins Earned',
                 value: '${store.lifetimeCoinsEarned}',
               ),
@@ -378,67 +275,137 @@ class _HeroStats extends StatelessWidget {
   );
 }
 
-class _CompactMetric extends StatelessWidget {
-  const _CompactMetric({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.accent,
+class _StreakMetrics extends StatelessWidget {
+  const _StreakMetrics({required this.store, required this.ar});
+
+  final ProgressStore store;
+  final bool ar;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    children: [
+      Expanded(
+        child: GameStatPanel(
+          iconData: Icons.local_fire_department_rounded,
+          label: ar ? 'السلسلة الحالية' : 'Current streak',
+          value: '${store.currentWinStreak}',
+          accent: AppTheme.orange,
+          compact: true,
+        ),
+      ),
+      const SizedBox(width: 10),
+      Expanded(
+        child: GameStatPanel(
+          iconData: Icons.emoji_events_rounded,
+          label: ar ? 'أفضل سلسلة' : 'Best streak',
+          value: '${store.bestWinStreak}',
+          accent: AppTheme.green,
+          compact: true,
+        ),
+      ),
+      const SizedBox(width: 10),
+      Expanded(
+        child: GameStatPanel(
+          iconData: Icons.bolt_rounded,
+          label: ar ? 'أفضل Combo' : 'Best combo',
+          value: '${store.bestCombo}',
+          accent: const Color(0xFF7B43C6),
+          compact: true,
+        ),
+      ),
+    ],
+  );
+}
+
+class _HeartPanel extends StatelessWidget {
+  const _HeartPanel({
+    required this.store,
+    required this.timer,
+    required this.ar,
   });
-  final IconData icon;
-  final String label;
-  final String value;
-  final Color accent;
+
+  final ProgressStore store;
+  final String timer;
+  final bool ar;
 
   @override
   Widget build(BuildContext context) => GamePanel(
-    semanticLabel: '$label: $value',
-    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
-    borderRadius: BorderRadius.circular(20),
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
+    semanticLabel:
+        '${store.hearts}/${ProgressStore.maxHearts} ${ar ? 'قلوب' : 'hearts'}',
+    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+    child: Row(
       children: [
-        Icon(icon, color: accent),
-        const SizedBox(height: 5),
-        Text(
-          value,
-          style: const TextStyle(
-            color: AppTheme.navy,
-            fontSize: 19,
-            fontWeight: FontWeight.w900,
+        const ThreeDGameIcon(
+          type: ThreeDIconType.heart,
+          size: 42,
+          animate: true,
+          semanticLabel: 'Hearts',
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '${store.hearts}/${ProgressStore.maxHearts} ${ar ? 'قلوب' : 'hearts'}',
+                style: const TextStyle(
+                  color: AppTheme.navy,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                timer,
+                style: const TextStyle(
+                  color: AppTheme.muted,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
           ),
         ),
-        Text(
-          label,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          textAlign: TextAlign.center,
-          style: const TextStyle(color: AppTheme.muted, fontSize: 9),
+        Icon(
+          store.hearts < ProgressStore.maxHearts
+              ? Icons.timer_outlined
+              : Icons.check_circle_rounded,
+          color: store.hearts < ProgressStore.maxHearts
+              ? AppTheme.orange
+              : AppTheme.green,
         ),
       ],
     ),
   );
 }
 
-class _Stat extends StatelessWidget {
-  const _Stat({required this.label, required this.value});
+class _HeroStat extends StatelessWidget {
+  const _HeroStat({required this.label, required this.value});
+
   final String label;
   final String value;
+
   @override
   Widget build(BuildContext context) => Column(
+    mainAxisSize: MainAxisSize.min,
     children: [
-      Text(
-        value,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 22,
-          fontWeight: FontWeight.w900,
+      FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(
+          value,
+          maxLines: 1,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 21,
+            fontWeight: FontWeight.w900,
+          ),
         ),
       ),
+      const SizedBox(height: 2),
       Text(
         label,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
         textAlign: TextAlign.center,
-        style: const TextStyle(color: Colors.white70, fontSize: 11),
+        style: const TextStyle(color: Colors.white70, fontSize: 10),
       ),
     ],
   );
@@ -451,6 +418,7 @@ class _MissionTile extends StatelessWidget {
     required this.target,
     required this.icon,
   });
+
   final String label;
   final int value;
   final int target;
@@ -508,6 +476,7 @@ class _Achievement extends StatelessWidget {
     required this.unlocked,
     required this.icon,
   });
+
   final String title;
   final bool unlocked;
   final IconData icon;
@@ -517,7 +486,6 @@ class _Achievement extends StatelessWidget {
     padding: const EdgeInsets.only(bottom: 8),
     child: GamePanel(
       semanticLabel: unlocked ? '$title unlocked' : '$title locked',
-      enabled: true,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       child: Row(
         children: [
