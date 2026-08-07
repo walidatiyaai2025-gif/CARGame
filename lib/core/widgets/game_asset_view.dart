@@ -112,7 +112,7 @@ class GameAssetView extends StatelessWidget {
       (null, final double h) => h,
       _ => 32.0,
     };
-    return shortest.clamp(18.0, 64.0);
+    return shortest.clamp(18.0, 64.0).toDouble();
   }
 
   static IconData _iconForToken(String token) => switch (token) {
