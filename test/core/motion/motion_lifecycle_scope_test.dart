@@ -10,7 +10,7 @@ void main() {
         home: MotionLifecycleScope(
           child: Builder(
             builder: (context) {
-              enabled = TickerMode.of(context);
+              enabled = TickerMode.valuesOf(context).enabled;
               return const SizedBox.shrink();
             },
           ),
@@ -30,7 +30,7 @@ void main() {
         home: MotionLifecycleScope(
           child: Builder(
             builder: (context) {
-              enabled = TickerMode.of(context);
+              enabled = TickerMode.valuesOf(context).enabled;
               return const SizedBox.shrink();
             },
           ),
@@ -60,7 +60,7 @@ void main() {
             child: MotionLifecycleScope(
               child: Builder(
                 builder: (context) {
-                  enabled = TickerMode.of(context);
+                  enabled = TickerMode.valuesOf(context).enabled;
                   return const SizedBox.shrink();
                 },
               ),
