@@ -1,6 +1,5 @@
 import 'dart:collection';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
 import 'game_asset_registry.dart';
@@ -104,7 +103,7 @@ final class GameAssetCachePolicy extends ChangeNotifier {
     final provider = _cached.remove(assetId);
     final failedRemoved = _failed.remove(assetId);
     if (provider != null) {
-      await provider.evict(cache: PaintingBinding.instance.imageCache);
+      await provider.evict();
     }
     if (provider != null || failedRemoved) notifyListeners();
   }
@@ -116,7 +115,7 @@ final class GameAssetCachePolicy extends ChangeNotifier {
     _failed.clear();
     _inFlight.clear();
     for (final provider in providers) {
-      await provider.evict(cache: PaintingBinding.instance.imageCache);
+      await provider.evict();
     }
     notifyListeners();
   }
@@ -135,7 +134,7 @@ final class GameAssetCachePolicy extends ChangeNotifier {
       final evictedId = _cached.keys.first;
       final provider = _cached.remove(evictedId);
       if (provider != null) {
-        await provider.evict(cache: PaintingBinding.instance.imageCache);
+        await provider.evict();
       }
     }
   }
