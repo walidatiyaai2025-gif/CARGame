@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:typed_data';
 
 import 'package:cargo_sort_game/core/assets/game_asset_cache_policy.dart';
 import 'package:cargo_sort_game/core/assets/game_asset_registry.dart';
