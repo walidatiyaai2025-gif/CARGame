@@ -115,7 +115,7 @@ void main() {
 
     await tester.tapAt(nextTarget);
     await tester.pump(const Duration(milliseconds: 1));
-    await tester.tapAt(nextTarget, warnIfMissed: false);
+    await tester.tapAt(nextTarget);
     await pumpUntilAbsent(find.byType(GameScreen));
 
     expect(observer.gameRoutePops, 1);
