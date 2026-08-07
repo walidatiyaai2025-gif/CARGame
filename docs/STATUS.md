@@ -7,29 +7,31 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | Field | Value |
 |---|---|
 | Current phase | C — Motion and living interface |
-| Completed checkpoint | `MOT-005` Ambient home/world motion |
-| Status | IMPLEMENTED — Home and world-map integration complete; CI and physical-device review pending |
-| Home implementation commit | `bfc16deb36bf3d675ca0c9f2b9df2b9713ebdd05` |
-| World-map integration commit | `8b33f4491f0128adec6e806e6b3ff063982f550b` |
-| Next recommended feature | `MOT-006` Product pickup, travel, placement, settle |
+| Active checkpoint | `MOT-006` Product pickup, travel, placement, settle |
+| Status | IN PROGRESS — pickup and placement feedback implemented; full travel path and physical-device review remain |
+| Implementation commit | `03c741a8627e6c48feeb8bf28624c1c86e079a56` |
+| Previous checkpoint | `MOT-005` lifecycle-safe Home and World Map ambient motion |
+| Next checkpoint | Animate cargo between measured source and warehouse coordinates without changing deterministic state timing |
 
-## MOT-005 implementation evidence — 2026-08-07
+## MOT-006 implementation evidence — 2026-08-07
 
-- Added a low-cost animated backdrop with gradient lighting, glow parallax, drifting clouds, and subtle depth.
-- Home and World Map now reuse the same production painter and animation-controller implementation.
-- World Map preserves all existing progress, locked/open/completed city states, stars, responsive grid behavior, navigation, and RTL/LTR behavior.
-- Each visible route uses one ticker and one `RepaintBoundary`; no second painter implementation was introduced.
-- Reduced Motion stops animation and renders a stable frame.
-- Existing `MotionLifecycleScope` pauses animation while routes are hidden or the application is backgrounded.
-- Added focused tests for Home rendering/disposal and World Map scrollable coexistence/reduced-motion disposal.
+- Added reusable `CargoMotionTile` and `WarehouseMotionTarget` primitives based on shared motion tokens.
+- Selected cargo lifts, scales, and receives clear pickup feedback.
+- Cargo and warehouse input are locked while a placement action resolves, preventing repeated taps and duplicate move consumption.
+- The selected warehouse gives correct spring-settle or wrong recoil feedback before board state changes.
+- Moves, combo, remaining cargo, win/loss checks, rewards, and persistence still mutate exactly once after the motion delay.
+- Reduced Motion shortens durations and removes unnecessary movement.
+- Added focused widget tests for pickup, correct placement settle, disposal safety, and reduced motion.
+- Fixed the invalid const wrapper in the World Map motion test so the project-wide analyzer gate can proceed.
 
 ## Verification ledger
 
 | Date | Verification | Result |
 |---|---|---|
-| 2026-08-07 | Flutter Analyze before world-map integration | PASSED — no issues found |
-| 2026-08-07 | Home ambient focused tests | PASSED — 2/2 |
-| 2026-08-07 | World-map focused tests | PENDING in Flutter CI |
+| 2026-08-07 | Dart format | PASSED |
+| 2026-08-07 | Flutter Analyze | PASSED — no issues found |
+| 2026-08-07 | Cargo motion focused tests | PASSED — 3/3 |
+| 2026-08-07 | Deterministic input guard review | PASSED |
 | 2026-08-07 | Full Flutter test suite | PENDING in Flutter CI |
 | 2026-08-07 | Debug APK build | PENDING in Flutter CI |
 | 2026-08-07 | Dashboard schema | PASSED — six-column tables and phases A–S preserved |
@@ -42,8 +44,7 @@ git fetch origin
 git reset --hard origin/main
 flutter pub get
 flutter analyze
-flutter test test\features\home\home_ambient_background_test.dart
-flutter test test\features\levels\world_map_ambient_background_test.dart
+flutter test test\features\game\cargo_motion_tile_test.dart
 flutter test
 flutter run
 ```
