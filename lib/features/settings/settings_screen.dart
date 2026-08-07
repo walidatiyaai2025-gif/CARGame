@@ -224,14 +224,16 @@ class _SettingsCard extends StatelessWidget {
   final EdgeInsetsGeometry padding;
 
   @override
-  Widget build(BuildContext context) => Container(
-    padding: padding,
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(24),
-      boxShadow: AppTheme.softShadow,
+  Widget build(BuildContext context) => Material(
+    color: Colors.white,
+    elevation: 6,
+    shadowColor: const Color(0x220A2945),
+    borderRadius: BorderRadius.circular(24),
+    clipBehavior: Clip.antiAlias,
+    child: Padding(
+      padding: padding,
+      child: Column(children: children),
     ),
-    child: Column(children: children),
   );
 }
 
