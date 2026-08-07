@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:cargo_sort_game/core/navigation/game_navigator.dart';
+import 'package:cargo_sort_game/core/navigation/game_route_names.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -92,6 +93,57 @@ void main() {
     expect(builds, 1);
     expect(find.text('Duplicate'), findsNothing);
     expect(secondCompleted, isTrue);
+
+    firstCanClose.complete();
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets('pushNamed applies stable name and automatic duplicate guard', (
+    tester,
+  ) async {
+    final firstCanClose = Completer<void>();
+    String? observedName;
+    var builds = 0;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        navigatorObservers: [_RouteNameObserver((name) => observedName = name)],
+        home: Builder(
+          builder: (context) => TextButton(
+            onPressed: () {
+              unawaited(
+                GameNavigator.pushNamed<void>(
+                  context,
+                  name: GameRouteNames.shop,
+                  builder: (_) {
+                    builds++;
+                    return _HeldRoute(canClose: firstCanClose.future);
+                  },
+                ),
+              );
+              unawaited(
+                GameNavigator.pushNamed<void>(
+                  context,
+                  name: GameRouteNames.shop,
+                  builder: (_) {
+                    builds++;
+                    return const Scaffold(body: Text('Duplicate'));
+                  },
+                ),
+              );
+            },
+            child: const Text('Open named'),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open named'));
+    await tester.pump();
+
+    expect(observedName, GameRouteNames.shop);
+    expect(builds, 1);
+    expect(find.text('Duplicate'), findsNothing);
 
     firstCanClose.complete();
     await tester.pumpAndSettle();
