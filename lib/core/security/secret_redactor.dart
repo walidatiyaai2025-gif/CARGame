@@ -15,7 +15,7 @@ final class SecretRedactor {
   );
 
   static final RegExp _credentialAssignment = RegExp(
-    r'\b(password|passwd|pwd|token|access[_-]?token|refresh[_-]?token|api[_-]?key|apikey|client[_-]?secret|secret|authorization)\b(\s*[:=]\s*)(["\']?)([^\s,"\';}{]{4,})(["\']?)',
+    r'''\b(password|passwd|pwd|token|access[_-]?token|refresh[_-]?token|api[_-]?key|apikey|client[_-]?secret|secret|authorization)\b(\s*[:=]\s*)(["']?)([^\s,"';}{]{4,})(["']?)''',
     caseSensitive: false,
   );
 
@@ -30,7 +30,7 @@ final class SecretRedactor {
   );
 
   static final RegExp _unixUserPath = RegExp(
-    r'(?<![A-Za-z0-9_])/(?:Users|home)/[^/\s]+(?:/[^\s\r\n]*)?',
+    r'/(?:Users|home)/[^/\s]+(?:/[^\s\r\n]*)?',
     caseSensitive: true,
   );
 
