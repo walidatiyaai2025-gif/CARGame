@@ -7,7 +7,6 @@ void main() {
     tester,
   ) async {
     final semantics = tester.ensureSemantics();
-    addTearDown(semantics.dispose);
 
     var taps = 0;
     await tester.pumpWidget(
@@ -30,6 +29,7 @@ void main() {
 
     expect(taps, 1);
     expect(tester.takeException(), isNull);
+    semantics.dispose();
   });
 
   testWidgets('loading panel replaces content with bounded skeleton', (
