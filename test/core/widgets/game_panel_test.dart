@@ -7,29 +7,31 @@ void main() {
     tester,
   ) async {
     final semantics = tester.ensureSemantics();
-    addTearDown(semantics.dispose);
-
-    var taps = 0;
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: GamePanel(
-            semanticLabel: 'Open reward',
-            onTap: () => taps++,
-            child: const Text('Reward'),
+    try {
+      var taps = 0;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: GamePanel(
+              semanticLabel: 'Open reward',
+              onTap: () => taps++,
+              child: const Text('Reward'),
+            ),
           ),
         ),
-      ),
-    );
+      );
 
-    expect(find.text('Reward'), findsOneWidget);
-    expect(find.bySemanticsLabel('Open reward'), findsOneWidget);
+      expect(find.text('Reward'), findsOneWidget);
+      expect(find.bySemanticsLabel('Open reward'), findsOneWidget);
 
-    await tester.tap(find.text('Reward'));
-    await tester.pump(const Duration(milliseconds: 180));
+      await tester.tap(find.text('Reward'));
+      await tester.pump(const Duration(milliseconds: 180));
 
-    expect(taps, 1);
-    expect(tester.takeException(), isNull);
+      expect(taps, 1);
+      expect(tester.takeException(), isNull);
+    } finally {
+      semantics.dispose();
+    }
   });
 
   testWidgets('loading panel replaces content with bounded skeleton', (
