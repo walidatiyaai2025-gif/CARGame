@@ -24,12 +24,28 @@ void main() {
       );
       await tester.pump();
 
-      expect(find.byType(ListView), findsOneWidget);
-      expect(find.byType(GamePanel), findsAtLeastNWidgets(7));
+      final list = find.byType(ListView);
+      expect(list, findsOneWidget);
+      expect(find.byType(GamePanel), findsAtLeastNWidgets(4));
       expect(find.text('Daily Mission'), findsOneWidget);
       expect(find.text('Win 3 cities'), findsOneWidget);
+
+      await tester.scrollUntilVisible(
+        find.text('Earn 150 coins'),
+        250,
+        scrollable: list,
+      );
+      await tester.pumpAndSettle();
+
       expect(find.text('Earn 6 stars'), findsOneWidget);
       expect(find.text('Earn 150 coins'), findsOneWidget);
+      expect(
+        find.ancestor(
+          of: find.text('Earn 150 coins'),
+          matching: find.byType(GamePanel),
+        ),
+        findsOneWidget,
+      );
     },
   );
 }
