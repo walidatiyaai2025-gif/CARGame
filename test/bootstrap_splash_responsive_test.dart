@@ -30,7 +30,7 @@ void main() {
 
   Future<void> disposeSplash(WidgetTester tester) async {
     await tester.pumpWidget(const SizedBox.shrink());
-    await tester.pump(const Duration(seconds: 2));
+    await tester.pump(const Duration(seconds: 7));
   }
 
   Finder splashStatus() => find.byWidgetPredicate((widget) {
