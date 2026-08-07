@@ -253,10 +253,14 @@ const productCatalog = <CargoItem>[
 ];
 
 final List<LevelData> levels = List<LevelData>.unmodifiable(
-  List<LevelData>.generate(150, (index) => _generateLevel(index + 1)),
+  List<LevelData>.generate(150, (index) => generateLevel(index + 1)),
 );
 
-LevelData _generateLevel(int number) {
+LevelData generateLevel(int number) {
+  if (number < 1 || number > 150) {
+    throw RangeError.range(number, 1, 150, 'number');
+  }
+
   final random = Random(number * 7919 + 2026);
   final world = ((number - 1) ~/ 25) + 1;
   final levelInWorld = ((number - 1) % 25) + 1;
