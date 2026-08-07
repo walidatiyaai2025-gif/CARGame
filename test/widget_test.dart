@@ -23,7 +23,11 @@ void main() {
         settings: settings,
       ),
     );
-    await tester.pumpAndSettle();
+
+    // The home screen intentionally contains ambient looping motion, so
+    // pumpAndSettle would never complete. Pump a bounded startup window instead.
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
 
     expect(find.text('Cargo Sort'), findsOneWidget);
   });
