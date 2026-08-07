@@ -5,12 +5,12 @@ param(
     [string]$Branch = "main"
 )
 
-# CARGame Setup Tool v2.6.0
+# CARGame Setup Tool v2.6.1
 # Windows PowerShell 5.1 compatible.
 # Safe by default: destructive sync creates a backup and requires YES.
 
 $ErrorActionPreference = "Continue"
-$ToolVersion = "2.6.0"
+$ToolVersion = "2.6.1"
 $OriginalLocation = (Get-Location).Path
 $script:LastFailure = $null
 
@@ -133,13 +133,54 @@ function Invoke-External {
     return [pscustomobject]@{ ExitCode=$exitCode; Output=$output }
 }
 
+function Get-GitSafeDirectoryValue {
+    return $ProjectPath.Replace('\','/')
+}
+
+function Ensure-GitSafeDirectory {
+    if (-not (Test-CommandExists "git")) { return $false }
+    if (-not (Test-Path $ProjectPath)) { return $false }
+
+    $safePath = Get-GitSafeDirectoryValue
+    try {
+        $existing = @(& git config --global --get-all safe.directory 2>$null)
+        if ($LASTEXITCODE -eq 0 -and $existing -contains $safePath) { return $true }
+    } catch { }
+
+    Write-ToolLog "Repairing Git safe.directory for repository ownership mismatch: $safePath" "WARN"
+    $result = Invoke-External "git" @("config","--global","--add","safe.directory",$safePath) "Repair Git safe.directory" -AllowFailure -Quiet
+    if ($result.ExitCode -eq 0) {
+        Write-ToolLog "Git safe.directory repaired: $safePath" "OK"
+        return $true
+    }
+    return $false
+}
+
+function Test-DubiousOwnershipOutput {
+    param([object[]]$Output)
+    $text = ($Output -join [Environment]::NewLine)
+    return $text -match "dubious ownership" -or $text -match "safe\.directory"
+}
+
 function Invoke-Git {
     param([string[]]$Arguments,[string]$Step="Git",[switch]$AllowFailure,[switch]$Quiet)
-    return Invoke-External "git" (@("-C",$ProjectPath)+$Arguments) $Step -AllowFailure:$AllowFailure -Quiet:$Quiet
+
+    if (Test-Path $ProjectPath) { [void](Ensure-GitSafeDirectory) }
+
+    $result = Invoke-External "git" (@("-C",$ProjectPath)+$Arguments) $Step -AllowFailure -Quiet:$Quiet
+    if ($result.ExitCode -ne 0 -and (Test-DubiousOwnershipOutput $result.Output)) {
+        Write-ToolLog "Git reported dubious ownership; repairing safe.directory and retrying once." "WARN"
+        if (Ensure-GitSafeDirectory) {
+            $result = Invoke-External "git" (@("-C",$ProjectPath)+$Arguments) "$Step (retry)" -AllowFailure -Quiet:$Quiet
+        }
+    }
+    if ($result.ExitCode -ne 0 -and -not $AllowFailure) { throw "$Step failed with exit code $($result.ExitCode)." }
+    return $result
 }
 
 function Ensure-Origin {
     if (-not (Test-Repo)) { return }
+    [void](Ensure-GitSafeDirectory)
     $r = Invoke-Git @("remote") "Read remotes" -AllowFailure -Quiet
     if ($r.Output -notcontains "origin") { Invoke-Git @("remote","add","origin",$RepositoryUrl) "Add origin" | Out-Null; return }
     $current = Invoke-Git @("remote","get-url","origin") "Read origin" -AllowFailure -Quiet
@@ -286,42 +327,56 @@ function Run-Diagnostics {
     Write-Host "";Write-Host "SYSTEM + PROJECT DIAGNOSTICS" -ForegroundColor Yellow;Write-Host "------------------------------------------------------------"
     foreach($cmd in @("git","flutter","dart","java")){
         $found=Get-Command $cmd -ErrorAction SilentlyContinue
-        if($found){Write-Host ("[OK]   {0,-18} {1}" -f $cmd,$found.Source) -ForegroundColor Green}else{Write-Host ("[FAIL] {0,-18} NOT FOUND" -f $cmd) -ForegroundColor Red}
+        if($found){Write-Host ("[OK]   {0,-18} {1}" -f $cmd,$found.Source) -ForegroundColor Green}else{Write-Host ("[FAIL] {0,-18} Not found" -f $cmd) -ForegroundColor Red}
     }
-    if(Test-Repo){Write-Host "[OK]   Git repository      .git found" -ForegroundColor Green;$s=Get-ChangeSummary;Write-Host "[INFO] Working tree        $($s.Source.Count) source / $($s.Generated.Count) generated"}
-    else{Write-Host "[WARN] Git repository      not initialized" -ForegroundColor Yellow}
-    $id=Get-AndroidDeviceId
-    if($id){Write-Host "[OK]   Android device      $id" -ForegroundColor Green}else{Write-Host "[WARN] Android device      none online" -ForegroundColor Yellow}
+    if(Test-Repo){
+        $safe=Ensure-GitSafeDirectory
+        if($safe){Write-Host "[OK]   Git safe.directory $(Get-GitSafeDirectoryValue)" -ForegroundColor Green}else{Write-Host "[WARN] Git safe.directory repair failed" -ForegroundColor Yellow}
+        Ensure-Origin
+        $branchResult=Invoke-Git @("branch","--show-current") "Read current branch" -AllowFailure -Quiet
+        $branchName=($branchResult.Output|Select-Object -First 1)
+        Write-Host "[OK]   Git repository     $ProjectPath" -ForegroundColor Green
+        if($branchName){Write-Host "[INFO] Current branch     $branchName" -ForegroundColor Cyan}
+    }else{Write-Host "[WARN] Git repository     Not initialized" -ForegroundColor Yellow}
+    if(Test-CommandExists "flutter"){
+        $d=Invoke-External "flutter" @("devices") "Flutter devices" -AllowFailure -Quiet
+        $online=@($d.Output|Where-Object{$_ -match "android" -and $_ -notmatch "offline"})
+        if($online.Count-gt0){Write-Host "[OK]   Android device     $($online[0])" -ForegroundColor Green}else{Write-Host "[WARN] Android device     None online" -ForegroundColor Yellow}
+    }
     if(-not$NoPause){Pause-Tool}
 }
 
-function Repair-Basic {
-    Write-ToolLog "Starting basic repair"
-    Stop-ProjectLockingProcesses
-    if(Test-Repo){Ensure-Origin;Invoke-Git @("fsck","--no-progress") "Git fsck" -AllowFailure|Out-Null;Invoke-Git @("fetch","--prune","origin") "Git fetch" -AllowFailure|Out-Null}
-    Remove-SafeCaches
-    if(Test-CommandExists "flutter"){Invoke-External "flutter" @("clean") "Flutter clean" -AllowFailure -WorkingDirectory $ProjectPath|Out-Null;Invoke-External "flutter" @("pub","get") "Flutter pub get" -AllowFailure -WorkingDirectory $ProjectPath|Out-Null}
-    Write-ToolLog "Basic repair completed" "OK"
-}
-
 function First-Download {
-    if(-not(Test-CommandExists "git")){throw "Git is not installed or not in PATH."}
-    if(Test-Repo){Update-Project;return}
-    if(Test-Path $ProjectPath){$items=@(Get-ChildItem $ProjectPath -Force -ErrorAction SilentlyContinue);if($items.Count-gt0){Stop-ProjectLockingProcesses;Move-OutOfProjectFolder;$backup="$ProjectPath`_backup_$(Get-Date -Format 'yyyyMMdd_HHmmss')";Move-Item $ProjectPath $backup -Force}}
-    if(-not(Test-Path $ProjectParent)){New-Item -ItemType Directory -Path $ProjectParent -Force|Out-Null}
-    Invoke-External "git" @("clone","--branch",$Branch,"--single-branch",$RepositoryUrl,$ProjectPath) "Clone repository"|Out-Null
+    if(Test-Path $ProjectPath){
+        Write-Host "Project folder already exists: $ProjectPath" -ForegroundColor Yellow
+        Write-Host "Use Update/Undo or choose a different -ProjectPath." -ForegroundColor Yellow
+        return
+    }
+    if(-not(Test-CommandExists "git")){throw "Git is required."}
+    New-Item -ItemType Directory -Path $ProjectParent -Force|Out-Null
+    Invoke-External "git" @("clone","--branch",$Branch,"$RepositoryUrl","$ProjectPath") "Clone repository"|Out-Null
+    [void](Ensure-GitSafeDirectory)
+    Ensure-Origin
     if(Test-CommandExists "flutter"){Invoke-External "flutter" @("pub","get") "Flutter pub get" -AllowFailure -WorkingDirectory $ProjectPath|Out-Null}
 }
 
 function Update-Project {
     if(-not(Test-Repo)){First-Download;return}
     Ensure-Origin
-    $s=Get-ChangeSummary
-    if($s.Source.Count-gt0){Show-ChangeSummary|Out-Null;Write-Host "1 - Backup + DISCARD local changes + apply GitHub" -ForegroundColor Yellow;Write-Host "2 - Keep local changes and cancel";Write-Host "3 - Upload local changes";$a=Read-Host "Choose [1/2/3]";if($a-eq"1"){[void](Sync-FromGitHub);return}elseif($a-eq"3"){Upload-Changes;return}else{return}}
-    if($s.Generated.Count-gt0){Stop-ProjectLockingProcesses;Remove-SafeCaches;Invoke-Git @("clean","-fd","-e","logs/") "Clean generated files" -AllowFailure|Out-Null}
+    $s=Show-ChangeSummary
+    if($s.Source.Count-gt0){
+        Write-Host "";Write-Host "Local source changes detected." -ForegroundColor Yellow
+        Write-Host "1 - Backup + DISCARD local changes + apply GitHub"
+        Write-Host "2 - Keep local changes and cancel update"
+        Write-Host "3 - Upload local changes to GitHub"
+        $choice=Read-Host "Choose"
+        switch($choice){"1"{[void](Sync-FromGitHub)}"3"{Upload-Changes}default{Write-ToolLog "Update cancelled to protect local source changes." "WARN"}}
+        return
+    }
+    if($s.Generated.Count-gt0){Write-ToolLog "Only generated/cache changes found; cleaning them before update." "WARN";Stop-ProjectLockingProcesses;Remove-SafeCaches}
+    Move-OutOfProjectFolder
     Invoke-Git @("fetch","--prune","origin",$Branch) "Fetch origin/$Branch"|Out-Null
-    $co=Invoke-Git @("checkout",$Branch) "Checkout $Branch" -AllowFailure
-    if($co.ExitCode-ne0){Invoke-Git @("checkout","-b",$Branch,"origin/$Branch") "Create branch"|Out-Null}
+    Invoke-Git @("checkout",$Branch) "Checkout branch" -AllowFailure|Out-Null
     Invoke-Git @("pull","--ff-only","origin",$Branch) "Fast-forward update"|Out-Null
     if(Test-CommandExists "flutter"){Invoke-External "flutter" @("pub","get") "Flutter pub get" -AllowFailure -WorkingDirectory $ProjectPath|Out-Null}
 }
@@ -330,205 +385,135 @@ function Upload-Changes {
     if(-not(Test-Repo)){throw "Project is not a Git repository."}
     Ensure-Origin
     $s=Show-ChangeSummary
-    if($s.All.Count-eq0){Write-ToolLog "No local changes to upload." "OK";return}
-    $msg=Read-Host "Commit message [Update project]";if([string]::IsNullOrWhiteSpace($msg)){$msg="Update project"}
+    if($s.Source.Count-eq0){Write-ToolLog "No source changes to upload." "WARN";return}
     Invoke-Git @("add","-A") "Stage changes"|Out-Null
-    Invoke-Git @("commit","-m",$msg) "Commit changes"|Out-Null
-    $push=Invoke-Git @("push","origin",$Branch) "Push changes" -AllowFailure
-    if($push.ExitCode-ne0){throw "Push failed. Check authentication or remote changes in the log."}
+    $message=Read-Host "Commit message"
+    if([string]::IsNullOrWhiteSpace($message)){$message="Update CARGame"}
+    $c=Invoke-Git @("commit","-m",$message) "Commit changes" -AllowFailure
+    if($c.ExitCode-ne0 -and (($c.Output-join" ")-notmatch"nothing to commit")){throw "Git commit failed."}
+    Invoke-Git @("push","origin",$Branch) "Push $Branch"|Out-Null
 }
 
-function Build-Apk {
-    param([ValidateSet("debug","release")][string]$Mode)
-    if(-not(Test-CommandExists "flutter")){throw "Flutter is not installed or not in PATH."}
-
-    Write-ToolLog "Build mode does not run dart format; source files will not be rewritten." "OK"
-
-    if($Mode-eq"release"){
-        Write-ToolLog "Preparing lock-safe Release build." "INFO"
-        Stop-ProjectLockingProcesses
-        Remove-SafeCaches
-        Invoke-External "flutter" @("clean") "Flutter clean before Release" -AllowFailure -WorkingDirectory $ProjectPath|Out-Null
-    }
-
+function Run-FlutterRepairBuild {
+    if(-not(Test-CommandExists "flutter")){throw "Flutter is not available in PATH."}
+    Stop-ProjectLockingProcesses
+    Remove-SafeCaches
     Invoke-External "flutter" @("pub","get") "Flutter pub get" -WorkingDirectory $ProjectPath|Out-Null
     Invoke-External "flutter" @("analyze","--no-fatal-infos","--no-fatal-warnings") "Flutter analyze" -WorkingDirectory $ProjectPath|Out-Null
-
-    $r=Invoke-External "flutter" @("build","apk","--$Mode","--no-pub") "Build $Mode APK" -AllowFailure -WorkingDirectory $ProjectPath
-    if($r.ExitCode-eq0){return}
-
-    if($Mode-ne"release"){
-        throw "Flutter $Mode build failed. See log."
-    }
-
-    $failureText=($r.Output-join[Environment]::NewLine)
-    $looksLikeLockFailure=$failureText-match'Unable to delete directory|Failed to delete some children|minifyReleaseWithR8|classes\.dex|file.*open|working directory set in the target directory'
-    if($looksLikeLockFailure){
-        Write-ToolLog "Release build hit a Windows/Gradle file lock. Running aggressive recovery and retrying once." "WARN"
-    }else{
-        Write-ToolLog "Release build failed. Running one clean recovery retry before returning the error." "WARN"
-    }
-
-    Stop-ProjectLockingProcesses -Aggressive
-    Remove-SafeCaches
-    Start-Sleep -Seconds 2
-    Invoke-External "flutter" @("clean") "Flutter clean after Release failure" -AllowFailure -WorkingDirectory $ProjectPath|Out-Null
-    Invoke-External "flutter" @("pub","get") "Flutter pub get after recovery" -WorkingDirectory $ProjectPath|Out-Null
-    $retry=Invoke-External "flutter" @("build","apk","--release","--no-pub") "Retry Release APK after lock recovery" -AllowFailure -WorkingDirectory $ProjectPath
-    if($retry.ExitCode-ne0){throw "Flutter release build failed after automatic lock recovery. See log."}
-    Write-ToolLog "Release APK succeeded after automatic lock recovery." "OK"
-}
-
-function Get-AndroidDeviceId {
-    if(-not(Test-CommandExists "flutter")){return $null}
-    $r=Invoke-External "flutter" @("devices","--machine") "Discover devices" -AllowFailure -Quiet -WorkingDirectory $ProjectPath
-    if($r.ExitCode-ne0){return $null}
-    try{$json=($r.Output-join"`n")|ConvertFrom-Json;$d=@($json|Where-Object{$_.targetPlatform-like"android*"-and$_.isSupported-ne$false})|Select-Object -First 1;if($d){return $d.id}}catch{}
-    return $null
-}
-
-function Get-AdbPath {
-    $cmd=Get-Command adb.exe -ErrorAction SilentlyContinue
-    if($cmd){return $cmd.Source}
-    foreach($root in @($env:ANDROID_SDK_ROOT,$env:ANDROID_HOME,(Join-Path $env:LOCALAPPDATA "Android\Sdk"))){if([string]::IsNullOrWhiteSpace([string]$root)){continue};$p=Join-Path $root "platform-tools\adb.exe";if(Test-Path $p){return $p}}
-    return $null
-}
-
-function Repair-Adb {
-    $adb=Get-AdbPath
-    if(-not$adb){Write-ToolLog "adb.exe not found." "WARN";return $false}
-    Write-ToolLog "Restarting ADB server" "WARN"
-    try{& $adb kill-server 2>&1|ForEach-Object{Write-Host $_}}catch{}
-    Start-Sleep -Milliseconds 700
-    try{& $adb start-server 2>&1|ForEach-Object{Write-Host $_}}catch{}
-    Start-Sleep -Seconds 1
-    return $true
-}
-
-function Get-InstalledAndroidEmulators {
-    if(-not(Test-CommandExists "flutter")){return @()}
-    $r=Invoke-External "flutter" @("emulators") "Discover Android emulators" -AllowFailure -Quiet -WorkingDirectory $ProjectPath
-    if($r.ExitCode-ne0){return @()}
-    $ids=New-Object System.Collections.Generic.List[string]
-    foreach($line in $r.Output){$text=[string]$line;if($text-match'^\s*([^\s•]+)\s+•.*•\s+android\s*$'){$ids.Add($Matches[1].Trim())}}
-    return @($ids)
-}
-
-function Wait-ForAndroidDevice {
-    param([int]$TimeoutSeconds=150)
-    $started=Get-Date;$adbRestarted=$false;$lastState="waiting"
-    Write-Host "";Write-Host "Waiting for Android device to become ready..." -ForegroundColor Yellow
-    while(((Get-Date)-$started).TotalSeconds-lt$TimeoutSeconds){
-        $id=Get-AndroidDeviceId
-        if($id){Write-Host "";Write-ToolLog "Android device ready: $id" "OK";return $id}
-        $adb=Get-AdbPath
-        if($adb){try{$states=@(& $adb devices 2>$null);$txt=$states-join' ';if($txt-match'\boffline\b'){$lastState="offline";if(-not$adbRestarted){[void](Repair-Adb);$adbRestarted=$true}}elseif($txt-match'\tdevice\b'){$lastState="booting"}else{$lastState="waiting"}}catch{}}
-        $elapsed=[int]((Get-Date)-$started).TotalSeconds
-        Write-Host -NoNewline ("`r  {0,3}s / {1}s   state: {2}          " -f $elapsed,$TimeoutSeconds,$lastState)
-        Start-Sleep -Seconds 3
-    }
-    Write-Host ""
-    return $null
+    Invoke-External "flutter" @("test") "Flutter test" -WorkingDirectory $ProjectPath|Out-Null
+    Invoke-External "flutter" @("build","apk","--release","--no-pub") "Build release APK" -WorkingDirectory $ProjectPath|Out-Null
 }
 
 function Start-SmartAndroidDevice {
-    Write-Host "";Write-Host "SMART ANDROID DEVICE MANAGER" -ForegroundColor Yellow;Write-Host "------------------------------------------------------------"
-    $existing=Get-AndroidDeviceId
-    if($existing){Write-ToolLog "Using online Android device: $existing" "OK";return $existing}
-
-    [void](Repair-Adb)
-    $existing=Wait-ForAndroidDevice -TimeoutSeconds 12
-    if($existing){return $existing}
-
-    $emulators=@(Get-InstalledAndroidEmulators)
-    if($emulators.Count-eq0){throw "No Android device is online and no Android emulator is installed. Create an AVD in Android Studio Device Manager, then retry."}
-
-    Write-Host "Installed Android emulators:" -ForegroundColor Cyan
-    for($i=0;$i-lt$emulators.Count;$i++){Write-Host ("  {0}. {1}" -f ($i+1),$emulators[$i])}
-    $selected=$emulators[0]
-    Write-ToolLog "Launching emulator automatically: $selected" "WARN"
-    $launch=Invoke-External "flutter" @("emulators","--launch",$selected) "Launch Android emulator $selected" -AllowFailure -WorkingDirectory $ProjectPath
-    if($launch.ExitCode-ne0){[void](Repair-Adb);$launch=Invoke-External "flutter" @("emulators","--launch",$selected) "Retry emulator launch" -AllowFailure -WorkingDirectory $ProjectPath;if($launch.ExitCode-ne0){throw "Android emulator '$selected' could not be launched."}}
-
-    $deviceId=Wait-ForAndroidDevice -TimeoutSeconds 180
-    if(-not$deviceId){[void](Repair-Adb);$deviceId=Wait-ForAndroidDevice -TimeoutSeconds 45}
-    if(-not$deviceId){throw "Android emulator started but never became Flutter-supported/online. Check virtualization, emulator logs, and ADB state."}
-    return $deviceId
+    if(-not(Test-CommandExists "flutter")){throw "Flutter is not available in PATH."}
+    $devices=Invoke-External "flutter" @("devices") "Detect Flutter devices" -AllowFailure -Quiet
+    if(@($devices.Output|Where-Object{$_ -match "android" -and $_ -notmatch "offline"}).Count-gt0){Write-ToolLog "Android device already online." "OK";return}
+    if(Test-CommandExists "adb"){
+        Invoke-External "adb" @("kill-server") "Restart ADB (stop)" -AllowFailure -Quiet|Out-Null
+        Invoke-External "adb" @("start-server") "Restart ADB (start)" -AllowFailure -Quiet|Out-Null
+    }
+    $emu=Invoke-External "flutter" @("emulators") "List Flutter emulators" -AllowFailure -Quiet
+    $ids=@()
+    foreach($line in $emu.Output){if([string]$line -match '^\s*([^\s]+)\s+•'){$ids+=$Matches[1]}}
+    if($ids.Count-eq0){throw "No Android emulator is configured. Create an AVD in Android Studio Device Manager or connect a device."}
+    $id=$ids[0]
+    Write-ToolLog "Launching emulator: $id"
+    Invoke-External "flutter" @("emulators","--launch",$id) "Launch emulator" -AllowFailure|Out-Null
+    for($i=0;$i-lt60;$i++){
+        Start-Sleep -Seconds 3
+        $check=Invoke-External "flutter" @("devices") "Wait for Android device" -AllowFailure -Quiet
+        $online=@($check.Output|Where-Object{$_ -match "android" -and $_ -notmatch "offline"})
+        if($online.Count-gt0){Write-ToolLog "Android device ready: $($online[0])" "OK";return}
+        if($i-eq20 -and (Test-CommandExists "adb")){Invoke-External "adb" @("kill-server") "ADB repair stop" -AllowFailure -Quiet|Out-Null;Invoke-External "adb" @("start-server") "ADB repair start" -AllowFailure -Quiet|Out-Null}
+    }
+    throw "Android emulator did not become ready within 180 seconds."
 }
 
-function Run-App {
-    $id=Start-SmartAndroidDevice
-    if(-not$id){throw "Smart Device Manager could not provide an Android device."}
-    Write-ToolLog "Launching CARGame on $id" "OK"
-    Invoke-External "flutter" @("run","-d",$id) "Run application" -WorkingDirectory $ProjectPath|Out-Null
+function Run-Game {
+    Start-SmartAndroidDevice
+    Invoke-External "flutter" @("run") "Run game" -WorkingDirectory $ProjectPath|Out-Null
 }
 
-function Collect-Diagnostics {
-    $stamp=Get-Date -Format "yyyyMMdd_HHmmss";$dir=Join-Path $env:TEMP "CARGame_Diagnostics_$stamp";New-Item -ItemType Directory -Path $dir -Force|Out-Null
-    try{Copy-Item $script:LogFile (Join-Path $dir "setup_tool.log") -Force -ErrorAction SilentlyContinue;@("Generated: $(Get-Date)","Project: $ProjectPath","Repository: $RepositoryUrl","Branch: $Branch","Windows: $([Environment]::OSVersion.VersionString)","PowerShell: $($PSVersionTable.PSVersion)","JAVA_HOME: $env:JAVA_HOME","ANDROID_SDK_ROOT: $env:ANDROID_SDK_ROOT","ANDROID_HOME: $env:ANDROID_HOME")|Set-Content (Join-Path $dir "environment.txt") -Encoding UTF8;if(Test-Repo){(Invoke-Git @("status","--branch","--short") "Diagnostic git status" -AllowFailure -Quiet).Output|Set-Content (Join-Path $dir "git_status.txt") -Encoding UTF8};if(Test-CommandExists "flutter"){(Invoke-External "flutter" @("devices","--machine") "Diagnostic devices" -AllowFailure -Quiet -WorkingDirectory $ProjectPath).Output|Set-Content (Join-Path $dir "flutter_devices.json") -Encoding UTF8};$adb=Get-AdbPath;if($adb){@(& $adb devices -l 2>&1)|Set-Content (Join-Path $dir "adb_devices.txt") -Encoding UTF8};$zip=Join-Path $LogDirectory "CARGame_Diagnostics_$stamp.zip";Compress-Archive -Path (Join-Path $dir "*") -DestinationPath $zip -Force;Write-ToolLog "Diagnostics ZIP created: $zip" "OK"}finally{Remove-Item $dir -Recurse -Force -ErrorAction SilentlyContinue}
+function Show-LastFailure {
+    Write-Host "";Write-Host "LAST FAILURE" -ForegroundColor Yellow
+    if($null-eq$script:LastFailure){Write-Host "No operation failure has been recorded in this session."}else{$script:LastFailure|Format-List|Out-Host}
+    Write-Host "Log: $script:LogFile" -ForegroundColor Cyan
 }
 
-function Show-Failure {
-    param($Err)
-    Write-Host "";Write-Host "============================================================" -ForegroundColor Red;Write-Host " OPERATION FAILED" -ForegroundColor Red;Write-Host "============================================================" -ForegroundColor Red;Write-Host $Err.Exception.Message -ForegroundColor Red
-    if($script:LastFailure){Write-Host "Step      : $($script:LastFailure.Step)";Write-Host "Command   : $($script:LastFailure.Command)";Write-Host "Exit Code : $($script:LastFailure.ExitCode)"}
-    Write-Host "Log       : $script:LogFile" -ForegroundColor Yellow;Write-Host "The tool will remain open." -ForegroundColor Yellow
+function Invoke-MenuAction {
+    param([scriptblock]$Action)
+    try{&$Action;Write-Host "";Write-ToolLog "Operation finished." "OK"}
+    catch{
+        $message=$_.Exception.Message
+        Write-Host "";Write-Host "============================================================" -ForegroundColor Red
+        Write-Host " OPERATION FAILED" -ForegroundColor Red
+        Write-Host "============================================================" -ForegroundColor Red
+        Write-Host $message -ForegroundColor Red
+        if($script:LastFailure){Write-Host "Step      : $($script:LastFailure.Step)";Write-Host "Command   : $($script:LastFailure.Command)";Write-Host "Exit Code : $($script:LastFailure.ExitCode)"}
+        Write-Host "Log       : $script:LogFile" -ForegroundColor Cyan
+        Write-Host "The tool will remain open." -ForegroundColor Yellow
+        Write-ToolLog "Operation failed: $message" "ERROR"
+    }
+    Pause-Tool
 }
 
-function Invoke-SafeAction { param([scriptblock]$Action);try{& $Action}catch{Show-Failure $_}finally{Restore-SafeLocation;Pause-Tool} }
+Initialize-Log
 
 try {
-    Initialize-Log
-    Show-Header
-    Write-Host "Startup safety check..." -ForegroundColor Yellow
-    try{Run-Diagnostics -NoPause}catch{Write-Host "Diagnostics could not finish, but the tool will continue." -ForegroundColor Yellow}
-
+    Run-Diagnostics -NoPause
     while($true){
         Show-Header
-        Write-Host "1  - First download / install project"
-        Write-Host "2  - Update project from GitHub"
-        Write-Host "3  - Upload local changes to GitHub"
-        Write-Host "4  - Update + repair + run"
-        Write-Host "5  - Repair Git + Flutter + Gradle"
-        Write-Host "6  - Run diagnostics now"
-        Write-Host "7  - Collect diagnostics ZIP"
-        Write-Host "8  - Flutter doctor"
-        Write-Host "9  - Flutter cache repair"
-        Write-Host "10 - Build Debug APK"
-        Write-Host "11 - Build Release APK (lock-safe retry)"
-        Write-Host "12 - Run app (auto detect/repair/launch Android)"
-        Write-Host "13 - Full repair + Build Release APK"
+        Write-Host "1  - Diagnostics"
+        Write-Host "2  - Update from GitHub"
+        Write-Host "3  - First Download / Clone"
+        Write-Host "4  - Repair + Analyze + Test + Release APK"
+        Write-Host "5  - Upload local source changes to GitHub"
+        Write-Host "6  - Flutter pub get"
+        Write-Host "7  - Flutter analyze"
+        Write-Host "8  - Flutter test"
+        Write-Host "9  - Build release APK"
+        Write-Host "10 - Flutter doctor"
+        Write-Host "11 - Show git status"
+        Write-Host "12 - Run game (auto-start Android device)"
+        Write-Host "13 - Show last error / log"
         Write-Host "14 - Backup + UNDO local changes + apply GitHub version"
         Write-Host "15 - Show local source/generated change summary"
         Write-Host "16 - Close/Kill processes locking project files"
-        Write-Host "17 - Smart Android Device Manager (detect/repair/launch)"
+        Write-Host "17 - Smart Android Device Manager"
         Write-Host "0  - Exit"
         Write-Host ""
         $choice=Read-Host "Choose an option"
-        if($choice-eq"0"){break}
         switch($choice){
-            "1"{Invoke-SafeAction{First-Download}}
-            "2"{Invoke-SafeAction{Update-Project}}
-            "3"{Invoke-SafeAction{Upload-Changes}}
-            "4"{Invoke-SafeAction{Update-Project;Repair-Basic;Run-App}}
-            "5"{Invoke-SafeAction{Repair-Basic}}
-            "6"{Invoke-SafeAction{Run-Diagnostics -NoPause}}
-            "7"{Invoke-SafeAction{Collect-Diagnostics}}
-            "8"{Invoke-SafeAction{Invoke-External "flutter" @("doctor","-v") "Flutter doctor" -WorkingDirectory $ProjectPath|Out-Null}}
-            "9"{Invoke-SafeAction{Stop-ProjectLockingProcesses;Remove-SafeCaches;Invoke-External "flutter" @("clean") "Flutter clean" -AllowFailure -WorkingDirectory $ProjectPath|Out-Null;Invoke-External "flutter" @("pub","get") "Flutter pub get" -WorkingDirectory $ProjectPath|Out-Null}}
-            "10"{Invoke-SafeAction{Build-Apk "debug"}}
-            "11"{Invoke-SafeAction{Build-Apk "release"}}
-            "12"{Invoke-SafeAction{Run-App}}
-            "13"{Invoke-SafeAction{Repair-Basic;Build-Apk "release"}}
-            "14"{Invoke-SafeAction{[void](Sync-FromGitHub)}}
-            "15"{Invoke-SafeAction{Show-ChangeSummary|Out-Null}}
-            "16"{Invoke-SafeAction{Stop-ProjectLockingProcesses -Aggressive}}
-            "17"{Invoke-SafeAction{$id=Start-SmartAndroidDevice;Write-Host "Ready Android device: $id" -ForegroundColor Green}}
+            "1"{Invoke-MenuAction{Run-Diagnostics -NoPause}}
+            "2"{Invoke-MenuAction{Update-Project}}
+            "3"{Invoke-MenuAction{First-Download}}
+            "4"{Invoke-MenuAction{Run-FlutterRepairBuild}}
+            "5"{Invoke-MenuAction{Upload-Changes}}
+            "6"{Invoke-MenuAction{Invoke-External "flutter" @("pub","get") "Flutter pub get" -WorkingDirectory $ProjectPath|Out-Null}}
+            "7"{Invoke-MenuAction{Invoke-External "flutter" @("analyze","--no-fatal-infos","--no-fatal-warnings") "Flutter analyze" -WorkingDirectory $ProjectPath|Out-Null}}
+            "8"{Invoke-MenuAction{Invoke-External "flutter" @("test") "Flutter test" -WorkingDirectory $ProjectPath|Out-Null}}
+            "9"{Invoke-MenuAction{Invoke-External "flutter" @("build","apk","--release","--no-pub") "Build release APK" -WorkingDirectory $ProjectPath|Out-Null}}
+            "10"{Invoke-MenuAction{Invoke-External "flutter" @("doctor","-v") "Flutter doctor" -AllowFailure|Out-Null}}
+            "11"{Invoke-MenuAction{(Show-ChangeSummary)|Out-Null}}
+            "12"{Invoke-MenuAction{Run-Game}}
+            "13"{Invoke-MenuAction{Show-LastFailure}}
+            "14"{Invoke-MenuAction{[void](Sync-FromGitHub)}}
+            "15"{Invoke-MenuAction{(Show-ChangeSummary)|Out-Null}}
+            "16"{Invoke-MenuAction{Stop-ProjectLockingProcesses -Aggressive}}
+            "17"{Invoke-MenuAction{Start-SmartAndroidDevice}}
+            "0"{Restore-SafeLocation;Write-ToolLog "Setup Tool closed." "OK";break}
             default{Write-Host "Invalid option." -ForegroundColor Yellow;Start-Sleep -Seconds 1}
         }
+        if($choice-eq"0"){break}
     }
-    Write-ToolLog "Setup Tool closed" "OK"
-} catch {
-    try{Show-Failure $_}catch{Write-Host "FATAL STARTUP ERROR" -ForegroundColor Red;Write-Host $_.Exception.Message -ForegroundColor Red}
-    Write-Host "";Write-Host "The window will NOT close automatically." -ForegroundColor Yellow;[void](Read-Host "Press Enter to close")
-} finally { Restore-SafeLocation }
+}
+catch{
+    Write-Host "";Write-Host "============================================================" -ForegroundColor Red
+    Write-Host " FATAL STARTUP ERROR" -ForegroundColor Red
+    Write-Host "============================================================" -ForegroundColor Red
+    Write-Host $_.Exception.Message -ForegroundColor Red
+    Write-Host "Log: $script:LogFile" -ForegroundColor Cyan
+    try{Write-ToolLog "Fatal startup error: $($_.Exception.Message)" "ERROR"}catch{}
+    Pause-Tool
+}
+finally{Restore-SafeLocation}
