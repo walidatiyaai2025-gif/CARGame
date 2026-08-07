@@ -17,11 +17,11 @@ class GameFitView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return Padding(
-          padding: padding,
-          child: SizedBox(
+    return Padding(
+      padding: padding,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return SizedBox(
             width: constraints.maxWidth,
             height: constraints.maxHeight,
             child: FittedBox(
@@ -32,9 +32,9 @@ class GameFitView extends StatelessWidget {
                 child: child,
               ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 }
