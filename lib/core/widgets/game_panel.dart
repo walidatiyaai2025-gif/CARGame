@@ -152,6 +152,7 @@ class _GamePanelState extends State<GamePanel> {
         container: true,
         label: widget.semanticLabel,
         enabled: widget.enabled,
+        excludeSemantics: widget.semanticLabel != null,
         child: panel,
       );
     }
@@ -160,6 +161,7 @@ class _GamePanelState extends State<GamePanel> {
       button: true,
       enabled: true,
       label: widget.semanticLabel,
+      excludeSemantics: widget.semanticLabel != null,
       child: MouseRegion(
         cursor: SystemMouseCursors.click,
         onEnter: (_) => _setHovered(true),
