@@ -5,16 +5,16 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   testWidgets('renders with scrollable world content', (tester) async {
     await tester.pumpWidget(
-      const MaterialApp(
+      MaterialApp(
         home: Stack(
           children: [
-            Positioned.fill(
+            const Positioned.fill(
               child: WorldMapAmbientBackground(
                 startColor: Colors.indigo,
                 endColor: Colors.teal,
               ),
             ),
-            ListView(children: [SizedBox(height: 1600)]),
+            ListView(children: const [SizedBox(height: 1600)]),
           ],
         ),
       ),
