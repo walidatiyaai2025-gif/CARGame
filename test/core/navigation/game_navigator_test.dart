@@ -7,7 +7,9 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   tearDown(GameNavigator.resetGuards);
 
-  testWidgets('push uses named shared route and returns result', (tester) async {
+  testWidgets('push uses named shared route and returns result', (
+    tester,
+  ) async {
     String? observedName;
     String? result;
 
