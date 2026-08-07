@@ -43,32 +43,38 @@ Future<void> _pumpProgress(
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('progress hub stays overflow-free on a narrow phone', (tester) async {
-    await _pumpProgress(
-      tester,
-      size: const Size(360, 640),
-      locale: const Locale('en'),
-    );
+  testWidgets(
+    'progress hub stays overflow-free on a narrow phone',
+    (tester) async {
+      await _pumpProgress(
+        tester,
+        size: const Size(360, 640),
+        locale: const Locale('en'),
+      );
 
-    expect(tester.takeException(), isNull);
-    expect(find.text('Player Progress'), findsOneWidget);
-    expect(find.text('Daily Mission'), findsOneWidget);
-  });
+      expect(tester.takeException(), isNull);
+      expect(find.text('Player Progress'), findsOneWidget);
+      expect(find.text('Daily Mission'), findsOneWidget);
+    },
+  );
 
-  testWidgets('progress hub supports Arabic RTL on a tall phone', (tester) async {
-    await _pumpProgress(
-      tester,
-      size: const Size(412, 915),
-      locale: const Locale('ar'),
-    );
+  testWidgets(
+    'progress hub supports Arabic RTL on a tall phone',
+    (tester) async {
+      await _pumpProgress(
+        tester,
+        size: const Size(412, 915),
+        locale: const Locale('ar'),
+      );
 
-    expect(tester.takeException(), isNull);
-    expect(find.text('تقدم اللاعب'), findsOneWidget);
-    expect(
-      Directionality.of(tester.element(find.text('تقدم اللاعب'))),
-      TextDirection.rtl,
-    );
-  });
+      expect(tester.takeException(), isNull);
+      expect(find.text('تقدم اللاعب'), findsOneWidget);
+      expect(
+        Directionality.of(tester.element(find.text('تقدم اللاعب'))),
+        TextDirection.rtl,
+      );
+    },
+  );
 
   testWidgets('progress hub survives large text on a tablet', (tester) async {
     await _pumpProgress(
