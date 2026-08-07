@@ -109,8 +109,12 @@ void main() {
     await pumpUntil(next);
     expect(next, findsOneWidget);
 
-    await tester.tap(next);
-    await tester.tap(next, warnIfMissed: false);
+    await tester.ensureVisible(next);
+    await tester.pump();
+    final nextTarget = tester.getCenter(next);
+
+    await tester.tapAt(nextTarget);
+    await tester.tapAt(nextTarget);
     await pumpUntilAbsent(find.byType(GameScreen));
 
     expect(observer.gameRoutePops, 1);
