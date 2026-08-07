@@ -1,0 +1,192 @@
+name: Patch Setup Tool Smart Device
+
+on:
+  push:
+    paths:
+      - '.github/setup_tool_smart_device.trigger'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Patch SETUP_TOOL.ps1
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('SETUP_TOOL.ps1')
+          s = p.read_text(encoding='utf-8')
+          s = s.replace('# CARGame Setup Tool v2.4.0', '# CARGame Setup Tool v2.5.0')
+          s = s.replace('$ToolVersion = "2.4.0"', '$ToolVersion = "2.5.0"')
+
+          old = '''function Get-AndroidDeviceId { if(-not(Test-CommandExists "flutter")){return $null};$r=Invoke-External "flutter" @("devices","--machine") "Discover devices" -AllowFailure -Quiet -WorkingDirectory $ProjectPath;if($r.ExitCode-ne0){return $null};try{$json=($r.Output-join"`n")|ConvertFrom-Json;$d=@($json|Where-Object{$_.targetPlatform-like"android*"-and$_.isSupported-ne$false})|Select-Object -First 1;if($d){return $d.id}}catch{};return $null }
+function Run-App { $id=Get-AndroidDeviceId;if(-not$id){throw "No supported Android device is online."};Invoke-External "flutter" @("run","-d",$id) "Run application" -WorkingDirectory $ProjectPath|Out-Null }
+'''
+          new = r'''function Get-AndroidDeviceId {
+    if (-not (Test-CommandExists "flutter")) { return $null }
+    $r = Invoke-External "flutter" @("devices","--machine") "Discover devices" -AllowFailure -Quiet -WorkingDirectory $ProjectPath
+    if ($r.ExitCode -ne 0) { return $null }
+    try {
+        $json = ($r.Output -join "`n") | ConvertFrom-Json
+        $device = @($json | Where-Object { $_.targetPlatform -like "android*" -and $_.isSupported -ne $false }) | Select-Object -First 1
+        if ($device) { return $device.id }
+    } catch { Write-ToolLog "Could not parse flutter devices --machine." "WARN" }
+    return $null
+}
+
+function Get-AdbPath {
+    $cmd = Get-Command adb.exe -ErrorAction SilentlyContinue
+    if ($cmd) { return $cmd.Source }
+    foreach ($root in @($env:ANDROID_SDK_ROOT,$env:ANDROID_HOME,(Join-Path $env:LOCALAPPDATA "Android\Sdk"))) {
+        if ([string]::IsNullOrWhiteSpace([string]$root)) { continue }
+        $candidate = Join-Path $root "platform-tools\adb.exe"
+        if (Test-Path $candidate) { return $candidate }
+    }
+    return $null
+}
+
+function Repair-Adb {
+    $adb = Get-AdbPath
+    if (-not $adb) { Write-ToolLog "adb.exe was not found; ADB repair skipped." "WARN"; return $false }
+    Write-ToolLog "Restarting ADB server" "WARN"
+    try { & $adb kill-server 2>&1 | ForEach-Object { Write-Host $_ } } catch { }
+    Start-Sleep -Milliseconds 700
+    try { & $adb start-server 2>&1 | ForEach-Object { Write-Host $_ } } catch { }
+    Start-Sleep -Seconds 1
+    return $true
+}
+
+function Get-InstalledAndroidEmulators {
+    if (-not (Test-CommandExists "flutter")) { return @() }
+    $r = Invoke-External "flutter" @("emulators") "Discover Android emulators" -AllowFailure -Quiet -WorkingDirectory $ProjectPath
+    if ($r.ExitCode -ne 0) { return @() }
+    $ids = New-Object System.Collections.Generic.List[string]
+    foreach ($line in $r.Output) {
+        $text = [string]$line
+        if ($text -match '^\s*([^\s•]+)\s+•.*•\s+android\s*$') { $ids.Add($Matches[1].Trim()) }
+    }
+    return @($ids)
+}
+
+function Wait-ForAndroidDevice {
+    param([int]$TimeoutSeconds = 150)
+    $started = Get-Date
+    $adbRestarted = $false
+    $lastState = ""
+    Write-Host ""
+    Write-Host "Waiting for Android device to become ready..." -ForegroundColor Yellow
+    while (((Get-Date) - $started).TotalSeconds -lt $TimeoutSeconds) {
+        $id = Get-AndroidDeviceId
+        if ($id) {
+            Write-ToolLog "Flutter-supported Android device ready: $id" "OK"
+            return $id
+        }
+
+        $adb = Get-AdbPath
+        if ($adb) {
+            try {
+                $states = @(& $adb devices 2>$null)
+                $stateText = ($states -join ' ')
+                if ($stateText -match '\boffline\b') {
+                    if (-not $adbRestarted) {
+                        Write-ToolLog "ADB reports an offline device; restarting ADB once." "WARN"
+                        [void](Repair-Adb)
+                        $adbRestarted = $true
+                    }
+                    $lastState = "offline"
+                } elseif ($stateText -match '\tdevice\b') {
+                    $lastState = "booting"
+                } else { $lastState = "waiting" }
+            } catch { }
+        }
+
+        $elapsed = [int]((Get-Date) - $started).TotalSeconds
+        Write-Host -NoNewline ("`r  {0,3}s / {1}s   state: {2}          " -f $elapsed,$TimeoutSeconds,$lastState)
+        Start-Sleep -Seconds 3
+    }
+    Write-Host ""
+    return $null
+}
+
+function Start-SmartAndroidDevice {
+    Write-Host ""
+    Write-Host "SMART ANDROID DEVICE MANAGER" -ForegroundColor Yellow
+    Write-Host "------------------------------------------------------------"
+
+    $existing = Get-AndroidDeviceId
+    if ($existing) {
+        Write-ToolLog "Using online Android device: $existing" "OK"
+        return $existing
+    }
+
+    [void](Repair-Adb)
+    $existing = Wait-ForAndroidDevice -TimeoutSeconds 12
+    if ($existing) { return $existing }
+
+    $emulators = @(Get-InstalledAndroidEmulators)
+    if ($emulators.Count -eq 0) {
+        throw "No Android device is online and no Android emulator is installed. Create an AVD in Android Studio Device Manager, then retry."
+    }
+
+    Write-Host "Installed Android emulators:" -ForegroundColor Cyan
+    for ($i=0; $i -lt $emulators.Count; $i++) { Write-Host ("  {0}. {1}" -f ($i+1),$emulators[$i]) }
+
+    $selected = $emulators[0]
+    Write-ToolLog "No online Android device. Launching emulator automatically: $selected" "WARN"
+    $launch = Invoke-External "flutter" @("emulators","--launch",$selected) "Launch Android emulator $selected" -AllowFailure -WorkingDirectory $ProjectPath
+    if ($launch.ExitCode -ne 0) {
+        [void](Repair-Adb)
+        $launch = Invoke-External "flutter" @("emulators","--launch",$selected) "Retry Android emulator launch" -AllowFailure -WorkingDirectory $ProjectPath
+        if ($launch.ExitCode -ne 0) { throw "Android emulator '$selected' could not be launched. See the setup log for details." }
+    }
+
+    $deviceId = Wait-ForAndroidDevice -TimeoutSeconds 180
+    if (-not $deviceId) {
+        [void](Repair-Adb)
+        $deviceId = Wait-ForAndroidDevice -TimeoutSeconds 45
+    }
+    if (-not $deviceId) { throw "Android emulator started but never became Flutter-supported/online. Check virtualization, emulator logs, and ADB state." }
+    return $deviceId
+}
+
+function Run-App {
+    $id = Start-SmartAndroidDevice
+    if (-not $id) { throw "Smart Device Manager could not provide an Android device." }
+    Write-ToolLog "Launching CARGame on $id" "OK"
+    Invoke-External "flutter" @("run","-d",$id) "Run application" -WorkingDirectory $ProjectPath | Out-Null
+}
+'''
+          if old not in s:
+              raise SystemExit('Device function block not found')
+          s = s.replace(old, new, 1)
+
+          s = s.replace('''        Write-Host "16 - Close/Kill processes locking project files"
+        Write-Host "0  - Exit"''', '''        Write-Host "16 - Close/Kill processes locking project files"
+        Write-Host "17 - Smart Android Device Manager (detect/repair/launch)"
+        Write-Host "0  - Exit"''', 1)
+          s = s.replace('''            "16"{Invoke-SafeAction{[void](Stop-ProjectLockingProcesses -Aggressive)}}
+            default''', '''            "16"{Invoke-SafeAction{[void](Stop-ProjectLockingProcesses -Aggressive)}}
+            "17"{Invoke-SafeAction{$id=Start-SmartAndroidDevice;Write-Host "Ready Android device: $id" -ForegroundColor Green}}
+            default''', 1)
+
+          p.write_text(s, encoding='utf-8', newline='\n')
+      - name: Validate patch
+        shell: bash
+        run: |
+          grep -q 'CARGame Setup Tool v2.5.0' SETUP_TOOL.ps1
+          grep -q 'function Start-SmartAndroidDevice' SETUP_TOOL.ps1
+          grep -q 'function Repair-Adb' SETUP_TOOL.ps1
+          grep -q '17 - Smart Android Device Manager' SETUP_TOOL.ps1
+      - name: Commit patched tool
+        shell: bash
+        run: |
+          git config user.name "CARGame Automation"
+          git config user.email "actions@users.noreply.github.com"
+          git add SETUP_TOOL.ps1
+          git commit -m "Add smart Android device recovery to setup tool"
+          git push origin main
