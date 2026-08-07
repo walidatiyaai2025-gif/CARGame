@@ -62,6 +62,18 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('open-game')));
     await tester.pumpAndSettle();
 
+    Future<void> pumpUntil(
+      Finder finder, {
+      Duration step = const Duration(milliseconds: 50),
+      int maxPumps = 30,
+    }) async {
+      for (var attempt = 0; attempt < maxPumps; attempt++) {
+        if (finder.evaluate().isNotEmpty) return;
+        await tester.pump(step);
+      }
+      expect(finder, findsWidgets);
+    }
+
     Future<void> placeCargo() async {
       await tester.tap(find.byKey(const ValueKey('cargo-1-0')));
       await tester.pump();
@@ -72,11 +84,14 @@ void main() {
       expect(target.isEmpty, isFalse);
 
       await tester.tapAt(target.center);
-      await tester.pump(const Duration(milliseconds: 260));
-      await tester.pump();
+      await pumpUntil(find.byType(GameActionFeedback));
       expect(find.byType(GameActionFeedback), findsOneWidget);
-      await tester.pump(const Duration(milliseconds: 720));
-      await tester.pump();
+
+      for (var attempt = 0; attempt < 30; attempt++) {
+        if (find.byType(GameActionFeedback).evaluate().isEmpty) break;
+        await tester.pump(const Duration(milliseconds: 50));
+      }
+      expect(find.byType(GameActionFeedback), findsNothing);
     }
 
     await placeCargo();
