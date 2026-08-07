@@ -1,6 +1,5 @@
 import 'dart:collection';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
 import 'game_asset_registry.dart';
@@ -67,7 +66,13 @@ final class GameAssetCachePolicy extends ChangeNotifier {
     }
     if (_inFlight.contains(assetId)) return false;
 
-    final provider = AssetImage(descriptor.path);
+    // Keep the provider bound to the same bundle used by the current view. This
+    // preserves manifest resolution during both precache and later LRU eviction;
+    // an unbound AssetImage can fall back to rootBundle when evicted.
+    final provider = AssetImage(
+      descriptor.path,
+      bundle: DefaultAssetBundle.of(context),
+    );
     _inFlight.add(assetId);
     notifyListeners();
     try {
