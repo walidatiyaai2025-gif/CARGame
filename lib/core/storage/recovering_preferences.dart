@@ -11,7 +11,7 @@ final class StorageRecoveryEvent {
 
 final class RecoveringPreferences {
   RecoveringPreferences({SharedPreferencesAsync? delegate})
-      : _delegate = delegate ?? SharedPreferencesAsync();
+    : _delegate = delegate ?? SharedPreferencesAsync();
 
   static const backupKey = 'storage_recovery_backup_v1';
 
