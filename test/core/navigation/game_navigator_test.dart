@@ -73,7 +73,7 @@ void main() {
                     builds++;
                     return const Scaffold(body: Text('Duplicate'));
                   },
-                ).then((_) {
+                ).whenComplete(() {
                   secondCompleted = true;
                 }),
               );
