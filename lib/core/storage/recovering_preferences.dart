@@ -19,8 +19,7 @@ final class RecoveringPreferences {
   final List<StorageRecoveryEvent> _events = <StorageRecoveryEvent>[];
   bool _backupWritten = false;
 
-  SharedPreferencesAsync get _store =>
-      _delegate ??= SharedPreferencesAsync();
+  SharedPreferencesAsync get _store => _delegate ??= SharedPreferencesAsync();
 
   List<StorageRecoveryEvent> get recoveryEvents => List.unmodifiable(_events);
   bool get recovered => _events.isNotEmpty;
