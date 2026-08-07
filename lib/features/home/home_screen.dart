@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/ads/banner_ad_footer.dart';
 import '../../core/logging/log_viewer_screen.dart';
 import '../../core/motion/ambient_motion_background.dart';
 import '../../core/settings/app_settings_store.dart';
@@ -97,6 +98,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
+      bottomNavigationBar: const BannerAdFooter(),
       body: AnimatedBuilder(
         animation: store,
         builder: (context, _) {
@@ -121,89 +123,101 @@ class _HomeScreenState extends State<HomeScreen> {
                   builder: (context, constraints) {
                     final compact = constraints.maxWidth < 390;
                     final horizontal = compact ? 12.0 : 18.0;
-                    return ListView(
+                    return Padding(
                       padding: EdgeInsets.fromLTRB(
                         horizontal,
-                        10,
+                        6,
                         horizontal,
-                        28,
+                        8,
                       ),
-                      children: [
-                        _TopBar(
-                          ar: ar,
-                          compact: compact,
-                          onShop: _openShop,
-                          onProgress: _openProgress,
-                          onLogs: () => Navigator.of(context).push(
-                            MaterialPageRoute<void>(
-                              builder: (_) => const LogViewerScreen(),
-                            ),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.topCenter,
+                        child: SizedBox(
+                          width: constraints.maxWidth - (horizontal * 2),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              _TopBar(
+                                ar: ar,
+                                compact: compact,
+                                onShop: _openShop,
+                                onProgress: _openProgress,
+                                onLogs: () => Navigator.of(context).push(
+                                  MaterialPageRoute<void>(
+                                    builder: (_) => const LogViewerScreen(),
+                                  ),
+                                ),
+                                onLanguage: widget.onToggleLanguage,
+                              ),
+                              const SizedBox(height: 8),
+                              _ResourceStrip(
+                                compact: compact,
+                                hearts:
+                                    '${store.hearts}/${ProgressStore.maxHearts}',
+                                heartLabel: _heartTimer(ar),
+                                coins: '${store.coins}',
+                                coinLabel: l10n.coins,
+                                stars: '${store.totalStars}',
+                                starLabel: ar ? 'النجوم' : 'Stars',
+                              ),
+                              const SizedBox(height: 10),
+                              _JourneyHero(
+                                ar: ar,
+                                compact: compact,
+                                title: l10n.appTitle,
+                                worldName: world.name,
+                                worldNumber: worldNumber,
+                                currentCity: currentCity,
+                                progress: store.completionProgress,
+                                completed: store.completedLevels,
+                                startColor: world.startColor,
+                                endColor: world.endColor,
+                              ),
+                              const SizedBox(height: 9),
+                              _QuickActions(
+                                compact: compact,
+                                ar: ar,
+                                dailyClaimed: !store.canClaimDailyReward,
+                                missionClaimed: store.missionClaimed,
+                                missionText:
+                                    '${store.missionWins}/3 • ${store.missionStars}/6',
+                                onDaily: _claimDailyReward,
+                                onMission: _openProgress,
+                                onShop: _openShop,
+                              ),
+                              const SizedBox(height: 8),
+                              _StreakPanel(
+                                ar: ar,
+                                current: store.currentWinStreak,
+                                best: store.bestWinStreak,
+                                combo: store.bestCombo,
+                                onTap: _openProgress,
+                              ),
+                              const SizedBox(height: 10),
+                              _StartJourneyButton(
+                                ar: ar,
+                                compact: compact,
+                                busy: _openingJourney,
+                                enabled: store.hearts > 0,
+                                cityName: currentCity,
+                                onPressed: _openJourney,
+                              ),
+                              const SizedBox(height: 9),
+                              const Text(
+                                'Walid Atiya Ata - PMP',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: AppTheme.muted,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: .2,
+                                ),
+                              ),
+                            ],
                           ),
-                          onLanguage: widget.onToggleLanguage,
                         ),
-                        const SizedBox(height: 14),
-                        _ResourceStrip(
-                          compact: compact,
-                          hearts: '${store.hearts}/${ProgressStore.maxHearts}',
-                          heartLabel: _heartTimer(ar),
-                          coins: '${store.coins}',
-                          coinLabel: l10n.coins,
-                          stars: '${store.totalStars}',
-                          starLabel: ar ? 'النجوم' : 'Stars',
-                        ),
-                        const SizedBox(height: 18),
-                        _JourneyHero(
-                          ar: ar,
-                          compact: compact,
-                          title: l10n.appTitle,
-                          worldName: world.name,
-                          worldNumber: worldNumber,
-                          currentCity: currentCity,
-                          progress: store.completionProgress,
-                          completed: store.completedLevels,
-                          startColor: world.startColor,
-                          endColor: world.endColor,
-                        ),
-                        const SizedBox(height: 16),
-                        _QuickActions(
-                          compact: compact,
-                          ar: ar,
-                          dailyClaimed: !store.canClaimDailyReward,
-                          missionClaimed: store.missionClaimed,
-                          missionText:
-                              '${store.missionWins}/3 • ${store.missionStars}/6',
-                          onDaily: _claimDailyReward,
-                          onMission: _openProgress,
-                          onShop: _openShop,
-                        ),
-                        const SizedBox(height: 14),
-                        _StreakPanel(
-                          ar: ar,
-                          current: store.currentWinStreak,
-                          best: store.bestWinStreak,
-                          combo: store.bestCombo,
-                          onTap: _openProgress,
-                        ),
-                        const SizedBox(height: 20),
-                        _StartJourneyButton(
-                          ar: ar,
-                          compact: compact,
-                          busy: _openingJourney,
-                          enabled: store.hearts > 0,
-                          cityName: currentCity,
-                          onPressed: _openJourney,
-                        ),
-                        const SizedBox(height: 16),
-                        const Text(
-                          'Walid Atiya Ata - PMP',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: AppTheme.muted,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: .2,
-                          ),
-                        ),
-                      ],
+                      ),
                     );
                   },
                 ),
@@ -367,10 +381,10 @@ class _ResourceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-    padding: EdgeInsets.symmetric(horizontal: compact ? 7 : 10, vertical: 9),
+    padding: EdgeInsets.symmetric(horizontal: compact ? 7 : 10, vertical: 5),
     decoration: BoxDecoration(
       color: Colors.white.withValues(alpha: .92),
-      borderRadius: BorderRadius.circular(22),
+      borderRadius: BorderRadius.circular(16),
       border: Border.all(color: Colors.white),
       boxShadow: AppTheme.softShadow,
     ),
@@ -378,7 +392,7 @@ class _ResourceCard extends StatelessWidget {
       children: [
         ThreeDGameIcon(
           type: icon,
-          size: compact ? 34 : 42,
+          size: compact ? 27 : 32,
           animate: icon == ThreeDIconType.heart,
         ),
         const SizedBox(height: 2),
@@ -388,7 +402,7 @@ class _ResourceCard extends StatelessWidget {
             value,
             style: TextStyle(
               color: AppTheme.navy,
-              fontSize: compact ? 15 : 18,
+              fontSize: compact ? 13 : 15,
               fontWeight: FontWeight.w900,
             ),
           ),
@@ -435,7 +449,7 @@ class _JourneyHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-    padding: EdgeInsets.all(compact ? 18 : 24),
+    padding: EdgeInsets.all(compact ? 12 : 16),
     decoration: BoxDecoration(
       gradient: LinearGradient(
         begin: Alignment.topLeft,
@@ -479,7 +493,7 @@ class _JourneyHero extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: compact ? 27 : 34,
+                          fontSize: compact ? 22 : 27,
                           fontWeight: FontWeight.w900,
                         ),
                       ),
@@ -522,13 +536,13 @@ class _JourneyHero extends StatelessWidget {
                 const SizedBox(width: 12),
                 ThreeDGameIcon(
                   type: ThreeDIconType.city,
-                  size: compact ? 82 : 108,
+                  size: compact ? 62 : 78,
                   animate: true,
                   semanticLabel: currentCity,
                 ),
               ],
             ),
-            const SizedBox(height: 18),
+            const SizedBox(height: 10),
             Row(
               children: [
                 Expanded(

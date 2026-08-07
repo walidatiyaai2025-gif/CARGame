@@ -23,6 +23,7 @@ const String _adsServiceName = 'mobile_ads';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  unawaited(SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky));
   runZonedGuarded<void>(() => runApp(const BootstrapApp()), (
     Object error,
     StackTrace stackTrace,
