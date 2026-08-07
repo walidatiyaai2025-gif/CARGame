@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   group('SecretRedactor', () {
     test('redacts bearer tokens', () {
-      const input = 'Authorization: Bearer abcdefghijklmnop.1234567890';
+      const input = 'Authorization: Bearer abcdefghijklmnop.1234567890'; // secret-scan: allow
 
       final output = SecretRedactor.redact(input);
 
@@ -13,7 +13,7 @@ void main() {
     });
 
     test('redacts common credential assignments while preserving key names', () {
-      const input = 'password="super-secret-value" api_key=abc123456789 token:xyz987654321';
+      const input = 'password="super-secret-value" api_key=abc123456789 token:xyz987654321'; // secret-scan: allow
 
       final output = SecretRedactor.redact(input);
 
@@ -24,7 +24,7 @@ void main() {
     });
 
     test('redacts secret query parameters without destroying the URL', () {
-      const input = 'https://example.test/path?mode=play&access_token=abc123456789&lang=en';
+      const input = 'https://example.test/path?mode=play&access_token=abc123456789&lang=en'; // secret-scan: allow
 
       final output = SecretRedactor.redact(input);
 
@@ -36,7 +36,7 @@ void main() {
 
     test('redacts private key blocks', () {
       final input = [
-        '-----BEGIN PRIVATE KEY-----',
+        '-----BEGIN PRIVATE KEY-----', // secret-scan: allow
         'not-real-key-material-for-redaction-test',
         '-----END PRIVATE KEY-----',
       ].join('\n');
@@ -45,7 +45,7 @@ void main() {
     });
 
     test('redacts Windows and Unix user-specific paths', () {
-      const input = 'C:\\Users\\Example\\AppData\\Local\\app.log /home/example/project/file.dart';
+      const input = 'C:\\Users\\Example\\AppData\\Local\\app.log /home/example/project/file.dart'; // secret-scan: allow
 
       final output = SecretRedactor.redact(input);
 
