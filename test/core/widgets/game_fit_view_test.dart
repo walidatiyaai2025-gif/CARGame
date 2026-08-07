@@ -118,7 +118,8 @@ void main() {
     );
 
     expect(tester.takeException(), isNull);
-    expect(find.byType(Scrollable), findsNothing);
+    expect(find.byType(ListView), findsNothing);
+    expect(find.byType(SingleChildScrollView), findsNothing);
     expect(find.text('Large accessible heading'), findsOneWidget);
     expect(find.byType(TextField), findsOneWidget);
   });

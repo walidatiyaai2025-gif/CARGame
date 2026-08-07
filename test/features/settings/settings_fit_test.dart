@@ -15,33 +15,27 @@ void main() {
   });
 
   for (final size in <Size>[const Size(360, 640), const Size(412, 915)]) {
-    testWidgets('settings fits ${size.width.toInt()}x${size.height.toInt()} without scrolling', (
-      tester,
-    ) async {
-      await tester.binding.setSurfaceSize(size);
-      addTearDown(() => tester.binding.setSurfaceSize(null));
+    testWidgets(
+      'settings fits ${size.width.toInt()}x${size.height.toInt()} without scrolling',
+      (tester) async {
+        await tester.binding.setSurfaceSize(size);
+        addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      Object? flutterError;
-      final previous = FlutterError.onError;
-      FlutterError.onError = (details) {
-        flutterError ??= details.exception;
-      };
-      addTearDown(() => FlutterError.onError = previous);
-
-      await tester.pumpWidget(
-        MaterialApp(
-          home: SettingsScreen(
-            settings: AppSettingsStore(),
-            onToggleLanguage: () {},
+        await tester.pumpWidget(
+          MaterialApp(
+            home: SettingsScreen(
+              settings: AppSettingsStore(),
+              onToggleLanguage: () {},
+            ),
           ),
-        ),
-      );
-      await tester.pump();
+        );
+        await tester.pump();
 
-      expect(find.byType(GameFitView), findsOneWidget);
-      expect(find.byType(ListView), findsNothing);
-      expect(find.byType(SingleChildScrollView), findsNothing);
-      expect(flutterError, isNull);
-    });
+        expect(find.byType(GameFitView), findsOneWidget);
+        expect(find.byType(ListView), findsNothing);
+        expect(find.byType(SingleChildScrollView), findsNothing);
+        expect(tester.takeException(), isNull);
+      },
+    );
   }
 }
