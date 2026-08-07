@@ -19,9 +19,7 @@ void main() {
   ) async {
     final store = ProgressStore();
 
-    await tester.pumpWidget(
-      MaterialApp(home: ShopScreen(store: store)),
-    );
+    await tester.pumpWidget(MaterialApp(home: ShopScreen(store: store)));
     await tester.pump();
 
     expect(find.text('Smart Hint Pack'), findsOneWidget);
