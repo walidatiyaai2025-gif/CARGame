@@ -64,7 +64,7 @@ Codex must not mark a feature complete merely because UI code exists.
 | UI3D-001 | Central colors, gradients, shadows, spacing, typography | P0 | IMPLEMENTED | ENG-001 | Shared design tokens exist and are used by core screens; consolidation review remains. |
 | UI3D-002 | Reusable 3D icon component | P0 | IMPLEMENTED | UI3D-001 | Hearts, coins, stars, rewards, cities, bosses, and boosters have reusable 3D widgets. |
 | UI3D-003 | Reusable 3D button system | P1 | IMPLEMENTED | UI3D-001, MOT-001 | Shared `GameButton` provides depth, spring release, hover, disabled/loading states, ripple, haptics, sound hook, async tap guard, RTL, semantics, theme inputs, and focused widget tests; full CTA adoption remains. |
-| UI3D-004 | Reusable 3D card and panel system | P1 | PLANNED | UI3D-001 | Unified depth, highlights, border, clipping, skeleton, error, and interaction states exist. |
+| UI3D-004 | Reusable 3D card and panel system | P1 | IMPLEMENTED | UI3D-001 | `GamePanel`, `GameResourcePanel`, `GameActionPanel`, `GameStatPanel`, and `GameHeroPanel` provide shared depth, highlights, border, clipping, loading/error states, semantics and interaction; adopted in Home, Shop, and Progress Hub with regression tests; latest Flutter CI/device verification pending. |
 | UI3D-005 | Resource chips | P1 | IMPLEMENTED | UI3D-002 | Heart, coin, star, XP, and booster chips use shared rules; full-screen adoption remains. |
 | UI3D-006 | Responsive screen shell and safe areas | P0 | IN PROGRESS | UI3D-001 | Shared `GameFitView` keeps bounded screens visible without scroll and is adopted by Home and Mission Briefing; 360x640/412x915 regression coverage, tablets, large text, keyboard, cutouts, and remaining short screens still require validation. |
 | UI3D-007 | Reduced motion and low-performance visual mode | P1 | PLANNED | MOT-001 | User setting and automatic graceful degradation affect all shared visual effects. |
@@ -78,7 +78,7 @@ Codex must not mark a feature complete merely because UI code exists.
 | MOT-001 | Motion tokens and reusable animation primitives | P0 | IMPLEMENTED | UI3D-001 | Central duration budgets, curves, spring descriptions, distance/scale amplitude, and MediaQuery-driven reduced-motion profile exist and are integrated into GameButton with focused tests. |
 | MOT-002 | Button press and release feedback primitive | P0 | IMPLEMENTED | UI3D-003 | `GameButton` responds within 100 ms, springs on release, and guards delayed or duplicate async taps; wider screen adoption remains under MOT-003. |
 | MOT-003 | Universal Button Motion System | P0 | IMPLEMENTED | UI3D-003, MOT-002 | Major Start, mission launch, Next, Retry, rewarded continuation, heart/booster/theme purchase, and settings actions use shared `GameButton`; focused tests and CI verification exist, while physical-device motion review remains. |
-| MOT-004 | Screen transitions | P1 | PLANNED | MOT-001 | Shared-axis/fade-through transitions are guarded, interruptible, and RTL-aware. |
+| MOT-004 | Screen transitions | P1 | IMPLEMENTED | MOT-001 | `GameRoute` supplies shared fade/shared-axis motion with RTL-aware direction and Reduced Motion fallback; `GameNavigator` centralizes route naming, replacement and duplicate-push guards; World Map to briefing uses named guarded transitions and focused navigation tests exist. Full main-route adoption remains tracked by NAV-002; latest CI/device verification pending. |
 | MOT-005 | Ambient home/world motion | P1 | IMPLEMENTED | MOT-001, UI3D-007 | Home and World Map share one core ambient painter with gradient lighting, parallax glows, drifting clouds, road depth, repaint isolation, reduced-motion freeze, and lifecycle-safe ticker disposal. Focused tests are included; CI and physical-device review remain. |
 | MOT-006 | Product pickup, travel, placement, settle | P0 | IMPLEMENTED | GAME-003, MOT-001 | Existing cargo/warehouse motion primitives and shared curved source-to-target travel now form one integrated flow; duplicate cargo instances resolve by index, all gameplay/booster/restart/back input is locked during resolution, reduced motion completes without a ticker, and focused widget tests cover completion and anti-spam. Flutter CI/device verification remains. |
 | MOT-007 | Correct/wrong/combo feedback | P0 | IMPLEMENTED | GAME-003, MOT-001 | Reusable synchronized correct/wrong overlay provides sparkle, bounce, recoil, combo escalation capped at intensity 8 without truncating game state, one-shot settings-aware haptics, a typed sound hook, localized live-region/non-color cues, Reduced Motion without a ticker, guarded completion, and anti-spam coverage. Flutter CI verified 32/32 tests plus the debug APK; centralized audio-service integration remains tracked by AV-001/AV-006 and physical-device review remains. |
@@ -115,7 +115,7 @@ Codex must not mark a feature complete merely because UI code exists.
 | HOME-005 | Daily mission entry | P1 | IMPLEMENTED | RET-002 | Progress and claim state are visible; final design/motion remains. |
 | HOME-006 | Shop and progress navigation | P1 | IMPLEMENTED | SHOP-001, PROG-001 | Navigation exists and must adopt shared transitions. |
 | NAV-001 | Navigation guard framework | P0 | IMPLEMENTED | ENG-003 | Double push/pop and result action races are prevented; regression tests remain. |
-| NAV-002 | Unified animated route transitions | P1 | PLANNED | MOT-004 | All main routes use one transition policy with back-stack and RTL validation. |
+| NAV-002 | Unified animated route transitions | P1 | READY | MOT-004 | Shared transition primitive and navigator façade are available; remaining Home, Shop, Progress, briefing/game/result routes must adopt the policy with back-stack and RTL validation. |
 | NAV-003 | Deep-link and notification route safety | P2 | PLANNED | NAV-001, RET-008 | External entry opens only allowed destinations and never duplicates navigation. |
 | HOME-007 | First-run onboarding and returning-player resume | P1 | PLANNED | GAME-013, ENG-008 | New players receive concise onboarding; returning players resume the correct journey safely. |
 
@@ -331,13 +331,13 @@ Codex must not mark a feature complete merely because UI code exists.
 
 ## IN PROGRESS
 
-- None. `AST-001` closed at a clean asset-governance checkpoint.
+- `UI3D-006` remains the only active catalog item from the responsive-shell work; current navigation checkpoint is clean and closed as `IMPLEMENTED`.
 
 ## NEXT READY
 
-1. `AST-002` Implement the asset manifest and typed registry.
-2. `TEST-001` Add progress/economy unit tests.
-3. `PRIV-001` Complete privacy/data inventory before analytics, ads consent, or cloud features.
+1. `NAV-002` Adopt `GameNavigator` across remaining main routes and validate back-stack/RTL behavior.
+2. `AST-002` Implement the asset manifest and typed registry.
+3. `TEST-001` Add progress/economy unit tests.
 
 ## BLOCKED
 
@@ -349,7 +349,10 @@ Codex must not mark a feature complete merely because UI code exists.
   names/IDs, render profiles, lighting, export budgets, accessibility, and
   provenance handoff are documented and mechanically validated.
 - `ENG-001` Repository audit and baseline — architecture, commands, tooling, assets, persistence keys, debt, and risks are recorded in human- and machine-readable evidence.
+
 ## Recently implemented
 
+- `MOT-004` Screen transitions — shared RTL-aware route motion, Reduced Motion fallback, central navigator façade, duplicate-push guards, named World Map→Briefing integration, and focused navigation tests added; latest Flutter CI/device verification pending.
+- `UI3D-004` Reusable 3D card and panel system — shared panels adopted in Home, Shop, and Progress Hub with focused regression tests; latest Flutter CI/device verification pending.
 - `MOT-007` Correct/wrong/combo feedback — synchronized overlay, capped visual/haptic intensity, settings-aware hooks, localized semantics, deterministic completion, and focused tests added; Flutter CI/device verification pending.
 - `MOT-006` Product pickup, travel, placement, settle — shared causal travel motion, deterministic input lock, reduced-motion path, and focused tests added; Flutter CI/device verification pending.
