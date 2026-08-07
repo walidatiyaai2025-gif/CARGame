@@ -1,0 +1,57 @@
+name: One-time MOT-003 catalog migration
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/one_time_mot003_catalog_migration.yml
+
+permissions:
+  contents: write
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Reconcile stable feature IDs
+        shell: python
+        run: |
+          from pathlib import Path
+
+          path = Path('docs/FEATURE_CATALOG.md')
+          text = path.read_text(encoding='utf-8')
+
+          replacements = {
+              '| UI3D-003 | Reusable 3D button system | P1 | PLANNED | UI3D-001, MOT-001 | Press depth, disabled, loading, focus, RTL, semantics, and responsive states pass widget tests. |':
+              '| UI3D-003 | Reusable 3D button system | P1 | IMPLEMENTED | UI3D-001, MOT-001 | Shared `GameButton` provides depth, spring release, hover, disabled/loading states, ripple, haptics, sound hook, async tap guard, RTL, semantics, theme inputs, and focused widget tests; full CTA adoption remains. |',
+              '| MOT-002 | Button press and release feedback | P0 | PLANNED | MOT-001, UI3D-003 | Visible response occurs within 100 ms with no delayed or duplicate tap. |':
+              '| MOT-002 | Button press and release feedback primitive | P0 | IMPLEMENTED | UI3D-003 | `GameButton` responds within 100 ms, springs on release, and guards delayed or duplicate async taps; wider screen adoption remains under MOT-003. |',
+              '| MOT-003 | Resource value interpolation and pulse | P1 | PLANNED | MOT-001, UI3D-005 | Coins, hearts, XP, and stars animate accurately from old to new values. |':
+              '| MOT-003 | Universal Button Motion System | P0 | IN PROGRESS | UI3D-003, MOT-002 | All major Start, launch, Next, Retry, purchase, and settings actions use shared `GameButton` behavior with no duplicated button-motion implementation; Settings adoption and 5 focused tests are complete. |',
+              '| MOT-010 | Animation lifecycle and interruption safety | P0 | PLANNED | MOT-001 | Controllers dispose correctly; background, route changes, pause, and app lifecycle do not leak or corrupt state. |':
+              '| MOT-010 | Animation lifecycle and interruption safety | P0 | PLANNED | MOT-001 | Controllers dispose correctly; background, route changes, pause, and app lifecycle do not leak or corrupt state. |\n| MOT-011 | Resource value interpolation and pulse | P1 | PLANNED | MOT-001, UI3D-005 | Coins, hearts, XP, and stars animate accurately from old to new values without changing wallet truth or duplicating rewards. |',
+              '- `REL-001` Dynamic ADB/device scripts.':
+              '- `REL-001` Dynamic ADB/device scripts.\n- `MOT-003` Universal Button Motion System adoption.'
+          }
+
+          for old, new in replacements.items():
+              if old not in text:
+                  raise SystemExit(f'Expected catalog text not found: {old}')
+              text = text.replace(old, new, 1)
+
+          path.write_text(text, encoding='utf-8')
+
+          workflow = Path('.github/workflows/one_time_mot003_catalog_migration.yml')
+          workflow.unlink()
+
+      - name: Commit catalog migration
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/FEATURE_CATALOG.md .github/workflows/one_time_mot003_catalog_migration.yml
+          git commit -m "docs: reconcile MOT-003 button system tracking [skip ci]"
+          git push
