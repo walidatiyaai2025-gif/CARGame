@@ -13,6 +13,7 @@ class GamePanel extends StatefulWidget {
     this.state = GamePanelState.ready,
     this.errorMessage,
     this.semanticLabel,
+    this.loadingLabel = 'Loading',
     this.padding = const EdgeInsets.all(16),
     this.borderRadius = const BorderRadius.all(Radius.circular(24)),
     this.backgroundColor,
@@ -28,6 +29,7 @@ class GamePanel extends StatefulWidget {
   final GamePanelState state;
   final String? errorMessage;
   final String? semanticLabel;
+  final String loadingLabel;
   final EdgeInsetsGeometry padding;
   final BorderRadius borderRadius;
   final Color? backgroundColor;
@@ -68,17 +70,20 @@ class _GamePanelState extends State<GamePanel> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final reducedMotion = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
     final baseColor =
         widget.backgroundColor ?? theme.colorScheme.surface.withValues(alpha: .96);
     final border =
         widget.borderColor ?? theme.colorScheme.outlineVariant.withValues(alpha: .55);
-    final scale = _pressed ? .985 : (_hovered && _interactive ? 1.008 : 1.0);
+    final scale = reducedMotion
+        ? 1.0
+        : (_pressed ? .985 : (_hovered && _interactive ? 1.008 : 1.0));
     final depth = _pressed ? 3.0 : (_hovered && _interactive ? 14.0 : 9.0);
-    final offsetY = _pressed ? 2.0 : 0.0;
+    final offset = reducedMotion || !_pressed ? Offset.zero : const Offset(0, .012);
 
     Widget content = switch (widget.state) {
       GamePanelState.ready => widget.child,
-      GamePanelState.loading => const _GamePanelSkeleton(),
+      GamePanelState.loading => _GamePanelSkeleton(label: widget.loadingLabel),
       GamePanelState.error => _GamePanelError(
         message: widget.errorMessage ?? 'Unable to load this content.',
       ),
@@ -89,11 +94,9 @@ class _GamePanelState extends State<GamePanel> {
       child: Padding(padding: widget.padding, child: content),
     );
 
-    final panel = AnimatedContainer(
-      duration: const Duration(milliseconds: 140),
+    Widget panel = AnimatedContainer(
+      duration: reducedMotion ? Duration.zero : const Duration(milliseconds: 140),
       curve: Curves.easeOutCubic,
-      transform: Matrix4.translationValues(0, offsetY, 0)..scale(scale, scale),
-      transformAlignment: Alignment.center,
       decoration: BoxDecoration(
         color: widget.gradient == null ? baseColor : null,
         gradient: widget.gradient,
@@ -132,6 +135,18 @@ class _GamePanelState extends State<GamePanel> {
       ),
     );
 
+    panel = AnimatedScale(
+      scale: scale,
+      duration: reducedMotion ? Duration.zero : const Duration(milliseconds: 140),
+      curve: Curves.easeOutCubic,
+      child: AnimatedSlide(
+        offset: offset,
+        duration: reducedMotion ? Duration.zero : const Duration(milliseconds: 140),
+        curve: Curves.easeOutCubic,
+        child: panel,
+      ),
+    );
+
     if (!_interactive) {
       return Semantics(
         container: true,
@@ -166,7 +181,9 @@ class _GamePanelState extends State<GamePanel> {
 }
 
 class _GamePanelSkeleton extends StatefulWidget {
-  const _GamePanelSkeleton();
+  const _GamePanelSkeleton({required this.label});
+
+  final String label;
 
   @override
   State<_GamePanelSkeleton> createState() => _GamePanelSkeletonState();
@@ -196,7 +213,7 @@ class _GamePanelSkeletonState extends State<_GamePanelSkeleton>
 
     return Semantics(
       liveRegion: true,
-      label: 'Loading',
+      label: widget.label,
       child: ExcludeSemantics(
         child: AnimatedBuilder(
           animation: _controller,
