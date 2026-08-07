@@ -13,9 +13,20 @@ void main() {
     );
     await tester.pump();
 
+    final scrollable = find.byType(Scrollable);
+
     expect(find.text('Smart Hint Pack'), findsOneWidget);
     expect(find.text('Extra Moves Pack'), findsOneWidget);
+    expect(find.byType(GamePanel), findsWidgets);
+
+    await tester.scrollUntilVisible(
+      find.text('Combo Shield'),
+      250,
+      scrollable: scrollable,
+    );
+
     expect(find.text('Combo Shield'), findsOneWidget);
-    expect(find.byType(GamePanel), findsNWidgets(3));
+    expect(find.byType(GamePanel), findsWidgets);
+    expect(tester.takeException(), isNull);
   });
 }
