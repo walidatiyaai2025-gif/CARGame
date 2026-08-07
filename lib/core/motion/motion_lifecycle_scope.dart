@@ -43,7 +43,7 @@ class _MotionLifecycleScopeState extends State<MotionLifecycleScope>
 
   @override
   Widget build(BuildContext context) {
-    final ancestorEnabled = TickerMode.of(context);
+    final ancestorEnabled = TickerMode.valuesOf(context).enabled;
     final reducedMotion =
         MediaQuery.maybeOf(context)?.disableAnimations ?? false;
     final active =
