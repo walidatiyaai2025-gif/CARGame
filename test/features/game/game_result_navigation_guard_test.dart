@@ -111,7 +111,13 @@ void main() {
     await pumpUntil(next);
     expect(next, findsOneWidget);
 
-    await tester.ensureVisible(next);
+    // The result sheet is intentionally scrollable. Bring the CTA into the
+    // actual hit-test viewport before exercising the rapid repeated action.
+    await tester.scrollUntilVisible(
+      next,
+      300,
+      scrollable: find.byType(Scrollable).last,
+    );
     await tester.pump();
 
     // Queue two activations before the widget can rebuild. This models the
