@@ -7,8 +7,11 @@ import '../../core/settings/app_settings_store.dart';
 import '../../core/storage/progress_store.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/three_d_game_icon.dart';
+import '../../core/widgets/game_action_panel.dart';
 import '../../core/widgets/game_button.dart';
 import '../../core/widgets/game_fit_view.dart';
+import '../../core/widgets/game_panel.dart';
+import '../../core/widgets/game_resource_panel.dart';
 import '../../l10n/app_localizations.dart';
 import '../game/city_catalog.dart';
 import '../game/level_data.dart';
@@ -377,45 +380,12 @@ class _ResourceCard extends StatelessWidget {
   final bool compact;
 
   @override
-  Widget build(BuildContext context) => Container(
-    padding: EdgeInsets.symmetric(horizontal: compact ? 7 : 10, vertical: 5),
-    decoration: BoxDecoration(
-      color: Colors.white.withValues(alpha: .92),
-      borderRadius: BorderRadius.circular(16),
-      border: Border.all(color: Colors.white),
-      boxShadow: AppTheme.softShadow,
-    ),
-    child: Column(
-      children: [
-        ThreeDGameIcon(
-          type: icon,
-          size: compact ? 27 : 32,
-          animate: icon == ThreeDIconType.heart,
-        ),
-        const SizedBox(height: 2),
-        FittedBox(
-          fit: BoxFit.scaleDown,
-          child: Text(
-            value,
-            style: TextStyle(
-              color: AppTheme.navy,
-              fontSize: compact ? 13 : 15,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-        ),
-        Text(
-          label,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            color: AppTheme.muted,
-            fontSize: compact ? 9 : 10,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-      ],
-    ),
+  Widget build(BuildContext context) => GameResourcePanel(
+    icon: icon,
+    value: value,
+    label: label,
+    compact: compact,
+    animateIcon: icon == ThreeDIconType.heart,
   );
 }
 
@@ -665,55 +635,12 @@ class _ActionCard extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) => Material(
-    color: Colors.white.withValues(alpha: .94),
-    borderRadius: BorderRadius.circular(24),
-    elevation: 2,
-    shadowColor: Colors.black12,
-    child: InkWell(
-      borderRadius: BorderRadius.circular(24),
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Row(
-          children: [
-            ThreeDGameIcon(
-              type: icon,
-              size: 52,
-              animate: icon == ThreeDIconType.gift,
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: AppTheme.navy,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    subtitle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: AppTheme.orange,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    ),
+  Widget build(BuildContext context) => GameActionPanel(
+    icon: icon,
+    title: title,
+    subtitle: subtitle,
+    onTap: onTap,
+    animateIcon: icon == ThreeDIconType.gift,
   );
 }
 
@@ -733,61 +660,57 @@ class _StreakPanel extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) => Material(
-    color: const Color(0xFFF2ECFF),
-    borderRadius: BorderRadius.circular(24),
-    child: InkWell(
-      borderRadius: BorderRadius.circular(24),
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        child: Row(
-          children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF9C5CFF), Color(0xFF5D2BA8)],
-                ),
-                borderRadius: BorderRadius.circular(17),
-              ),
-              child: const Icon(
-                Icons.local_fire_department_rounded,
-                color: Colors.white,
-                size: 29,
-              ),
+  Widget build(BuildContext context) => GamePanel(
+    onTap: onTap,
+    semanticLabel: ar ? 'سلسلة الانتصارات' : 'Win streak',
+    backgroundColor: const Color(0xFFF2ECFF),
+    borderColor: const Color(0xFFDCCAF7),
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+    child: Row(
+      children: [
+        Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF9C5CFF), Color(0xFF5D2BA8)],
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    ar ? 'سلسلة الانتصارات' : 'Win streak',
-                    style: const TextStyle(
-                      color: AppTheme.navy,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                  Text(
-                    ar
-                        ? '$current حاليًا • الأفضل $best • Combo $combo'
-                        : '$current current • best $best • combo $combo',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: AppTheme.muted,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const Icon(Icons.chevron_right_rounded, color: Color(0xFF7B43C6)),
-          ],
+            borderRadius: BorderRadius.circular(17),
+          ),
+          child: const Icon(
+            Icons.local_fire_department_rounded,
+            color: Colors.white,
+            size: 29,
+          ),
         ),
-      ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                ar ? 'سلسلة الانتصارات' : 'Win streak',
+                style: const TextStyle(
+                  color: AppTheme.navy,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              Text(
+                ar
+                    ? '$current حاليًا • الأفضل $best • Combo $combo'
+                    : '$current current • best $best • combo $combo',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: AppTheme.muted,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const Icon(Icons.chevron_right_rounded, color: Color(0xFF7B43C6)),
+      ],
     ),
   );
 }

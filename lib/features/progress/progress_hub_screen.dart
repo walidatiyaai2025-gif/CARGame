@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../core/storage/progress_store.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/theme/three_d_game_icon.dart';
+import '../../core/widgets/game_panel.dart';
 
 class ProgressHubScreen extends StatelessWidget {
   const ProgressHubScreen({super.key, required this.store});
@@ -86,22 +88,50 @@ class ProgressHubScreen extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 14),
-            Card(
-              child: ListTile(
-                leading: const CircleAvatar(
-                  backgroundColor: Color(0xFFFFE7EC),
-                  child: Icon(Icons.favorite_rounded, color: AppTheme.red),
-                ),
-                title: Text(
+            GamePanel(
+              semanticLabel:
                   '${store.hearts}/${ProgressStore.maxHearts} ${ar ? 'قلوب' : 'hearts'}',
-                ),
-                subtitle: Text(_heartTimer(ar)),
-                trailing: store.hearts < ProgressStore.maxHearts
-                    ? const Icon(Icons.timer_outlined, color: AppTheme.orange)
-                    : const Icon(
-                        Icons.check_circle_rounded,
-                        color: AppTheme.green,
-                      ),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              child: Row(
+                children: [
+                  const ThreeDGameIcon(
+                    type: ThreeDIconType.heart,
+                    size: 42,
+                    animate: true,
+                    semanticLabel: 'Hearts',
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${store.hearts}/${ProgressStore.maxHearts} ${ar ? 'قلوب' : 'hearts'}',
+                          style: const TextStyle(
+                            color: AppTheme.navy,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          _heartTimer(ar),
+                          style: const TextStyle(
+                            color: AppTheme.muted,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    store.hearts < ProgressStore.maxHearts
+                        ? Icons.timer_outlined
+                        : Icons.check_circle_rounded,
+                    color: store.hearts < ProgressStore.maxHearts
+                        ? AppTheme.orange
+                        : AppTheme.green,
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 18),
@@ -337,14 +367,12 @@ class _CompactMetric extends StatelessWidget {
   final Color accent;
 
   @override
-  Widget build(BuildContext context) => Container(
+  Widget build(BuildContext context) => GamePanel(
+    semanticLabel: '$label: $value',
     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(20),
-      boxShadow: AppTheme.softShadow,
-    ),
+    borderRadius: BorderRadius.circular(20),
     child: Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
         Icon(icon, color: accent),
         const SizedBox(height: 5),
@@ -358,6 +386,8 @@ class _CompactMetric extends StatelessWidget {
         ),
         Text(
           label,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
           textAlign: TextAlign.center,
           style: const TextStyle(color: AppTheme.muted, fontSize: 9),
         ),
@@ -405,8 +435,10 @@ class _MissionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final progress = (value / target).clamp(0, 1).toDouble();
-    return Card(
-      child: Padding(
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: GamePanel(
+        semanticLabel: '$label ${value.clamp(0, target)} of $target',
         padding: const EdgeInsets.all(14),
         child: Row(
           children: [
@@ -417,12 +449,16 @@ class _MissionTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        label,
-                        style: const TextStyle(fontWeight: FontWeight.w800),
+                      Expanded(
+                        child: Text(
+                          label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontWeight: FontWeight.w800),
+                        ),
                       ),
+                      const SizedBox(width: 8),
                       Text('${value.clamp(0, target)}/$target'),
                     ],
                   ),
