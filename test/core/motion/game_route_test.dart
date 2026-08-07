@@ -3,30 +3,33 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('builds a named route and reaches the destination', (tester) async {
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Builder(
-          builder: (context) => TextButton(
-            onPressed: () => Navigator.of(context).push(
-              GameRoute.build<void>(
-                context: context,
-                name: '/next',
-                builder: (_) => const Scaffold(body: Text('Next screen')),
+  testWidgets(
+    'builds a named route and reaches the destination',
+    (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Builder(
+            builder: (context) => TextButton(
+              onPressed: () => Navigator.of(context).push(
+                GameRoute.build<void>(
+                  context: context,
+                  name: '/next',
+                  builder: (_) => const Scaffold(body: Text('Next screen')),
+                ),
               ),
+              child: const Text('Open'),
             ),
-            child: const Text('Open'),
           ),
         ),
-      ),
-    );
+      );
 
-    await tester.tap(find.text('Open'));
-    await tester.pump();
-    expect(find.text('Next screen'), findsOneWidget);
-    await tester.pumpAndSettle();
-    expect(find.text('Next screen'), findsOneWidget);
-  });
+      await tester.tap(find.text('Open'));
+      await tester.pump();
+      expect(find.text('Next screen'), findsOneWidget);
+      await tester.pumpAndSettle();
+      expect(find.text('Next screen'), findsOneWidget);
+    },
+  );
 
   testWidgets('uses slide transition in normal motion mode', (tester) async {
     await tester.pumpWidget(
