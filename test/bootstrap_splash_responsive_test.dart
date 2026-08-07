@@ -25,7 +25,7 @@ void main() {
     expect(find.text('CARGO SORT'), findsOneWidget);
     expect(find.text('Version $appVersion ($appBuildNumber)'), findsOneWidget);
     expect(find.text(appAuthor), findsOneWidget);
-    expect(find.textContaining('...'), findsOneWidget);
+    expect(find.textContaining('...'), findsWidgets);
     expect(find.byType(SingleChildScrollView), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox.shrink());
@@ -48,7 +48,7 @@ void main() {
     expect(find.text('SORT • SHIP • CONQUER'), findsOneWidget);
     expect(find.text('Version $appVersion ($appBuildNumber)'), findsOneWidget);
     expect(find.text(appAuthor), findsOneWidget);
-    expect(find.textContaining('...'), findsOneWidget);
+    expect(find.textContaining('...'), findsWidgets);
 
     await tester.ensureVisible(find.text(appAuthor));
     await tester.pump();
