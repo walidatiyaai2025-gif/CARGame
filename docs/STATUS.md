@@ -6,12 +6,20 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 
 | Field | Value |
 |---|---|
-| Current phase | C — Motion and living interface |
-| Completed checkpoint | `MOT-004` Screen transitions |
-| Status | IMPLEMENTED — shared route motion and guarded navigator exist; World Map→Briefing is integrated; workstation Android toolchain and Release APK are healthy |
-| Previous checkpoint | `UI3D-004` Reusable 3D card and panel system |
-| Next recommended feature | `NAV-002` Adopt the shared route policy across Home, Shop, Progress, briefing/game/result routes |
+| Current phase | B — Shared 3D design system |
+| Completed checkpoint | `NAV-002` Home/app-shell route adoption checkpoint |
+| Status | IMPLEMENTED — PR #62 merged at `f953607f1cc182c86d9ec02cb189cea5168c7402`; Flutter CI run #433 passed formatting, Analyze, focused/full tests, Debug APK build, and artifact upload. Broader NAV-002 briefing/game/result adoption and complete RTL/back-stack validation remain open. |
+| Previous checkpoint | `MOT-004` Screen transitions |
+| Next recommended feature | `UI3D-006` Continue responsive shell migration and large-text/tablet/cutout validation |
 | Known blocker | No Android development blocker. Gradle 8.13.0 still emits a future-support warning and should be made reproducibly >=8.14.0. Visual Studio C++ components are missing only for optional Windows desktop builds. |
+
+## Tracking reconciliation — 2026-08-07
+
+- Repository evidence shows the typed asset model, manifest, registry, runtime asset views, and focused tests already exist under `lib/core/assets` and `test/core/assets`.
+- `AST-002` and `AST-003` therefore require catalog promotion to `IMPLEMENTED`; they must not be marked `VERIFIED` until the catalog/dashboard integrity and applicable CI evidence are complete.
+- `UI3D-006` remains the sole `IN PROGRESS` feature and must not be overwritten by this docs-only reconciliation.
+- PR #62 merged the first NAV-002 Home/app-shell checkpoint; the broader NAV-002 feature remains open for briefing/game/result route adoption and complete RTL/back-stack validation.
+- Issue #54 tracks the remaining catalog reconciliation so status and feature catalog stay consistent with repository evidence.
 
 ## Workstation Android toolchain evidence — 2026-08-07
 
@@ -67,6 +75,7 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | 2026-08-07 | Gradle support policy | WARNING — local wrapper is 8.13.0; Flutter recommends >=8.14.0 |
 | 2026-08-07 | Setup Tool Git ownership recovery | IMPLEMENTED — v2.6.1 adds project-scoped `safe.directory` repair and one retry for dubious ownership |
 | 2026-08-07 | MOT-004 shared route primitive and World Map adoption | IMPLEMENTED — CI/device-wide route adoption remains under NAV-002 |
+| 2026-08-07 | NAV-002 Home/app-shell checkpoint | PASSED — PR #62 merged after Flutter CI run #433 completed successfully with Debug APK artifact uploaded |
 
 ## Test locally
 
