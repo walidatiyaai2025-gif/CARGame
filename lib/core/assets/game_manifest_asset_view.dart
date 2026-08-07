@@ -16,6 +16,7 @@ final class GameManifestAssetView extends StatelessWidget {
     this.height,
     this.fit = BoxFit.contain,
     this.semanticLabel,
+    this.errorFallback,
   });
 
   final String assetId;
@@ -24,6 +25,7 @@ final class GameManifestAssetView extends StatelessWidget {
   final double? height;
   final BoxFit fit;
   final String? semanticLabel;
+  final Widget? errorFallback;
 
   static Future<GameAssetRegistry>? _registryFuture;
 
@@ -52,6 +54,7 @@ final class GameManifestAssetView extends StatelessWidget {
           height: height,
           fit: fit,
           semanticLabel: semanticLabel,
+          errorFallback: errorFallback,
         );
       },
     );
