@@ -1,0 +1,196 @@
+name: Patch Setup Tool Locks V2
+
+on:
+  push:
+    paths:
+      - '.github/workflows/patch_setup_tool_locks_v2.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Patch setup tool
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('SETUP_TOOL.ps1')
+          s = p.read_text(encoding='utf-8')
+          s = s.replace('# CARGame Setup Tool v2.3.0', '# CARGame Setup Tool v2.4.0')
+          s = s.replace('$ToolVersion = "2.3.0"', '$ToolVersion = "2.4.0"')
+
+          marker = 'function Backup-LocalChanges {'
+          insert = r'''function Move-OutOfProjectFolder {
+    try {
+        $current = (Get-Location).Path
+        $fullProject = [System.IO.Path]::GetFullPath($ProjectPath).TrimEnd('\\')
+        if ($current -and $current.StartsWith($fullProject, [System.StringComparison]::OrdinalIgnoreCase)) {
+            $parent = Split-Path $fullProject -Parent
+            if (-not $parent -or -not (Test-Path $parent)) { $parent = $env:TEMP }
+            Set-Location $parent
+            Write-ToolLog "Moved working directory outside project: $parent" "OK"
+        }
+    } catch {
+        try { Set-Location $env:TEMP } catch { }
+    }
+}
+
+function Close-ProjectExplorerWindows {
+    $closed = 0
+    try {
+        $shell = New-Object -ComObject Shell.Application
+        $windows = @($shell.Windows())
+        $projectFull = [System.IO.Path]::GetFullPath($ProjectPath).TrimEnd('\\')
+        foreach ($window in $windows) {
+            try {
+                $url = [string]$window.LocationURL
+                if ([string]::IsNullOrWhiteSpace($url) -or -not $url.StartsWith('file:', [System.StringComparison]::OrdinalIgnoreCase)) { continue }
+                $path = [uri]::UnescapeDataString(([uri]$url).LocalPath).TrimEnd('\\')
+                if ($path.StartsWith($projectFull, [System.StringComparison]::OrdinalIgnoreCase)) {
+                    Write-ToolLog "Closing Explorer window: $path" "WARN"
+                    $window.Quit()
+                    $closed++
+                }
+            } catch { }
+        }
+    } catch {
+        Write-ToolLog "Explorer detection unavailable: $($_.Exception.Message)" "WARN"
+    }
+    return $closed
+}
+
+function Stop-ProjectLockingProcesses {
+    param([switch]$Aggressive)
+
+    Write-Host ""
+    Write-Host "RELEASING PROJECT FILE/FOLDER LOCKS" -ForegroundColor Yellow
+    Write-Host "------------------------------------------------------------"
+    Move-OutOfProjectFolder
+
+    $stopped = New-Object System.Collections.Generic.List[string]
+    $currentPid = $PID
+    $projectFull = [System.IO.Path]::GetFullPath($ProjectPath).TrimEnd('\\')
+    $projectRegex = [regex]::Escape($projectFull)
+    $projectName = Split-Path $projectFull -Leaf
+
+    $gradlew = Join-Path $ProjectPath 'android\\gradlew.bat'
+    if (Test-Path $gradlew) {
+        try {
+            Write-ToolLog "Stopping Gradle daemons cleanly" "INFO"
+            $androidDir = Split-Path $gradlew -Parent
+            Push-Location $androidDir
+            try { & $gradlew --stop 2>&1 | ForEach-Object { Write-Host $_ } } finally { Pop-Location }
+        } catch { Write-ToolLog "Gradle daemon stop returned an error; continuing." "WARN" }
+    }
+
+    [void](Close-ProjectExplorerWindows)
+    Start-Sleep -Milliseconds 600
+
+    $knownNames = @('java.exe','javaw.exe','dart.exe','adb.exe','node.exe','gradle.exe','code.exe','studio64.exe','idea64.exe','devenv.exe','msbuild.exe','cmd.exe')
+    try {
+        $processes = @(Get-CimInstance Win32_Process -ErrorAction SilentlyContinue)
+        foreach ($proc in $processes) {
+            try {
+                if (-not $proc.ProcessId -or $proc.ProcessId -eq $currentPid) { continue }
+                $name = [string]$proc.Name
+                if ($knownNames -notcontains $name.ToLowerInvariant()) { continue }
+                $cmd = [string]$proc.CommandLine
+                $matchesProject = $cmd -match $projectRegex
+                if (-not $matchesProject) {
+                    $gp = Get-Process -Id $proc.ProcessId -ErrorAction SilentlyContinue
+                    if ($gp -and $gp.MainWindowTitle -and $gp.MainWindowTitle -like "*$projectName*") { $matchesProject = $true }
+                }
+                if ($matchesProject) {
+                    Write-ToolLog "Stopping project process: $name PID=$($proc.ProcessId)" "WARN"
+                    Stop-Process -Id $proc.ProcessId -Force -ErrorAction SilentlyContinue
+                    $stopped.Add("$name ($($proc.ProcessId))")
+                }
+            } catch { }
+        }
+    } catch { Write-ToolLog "Process detection failed: $($_.Exception.Message)" "WARN" }
+
+    $handle = Get-Command handle.exe -ErrorAction SilentlyContinue
+    if ($handle) {
+        try {
+            Write-ToolLog "Sysinternals handle.exe detected; scanning exact open handles." "INFO"
+            $handleOutput = @(& $handle.Source -accepteula -nobanner $projectFull 2>&1)
+            $pids = New-Object System.Collections.Generic.HashSet[int]
+            foreach ($line in $handleOutput) {
+                if ([string]$line -match 'pid:\s*(\d+)') { [void]$pids.Add([int]$Matches[1]) }
+            }
+            foreach ($id in $pids) {
+                if ($id -eq $currentPid) { continue }
+                $gp = Get-Process -Id $id -ErrorAction SilentlyContinue
+                if (-not $gp) { continue }
+                if (-not $Aggressive -and $gp.ProcessName -in @('explorer','powershell','pwsh')) { continue }
+                Write-ToolLog "Stopping handle owner: $($gp.ProcessName) PID=$id" "WARN"
+                Stop-Process -Id $id -Force -ErrorAction SilentlyContinue
+                $stopped.Add("$($gp.ProcessName) ($id)")
+            }
+        } catch { Write-ToolLog "handle.exe scan failed: $($_.Exception.Message)" "WARN" }
+    }
+
+    Start-Sleep -Seconds 1
+    if ($stopped.Count -eq 0) { Write-ToolLog "No project-specific locking processes required termination." "OK" }
+    else { Write-ToolLog "Released locks by stopping $($stopped.Count) process(es): $($stopped -join ', ')" "OK" }
+    return $stopped.Count
+}
+
+'''
+          if 'function Stop-ProjectLockingProcesses {' not in s:
+              if marker not in s:
+                  raise SystemExit('Backup marker not found')
+              s = s.replace(marker, insert + marker, 1)
+
+          s = s.replace('''function Remove-SafeCaches {
+    foreach ($relative in @("build", ".dart_tool", "android\\.gradle", "node_modules")) {''', '''function Remove-SafeCaches {
+    Move-OutOfProjectFolder
+    foreach ($relative in @("build", ".dart_tool", "android\\.gradle", "node_modules")) {''', 1)
+
+          s = s.replace('''    $backup = Backup-LocalChanges
+    if ($backup) { Write-Host "Backup: $backup" -ForegroundColor Green }
+
+    Remove-SafeCaches''', '''    $backup = Backup-LocalChanges
+    if ($backup) { Write-Host "Backup: $backup" -ForegroundColor Green }
+
+    [void](Stop-ProjectLockingProcesses)
+    Remove-SafeCaches''', 1)
+
+          s = s.replace('''function Repair-Basic {
+    Write-ToolLog "Starting basic repair"''', '''function Repair-Basic {
+    Write-ToolLog "Starting basic repair"
+    [void](Stop-ProjectLockingProcesses)''', 1)
+
+          s = s.replace('''        if ($items.Count -gt 0) { $backup = "$ProjectPath`_backup_$(Get-Date -Format 'yyyyMMdd_HHmmss')"; Write-ToolLog "Existing non-Git folder moved to $backup" "WARN"; Move-Item $ProjectPath $backup -Force }''', '''        if ($items.Count -gt 0) { [void](Stop-ProjectLockingProcesses); Move-OutOfProjectFolder; $backup = "$ProjectPath`_backup_$(Get-Date -Format 'yyyyMMdd_HHmmss')"; Write-ToolLog "Existing non-Git folder moved to $backup" "WARN"; Move-Item $ProjectPath $backup -Force }''', 1)
+
+          s = s.replace('''        Write-Host "15 - Show local source/generated change summary"
+        Write-Host "0  - Exit"''', '''        Write-Host "15 - Show local source/generated change summary"
+        Write-Host "16 - Close/Kill processes locking project files"
+        Write-Host "0  - Exit"''', 1)
+          s = s.replace('''            "15" { Invoke-SafeAction { Show-ChangeSummary | Out-Null } }
+            default''', '''            "15" { Invoke-SafeAction { Show-ChangeSummary | Out-Null } }
+            "16" { Invoke-SafeAction { [void](Stop-ProjectLockingProcesses -Aggressive) } }
+            default''', 1)
+
+          p.write_text(s, encoding='utf-8', newline='\n')
+          PY
+      - name: Validate patch
+        shell: bash
+        run: |
+          grep -q 'CARGame Setup Tool v2.4.0' SETUP_TOOL.ps1
+          grep -q 'function Stop-ProjectLockingProcesses' SETUP_TOOL.ps1
+          grep -q '16 - Close/Kill processes locking project files' SETUP_TOOL.ps1
+      - name: Commit changes
+        shell: bash
+        run: |
+          git config user.name "CARGame Automation"
+          git config user.email "actions@users.noreply.github.com"
+          git add SETUP_TOOL.ps1
+          git commit -m "Release project file locks before setup operations"
+          git push origin main
