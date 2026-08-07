@@ -17,11 +17,22 @@ void main() {
     );
     await tester.pump();
 
+    final scrollable = find.byType(Scrollable);
+
     expect(find.byType(ListView), findsOneWidget);
-    expect(find.byType(GamePanel), findsAtLeastNWidgets(7));
+    expect(find.byType(GamePanel), findsWidgets);
     expect(find.text('Daily Mission'), findsOneWidget);
     expect(find.text('Win 3 cities'), findsOneWidget);
     expect(find.text('Earn 6 stars'), findsOneWidget);
     expect(find.text('Earn 150 coins'), findsOneWidget);
+
+    await tester.scrollUntilVisible(
+      find.text('Perfect Player'),
+      300,
+      scrollable: scrollable,
+    );
+
+    expect(find.text('Perfect Player'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 }
