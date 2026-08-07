@@ -38,10 +38,16 @@ void main() {
       ),
     );
 
-    expect(await policy.precache(context, registry, 'ui.heart'), isTrue);
+    expect(
+      await _precacheWithFrame(tester, policy, context, registry, 'ui.heart'),
+      isTrue,
+    );
     expect(policy.snapshot.cachedIds, ['ui.heart']);
 
-    expect(await policy.precache(context, registry, 'ui.coin'), isTrue);
+    expect(
+      await _precacheWithFrame(tester, policy, context, registry, 'ui.coin'),
+      isTrue,
+    );
     expect(policy.snapshot.cachedIds, ['ui.coin']);
     expect(policy.snapshot.cachedCount, 1);
     expect(policy.snapshot.inFlightCount, 0);
@@ -98,6 +104,19 @@ void main() {
 
     expect(policy.snapshot.failedIds, ['missing.a', 'missing.b']);
   });
+}
+
+Future<bool> _precacheWithFrame(
+  WidgetTester tester,
+  GameAssetCachePolicy policy,
+  BuildContext context,
+  GameAssetRegistry registry,
+  String assetId,
+) async {
+  final result = policy.precache(context, registry, assetId);
+  await tester.pump();
+  await tester.pump();
+  return result;
 }
 
 final class _MemoryBinaryBundle extends CachingAssetBundle {
