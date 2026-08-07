@@ -25,7 +25,9 @@ void main() {
       await tester.pump();
 
       final list = find.byType(ListView);
+      final scrollable = find.byType(Scrollable);
       expect(list, findsOneWidget);
+      expect(scrollable, findsOneWidget);
       expect(find.byType(GamePanel), findsAtLeastNWidgets(4));
       expect(find.text('Daily Mission'), findsOneWidget);
       expect(find.text('Win 3 cities'), findsOneWidget);
@@ -33,7 +35,7 @@ void main() {
       await tester.scrollUntilVisible(
         find.text('Earn 150 coins'),
         250,
-        scrollable: list,
+        scrollable: scrollable,
       );
       await tester.pumpAndSettle();
 
