@@ -108,3 +108,12 @@ flutter test
 flutter build apk --debug
 flutter run
 ```
+
+## Fullscreen home + banner checkpoint — 2026-08-07
+
+- Android/iOS app shell requests immersive-sticky fullscreen at startup while retaining portrait orientation policy.
+- Home no longer uses a ListView/scroll container; content scales down as one bounded composition and compact resource/hero cards reclaim vertical space.
+- Google Mobile Ads banner footer is isolated from offline core play, uses official debug test IDs, and occupies no footer space until an ad actually loads.
+- Full checkpoint verification passed in GitHub Actions: Dart format, Flutter Analyze with no issues, full Flutter tests, and Debug APK build.
+- Added regression coverage for 360x640 and 412x915 home layouts with no ListView/SingleChildScrollView and no captured Flutter layout exception.
+- Release ad unit injection/consent remain separate ADS-002/ADS-007 work and are not claimed complete.

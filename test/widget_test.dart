@@ -31,22 +31,23 @@ void main() {
   });
 
   for (final size in <Size>[const Size(360, 640), const Size(412, 915)]) {
-    testWidgets('home fits ${size.width.toInt()}x${size.height.toInt()} without scroll', (
-      tester,
-    ) async {
-      await tester.binding.setSurfaceSize(size);
-      addTearDown(() => tester.binding.setSurfaceSize(null));
+    testWidgets(
+      'home fits ${size.width.toInt()}x${size.height.toInt()} without scroll',
+      (tester) async {
+        await tester.binding.setSurfaceSize(size);
+        addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      await tester.pumpWidget(
-        CargoSortApp(store: ProgressStore(), settings: AppSettingsStore()),
-      );
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
+        await tester.pumpWidget(
+          CargoSortApp(store: ProgressStore(), settings: AppSettingsStore()),
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
 
-      expect(tester.takeException(), isNull);
-      expect(find.byType(ListView), findsNothing);
-      expect(find.byType(SingleChildScrollView), findsNothing);
-      expect(find.text('Cargo Sort'), findsOneWidget);
-    });
+        expect(tester.takeException(), isNull);
+        expect(find.byType(ListView), findsNothing);
+        expect(find.byType(SingleChildScrollView), findsNothing);
+        expect(find.text('Cargo Sort'), findsOneWidget);
+      },
+    );
   }
 }

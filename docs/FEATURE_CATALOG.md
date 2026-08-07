@@ -109,7 +109,7 @@ Codex must not mark a feature complete merely because UI code exists.
 | ID | Function | Priority | Status | Dependencies | Acceptance / evidence |
 |---|---|---:|---|---|---|
 | HOME-001 | Premium 3D home screen | P1 | IMPLEMENTED | UI3D-002 | Hero, resources, cards, and start CTA exist; a lifecycle-safe living backdrop with parallax glow and drifting cloud layers is integrated. Final authored assets and device polish remain. |
-| HOME-002 | Responsive Start button | P0 | IMPLEMENTED | HOME-001 | No overflow and repeated navigation is guarded; device matrix test remains. |
+| HOME-002 | Responsive Start button | P0 | IMPLEMENTED | HOME-001 | Home is fit-to-screen without a scroll container on 360x640 and 412x915 regression sizes; compact resources/hero preserve the guarded Start action; physical-device matrix remains. |
 | HOME-003 | Current world and next-city hero | P1 | IMPLEMENTED | WORLD-001 | Current journey/next target are shown; production city assets remain. |
 | HOME-004 | Daily reward entry | P1 | IMPLEMENTED | RET-001 | Entry reflects availability; animated claim flow remains. |
 | HOME-005 | Daily mission entry | P1 | IMPLEMENTED | RET-002 | Progress and claim state are visible; final design/motion remains. |
@@ -236,6 +236,7 @@ Codex must not mark a feature complete merely because UI code exists.
 | ADS-007 | Consent/privacy integration | P1 | PLANNED | ADS-002, PRIV-001 | Consent state controls personalized ads/analytics and is re-openable. |
 | ADS-008 | Ad placement analytics and quality safeguards | P2 | PLANNED | ADS-006, ENG-012 | Impression, completion, failure, churn signals are measured without sensitive data. |
 | ADS-009 | Ad-free failure and fallback UX | P1 | PLANNED | ADS-001 | Unavailable/no-fill/network errors return immediately to a valid non-blocking UI state. |
+| ADS-010 | Home banner ad footer | P1 | IMPLEMENTED | ADS-001, ENG-014 | Home uses a Google banner footer with official debug test ID; it reserves no space until loaded and no-fill/offline leaves core play usable. Production ID injection remains governed by ADS-002. |
 
 # N. Audio and haptics
 
