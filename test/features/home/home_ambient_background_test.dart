@@ -20,7 +20,10 @@ void main() {
         matching: find.byType(AnimatedBuilder),
       ),
     );
-    expect((animatedBuilder.animation as AnimationController).isAnimating, isTrue);
+    expect(
+      (animatedBuilder.animation as AnimationController).isAnimating,
+      isTrue,
+    );
 
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump();

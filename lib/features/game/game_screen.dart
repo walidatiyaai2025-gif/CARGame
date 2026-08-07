@@ -1,9 +1,10 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
 
 import '../../core/ads/ad_service.dart';
-import '../../core/motion/game_motion.dart';
+import '../../core/motion/game_travel_motion.dart';
 import '../../core/storage/progress_store.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/game_skin.dart';
@@ -19,21 +20,28 @@ class GameScreen extends StatefulWidget {
     required this.level,
     required this.store,
     this.loadout = MissionLoadout.empty,
+    this.adService,
   });
 
   final LevelData level;
   final ProgressStore store;
   final MissionLoadout loadout;
+  final AdService? adService;
 
   @override
   State<GameScreen> createState() => _GameScreenState();
 }
 
 class _GameScreenState extends State<GameScreen> {
-  final AdService _ads = AdService();
+  late final AdService _ads;
+  final GlobalKey _motionLayerKey = GlobalKey();
 
   late List<CargoItem> _remaining;
   CargoItem? _selected;
+  int? _selectedIndex;
+  Offset? _selectedOrigin;
+  _CargoFlight? _flight;
+  int _flightSequence = 0;
   late int _moves;
   int _combo = 0;
   int _bestCombo = 0;
@@ -43,9 +51,7 @@ class _GameScreenState extends State<GameScreen> {
   bool _madeWrongMove = false;
   bool _resultActionBusy = false;
   bool _resultVisible = false;
-  bool _cargoActionBusy = false;
-  int? _activeWarehouseId;
-  bool _placementCorrect = false;
+  bool _resolving = false;
 
   int get _matchedCount => widget.level.items.length - _remaining.length;
   double get _progress => widget.level.items.isEmpty
@@ -66,6 +72,7 @@ class _GameScreenState extends State<GameScreen> {
   @override
   void initState() {
     super.initState();
+    _ads = widget.adService ?? AdService();
     _ads.preload();
     _reset(applyLoadout: true);
   }
@@ -78,6 +85,9 @@ class _GameScreenState extends State<GameScreen> {
         (applyLoadout && widget.loadout.extraMoves ? 5 : 0);
     _preparedHints = applyLoadout && widget.loadout.smartHint ? 1 : 0;
     _selected = null;
+    _selectedIndex = null;
+    _selectedOrigin = null;
+    _flight = null;
     _combo = 0;
     _bestCombo = 0;
     _finished = false;
@@ -85,9 +95,7 @@ class _GameScreenState extends State<GameScreen> {
     _madeWrongMove = false;
     _resultActionBusy = false;
     _resultVisible = false;
-    _cargoActionBusy = false;
-    _activeWarehouseId = null;
-    _placementCorrect = false;
+    _resolving = false;
   }
 
   List<CargoItem> get _warehouses {
@@ -98,37 +106,56 @@ class _GameScreenState extends State<GameScreen> {
     return unique.values.toList();
   }
 
-  void _choosePackage(CargoItem item) {
-    if (_finished || _moves <= 0 || _resultVisible || _cargoActionBusy) {
-      return;
-    }
-    setState(() => _selected = item);
+  void _choosePackage(CargoItem item, int index, Offset globalOrigin) {
+    if (_finished || _moves <= 0 || _resultVisible || _resolving) return;
+    setState(() {
+      _selected = item;
+      _selectedIndex = index;
+      _selectedOrigin = globalOrigin;
+    });
   }
 
-  Future<void> _chooseWarehouse(CargoItem warehouse) async {
+  void _chooseWarehouse(CargoItem warehouse, Offset globalDestination) {
     final selected = _selected;
+    final selectedIndex = _selectedIndex;
+    final layer = _motionLayerKey.currentContext?.findRenderObject();
     if (selected == null ||
+        selectedIndex == null ||
         _finished ||
         _moves <= 0 ||
         _resultVisible ||
-        _cargoActionBusy) {
+        _resolving ||
+        layer is! RenderBox) {
       return;
     }
 
-    final correct = selected.id == warehouse.id;
-    final motion = GameMotion.of(context);
+    final flight = _CargoFlight(
+      id: ++_flightSequence,
+      item: selected,
+      selectedIndex: selectedIndex,
+      warehouse: warehouse,
+      start: layer.globalToLocal(_selectedOrigin ?? globalDestination),
+      end: layer.globalToLocal(globalDestination),
+    );
     setState(() {
-      _cargoActionBusy = true;
-      _activeWarehouseId = warehouse.id;
-      _placementCorrect = correct;
+      _resolving = true;
+      _flight = flight;
     });
-    await Future<void>.delayed(motion.duration(GameMotionDurations.standard));
-    if (!mounted) return;
+  }
 
+  Future<void> _completeFlight(_CargoFlight flight) async {
+    if (!mounted || _flight?.id != flight.id) return;
+
+    final correct = flight.item.id == flight.warehouse.id;
     setState(() {
       _moves--;
       if (correct) {
-        _remaining.remove(selected);
+        if (flight.selectedIndex < _remaining.length &&
+            identical(_remaining[flight.selectedIndex], flight.item)) {
+          _remaining.removeAt(flight.selectedIndex);
+        } else {
+          _remaining.remove(flight.item);
+        }
         _combo++;
         _bestCombo = max(_bestCombo, _combo);
       } else {
@@ -140,9 +167,10 @@ class _GameScreenState extends State<GameScreen> {
         }
       }
       _selected = null;
-      _cargoActionBusy = false;
-      _activeWarehouseId = null;
-      _placementCorrect = false;
+      _selectedIndex = null;
+      _selectedOrigin = null;
+      _flight = null;
+      _resolving = false;
     });
 
     if (_remaining.isEmpty) {
@@ -527,9 +555,10 @@ class _GameScreenState extends State<GameScreen> {
     final skin = gameSkinById(widget.store.selectedTheme);
     final world = gameWorlds[widget.level.world - 1];
     final ar = Localizations.localeOf(context).languageCode == 'ar';
+    final flight = _flight;
 
     return PopScope(
-      canPop: !_resultVisible,
+      canPop: !_resultVisible && !_resolving,
       child: Scaffold(
         appBar: AppBar(
           title: Column(
@@ -548,114 +577,139 @@ class _GameScreenState extends State<GameScreen> {
           actions: [
             IconButton(
               tooltip: ar ? 'إعادة' : 'Restart',
-              onPressed: _finished || _resultVisible
+              onPressed: _finished || _resultVisible || _resolving
                   ? null
                   : () => setState(() => _reset()),
               icon: const Icon(Icons.restart_alt_rounded),
             ),
           ],
         ),
-        body: Container(
-          decoration: BoxDecoration(gradient: skin.backgroundGradient),
-          child: SafeArea(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final compact =
-                    constraints.maxHeight < 690 || constraints.maxWidth < 370;
-                return Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    compact ? 9 : 14,
-                    compact ? 8 : 12,
-                    compact ? 9 : 14,
-                    compact ? 10 : 16,
-                  ),
-                  child: Column(
-                    children: [
-                      _StatusPanel(
-                        moves: _moves,
-                        matched: _matchedCount,
-                        total: widget.level.items.length,
-                        progress: _progress,
-                        combo: _combo,
-                        hearts: widget.store.hearts,
-                        skin: skin,
-                        shieldActive: _shieldActive,
-                        compact: compact,
+        body: Stack(
+          key: _motionLayerKey,
+          children: [
+            Container(
+              decoration: BoxDecoration(gradient: skin.backgroundGradient),
+              child: SafeArea(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final compact =
+                        constraints.maxHeight < 690 ||
+                        constraints.maxWidth < 370;
+                    return Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        compact ? 9 : 14,
+                        compact ? 8 : 12,
+                        compact ? 9 : 14,
+                        compact ? 10 : 16,
                       ),
-                      SizedBox(height: compact ? 6 : 10),
-                      Text(
-                        widget.level.isBossCity
-                            ? (ar ? 'مهمة مدينة الزعيم' : 'BOSS CITY MISSION')
-                            : (ar ? 'رتّب كل الشحنات' : 'SORT ALL CARGO'),
-                        style: TextStyle(
-                          color: widget.level.isBossCity
-                              ? skin.accent
-                              : skin.primary,
-                          fontWeight: FontWeight.w900,
-                          fontSize: compact ? 14 : 17,
-                        ),
-                      ),
-                      SizedBox(height: compact ? 6 : 10),
-                      Expanded(
-                        flex: 3,
-                        child: _CargoBoard(
-                          items: _remaining,
-                          selected: _selected,
-                          onTap: _choosePackage,
-                          compact: compact,
-                          busy: _cargoActionBusy,
-                        ),
-                      ),
-                      SizedBox(height: compact ? 7 : 12),
-                      Expanded(
-                        flex: 2,
-                        child: _WarehouseBoard(
-                          warehouses: _warehouses,
-                          onTap: _chooseWarehouse,
-                          compact: compact,
-                          busy: _cargoActionBusy,
-                          activeWarehouseId: _activeWarehouseId,
-                          placementCorrect: _placementCorrect,
-                        ),
-                      ),
-                      SizedBox(height: compact ? 7 : 12),
-                      Row(
+                      child: Column(
                         children: [
-                          Expanded(
-                            child: _BoosterButton(
-                              icon: Icons.lightbulb_rounded,
-                              count: widget.store.freeHints + _preparedHints,
-                              active: _selected != null,
-                              onPressed: _selected == null || _finished
-                                  ? null
-                                  : _useHint,
+                          _StatusPanel(
+                            moves: _moves,
+                            matched: _matchedCount,
+                            total: widget.level.items.length,
+                            progress: _progress,
+                            combo: _combo,
+                            hearts: widget.store.hearts,
+                            skin: skin,
+                            shieldActive: _shieldActive,
+                            compact: compact,
+                          ),
+                          SizedBox(height: compact ? 6 : 10),
+                          Text(
+                            widget.level.isBossCity
+                                ? (ar
+                                      ? 'مهمة مدينة الزعيم'
+                                      : 'BOSS CITY MISSION')
+                                : (ar ? 'رتّب كل الشحنات' : 'SORT ALL CARGO'),
+                            style: TextStyle(
+                              color: widget.level.isBossCity
+                                  ? skin.accent
+                                  : skin.primary,
+                              fontWeight: FontWeight.w900,
+                              fontSize: compact ? 14 : 17,
                             ),
                           ),
-                          const SizedBox(width: 7),
+                          SizedBox(height: compact ? 6 : 10),
                           Expanded(
-                            child: _BoosterButton(
-                              icon: Icons.add_circle_rounded,
-                              count: widget.store.extraMovesBoosters,
-                              onPressed: _finished ? null : _useExtraMoves,
+                            flex: 3,
+                            child: _CargoBoard(
+                              items: _remaining,
+                              selectedIndex: _selectedIndex,
+                              travellingIndex: _resolving
+                                  ? _selectedIndex
+                                  : null,
+                              onTap: _choosePackage,
+                              compact: compact,
                             ),
                           ),
-                          const SizedBox(width: 7),
+                          SizedBox(height: compact ? 7 : 12),
                           Expanded(
-                            child: _BoosterButton(
-                              icon: Icons.shield_rounded,
-                              count: widget.store.comboShields,
-                              active: _shieldActive,
-                              onPressed: _finished ? null : _useComboShield,
+                            flex: 2,
+                            child: _WarehouseBoard(
+                              warehouses: _warehouses,
+                              activeFlight: flight,
+                              onTap: _chooseWarehouse,
+                              compact: compact,
                             ),
+                          ),
+                          SizedBox(height: compact ? 7 : 12),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _BoosterButton(
+                                  icon: Icons.lightbulb_rounded,
+                                  count:
+                                      widget.store.freeHints + _preparedHints,
+                                  active: _selected != null,
+                                  onPressed:
+                                      _selected == null ||
+                                          _finished ||
+                                          _resolving
+                                      ? null
+                                      : _useHint,
+                                ),
+                              ),
+                              const SizedBox(width: 7),
+                              Expanded(
+                                child: _BoosterButton(
+                                  icon: Icons.add_circle_rounded,
+                                  count: widget.store.extraMovesBoosters,
+                                  onPressed: _finished || _resolving
+                                      ? null
+                                      : _useExtraMoves,
+                                ),
+                              ),
+                              const SizedBox(width: 7),
+                              Expanded(
+                                child: _BoosterButton(
+                                  icon: Icons.shield_rounded,
+                                  count: widget.store.comboShields,
+                                  active: _shieldActive,
+                                  onPressed: _finished || _resolving
+                                      ? null
+                                      : _useComboShield,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                    ],
-                  ),
-                );
-              },
+                    );
+                  },
+                ),
+              ),
             ),
-          ),
+            if (flight != null)
+              GameTravelMotion(
+                key: ValueKey(flight.id),
+                start: flight.start,
+                end: flight.end,
+                size: 58,
+                onCompleted: () => unawaited(_completeFlight(flight)),
+                child: _FlightCargo(item: flight.item),
+              ),
+          ],
         ),
       ),
     );
@@ -710,17 +764,17 @@ class _BoosterButton extends StatelessWidget {
 class _CargoBoard extends StatelessWidget {
   const _CargoBoard({
     required this.items,
-    required this.selected,
+    required this.selectedIndex,
+    required this.travellingIndex,
     required this.onTap,
     required this.compact,
-    required this.busy,
   });
 
   final List<CargoItem> items;
-  final CargoItem? selected;
-  final ValueChanged<CargoItem> onTap;
+  final int? selectedIndex;
+  final int? travellingIndex;
+  final void Function(CargoItem item, int index, Offset globalOrigin) onTap;
   final bool compact;
-  final bool busy;
 
   @override
   Widget build(BuildContext context) => Container(
@@ -746,44 +800,57 @@ class _CargoBoard extends StatelessWidget {
       ),
       itemBuilder: (_, index) {
         final item = items[index];
-        final selectedItem = identical(item, selected);
-        return CargoMotionTile(
-          selected: selectedItem,
-          busy: busy,
-          child: InkWell(
-            onTap: busy ? null : () => onTap(item),
-            borderRadius: BorderRadius.circular(18),
-            child: Container(
-              padding: EdgeInsets.all(compact ? 5 : 8),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [item.accentColor, item.color],
-                ),
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(
-                  color: selectedItem ? Colors.white : Colors.transparent,
-                  width: 3,
-                ),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(item.icon, color: Colors.white, size: compact ? 26 : 34),
-                  const SizedBox(height: 4),
-                  Text(
-                    item.name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: compact ? 8 : 10,
-                      fontWeight: FontWeight.w900,
+        final selectedItem = index == selectedIndex;
+        final travellingItem = index == travellingIndex;
+        return Builder(
+          builder: (tileContext) {
+            Offset? tapOrigin;
+            return InkWell(
+              key: ValueKey('cargo-${item.id}-$index'),
+              onTapDown: (details) => tapOrigin = details.globalPosition,
+              onTap: () =>
+                  onTap(item, index, tapOrigin ?? _globalCenter(tileContext)),
+              borderRadius: BorderRadius.circular(18),
+              child: CargoMotionTile(
+                selected: selectedItem,
+                busy: travellingItem,
+                child: Container(
+                  padding: EdgeInsets.all(compact ? 5 : 8),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [item.accentColor, item.color],
+                    ),
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(
+                      color: selectedItem ? Colors.white : Colors.transparent,
+                      width: 3,
                     ),
                   ),
-                ],
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        item.icon,
+                        color: Colors.white,
+                        size: compact ? 26 : 34,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        item.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: compact ? 8 : 10,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ),
-          ),
+            );
+          },
         );
       },
     ),
@@ -793,19 +860,15 @@ class _CargoBoard extends StatelessWidget {
 class _WarehouseBoard extends StatelessWidget {
   const _WarehouseBoard({
     required this.warehouses,
+    required this.activeFlight,
     required this.onTap,
     required this.compact,
-    required this.busy,
-    required this.activeWarehouseId,
-    required this.placementCorrect,
   });
 
   final List<CargoItem> warehouses;
-  final ValueChanged<CargoItem> onTap;
+  final _CargoFlight? activeFlight;
+  final void Function(CargoItem item, Offset globalDestination) onTap;
   final bool compact;
-  final bool busy;
-  final int? activeWarehouseId;
-  final bool placementCorrect;
 
   @override
   Widget build(BuildContext context) => GridView.builder(
@@ -818,42 +881,52 @@ class _WarehouseBoard extends StatelessWidget {
     ),
     itemBuilder: (_, index) {
       final item = warehouses[index];
-      return WarehouseMotionTarget(
-        active: activeWarehouseId == item.id,
-        correct: placementCorrect,
-        child: InkWell(
-          onTap: busy ? null : () => onTap(item),
-          borderRadius: BorderRadius.circular(18),
-          child: Ink(
-            padding: EdgeInsets.all(compact ? 5 : 7),
-            decoration: BoxDecoration(
-              color: Colors.white,
+      final active = activeFlight?.warehouse.id == item.id;
+      final correct = active && activeFlight?.item.id == item.id;
+      return Builder(
+        builder: (tileContext) {
+          Offset? tapDestination;
+          return WarehouseMotionTarget(
+            active: active,
+            correct: correct,
+            child: InkWell(
+              key: ValueKey('warehouse-${item.id}'),
+              onTapDown: (details) => tapDestination = details.globalPosition,
+              onTap: () =>
+                  onTap(item, tapDestination ?? _globalCenter(tileContext)),
               borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: item.color, width: 3),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.warehouse_rounded,
-                  color: item.color,
-                  size: compact ? 28 : 38,
+              child: Ink(
+                padding: EdgeInsets.all(compact ? 5 : 7),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: item.color, width: 3),
                 ),
-                const SizedBox(height: 3),
-                Text(
-                  item.category,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: item.color,
-                    fontSize: compact ? 8 : 9,
-                    fontWeight: FontWeight.w900,
-                  ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.warehouse_rounded,
+                      color: item.color,
+                      size: compact ? 28 : 38,
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      item.category,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: item.color,
+                        fontSize: compact ? 8 : 9,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
-          ),
-        ),
+          );
+        },
       );
     },
   );
@@ -895,6 +968,7 @@ class _StatusPanel extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             _Metric(
+              key: const ValueKey('game-moves'),
               icon: Icons.touch_app_rounded,
               value: '$moves',
               compact: compact,
@@ -935,6 +1009,7 @@ class _StatusPanel extends StatelessWidget {
 
 class _Metric extends StatelessWidget {
   const _Metric({
+    super.key,
     required this.icon,
     required this.value,
     required this.compact,
@@ -957,4 +1032,51 @@ class _Metric extends StatelessWidget {
       ),
     ],
   );
+}
+
+class _FlightCargo extends StatelessWidget {
+  const _FlightCargo({required this.item});
+
+  final CargoItem item;
+
+  @override
+  Widget build(BuildContext context) => DecoratedBox(
+    decoration: BoxDecoration(
+      gradient: LinearGradient(colors: [item.accentColor, item.color]),
+      borderRadius: BorderRadius.circular(18),
+      border: Border.all(color: Colors.white, width: 3),
+      boxShadow: [
+        BoxShadow(
+          color: item.color.withValues(alpha: .42),
+          blurRadius: 18,
+          offset: const Offset(0, 10),
+        ),
+      ],
+    ),
+    child: Icon(item.icon, color: Colors.white, size: 32),
+  );
+}
+
+class _CargoFlight {
+  const _CargoFlight({
+    required this.id,
+    required this.item,
+    required this.selectedIndex,
+    required this.warehouse,
+    required this.start,
+    required this.end,
+  });
+
+  final int id;
+  final CargoItem item;
+  final int selectedIndex;
+  final CargoItem warehouse;
+  final Offset start;
+  final Offset end;
+}
+
+Offset _globalCenter(BuildContext context) {
+  final renderObject = context.findRenderObject();
+  if (renderObject is! RenderBox || !renderObject.hasSize) return Offset.zero;
+  return renderObject.localToGlobal(renderObject.size.center(Offset.zero));
 }

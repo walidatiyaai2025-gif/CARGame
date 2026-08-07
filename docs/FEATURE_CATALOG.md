@@ -80,7 +80,7 @@ Codex must not mark a feature complete merely because UI code exists.
 | MOT-003 | Universal Button Motion System | P0 | IMPLEMENTED | UI3D-003, MOT-002 | Major Start, mission launch, Next, Retry, rewarded continuation, heart/booster/theme purchase, and settings actions use shared `GameButton`; focused tests and CI verification exist, while physical-device motion review remains. |
 | MOT-004 | Screen transitions | P1 | PLANNED | MOT-001 | Shared-axis/fade-through transitions are guarded, interruptible, and RTL-aware. |
 | MOT-005 | Ambient home/world motion | P1 | IMPLEMENTED | MOT-001, UI3D-007 | Home and World Map share one core ambient painter with gradient lighting, parallax glows, drifting clouds, road depth, repaint isolation, reduced-motion freeze, and lifecycle-safe ticker disposal. Focused tests are included; CI and physical-device review remain. |
-| MOT-006 | Product pickup, travel, placement, settle | P0 | IN PROGRESS | GAME-003, MOT-001 | Selection now lifts the cargo, placement locks repeated input, and the chosen warehouse gives correct/wrong settle feedback before deterministic state mutation. Coordinate-to-coordinate travel and physical-device review remain. |
+| MOT-006 | Product pickup, travel, placement, settle | P0 | IMPLEMENTED | GAME-003, MOT-001 | Existing cargo/warehouse motion primitives and shared curved source-to-target travel now form one integrated flow; duplicate cargo instances resolve by index, all gameplay/booster/restart/back input is locked during resolution, reduced motion completes without a ticker, and focused widget tests cover completion and anti-spam. Flutter CI/device verification remains. |
 | MOT-007 | Correct/wrong/combo feedback | P0 | PLANNED | GAME-003, MOT-001 | Sparkle, bounce, recoil, capped combo escalation, audio, and haptics are synchronized. |
 | MOT-008 | Reward flight and reveal sequences | P1 | PLANNED | REW-001, MOT-001 | Coins fly to wallet, stars reveal, XP interpolates, and rewards remain idempotent. |
 | MOT-009 | Boss/world completion cinematic | P2 | PLANNED | WORLD-006, MOT-008 | Sequence lasts 1.2–2.5 seconds, is skippable after first view, and never duplicates rewards. |
@@ -281,7 +281,7 @@ Codex must not mark a feature complete merely because UI code exists.
 | PERF-005 | Low-end device mode | P2 | PLANNED | UI3D-007 | Particles, blur, shadows, and simultaneous animations reduce predictably. |
 | PERF-006 | Network and battery efficiency | P1 | PLANNED | ENG-014, RET-007 | Background work, retries, telemetry, ads, and downloads use bounded policies. |
 | PERF-007 | App size and asset delivery budget | P1 | PLANNED | AST-010, REL-008 | APK/AAB size, native libs, fonts, and assets meet documented thresholds. |
-| REL-001 | ADB/device scripts remain dynamic | P0 | IN PROGRESS | ENG-002 | No hard-coded device/AVD name exists in any script. |
+| REL-001 | ADB/device scripts remain dynamic | P0 | READY | ENG-002 | No hard-coded device/AVD name exists in any script. |
 | REL-002 | Kotlin incremental-cache recovery | P0 | IMPLEMENTED | ENG-002 | Shared build repair performs cleanup/retry; multi-machine verification remains. |
 | REL-003 | Runtime resilience and watchdog policy | P1 | PLANNED | ENG-004, ENG-014 | Recoverable failures surface actionable UI/logs without restart loops or data loss. |
 | REL-004 | Storage corruption backup/recovery | P0 | PLANNED | ENG-008 | Invalid local data is detected, backed up when possible, migrated/reset safely, and diagnosed. |
@@ -330,14 +330,12 @@ Codex must not mark a feature complete merely because UI code exists.
 
 ## IN PROGRESS
 
-- `ENG-002` Stable Android build toolchain.
-- `REL-001` Dynamic ADB/device scripts.
-- `MOT-006` Product pickup, travel, placement, settle.
+- None. The last checkpoint is clean and awaiting Flutter CI/device verification.
 
 ## NEXT READY
 
-1. `ENG-001` Complete baseline audit and documentation.
-2. `MOT-001` Create motion tokens and reusable animation primitives.
+1. `MOT-007` Add synchronized correct, wrong, and capped combo feedback.
+2. `ENG-001` Complete baseline audit and documentation.
 3. `AST-001` Create 3D asset taxonomy and naming standard.
 4. `TEST-001` Add progress/economy unit tests.
 5. `PRIV-001` Complete privacy/data inventory before analytics, ads consent, or cloud features.
@@ -349,3 +347,6 @@ Codex must not mark a feature complete merely because UI code exists.
 ## Recently verified
 
 - None recorded yet. Existing implemented features require systematic verification against this catalog.
+## Recently implemented
+
+- `MOT-006` Product pickup, travel, placement, settle — shared causal travel motion, deterministic input lock, reduced-motion path, and focused tests added; Flutter CI/device verification pending.

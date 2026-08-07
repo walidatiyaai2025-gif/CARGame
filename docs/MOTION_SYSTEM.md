@@ -143,6 +143,13 @@ Events:
 - Shield: metallic flash and impact absorption.
 - Extra moves: move counter increments with card-to-counter travel.
 
+Implemented checkpoint `MOT-006`:
+
+- `CargoMotionTile` and `WarehouseMotionTarget` own board pickup/busy/target states; `GameTravelMotion` adds reusable curved source-to-target movement and arrival settle without owning game state.
+- The gameplay state applies a selected cargo result once, after travel completes, and rejects gameplay, booster, restart, and back input while resolving.
+- Duplicate cargo instances use the selected board index, so only the tapped item lifts and resolves.
+- Reduced motion keeps a brief destination fade and the same one-time completion contract.
+
 ### Victory
 
 Sequence:
