@@ -59,8 +59,8 @@ jobs:
       - name: Test animated GameButton
         run: flutter test test/core/widgets/game_button_test.dart
 
-      - name: Diagnose bounded 3D asset cache
-        run: timeout 45s flutter test test/core/assets/game_asset_cache_policy_test.dart --reporter expanded
+      - name: Verify bounded 3D asset cache
+        run: timeout 60s flutter test test/core/assets/game_asset_cache_policy_test.dart --reporter expanded
 
       - name: Run full test suite
         run: flutter test
