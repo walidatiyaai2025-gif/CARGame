@@ -1,0 +1,28 @@
+name: REL004 Format Probe
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.44.8
+          cache: true
+      - name: Print exact Dart formatter diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          dart format test/core/storage/recovering_preferences_test.dart
+          git diff -- test/core/storage/recovering_preferences_test.dart
+          exit 1
