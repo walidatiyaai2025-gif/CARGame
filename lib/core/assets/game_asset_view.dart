@@ -12,6 +12,7 @@ final class GameAssetView extends StatelessWidget {
     this.height,
     this.fit = BoxFit.contain,
     this.semanticLabel,
+    this.errorFallback,
   });
 
   final String assetId;
@@ -20,6 +21,7 @@ final class GameAssetView extends StatelessWidget {
   final double? height;
   final BoxFit fit;
   final String? semanticLabel;
+  final Widget? errorFallback;
 
   @override
   Widget build(BuildContext context) {
@@ -48,12 +50,12 @@ final class GameAssetView extends StatelessWidget {
 
   Widget _buildById(BuildContext context, String id, Set<String> visited) {
     if (!visited.add(id)) {
-      return _placeholder(context);
+      return errorFallback ?? _placeholder(context);
     }
 
     final descriptor = registry.find(id);
     if (descriptor == null) {
-      return _placeholder(context);
+      return errorFallback ?? _placeholder(context);
     }
 
     return Image.asset(
@@ -63,7 +65,7 @@ final class GameAssetView extends StatelessWidget {
       fit: fit,
       excludeFromSemantics: true,
       errorBuilder: (context, error, stackTrace) {
-        return _fallbackFor(context, descriptor, visited);
+        return errorFallback ?? _fallbackFor(context, descriptor, visited);
       },
     );
   }
