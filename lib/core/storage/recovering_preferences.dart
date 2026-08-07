@@ -11,29 +11,32 @@ final class StorageRecoveryEvent {
 
 final class RecoveringPreferences {
   RecoveringPreferences({SharedPreferencesAsync? delegate})
-    : _delegate = delegate ?? SharedPreferencesAsync();
+    : _delegate = delegate;
 
   static const backupKey = 'storage_recovery_backup_v1';
 
-  final SharedPreferencesAsync _delegate;
+  SharedPreferencesAsync? _delegate;
   final List<StorageRecoveryEvent> _events = <StorageRecoveryEvent>[];
   bool _backupWritten = false;
+
+  SharedPreferencesAsync get _store =>
+      _delegate ??= SharedPreferencesAsync();
 
   List<StorageRecoveryEvent> get recoveryEvents => List.unmodifiable(_events);
   bool get recovered => _events.isNotEmpty;
 
   Future<Map<String, Object?>> getAll({Set<String>? allowList}) =>
-      _delegate.getAll(allowList: allowList);
+      _store.getAll(allowList: allowList);
 
   Future<Set<String>> getKeys({Set<String>? allowList}) =>
-      _delegate.getKeys(allowList: allowList);
+      _store.getKeys(allowList: allowList);
 
-  Future<bool> containsKey(String key) => _delegate.containsKey(key);
+  Future<bool> containsKey(String key) => _store.containsKey(key);
 
   Future<int?> getInt(String key) async {
     int? value;
     try {
-      value = await _delegate.getInt(key);
+      value = await _store.getInt(key);
     } on TypeError {
       await _repairByRemoval(key, 'expected int');
       return null;
@@ -43,7 +46,7 @@ final class RecoveringPreferences {
     final normalized = _normalizeInt(key, value);
     if (normalized != value) {
       await _recordRepair(key, 'out-of-range int $value -> $normalized');
-      await _delegate.setInt(key, normalized);
+      await _store.setInt(key, normalized);
       return normalized;
     }
     return value;
@@ -51,7 +54,7 @@ final class RecoveringPreferences {
 
   Future<bool?> getBool(String key) async {
     try {
-      return await _delegate.getBool(key);
+      return await _store.getBool(key);
     } on TypeError {
       await _repairByRemoval(key, 'expected bool');
       return null;
@@ -60,7 +63,7 @@ final class RecoveringPreferences {
 
   Future<double?> getDouble(String key) async {
     try {
-      return await _delegate.getDouble(key);
+      return await _store.getDouble(key);
     } on TypeError {
       await _repairByRemoval(key, 'expected double');
       return null;
@@ -70,7 +73,7 @@ final class RecoveringPreferences {
   Future<String?> getString(String key) async {
     String? value;
     try {
-      value = await _delegate.getString(key);
+      value = await _store.getString(key);
     } on TypeError {
       await _repairByRemoval(key, 'expected string');
       return null;
@@ -80,7 +83,7 @@ final class RecoveringPreferences {
     if (key == 'heart_refill_timestamp' && DateTime.tryParse(value) == null) {
       await _recordRepair(key, 'invalid ISO-8601 timestamp');
       final repaired = DateTime.now().toUtc().toIso8601String();
-      await _delegate.setString(key, repaired);
+      await _store.setString(key, repaired);
       return repaired;
     }
     return value;
@@ -88,24 +91,24 @@ final class RecoveringPreferences {
 
   Future<List<String>?> getStringList(String key) async {
     try {
-      return await _delegate.getStringList(key);
+      return await _store.getStringList(key);
     } on TypeError {
       await _repairByRemoval(key, 'expected string list');
       return null;
     }
   }
 
-  Future<void> setBool(String key, bool value) => _delegate.setBool(key, value);
+  Future<void> setBool(String key, bool value) => _store.setBool(key, value);
   Future<void> setDouble(String key, double value) =>
-      _delegate.setDouble(key, value);
-  Future<void> setInt(String key, int value) => _delegate.setInt(key, value);
+      _store.setDouble(key, value);
+  Future<void> setInt(String key, int value) => _store.setInt(key, value);
   Future<void> setString(String key, String value) =>
-      _delegate.setString(key, value);
+      _store.setString(key, value);
   Future<void> setStringList(String key, List<String> value) =>
-      _delegate.setStringList(key, value);
-  Future<void> remove(String key) => _delegate.remove(key);
+      _store.setStringList(key, value);
+  Future<void> remove(String key) => _store.remove(key);
   Future<void> clear({Set<String>? allowList}) =>
-      _delegate.clear(allowList: allowList);
+      _store.clear(allowList: allowList);
 
   int _normalizeInt(String key, int value) {
     if (key == 'highest_unlocked_level') return value.clamp(1, 150);
@@ -136,7 +139,7 @@ final class RecoveringPreferences {
 
   Future<void> _repairByRemoval(String key, String reason) async {
     await _recordRepair(key, reason);
-    await _delegate.remove(key);
+    await _store.remove(key);
   }
 
   Future<void> _recordRepair(String key, String reason) async {
@@ -149,14 +152,14 @@ final class RecoveringPreferences {
     _backupWritten = true;
 
     try {
-      final snapshot = await _delegate.getAll();
+      final snapshot = await _store.getAll();
       snapshot.remove(backupKey);
       final payload = <String, Object?>{
         'schemaVersion': 1,
         'capturedAt': DateTime.now().toUtc().toIso8601String(),
         'values': snapshot,
       };
-      await _delegate.setString(backupKey, jsonEncode(payload));
+      await _store.setString(backupKey, jsonEncode(payload));
     } catch (_) {
       // Recovery must continue even if the platform store cannot be snapshotted.
     }
