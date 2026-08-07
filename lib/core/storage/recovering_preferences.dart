@@ -79,11 +79,18 @@ final class RecoveringPreferences {
     }
     if (value == null) return null;
 
-    if (key == 'heart_refill_timestamp' && DateTime.tryParse(value) == null) {
-      await _recordRepair(key, 'invalid ISO-8601 timestamp');
-      final repaired = DateTime.now().toUtc().toIso8601String();
-      await _store.setString(key, repaired);
-      return repaired;
+    if (key == 'heart_refill_timestamp') {
+      final now = DateTime.now().toUtc();
+      final parsed = DateTime.tryParse(value)?.toUtc();
+      if (parsed == null || parsed.isAfter(now)) {
+        await _recordRepair(
+          key,
+          parsed == null ? 'invalid ISO-8601 timestamp' : 'future timestamp',
+        );
+        final repaired = now.toIso8601String();
+        await _store.setString(key, repaired);
+        return repaired;
+      }
     }
     return value;
   }
