@@ -1,9 +1,6 @@
-import 'dart:convert';
-
 import 'package:cargo_sort_game/core/assets/game_asset_cache_policy.dart';
 import 'package:cargo_sort_game/core/assets/game_asset_registry.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 const _heartPath = 'assets/3d/runtime/ui/cg_ui_heart_pui_v01.webp';
@@ -16,41 +13,33 @@ void main() {
     tester,
   ) async {
     final registry = GameAssetRegistry.fromJsonString(_manifest);
-    final policy = GameAssetCachePolicy(maxEntries: 1);
-    final bundle = _MemoryBinaryBundle({
-      'AssetManifest.bin': _assetManifestBin([_heartPath, _coinPath]),
-      _heartPath: _onePixelPng,
-      _coinPath: _onePixelPng,
-    });
+    final evicted = <String>[];
+    final policy = GameAssetCachePolicy(
+      maxEntries: 1,
+      precacheLoader: (_, _) async {},
+      evictor: (provider) async => evicted.add(provider.assetName),
+    );
     late BuildContext context;
 
     await tester.pumpWidget(
-      DefaultAssetBundle(
-        bundle: bundle,
-        child: MaterialApp(
-          home: Builder(
-            builder: (value) {
-              context = value;
-              return const SizedBox();
-            },
-          ),
+      MaterialApp(
+        home: Builder(
+          builder: (value) {
+            context = value;
+            return const SizedBox();
+          },
         ),
       ),
     );
 
-    expect(
-      await _precacheWithFrame(tester, policy, context, registry, 'ui.heart'),
-      isTrue,
-    );
+    expect(await policy.precache(context, registry, 'ui.heart'), isTrue);
     expect(policy.snapshot.cachedIds, ['ui.heart']);
 
-    expect(
-      await _precacheWithFrame(tester, policy, context, registry, 'ui.coin'),
-      isTrue,
-    );
+    expect(await policy.precache(context, registry, 'ui.coin'), isTrue);
     expect(policy.snapshot.cachedIds, ['ui.coin']);
     expect(policy.snapshot.cachedCount, 1);
     expect(policy.snapshot.inFlightCount, 0);
+    expect(evicted, [_heartPath]);
   });
 
   testWidgets('unknown asset is isolated as a bounded failure', (tester) async {
@@ -104,50 +93,32 @@ void main() {
 
     expect(policy.snapshot.failedIds, ['missing.a', 'missing.b']);
   });
-}
 
-Future<bool> _precacheWithFrame(
-  WidgetTester tester,
-  GameAssetCachePolicy policy,
-  BuildContext context,
-  GameAssetRegistry registry,
-  String assetId,
-) async {
-  final result = policy.precache(context, registry, assetId);
-  await tester.pump();
-  await tester.pump();
-  return result;
-}
+  testWidgets('precache loader failures stay isolated and observable', (
+    tester,
+  ) async {
+    final registry = GameAssetRegistry.fromJsonString(_manifest);
+    final policy = GameAssetCachePolicy(
+      precacheLoader: (_, _) async => throw StateError('decode failed'),
+    );
+    late BuildContext context;
 
-final class _MemoryBinaryBundle extends CachingAssetBundle {
-  _MemoryBinaryBundle(this.assets);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (value) {
+            context = value;
+            return const SizedBox();
+          },
+        ),
+      ),
+    );
 
-  final Map<String, Uint8List> assets;
-
-  @override
-  Future<ByteData> load(String key) async {
-    final bytes = assets[key];
-    if (bytes == null) throw StateError('Missing fake asset: $key');
-    return ByteData.sublistView(bytes);
-  }
-}
-
-Uint8List _assetManifestBin(Iterable<String> paths) {
-  final data = const StandardMessageCodec().encodeMessage(<String, Object?>{
-    for (final path in paths)
-      path: <Object?>[
-        <String, Object?>{'asset': path},
-      ],
+    expect(await policy.precache(context, registry, 'ui.heart'), isFalse);
+    expect(policy.hasFailed('ui.heart'), isTrue);
+    expect(policy.snapshot.inFlightCount, 0);
   });
-  if (data == null) {
-    throw StateError('Unable to encode the fake AssetManifest.bin');
-  }
-  return data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
 }
-
-final Uint8List _onePixelPng = base64Decode(
-  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
-);
 
 const _manifest = '''
 {
