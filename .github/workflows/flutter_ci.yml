@@ -63,6 +63,7 @@ jobs:
           PUSH_BEFORE_SHA: ${{ github.event.before }}
         run: |
           set -euo pipefail
+
           if [[ "$EVENT_NAME" == "pull_request" && -n "${PR_BASE_SHA:-}" ]]; then
             base_sha="$PR_BASE_SHA"
           elif [[ "$EVENT_NAME" == "push" && -n "${PUSH_BEFORE_SHA:-}" && ! "$PUSH_BEFORE_SHA" =~ ^0+$ ]]; then
@@ -70,13 +71,22 @@ jobs:
           elif git rev-parse HEAD^ >/dev/null 2>&1; then
             base_sha="$(git rev-parse HEAD^)"
           else
+            echo "No parent commit is available; skipping changed-file formatting validation."
             exit 0
           fi
-          mapfile -t dart_files < <(git diff --diff-filter=ACMR --name-only "$base_sha" "$GITHUB_SHA" -- '*.dart')
-          if (( ${#dart_files[@]} == 0 )); then exit 0; fi
-          dart format "${dart_files[@]}"
-          git diff -- test/features/home/home_navigation_test.dart
-          git diff --exit-code -- "${dart_files[@]}"
+
+          mapfile -t dart_files < <(
+            git diff --diff-filter=ACMR --name-only "$base_sha" "$GITHUB_SHA" -- '*.dart'
+          )
+
+          if (( ${#dart_files[@]} == 0 )); then
+            echo "No changed Dart files to validate."
+            exit 0
+          fi
+
+          printf 'Validating Dart formatting for %d changed file(s):\n' "${#dart_files[@]}"
+          printf ' - %s\n' "${dart_files[@]}"
+          dart format --output=none --set-exit-if-changed "${dart_files[@]}"
 
       - name: Verify whitespace integrity
         run: git diff --check
