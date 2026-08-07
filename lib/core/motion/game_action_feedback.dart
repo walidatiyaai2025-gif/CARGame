@@ -204,7 +204,7 @@ class _Sparkle extends StatelessWidget {
   Widget build(BuildContext context) {
     final angle = index / 8 * math.pi * 2;
     final distance = Curves.easeOut.transform(progress) * 92 * intensity;
-    final opacity = (1 - progress).clamp(0, 1);
+    final opacity = (1 - progress).clamp(0, 1).toDouble();
     return Transform.translate(
       offset: Offset(math.cos(angle) * distance, math.sin(angle) * distance),
       child: Opacity(
