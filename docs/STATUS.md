@@ -117,3 +117,10 @@ flutter run
 - Full checkpoint verification passed in GitHub Actions: Dart format, Flutter Analyze with no issues, full Flutter tests, and Debug APK build.
 - Added regression coverage for 360x640 and 412x915 home layouts with no ListView/SingleChildScrollView and no captured Flutter layout exception.
 - Release ad unit injection/consent remain separate ADS-002/ADS-007 work and are not claimed complete.
+
+## UI3D-006 fit shell checkpoint — 2026-08-07
+
+- Added reusable `GameFitView` for bounded game screens that must remain fully visible without a scroll container.
+- Home now uses the shared fit primitive instead of a screen-local FittedBox implementation.
+- Mission Briefing replaces its ListView with the shared fit primitive and tighter vertical rhythm while preserving boosters, wallet, RTL/LTR, SafeArea, and guarded mission launch.
+- UI3D-006 remains IN PROGRESS until remaining short screens and large-text/tablet/cutout cases are migrated and verified.

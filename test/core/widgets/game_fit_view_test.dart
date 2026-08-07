@@ -13,7 +13,11 @@ void main() {
       const MaterialApp(
         home: Scaffold(
           body: GameFitView(
-            child: SizedBox(width: 360, height: 900, child: ColoredBox(color: Colors.blue)),
+            child: SizedBox(
+              width: 360,
+              height: 900,
+              child: ColoredBox(color: Colors.blue),
+            ),
           ),
         ),
       ),
@@ -37,6 +41,9 @@ void main() {
       ),
     );
 
-    expect(Directionality.of(tester.element(find.text('مرحبا'))), TextDirection.rtl);
+    expect(
+      Directionality.of(tester.element(find.text('مرحبا'))),
+      TextDirection.rtl,
+    );
   });
 }

@@ -5,6 +5,7 @@ import '../../core/storage/progress_store.dart';
 import '../../core/theme/game_skin.dart';
 import '../../core/theme/three_d_game_icon.dart';
 import '../../core/widgets/game_button.dart';
+import '../../core/widgets/game_fit_view.dart';
 import '../game/city_catalog.dart';
 import '../game/game_screen.dart';
 import '../game/level_data.dart';
@@ -116,137 +117,147 @@ class _CityBriefingScreenState extends State<CityBriefingScreen> {
                     ),
                   ),
                   Expanded(
-                    child: ListView(
+                    child: GameFitView(
                       padding: EdgeInsets.fromLTRB(
                         horizontal,
-                        12,
+                        8,
                         horizontal,
-                        28,
+                        10,
                       ),
-                      children: [
-                        _HeroCard(
-                          level: level,
-                          worldName: world.name,
-                          previousStars: previousStars,
-                          isArabic: isArabic,
-                          compact: compact,
-                          skin: skin,
+                      child: SizedBox(
+                        width: constraints.maxWidth - (horizontal * 2),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            _HeroCard(
+                              level: level,
+                              worldName: world.name,
+                              previousStars: previousStars,
+                              isArabic: isArabic,
+                              compact: compact,
+                              skin: skin,
+                            ),
+                            const SizedBox(height: 10),
+                            _MissionCard(
+                              isArabic: isArabic,
+                              level: level,
+                              accent: skin.primary,
+                              selectedCount:
+                                  (_hint ? 1 : 0) +
+                                  (_moves ? 1 : 0) +
+                                  (_shield ? 1 : 0),
+                            ),
+                            const SizedBox(height: 10),
+                            Text(
+                              isArabic
+                                  ? 'اختر تجهيزات المهمة'
+                                  : 'Choose Mission Loadout',
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                            const SizedBox(height: 5),
+                            Text(
+                              isArabic
+                                  ? 'يتم استهلاك الأدوات فقط عند بدء المهمة.'
+                                  : 'Boosters are consumed only when the mission starts.',
+                              style: const TextStyle(
+                                color: Colors.black54,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            LayoutBuilder(
+                              builder: (context, loadoutConstraints) {
+                                final columns =
+                                    loadoutConstraints.maxWidth < 360 ? 1 : 3;
+                                final gap = 10.0;
+                                final width = columns == 1
+                                    ? loadoutConstraints.maxWidth
+                                    : (loadoutConstraints.maxWidth - gap * 2) /
+                                          3;
+                                return Wrap(
+                                  spacing: gap,
+                                  runSpacing: gap,
+                                  children: [
+                                    SizedBox(
+                                      width: width,
+                                      child: _SelectableBoosterCard(
+                                        type: ThreeDIconType.hint,
+                                        title: isArabic
+                                            ? 'تلميح ذكي'
+                                            : 'Smart Hint',
+                                        subtitle: isArabic
+                                            ? 'تلميح مجاني داخل الجولة'
+                                            : 'One free in-game hint',
+                                        count: store.freeHints,
+                                        selected: _hint,
+                                        color: const Color(0xFFFFB300),
+                                        onTap: store.freeHints <= 0
+                                            ? null
+                                            : () => setState(
+                                                () => _hint = !_hint,
+                                              ),
+                                      ),
+                                    ),
+                                    SizedBox(
+                                      width: width,
+                                      child: _SelectableBoosterCard(
+                                        type: ThreeDIconType.extraMoves,
+                                        title: isArabic
+                                            ? 'حركات إضافية'
+                                            : 'Extra Moves',
+                                        subtitle: isArabic
+                                            ? '+5 حركات عند البداية'
+                                            : '+5 starting moves',
+                                        count: store.extraMovesBoosters,
+                                        selected: _moves,
+                                        color: const Color(0xFF2D6CDF),
+                                        onTap: store.extraMovesBoosters <= 0
+                                            ? null
+                                            : () => setState(
+                                                () => _moves = !_moves,
+                                              ),
+                                      ),
+                                    ),
+                                    SizedBox(
+                                      width: width,
+                                      child: _SelectableBoosterCard(
+                                        type: ThreeDIconType.shield,
+                                        title: isArabic
+                                            ? 'درع الكومبو'
+                                            : 'Combo Shield',
+                                        subtitle: isArabic
+                                            ? 'يحمي أول خطأ'
+                                            : 'Protects first mistake',
+                                        count: store.comboShields,
+                                        selected: _shield,
+                                        color: const Color(0xFF7B3FF2),
+                                        onTap: store.comboShields <= 0
+                                            ? null
+                                            : () => setState(
+                                                () => _shield = !_shield,
+                                              ),
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              },
+                            ),
+                            const SizedBox(height: 12),
+                            _StartMissionButton(
+                              enabled: store.hearts > 0 && !_starting,
+                              loading: _starting,
+                              skinColor: skin.primary,
+                              isArabic: isArabic,
+                              cityName: level.cityName,
+                              onPressed: _startMission,
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 18),
-                        _MissionCard(
-                          isArabic: isArabic,
-                          level: level,
-                          accent: skin.primary,
-                          selectedCount:
-                              (_hint ? 1 : 0) +
-                              (_moves ? 1 : 0) +
-                              (_shield ? 1 : 0),
-                        ),
-                        const SizedBox(height: 20),
-                        Text(
-                          isArabic
-                              ? 'اختر تجهيزات المهمة'
-                              : 'Choose Mission Loadout',
-                          style: const TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                        const SizedBox(height: 5),
-                        Text(
-                          isArabic
-                              ? 'يتم استهلاك الأدوات فقط عند بدء المهمة.'
-                              : 'Boosters are consumed only when the mission starts.',
-                          style: const TextStyle(
-                            color: Colors.black54,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        LayoutBuilder(
-                          builder: (context, loadoutConstraints) {
-                            final columns = loadoutConstraints.maxWidth < 360
-                                ? 1
-                                : 3;
-                            final gap = 10.0;
-                            final width = columns == 1
-                                ? loadoutConstraints.maxWidth
-                                : (loadoutConstraints.maxWidth - gap * 2) / 3;
-                            return Wrap(
-                              spacing: gap,
-                              runSpacing: gap,
-                              children: [
-                                SizedBox(
-                                  width: width,
-                                  child: _SelectableBoosterCard(
-                                    type: ThreeDIconType.hint,
-                                    title: isArabic
-                                        ? 'تلميح ذكي'
-                                        : 'Smart Hint',
-                                    subtitle: isArabic
-                                        ? 'تلميح مجاني داخل الجولة'
-                                        : 'One free in-game hint',
-                                    count: store.freeHints,
-                                    selected: _hint,
-                                    color: const Color(0xFFFFB300),
-                                    onTap: store.freeHints <= 0
-                                        ? null
-                                        : () => setState(() => _hint = !_hint),
-                                  ),
-                                ),
-                                SizedBox(
-                                  width: width,
-                                  child: _SelectableBoosterCard(
-                                    type: ThreeDIconType.extraMoves,
-                                    title: isArabic
-                                        ? 'حركات إضافية'
-                                        : 'Extra Moves',
-                                    subtitle: isArabic
-                                        ? '+5 حركات عند البداية'
-                                        : '+5 starting moves',
-                                    count: store.extraMovesBoosters,
-                                    selected: _moves,
-                                    color: const Color(0xFF2D6CDF),
-                                    onTap: store.extraMovesBoosters <= 0
-                                        ? null
-                                        : () =>
-                                              setState(() => _moves = !_moves),
-                                  ),
-                                ),
-                                SizedBox(
-                                  width: width,
-                                  child: _SelectableBoosterCard(
-                                    type: ThreeDIconType.shield,
-                                    title: isArabic
-                                        ? 'درع الكومبو'
-                                        : 'Combo Shield',
-                                    subtitle: isArabic
-                                        ? 'يحمي أول خطأ'
-                                        : 'Protects first mistake',
-                                    count: store.comboShields,
-                                    selected: _shield,
-                                    color: const Color(0xFF7B3FF2),
-                                    onTap: store.comboShields <= 0
-                                        ? null
-                                        : () => setState(
-                                            () => _shield = !_shield,
-                                          ),
-                                  ),
-                                ),
-                              ],
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 24),
-                        _StartMissionButton(
-                          enabled: store.hearts > 0 && !_starting,
-                          loading: _starting,
-                          skinColor: skin.primary,
-                          isArabic: isArabic,
-                          cityName: level.cityName,
-                          onPressed: _startMission,
-                        ),
-                      ],
+                      ),
                     ),
                   ),
                 ],

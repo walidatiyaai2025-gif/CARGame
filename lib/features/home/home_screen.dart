@@ -8,6 +8,7 @@ import '../../core/storage/progress_store.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/three_d_game_icon.dart';
 import '../../core/widgets/game_button.dart';
+import '../../core/widgets/game_fit_view.dart';
 import '../../l10n/app_localizations.dart';
 import '../game/city_catalog.dart';
 import '../game/level_data.dart';
@@ -123,99 +124,95 @@ class _HomeScreenState extends State<HomeScreen> {
                   builder: (context, constraints) {
                     final compact = constraints.maxWidth < 390;
                     final horizontal = compact ? 12.0 : 18.0;
-                    return Padding(
+                    return GameFitView(
                       padding: EdgeInsets.fromLTRB(
                         horizontal,
                         6,
                         horizontal,
                         8,
                       ),
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        alignment: Alignment.topCenter,
-                        child: SizedBox(
-                          width: constraints.maxWidth - (horizontal * 2),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              _TopBar(
-                                ar: ar,
-                                compact: compact,
-                                onShop: _openShop,
-                                onProgress: _openProgress,
-                                onLogs: () => Navigator.of(context).push(
-                                  MaterialPageRoute<void>(
-                                    builder: (_) => const LogViewerScreen(),
-                                  ),
-                                ),
-                                onLanguage: widget.onToggleLanguage,
-                              ),
-                              const SizedBox(height: 8),
-                              _ResourceStrip(
-                                compact: compact,
-                                hearts:
-                                    '${store.hearts}/${ProgressStore.maxHearts}',
-                                heartLabel: _heartTimer(ar),
-                                coins: '${store.coins}',
-                                coinLabel: l10n.coins,
-                                stars: '${store.totalStars}',
-                                starLabel: ar ? 'النجوم' : 'Stars',
-                              ),
-                              const SizedBox(height: 10),
-                              _JourneyHero(
-                                ar: ar,
-                                compact: compact,
-                                title: l10n.appTitle,
-                                worldName: world.name,
-                                worldNumber: worldNumber,
-                                currentCity: currentCity,
-                                progress: store.completionProgress,
-                                completed: store.completedLevels,
-                                startColor: world.startColor,
-                                endColor: world.endColor,
-                              ),
-                              const SizedBox(height: 9),
-                              _QuickActions(
-                                compact: compact,
-                                ar: ar,
-                                dailyClaimed: !store.canClaimDailyReward,
-                                missionClaimed: store.missionClaimed,
-                                missionText:
-                                    '${store.missionWins}/3 • ${store.missionStars}/6',
-                                onDaily: _claimDailyReward,
-                                onMission: _openProgress,
-                                onShop: _openShop,
-                              ),
-                              const SizedBox(height: 8),
-                              _StreakPanel(
-                                ar: ar,
-                                current: store.currentWinStreak,
-                                best: store.bestWinStreak,
-                                combo: store.bestCombo,
-                                onTap: _openProgress,
-                              ),
-                              const SizedBox(height: 10),
-                              _StartJourneyButton(
-                                ar: ar,
-                                compact: compact,
-                                busy: _openingJourney,
-                                enabled: store.hearts > 0,
-                                cityName: currentCity,
-                                onPressed: _openJourney,
-                              ),
-                              const SizedBox(height: 9),
-                              const Text(
-                                'Walid Atiya Ata - PMP',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  color: AppTheme.muted,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: .2,
+                      child: SizedBox(
+                        width: constraints.maxWidth - (horizontal * 2),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _TopBar(
+                              ar: ar,
+                              compact: compact,
+                              onShop: _openShop,
+                              onProgress: _openProgress,
+                              onLogs: () => Navigator.of(context).push(
+                                MaterialPageRoute<void>(
+                                  builder: (_) => const LogViewerScreen(),
                                 ),
                               ),
-                            ],
-                          ),
+                              onLanguage: widget.onToggleLanguage,
+                            ),
+                            const SizedBox(height: 8),
+                            _ResourceStrip(
+                              compact: compact,
+                              hearts:
+                                  '${store.hearts}/${ProgressStore.maxHearts}',
+                              heartLabel: _heartTimer(ar),
+                              coins: '${store.coins}',
+                              coinLabel: l10n.coins,
+                              stars: '${store.totalStars}',
+                              starLabel: ar ? 'النجوم' : 'Stars',
+                            ),
+                            const SizedBox(height: 10),
+                            _JourneyHero(
+                              ar: ar,
+                              compact: compact,
+                              title: l10n.appTitle,
+                              worldName: world.name,
+                              worldNumber: worldNumber,
+                              currentCity: currentCity,
+                              progress: store.completionProgress,
+                              completed: store.completedLevels,
+                              startColor: world.startColor,
+                              endColor: world.endColor,
+                            ),
+                            const SizedBox(height: 9),
+                            _QuickActions(
+                              compact: compact,
+                              ar: ar,
+                              dailyClaimed: !store.canClaimDailyReward,
+                              missionClaimed: store.missionClaimed,
+                              missionText:
+                                  '${store.missionWins}/3 • ${store.missionStars}/6',
+                              onDaily: _claimDailyReward,
+                              onMission: _openProgress,
+                              onShop: _openShop,
+                            ),
+                            const SizedBox(height: 8),
+                            _StreakPanel(
+                              ar: ar,
+                              current: store.currentWinStreak,
+                              best: store.bestWinStreak,
+                              combo: store.bestCombo,
+                              onTap: _openProgress,
+                            ),
+                            const SizedBox(height: 10),
+                            _StartJourneyButton(
+                              ar: ar,
+                              compact: compact,
+                              busy: _openingJourney,
+                              enabled: store.hearts > 0,
+                              cityName: currentCity,
+                              onPressed: _openJourney,
+                            ),
+                            const SizedBox(height: 9),
+                            const Text(
+                              'Walid Atiya Ata - PMP',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: AppTheme.muted,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: .2,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     );

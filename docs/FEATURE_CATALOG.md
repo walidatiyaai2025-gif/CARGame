@@ -66,7 +66,7 @@ Codex must not mark a feature complete merely because UI code exists.
 | UI3D-003 | Reusable 3D button system | P1 | IMPLEMENTED | UI3D-001, MOT-001 | Shared `GameButton` provides depth, spring release, hover, disabled/loading states, ripple, haptics, sound hook, async tap guard, RTL, semantics, theme inputs, and focused widget tests; full CTA adoption remains. |
 | UI3D-004 | Reusable 3D card and panel system | P1 | PLANNED | UI3D-001 | Unified depth, highlights, border, clipping, skeleton, error, and interaction states exist. |
 | UI3D-005 | Resource chips | P1 | IMPLEMENTED | UI3D-002 | Heart, coin, star, XP, and booster chips use shared rules; full-screen adoption remains. |
-| UI3D-006 | Responsive screen shell and safe areas | P0 | PLANNED | UI3D-001 | Narrow phones, tall phones, tablets, large text, RTL/LTR, keyboard, and cutouts pass. |
+| UI3D-006 | Responsive screen shell and safe areas | P0 | IN PROGRESS | UI3D-001 | Shared `GameFitView` keeps bounded screens visible without scroll and is adopted by Home and Mission Briefing; 360x640/412x915 regression coverage, tablets, large text, keyboard, cutouts, and remaining short screens still require validation. |
 | UI3D-007 | Reduced motion and low-performance visual mode | P1 | PLANNED | MOT-001 | User setting and automatic graceful degradation affect all shared visual effects. |
 | UI3D-008 | Remove production emoji and primary flat icons | P1 | PLANNED | AST-001 | Primary game visuals use approved 3D assets/components with accessible fallbacks. |
 | UI3D-009 | Loading, empty, error, and retry visual states | P1 | PLANNED | UI3D-004 | Shared states are consistent, localized, responsive, and do not block offline core play. |
