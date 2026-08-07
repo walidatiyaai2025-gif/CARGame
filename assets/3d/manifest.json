@@ -10,14 +10,8 @@
         "localizationKey": "hearts",
         "decorative": false
       },
-      "fallback": {
-        "kind": "icon",
-        "token": "favorite"
-      },
-      "dimensions": {
-        "width": 256,
-        "height": 256
-      },
+      "fallback": {"kind": "icon", "token": "favorite"},
+      "dimensions": {"width": 256, "height": 256},
       "rarity": "common",
       "world": null,
       "profile": "pui"
@@ -31,14 +25,8 @@
         "localizationKey": "coins",
         "decorative": false
       },
-      "fallback": {
-        "kind": "icon",
-        "token": "paid"
-      },
-      "dimensions": {
-        "width": 256,
-        "height": 256
-      },
+      "fallback": {"kind": "icon", "token": "paid"},
+      "dimensions": {"width": 256, "height": 256},
       "rarity": "common",
       "world": null,
       "profile": "pui"
@@ -52,17 +40,101 @@
         "localizationKey": "stars",
         "decorative": false
       },
-      "fallback": {
-        "kind": "icon",
-        "token": "star"
-      },
-      "dimensions": {
-        "width": 256,
-        "height": 256
-      },
+      "fallback": {"kind": "icon", "token": "star"},
+      "dimensions": {"width": 256, "height": 256},
       "rarity": "common",
       "world": null,
       "profile": "pui"
+    },
+    {
+      "id": "ui.gift",
+      "path": "assets/3d/runtime/ui/cg_ui_gift_pui_v01.webp",
+      "category": "ui",
+      "semantics": {
+        "englishConcept": "Gift reward",
+        "localizationKey": "dailyReward",
+        "decorative": false
+      },
+      "fallback": {"kind": "icon", "token": "redeem"},
+      "dimensions": {"width": 256, "height": 256},
+      "rarity": "special",
+      "world": null,
+      "profile": "pui"
+    },
+    {
+      "id": "booster.hint",
+      "path": "assets/3d/runtime/boosters/cg_booster_hint_pui_v01.webp",
+      "category": "booster",
+      "semantics": {
+        "englishConcept": "Hint booster",
+        "localizationKey": "hint",
+        "decorative": false
+      },
+      "fallback": {"kind": "icon", "token": "bolt"},
+      "dimensions": {"width": 384, "height": 384},
+      "rarity": "uncommon",
+      "world": null,
+      "profile": "pui"
+    },
+    {
+      "id": "booster.extra_moves",
+      "path": "assets/3d/runtime/boosters/cg_booster_extra_moves_pui_v01.webp",
+      "category": "booster",
+      "semantics": {
+        "englishConcept": "Extra moves booster",
+        "localizationKey": "extraMoves",
+        "decorative": false
+      },
+      "fallback": {"kind": "text", "token": "+5"},
+      "dimensions": {"width": 384, "height": 384},
+      "rarity": "uncommon",
+      "world": null,
+      "profile": "pui"
+    },
+    {
+      "id": "booster.shield",
+      "path": "assets/3d/runtime/boosters/cg_booster_shield_pui_v01.webp",
+      "category": "booster",
+      "semantics": {
+        "englishConcept": "Combo shield booster",
+        "localizationKey": "comboShield",
+        "decorative": false
+      },
+      "fallback": {"kind": "icon", "token": "inventory_2"},
+      "dimensions": {"width": 384, "height": 384},
+      "rarity": "rare",
+      "world": null,
+      "profile": "pui"
+    },
+    {
+      "id": "reward.chest",
+      "path": "assets/3d/runtime/rewards/cg_reward_chest_pui_v01.webp",
+      "category": "reward",
+      "semantics": {
+        "englishConcept": "Reward chest",
+        "localizationKey": "reward",
+        "decorative": false
+      },
+      "fallback": {"kind": "icon", "token": "inventory_2"},
+      "dimensions": {"width": 384, "height": 384},
+      "rarity": "rare",
+      "world": null,
+      "profile": "pui"
+    },
+    {
+      "id": "boss.reward_chest",
+      "path": "assets/3d/runtime/boss/cg_boss_reward_chest_pcity_v01.webp",
+      "category": "boss",
+      "semantics": {
+        "englishConcept": "Boss reward chest",
+        "localizationKey": "bossReward",
+        "decorative": false
+      },
+      "fallback": {"kind": "icon", "token": "inventory_2"},
+      "dimensions": {"width": 512, "height": 512},
+      "rarity": "legendary",
+      "world": null,
+      "profile": "pcity"
     }
   ]
 }
