@@ -57,36 +57,11 @@ jobs:
 
       - name: Verify changed Dart formatting
         shell: bash
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          PUSH_BEFORE_SHA: ${{ github.event.before }}
         run: |
           set -euo pipefail
-
-          if [[ "$EVENT_NAME" == "pull_request" && -n "${PR_BASE_SHA:-}" ]]; then
-            base_sha="$PR_BASE_SHA"
-          elif [[ "$EVENT_NAME" == "push" && -n "${PUSH_BEFORE_SHA:-}" && ! "$PUSH_BEFORE_SHA" =~ ^0+$ ]]; then
-            base_sha="$PUSH_BEFORE_SHA"
-          elif git rev-parse HEAD^ >/dev/null 2>&1; then
-            base_sha="$(git rev-parse HEAD^)"
-          else
-            echo "No parent commit is available; skipping changed-file formatting validation."
-            exit 0
-          fi
-
-          mapfile -t dart_files < <(
-            git diff --diff-filter=ACMR --name-only "$base_sha" "$GITHUB_SHA" -- '*.dart'
-          )
-
-          if (( ${#dart_files[@]} == 0 )); then
-            echo "No changed Dart files to validate."
-            exit 0
-          fi
-
-          printf 'Validating Dart formatting for %d changed file(s):\n' "${#dart_files[@]}"
-          printf ' - %s\n' "${dart_files[@]}"
-          dart format --output=none --set-exit-if-changed "${dart_files[@]}"
+          dart format lib/core/widgets/game_hero_panel.dart test/core/widgets/game_hero_panel_test.dart
+          git diff -- lib/core/widgets/game_hero_panel.dart test/core/widgets/game_hero_panel_test.dart
+          exit 1
 
       - name: Verify whitespace integrity
         run: git diff --check
