@@ -1,6 +1,5 @@
 import 'dart:collection';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
 import 'game_asset_registry.dart';
@@ -79,7 +78,10 @@ final class GameAssetCachePolicy extends ChangeNotifier {
     }
     if (_inFlight.contains(assetId)) return false;
 
-    final provider = AssetImage(descriptor.path);
+    final provider = AssetImage(
+      descriptor.path,
+      bundle: DefaultAssetBundle.of(context),
+    );
     _inFlight.add(assetId);
     notifyListeners();
     try {
@@ -160,6 +162,6 @@ final class GameAssetCachePolicy extends ChangeNotifier {
   }
 
   static Future<void> _evictWithFlutter(AssetImage provider) async {
-    await provider.evict(cache: PaintingBinding.instance.imageCache);
+    await provider.evict();
   }
 }
