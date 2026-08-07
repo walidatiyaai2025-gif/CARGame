@@ -142,7 +142,7 @@ class _HomeAmbientPainter extends CustomPainter {
     final cloudPaint = Paint()..color = Colors.white.withValues(alpha: .34);
     for (var index = 0; index < 4; index++) {
       final base = (index * .29 + progress * .08) % 1.25 - .12;
-      final x = size.width * (Directionality.maybeOf == null ? base : base);
+      final x = size.width * base;
       final y = size.height * (.08 + index * .075);
       _drawCloud(canvas, Offset(x, y), 18 + index * 3, cloudPaint);
     }
@@ -187,14 +187,6 @@ class _HomeAmbientPainter extends CustomPainter {
 }
 ''', encoding='utf-8')
 
-# Fix accidental non-context expression before formatting.
-ambient_text = ambient.read_text(encoding='utf-8')
-ambient_text = ambient_text.replace(
-    "final x = size.width * (Directionality.maybeOf == null ? base : base);",
-    "final x = size.width * base;",
-)
-ambient.write_text(ambient_text, encoding='utf-8')
-
 test = root / 'test/features/home/home_ambient_background_test.dart'
 test.parent.mkdir(parents=True, exist_ok=True)
 test.write_text(r'''import 'package:cargo_sort_game/features/home/home_ambient_background.dart';
@@ -212,7 +204,7 @@ void main() {
       ),
     );
     await tester.pump(const Duration(milliseconds: 250));
-    expect(find.byType(CustomPaint), findsOneWidget);
+    expect(find.byType(HomeAmbientBackground), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump();
