@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:cargo_sort_game/core/storage/progress_store.dart';
+import 'package:cargo_sort_game/core/storage/recovering_preferences.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
@@ -30,6 +33,49 @@ void main() {
     expect(store.freeHints, 0);
     expect(store.extraMovesBoosters, 0);
     expect(store.comboShields, 0);
+    expect(store.recoveryEvents, hasLength(6));
+  });
+
+  test('wrong-type progress key is backed up and repaired independently', () async {
+    final prefs = SharedPreferencesAsync();
+    await prefs.setString('coins', 'not-an-int');
+    await prefs.setInt('stats_wins', 17);
+
+    final store = ProgressStore();
+    await store.load();
+
+    expect(store.coins, 100);
+    expect(store.wins, 17);
+    expect(store.recoveryEvents, hasLength(1));
+    expect(store.recoveryEvents.single.key, 'coins');
+    expect(await prefs.containsKey('coins'), isFalse);
+
+    final backupText = await prefs.getString(RecoveringPreferences.backupKey);
+    expect(backupText, isNotNull);
+    final backup = jsonDecode(backupText!) as Map<String, dynamic>;
+    final values = backup['values'] as Map<String, dynamic>;
+    expect(values['coins'], 'not-an-int');
+    expect(values['stats_wins'], 17);
+  });
+
+  test('malformed heart timestamp is removed without resetting wallet', () async {
+    final prefs = SharedPreferencesAsync();
+    await prefs.setString('heart_refill_timestamp', 'definitely-not-a-date');
+    await prefs.setInt('hearts', 2);
+    await prefs.setInt('coins', 450);
+
+    final store = ProgressStore();
+    await store.load();
+
+    expect(store.coins, 450);
+    expect(store.hearts, 2);
+    expect(
+      store.recoveryEvents.any(
+        (event) => event.key == 'heart_refill_timestamp',
+      ),
+      isTrue,
+    );
+    expect(await prefs.containsKey('heart_refill_timestamp'), isTrue);
   });
 
   test('spendCoins rejects non-positive amounts and insufficient funds', () async {
