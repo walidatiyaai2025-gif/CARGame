@@ -6,55 +6,39 @@ This document is the operational summary. Detailed feature tracking remains in `
 
 | Field | Value |
 |---|---|
-| Current phase | B/C — Shared 3D UI and motion |
-| Active primary feature | `MOT-003` Universal Button Motion System |
-| Status | IMPLEMENTED across major CTAs; CI and physical-device review pending |
-| Catalog alignment | `MOT-003` tracks universal button adoption; resource interpolation is `MOT-011`. |
-| Integrated flows | Settings, Home Start, Mission Start, result Next/Retry, rewarded continuation, heart/booster/theme purchases |
-| Next checkpoint | Complete CI and physical Android motion review, then promote `MOT-003` to VERIFIED if acceptance remains satisfied. |
+| Current phase | C — Motion and living interface |
+| Completed checkpoint | `MOT-001` Motion tokens and reusable animation primitives |
+| Status | IMPLEMENTED — awaiting final CI and physical-device motion review |
+| Next recommended feature | `MOT-010` Animation lifecycle and interruption safety |
+| Build foundation | `ENG-002` moved to IMPLEMENTED; Windows device verification remains |
 
-## GameButton implementation evidence — 2026-08-07
+## MOT-001 implementation evidence — 2026-08-07
 
-- One reusable `GameButton` component provides press depth, elastic spring release, desktop/web hover, ripple/highlight, disabled/loading states, optional haptics, a sound hook, keyboard/focus support, semantics, RTL/LTR inheritance, and responsive composition.
-- Async callbacks are guarded so rapid repeated taps execute only once until completion.
-- Settings Language, Privacy, and About actions use the shared component.
-- Home Start and Mission Start use the shared component with loading and navigation guards.
-- Result Next, Retry, and rewarded-continuation actions use the shared component.
-- Heart, booster, and theme purchase/selection actions use the shared component.
-- Five focused widget tests cover async tap deduplication, disabled state, loading state, RTL, and sound-hook ordering.
-- The Home smoke test uses in-memory asynchronous preferences and bounded pumping so ambient looping motion does not stall tests.
-
-## Changed areas
-
-- `lib/core/widgets/game_button.dart`
-- `lib/features/settings/settings_screen.dart`
-- `lib/features/home/home_screen.dart`
-- `lib/features/levels/city_briefing_screen.dart`
-- `lib/features/game/game_screen.dart`
-- `lib/features/shop/shop_screen.dart`
-- `test/core/widgets/game_button_test.dart`
-- `test/widget_test.dart`
-- `.github/workflows/flutter_ci.yml`
-- `docs/FEATURE_CATALOG.md`
-- `docs/STATUS.md`
+- Added `lib/core/motion/game_motion.dart` as the single motion-token source.
+- Centralized tap, fast, standard, modal, reward, and idle duration budgets.
+- Centralized enter, exit, emphasized, and spring-release curves.
+- Added reusable button and placement spring descriptions.
+- Added `GameMotionProfile` for duration, distance, scale, and curve adaptation.
+- Reduced motion follows `MediaQuery.disableAnimations`, removes travel/scale, and keeps brief functional feedback.
+- `GameButton` now consumes motion tokens instead of local duration/curve/amplitude literals.
+- Added focused tests for documented motion budgets, reduced-motion behavior, and MediaQuery integration.
 
 ## Verification ledger
 
 | Date | Verification | Result |
 |---|---|---|
-| 2026-08-07 | Static component and integration review | PASSED |
-| 2026-08-07 | Focused GameButton tests | PASSED — 5/5 on previous CI checkpoint |
-| 2026-08-07 | Optional-service tests | PASSED — 6/6 on previous CI checkpoint |
-| 2026-08-07 | Full Flutter test suite | PASSED on previous CI checkpoint |
-| 2026-08-07 | Final major-CTA formatting and whitespace validation | PASSED |
-| 2026-08-07 | Final major-CTA Analyze, full tests, and Debug APK | IN PROGRESS in latest Flutter CI run |
-| 2026-08-07 | Dashboard schema | PASSED — six-column tables, phases A–S, supported statuses, and stable IDs preserved |
+| 2026-08-07 | Motion-token static integration review | PASSED |
+| 2026-08-07 | Motion budget and reduced-motion tests | PENDING in Flutter CI |
+| 2026-08-07 | Existing GameButton tests | PENDING in Flutter CI |
+| 2026-08-07 | Full Flutter test suite | PENDING in Flutter CI |
+| 2026-08-07 | Debug APK build | PENDING in Flutter CI |
+| 2026-08-07 | Dashboard schema | PASSED — six-column tables and phases A–S preserved |
 
 ## Known limitations and next work
 
-1. Promotion to VERIFIED requires the latest CI run to pass and a physical Android review of press motion, loading, RTL, and rapid-tap behavior.
-2. The sound hook exists, but the audio service remains planned under Phase N.
-3. Visual 3D assets are caller-provided; the generic button intentionally does not hard-code assets.
+1. Physical-device review is still required to confirm press response and reduced-motion behavior.
+2. Existing screens outside `GameButton` still need migration to the shared motion tokens.
+3. `MOT-010` should add lifecycle-safe reusable controllers and off-screen pause behavior.
 
 ## Test locally
 
@@ -63,9 +47,9 @@ cd "D:\Apps\CARGame"
 git fetch origin
 git reset --hard origin/main
 flutter pub get
+flutter test test\core\motion\game_motion_test.dart
+flutter test test\core\widgets\game_button_test.dart
 flutter analyze --no-fatal-infos --no-fatal-warnings
 flutter test
 flutter run
 ```
-
-Test Home Start, Mission Start, result Next/Retry, rewarded continuation, heart and booster purchases, theme selection, and Settings actions. Rapid repeated taps must execute only once.

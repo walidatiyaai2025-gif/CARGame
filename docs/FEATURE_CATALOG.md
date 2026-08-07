@@ -43,7 +43,7 @@ Codex must not mark a feature complete merely because UI code exists.
 | ID | Function | Priority | Status | Dependencies | Acceptance / evidence |
 |---|---|---:|---|---|---|
 | ENG-001 | Repository audit and baseline | P0 | READY | None | Architecture, debt, baseline commands, scripts, assets, storage keys, and risks are documented. |
-| ENG-002 | Stable Android build toolchain | P0 | IN PROGRESS | ENG-001 | Debug/release scripts use dynamic device discovery, JDK validation, Kotlin cache recovery, and reproducible commands. |
+| ENG-002 | Stable Android build toolchain | P0 | IMPLEMENTED | ENG-001 | Shared scripts provide dynamic device discovery, JDK validation, Kotlin cache recovery, and reproducible debug/release commands; final Windows device verification remains. |
 | ENG-003 | Startup resilience | P0 | IMPLEMENTED | ENG-001 | App opens when ads, logger, orientation, or storage is slow; final device verification remains. |
 | ENG-004 | Error logging and copyable diagnostics | P0 | IMPLEMENTED | ENG-003 | Runtime errors are logged and can be viewed/copied without blocking normal use. |
 | ENG-005 | Clean architecture boundaries | P1 | PLANNED | ENG-001 | Presentation, domain, application, storage, assets, motion, analytics, and services are separated and documented. |
@@ -75,7 +75,7 @@ Codex must not mark a feature complete merely because UI code exists.
 
 | ID | Function | Priority | Status | Dependencies | Acceptance / evidence |
 |---|---|---:|---|---|---|
-| MOT-001 | Motion tokens and reusable animation primitives | P0 | READY | UI3D-001 | Central durations, curves, springs, stagger, amplitude, and reduced-motion behavior exist. |
+| MOT-001 | Motion tokens and reusable animation primitives | P0 | IMPLEMENTED | UI3D-001 | Central duration budgets, curves, spring descriptions, distance/scale amplitude, and MediaQuery-driven reduced-motion profile exist and are integrated into GameButton with focused tests. |
 | MOT-002 | Button press and release feedback primitive | P0 | IMPLEMENTED | UI3D-003 | `GameButton` responds within 100 ms, springs on release, and guards delayed or duplicate async taps; wider screen adoption remains under MOT-003. |
 | MOT-003 | Universal Button Motion System | P0 | IMPLEMENTED | UI3D-003, MOT-002 | Major Start, mission launch, Next, Retry, rewarded continuation, heart/booster/theme purchase, and settings actions use shared `GameButton`; focused tests and CI verification exist, while physical-device motion review remains. |
 | MOT-004 | Screen transitions | P1 | PLANNED | MOT-001 | Shared-axis/fade-through transitions are guarded, interruptible, and RTL-aware. |
