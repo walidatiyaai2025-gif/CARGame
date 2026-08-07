@@ -80,7 +80,7 @@ Codex must not mark a feature complete merely because UI code exists.
 | MOT-003 | Universal Button Motion System | P0 | IMPLEMENTED | UI3D-003, MOT-002 | Major Start, mission launch, Next, Retry, rewarded continuation, heart/booster/theme purchase, and settings actions use shared `GameButton`; focused tests and CI verification exist, while physical-device motion review remains. |
 | MOT-004 | Screen transitions | P1 | PLANNED | MOT-001 | Shared-axis/fade-through transitions are guarded, interruptible, and RTL-aware. |
 | MOT-005 | Ambient home/world motion | P1 | IMPLEMENTED | MOT-001, UI3D-007 | Home and World Map reuse one lifecycle-safe animated gradient, drifting-cloud, glow-parallax, and low-cost depth implementation with reduced-motion support; physical-device performance review remains. |
-| MOT-006 | Product pickup, travel, placement, settle | P0 | PLANNED | GAME-003, MOT-001 | Every gameplay action shows cause/result while board state remains deterministic. |
+| MOT-006 | Product pickup, travel, placement, settle | P0 | IN PROGRESS | GAME-003, MOT-001 | Selection now lifts the cargo, placement locks repeated input, and the chosen warehouse gives correct/wrong settle feedback before deterministic state mutation. Coordinate-to-coordinate travel and physical-device review remain. |
 | MOT-007 | Correct/wrong/combo feedback | P0 | PLANNED | GAME-003, MOT-001 | Sparkle, bounce, recoil, capped combo escalation, audio, and haptics are synchronized. |
 | MOT-008 | Reward flight and reveal sequences | P1 | PLANNED | REW-001, MOT-001 | Coins fly to wallet, stars reveal, XP interpolates, and rewards remain idempotent. |
 | MOT-009 | Boss/world completion cinematic | P2 | PLANNED | WORLD-006, MOT-008 | Sequence lasts 1.2–2.5 seconds, is skippable after first view, and never duplicates rewards. |
@@ -332,7 +332,7 @@ Codex must not mark a feature complete merely because UI code exists.
 
 - `ENG-002` Stable Android build toolchain.
 - `REL-001` Dynamic ADB/device scripts.
-- `MOT-003` Universal Button Motion System adoption.
+- `MOT-006` Product pickup, travel, placement, settle.
 
 ## NEXT READY
 
