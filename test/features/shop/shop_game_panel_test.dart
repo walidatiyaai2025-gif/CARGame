@@ -5,28 +5,31 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('shop booster offers use the shared GamePanel shell', (tester) async {
-    final store = ProgressStore();
+  testWidgets(
+    'shop booster offers use the shared GamePanel shell',
+    (tester) async {
+      final store = ProgressStore();
 
-    await tester.pumpWidget(
-      MaterialApp(home: ShopScreen(store: store)),
-    );
-    await tester.pump();
+      await tester.pumpWidget(
+        MaterialApp(home: ShopScreen(store: store)),
+      );
+      await tester.pump();
 
-    final scrollable = find.byType(Scrollable);
+      final scrollable = find.byType(Scrollable);
 
-    expect(find.text('Smart Hint Pack'), findsOneWidget);
-    expect(find.text('Extra Moves Pack'), findsOneWidget);
-    expect(find.byType(GamePanel), findsWidgets);
+      expect(find.text('Smart Hint Pack'), findsOneWidget);
+      expect(find.text('Extra Moves Pack'), findsOneWidget);
+      expect(find.byType(GamePanel), findsWidgets);
 
-    await tester.scrollUntilVisible(
-      find.text('Combo Shield'),
-      250,
-      scrollable: scrollable,
-    );
+      await tester.scrollUntilVisible(
+        find.text('Combo Shield'),
+        250,
+        scrollable: scrollable,
+      );
 
-    expect(find.text('Combo Shield'), findsOneWidget);
-    expect(find.byType(GamePanel), findsWidgets);
-    expect(tester.takeException(), isNull);
-  });
+      expect(find.text('Combo Shield'), findsOneWidget);
+      expect(find.byType(GamePanel), findsWidgets);
+      expect(tester.takeException(), isNull);
+    },
+  );
 }
