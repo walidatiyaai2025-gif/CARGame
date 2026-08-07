@@ -325,6 +325,7 @@ class _GameScreenState extends State<GameScreen> {
     final navigator = Navigator.of(context);
     _dismissResultSheet(sheetContext);
     if (!mounted) return;
+    setState(() => _resultVisible = false);
     navigator.pop();
   }
 
