@@ -45,7 +45,12 @@ void main() {
     );
 
     expect(tester.takeException(), isNull);
-    expect(find.byType(CustomPaint), findsOneWidget);
+    final icon = find.byType(ThreeDGameIcon);
+    expect(icon, findsOneWidget);
+    expect(
+      find.descendant(of: icon, matching: find.byType(CustomPaint)),
+      findsOneWidget,
+    );
     expect(find.bySemanticsLabel('city'), findsOneWidget);
   });
 }
