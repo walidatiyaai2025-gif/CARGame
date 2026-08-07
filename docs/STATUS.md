@@ -7,34 +7,36 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | Field | Value |
 |---|---|
 | Current phase | C — Motion and living interface |
-| Completed checkpoint | `MOT-006` Product pickup, travel, placement, settle |
-| Status | IMPLEMENTED — Flutter CI and physical-device motion review pending |
-| Previous checkpoint | `MOT-005` lifecycle-safe Home and World Map ambient motion |
-| Next recommended feature | `MOT-007` Correct/wrong/combo feedback |
-| Known blocker | Local environment has no Flutter/Dart SDK; required commands are delegated to repository CI |
+| Active checkpoint | `MOT-007` Correct/wrong/combo feedback |
+| Status | IN PROGRESS — synchronized visual/haptic checkpoint implemented; audio-service integration and physical-device review remain |
+| Implementation commit | `ad74febe5d8f1287428836022c65fe353c3abd98` |
+| Previous checkpoint | `MOT-006` Product pickup, measured travel, placement, and settle |
+| Next checkpoint | Connect the optional feedback sound hook to the centralized audio service after `AV-001` exists |
 
-## MOT-006 implementation evidence — 2026-08-07
+## MOT-007 implementation evidence — 2026-08-07
 
-- Reused the shared `CargoMotionTile` and `WarehouseMotionTarget` primitives for source lift/busy state and target settle.
-- Added reusable `GameTravelMotion` with measured source-to-target curved travel, pickup lift, arrival settle, repaint isolation, lifecycle-safe disposal, and excluded duplicate semantics.
-- Cargo and warehouse tap coordinates are captured from the live board; duplicate cargo instances resolve by stable selected index.
-- Gameplay, boosters, restart, and back navigation remain locked until resolution completes; moves, combo, remaining cargo, win/loss, rewards, and persistence mutate exactly once.
-- Reduced Motion renders destination feedback and completes after the frame without relying on a disabled ticker.
-- Added focused widget tests for one-time travel completion, ticker-disabled Reduced Motion, and repeated warehouse input during resolution.
-- Preserved the existing World Map analyzer cleanup and all MOT-005 work from the concurrent mainline updates.
+- Added reusable `GameActionFeedback` for correct and wrong sorting outcomes.
+- Correct placement produces a bounce, glow, radial sparkle burst, and capped combo-size escalation.
+- Wrong placement produces a red recoil/shake response with a distinct heavy haptic profile.
+- Correct haptics escalate from light to medium at higher combos while visual escalation is capped at combo eight to prevent excessive motion.
+- An optional one-shot sound hook is exposed without hard-coding audio assets or creating a competing audio service.
+- Gameplay resolution waits for feedback completion before win/loss result presentation, preventing overlapping result sheets and duplicate state mutation.
+- Feedback completion uses a guarded `Completer`, is disposed safely, and remains single-fire during Reduced Motion or route disposal.
+- Reduced Motion renders stable feedback and completes after one frame without requiring an active ticker.
+- Added focused widget tests for correct/combo feedback, wrong feedback, one-shot sound hook, one-time completion, and Reduced Motion disposal.
 
 ## Verification ledger
 
 | Date | Verification | Result |
 |---|---|---|
-| 2026-08-07 | Pre-travel Flutter Analyze | PASSED — no issues found at the pickup/placement checkpoint |
-| 2026-08-07 | Cargo motion primitive tests | PASSED — 3/3 before coordinate travel integration |
-| 2026-08-07 | Dart syntax and formatting for all `lib`/`test` sources | PASSED — 39 files parsed by `dart_style` WASM with zero formatting drift |
-| 2026-08-07 | Git whitespace validation | PASSED — `git diff --check` |
-| 2026-08-07 | Flutter Analyze after coordinate travel | BLOCKED locally — Flutter SDK unavailable; CI pending |
-| 2026-08-07 | Focused and full Flutter tests after coordinate travel | BLOCKED locally — Flutter SDK unavailable; CI pending |
-| 2026-08-07 | Debug APK | BLOCKED locally — Flutter SDK unavailable; CI pending |
-| 2026-08-07 | Dashboard/catalog integrity | PASSED — phases A–S, six-column task rows, unique IDs, dependencies, statuses, and single-active-task rule validated |
+| 2026-08-07 | Dart format | PASSED |
+| 2026-08-07 | Flutter Analyze | PASSED — no issues found |
+| 2026-08-07 | Action feedback focused tests | PASSED — 3/3 |
+| 2026-08-07 | Travel-motion regression tests | PASSED |
+| 2026-08-07 | Dashboard/catalog schema | PASSED — phases A–S and six-column task rows preserved |
+| 2026-08-07 | Full Flutter test suite | RUNNING in Flutter CI |
+| 2026-08-07 | Debug APK build | RUNNING in Flutter CI |
+| 2026-08-07 | Physical Android motion/audio review | PENDING |
 
 ## Test locally
 
@@ -44,7 +46,7 @@ git fetch origin
 git reset --hard origin/main
 flutter pub get
 flutter analyze --no-fatal-infos --no-fatal-warnings
-flutter test test\features\game\cargo_motion_tile_test.dart
+flutter test test\core\motion\game_action_feedback_test.dart
 flutter test test\core\motion\game_travel_motion_test.dart
 flutter test test\features\game\game_screen_motion_test.dart
 flutter test
