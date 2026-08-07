@@ -7,11 +7,11 @@ This document is the operational summary. Detailed feature tracking remains in `
 | Field | Value |
 |---|---|
 | Current phase | B/C — Shared 3D UI and motion |
-| Requested feature | `MOT-003` Universal Button Motion System |
-| Catalog alignment | The catalog currently defines `MOT-003` as resource interpolation; this button checkpoint functionally maps to `MOT-002` and `UI3D-003`. Stable IDs were not silently renamed. |
-| Status | IMPLEMENTED checkpoint; final CI run pending |
-| Integrated screen | Settings |
-| Next checkpoint | Adopt `GameButton` in Home Start, mission launch, result Next/Retry, and shop purchase flows after the current CI run passes. |
+| Active primary feature | `MOT-003` Universal Button Motion System |
+| Status | IN PROGRESS — shared component and Settings adoption implemented; major CTA adoption remains |
+| Catalog alignment | Explicitly reconciled: `MOT-003` now tracks universal button adoption; resource interpolation moved to `MOT-011`. |
+| Integrated screen | Settings: Language, Privacy, and About actions |
+| Next checkpoint | Adopt `GameButton` in Home Start, mission launch, result Next/Retry, and shop purchase flows without duplicating motion logic. |
 
 ## GameButton implementation evidence — 2026-08-07
 
@@ -24,9 +24,9 @@ This document is the operational summary. Detailed feature tracking remains in `
 - A sound hook is provided without hard-coding an audio package or asset.
 - Ink ripple/highlight, semantic button state, keyboard activation, focus behavior, and mouse cursors are included.
 - Directionality is inherited, preserving RTL/LTR child layout and responsive composition.
-- Settings language, privacy, and about actions now use the shared component.
+- Settings language, privacy, and about actions use the shared component.
 - Five focused widget tests cover async tap deduplication, disabled state, loading state, RTL, and sound-hook ordering.
-- The existing home smoke test now installs an in-memory SharedPreferencesAsync platform so the full suite can run in CI without native plugins.
+- The Home smoke test uses an in-memory asynchronous preferences platform and bounded pumping, so ambient looping motion no longer causes `pumpAndSettle` timeouts.
 
 ## Changed areas
 
@@ -36,26 +36,28 @@ This document is the operational summary. Detailed feature tracking remains in `
 - `test/widget_test.dart`
 - `pubspec.yaml`
 - `.github/workflows/flutter_ci.yml`
+- `docs/FEATURE_CATALOG.md`
+- `docs/STATUS.md`
 
 ## Verification ledger
 
 | Date | Verification | Result |
 |---|---|---|
-| 2026-08-07 | Static component and integration review | PASSED |
-| 2026-08-07 | Flutter Analyze in GitHub Actions | PASSED; one pre-existing non-fatal style info remains |
+| 2026-08-07 | Static component and Settings integration review | PASSED |
+| 2026-08-07 | Flutter Analyze in GitHub Actions | PASSED; one pre-existing non-fatal style info remains in `progress_store.dart` |
 | 2026-08-07 | Focused GameButton tests | PASSED — 5/5 |
 | 2026-08-07 | Optional-service tests | PASSED — 6/6 |
-| 2026-08-07 | Full suite attempt | Found one pre-existing test-platform setup failure in `widget_test.dart` |
-| 2026-08-07 | Home smoke-test platform fix | IMPLEMENTED; latest CI run pending |
-| 2026-08-07 | Dashboard schema | Catalog table and phase schema remain parser-compatible |
+| 2026-08-07 | Full Flutter test suite | PASSED after replacing unbounded `pumpAndSettle` with bounded startup pumping |
+| 2026-08-07 | Debug APK build | IN PROGRESS in Flutter CI run 12 |
+| 2026-08-07 | Catalog migration | PASSED — `MOT-003` reconciled and `MOT-011` created for resource interpolation |
+| 2026-08-07 | Dashboard schema | PASSED — six-column tables, phases A–S, supported statuses, and unique stable IDs preserved |
 
 ## Known limitations and next work
 
-1. The requested `MOT-003` label conflicts with the current catalog definition. Reconciliation must be explicit rather than silently repurposing a stable ID.
-2. This checkpoint replaces three safe settings actions; remaining major CTAs still use legacy implementations.
-3. The sound hook exists, but the audio service remains planned under Phase N.
-4. Visual 3D assets are caller-provided; the generic component does not hard-code assets.
-5. Final status remains below VERIFIED until the latest CI run passes the full suite and Debug APK build.
+1. `MOT-003` remains IN PROGRESS because Start, mission launch, Next, Retry, and purchase CTAs still contain legacy button implementations.
+2. The sound hook exists, but the audio service remains planned under Phase N.
+3. Visual 3D assets are caller-provided; the generic component intentionally does not hard-code assets.
+4. Promotion to VERIFIED requires complete major-CTA adoption, regression coverage, and a successful applicable Android build.
 
 ## Test locally
 
