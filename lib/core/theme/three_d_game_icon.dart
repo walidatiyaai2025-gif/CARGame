@@ -72,7 +72,13 @@ class _ThreeDGameIconState extends State<ThreeDGameIcon>
     ThreeDIconType.heart => 'ui.heart',
     ThreeDIconType.coin => 'ui.coin',
     ThreeDIconType.star => 'ui.star',
-    _ => null,
+    ThreeDIconType.gift => 'ui.gift',
+    ThreeDIconType.hint => 'booster.hint',
+    ThreeDIconType.extraMoves => 'booster.extra_moves',
+    ThreeDIconType.shield => 'booster.shield',
+    ThreeDIconType.chest => 'reward.chest',
+    ThreeDIconType.boss => 'boss.reward_chest',
+    ThreeDIconType.city => null,
   };
 
   Widget _proceduralIcon() => SizedBox.square(
