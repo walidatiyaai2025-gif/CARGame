@@ -60,7 +60,7 @@ void main() {
         ),
       ),
     );
-    expect(find.bySemanticsLabel('Loading'), findsOneWidget);
+    expect(find.bySemanticsLabel('Loading hero'), findsOneWidget);
 
     await tester.pumpWidget(
       host(
