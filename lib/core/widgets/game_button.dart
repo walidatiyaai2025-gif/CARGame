@@ -24,6 +24,8 @@ class GameButton extends StatefulWidget {
     this.borderRadius = const BorderRadius.all(Radius.circular(22)),
     this.gradient,
     this.backgroundColor,
+    this.foregroundColor,
+    this.border,
     this.disabledColor = const Color(0xFF9EA6B0),
     this.shadowColor = const Color(0x55000000),
     this.loadingIndicatorColor = Colors.white,
@@ -42,6 +44,8 @@ class GameButton extends StatefulWidget {
   final BorderRadius borderRadius;
   final Gradient? gradient;
   final Color? backgroundColor;
+  final Color? foregroundColor;
+  final BoxBorder? border;
   final Color disabledColor;
   final Color shadowColor;
   final Color loadingIndicatorColor;
@@ -63,7 +67,9 @@ class _GameButtonState extends State<GameButton> {
       widget.onPressed != null;
 
   Future<void> _activate() async {
-    if (!_interactive) return;
+    if (!_interactive) {
+      return;
+    }
     setState(() => _running = true);
     try {
       if (widget.hapticsEnabled) {
@@ -82,7 +88,9 @@ class _GameButtonState extends State<GameButton> {
   }
 
   void _setPressed(bool value) {
-    if (!_interactive || _pressed == value) return;
+    if (!_interactive || _pressed == value) {
+      return;
+    }
     setState(() => _pressed = value);
   }
 
@@ -102,6 +110,15 @@ class _GameButtonState extends State<GameButton> {
     final scale = motion.scale(
       _pressed ? .975 : (_hovered && hoverSupported ? 1.012 : 1.0),
     );
+    final foreground = widget.foregroundColor ?? Colors.white;
+
+    final buttonChild = DefaultTextStyle.merge(
+      style: TextStyle(color: foreground),
+      child: IconTheme.merge(
+        data: IconThemeData(color: foreground),
+        child: widget.child,
+      ),
+    );
 
     final content = AnimatedContainer(
       duration: motion.duration(GameMotionDurations.fast),
@@ -113,9 +130,11 @@ class _GameButtonState extends State<GameButton> {
         color: disabled ? widget.disabledColor : widget.backgroundColor,
         gradient: disabled ? null : widget.gradient,
         borderRadius: widget.borderRadius,
-        border: Border.all(
-          color: Colors.white.withValues(alpha: disabled ? .10 : .24),
-        ),
+        border:
+            widget.border ??
+            Border.all(
+              color: Colors.white.withValues(alpha: disabled ? .10 : .24),
+            ),
         boxShadow: [
           BoxShadow(
             color: disabled ? Colors.transparent : widget.shadowColor,
@@ -142,7 +161,10 @@ class _GameButtonState extends State<GameButton> {
                   color: widget.loadingIndicatorColor,
                 ),
               )
-            : KeyedSubtree(key: const ValueKey('content'), child: widget.child),
+            : KeyedSubtree(
+                key: const ValueKey('content'),
+                child: buttonChild,
+              ),
       ),
     );
 
@@ -156,7 +178,9 @@ class _GameButtonState extends State<GameButton> {
             ? SystemMouseCursors.click
             : SystemMouseCursors.forbidden,
         onShowHoverHighlight: (value) {
-          if (hoverSupported && mounted) setState(() => _hovered = value);
+          if (hoverSupported && mounted) {
+            setState(() => _hovered = value);
+          }
         },
         actions: <Type, Action<Intent>>{
           ActivateIntent: CallbackAction<ActivateIntent>(
