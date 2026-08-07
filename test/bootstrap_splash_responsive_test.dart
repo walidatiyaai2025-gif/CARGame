@@ -12,6 +12,16 @@ void main() {
         InMemorySharedPreferencesAsync.empty();
   });
 
+  Future<void> drainBootstrapTimers(WidgetTester tester) async {
+    // Bootstrap intentionally owns bounded startup timers (minimum splash,
+    // optional local-service timeouts, and background ads initialization).
+    // Advance fake time through those lifetimes before ending the widget test
+    // so responsive assertions do not leave legitimate startup timers pending.
+    await tester.pump(const Duration(seconds: 7));
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 25));
+  }
+
   testWidgets('startup splash is overflow-free on a narrow phone', (
     tester,
   ) async {
@@ -26,6 +36,8 @@ void main() {
     expect(find.text('Version $appVersion ($appBuildNumber)'), findsOneWidget);
     expect(find.text(appAuthor), findsOneWidget);
     expect(find.byType(SingleChildScrollView), findsOneWidget);
+
+    await drainBootstrapTimers(tester);
   });
 
   testWidgets('startup splash supports large text on a tablet', (tester) async {
@@ -44,5 +56,7 @@ void main() {
     expect(find.text('SORT • SHIP • CONQUER'), findsOneWidget);
     expect(find.text('Version $appVersion ($appBuildNumber)'), findsOneWidget);
     expect(find.text(appAuthor), findsOneWidget);
+
+    await drainBootstrapTimers(tester);
   });
 }
