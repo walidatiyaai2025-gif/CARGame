@@ -5,12 +5,12 @@ param(
     [string]$Branch = "main"
 )
 
-# CARGame Setup Tool v2.5.0
+# CARGame Setup Tool v2.6.0
 # Windows PowerShell 5.1 compatible.
 # Safe by default: destructive sync creates a backup and requires YES.
 
 $ErrorActionPreference = "Continue"
-$ToolVersion = "2.5.0"
+$ToolVersion = "2.6.0"
 $OriginalLocation = (Get-Location).Path
 $script:LastFailure = $null
 
@@ -215,7 +215,7 @@ function Test-GeneratedPath {
     param([string]$StatusLine)
     $text=[string]$StatusLine
     $path=$text.Substring([Math]::Min(3,$text.Length)).Trim().Replace('"','')
-    foreach($p in @('^build/','^\.dart_tool/','^android/\.gradle/','^\.gradle-user-home-','^node_modules/','^logs/','^\.metadata$','^android/app/src/debug/','^android/app/src/profile/')) { if($path-match$p){return $true} }
+    foreach($p in @('^build/','^\.dart_tool/','^android/\.gradle/','^android/gradle/','^android/gradlew(?:\.bat)?$','^\.gradle-user-home-','^node_modules/','^logs/','^\.metadata$','^android/app/src/debug/','^android/app/src/profile/')) { if($path-match$p){return $true} }
     return $false
 }
 
@@ -341,11 +341,42 @@ function Upload-Changes {
 function Build-Apk {
     param([ValidateSet("debug","release")][string]$Mode)
     if(-not(Test-CommandExists "flutter")){throw "Flutter is not installed or not in PATH."}
+
+    Write-ToolLog "Build mode does not run dart format; source files will not be rewritten." "OK"
+
+    if($Mode-eq"release"){
+        Write-ToolLog "Preparing lock-safe Release build." "INFO"
+        Stop-ProjectLockingProcesses
+        Remove-SafeCaches
+        Invoke-External "flutter" @("clean") "Flutter clean before Release" -AllowFailure -WorkingDirectory $ProjectPath|Out-Null
+    }
+
     Invoke-External "flutter" @("pub","get") "Flutter pub get" -WorkingDirectory $ProjectPath|Out-Null
-    if(Test-CommandExists "dart"){Invoke-External "dart" @("format","lib","test") "Dart format" -AllowFailure -WorkingDirectory $ProjectPath|Out-Null}
     Invoke-External "flutter" @("analyze","--no-fatal-infos","--no-fatal-warnings") "Flutter analyze" -WorkingDirectory $ProjectPath|Out-Null
+
     $r=Invoke-External "flutter" @("build","apk","--$Mode","--no-pub") "Build $Mode APK" -AllowFailure -WorkingDirectory $ProjectPath
-    if($r.ExitCode-ne0){throw "Flutter $Mode build failed. See log."}
+    if($r.ExitCode-eq0){return}
+
+    if($Mode-ne"release"){
+        throw "Flutter $Mode build failed. See log."
+    }
+
+    $failureText=($r.Output-join[Environment]::NewLine)
+    $looksLikeLockFailure=$failureText-match'Unable to delete directory|Failed to delete some children|minifyReleaseWithR8|classes\.dex|file.*open|working directory set in the target directory'
+    if($looksLikeLockFailure){
+        Write-ToolLog "Release build hit a Windows/Gradle file lock. Running aggressive recovery and retrying once." "WARN"
+    }else{
+        Write-ToolLog "Release build failed. Running one clean recovery retry before returning the error." "WARN"
+    }
+
+    Stop-ProjectLockingProcesses -Aggressive
+    Remove-SafeCaches
+    Start-Sleep -Seconds 2
+    Invoke-External "flutter" @("clean") "Flutter clean after Release failure" -AllowFailure -WorkingDirectory $ProjectPath|Out-Null
+    Invoke-External "flutter" @("pub","get") "Flutter pub get after recovery" -WorkingDirectory $ProjectPath|Out-Null
+    $retry=Invoke-External "flutter" @("build","apk","--release","--no-pub") "Retry Release APK after lock recovery" -AllowFailure -WorkingDirectory $ProjectPath
+    if($retry.ExitCode-ne0){throw "Flutter release build failed after automatic lock recovery. See log."}
+    Write-ToolLog "Release APK succeeded after automatic lock recovery." "OK"
 }
 
 function Get-AndroidDeviceId {
@@ -464,7 +495,7 @@ try {
         Write-Host "8  - Flutter doctor"
         Write-Host "9  - Flutter cache repair"
         Write-Host "10 - Build Debug APK"
-        Write-Host "11 - Build Release APK"
+        Write-Host "11 - Build Release APK (lock-safe retry)"
         Write-Host "12 - Run app (auto detect/repair/launch Android)"
         Write-Host "13 - Full repair + Build Release APK"
         Write-Host "14 - Backup + UNDO local changes + apply GitHub version"
