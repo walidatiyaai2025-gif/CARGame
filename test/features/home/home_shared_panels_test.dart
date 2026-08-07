@@ -11,39 +11,40 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('home uses shared resource/action panels without adding scrolling', (
-    tester,
-  ) async {
-    tester.view.physicalSize = const Size(412, 915);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
+  testWidgets(
+    'home uses shared resource/action panels without adding scrolling',
+    (tester) async {
+      tester.view.physicalSize = const Size(412, 915);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
 
-    final store = ProgressStore();
-    final settings = AppSettingsStore();
+      final store = ProgressStore();
+      final settings = AppSettingsStore();
 
-    await tester.pumpWidget(
-      MaterialApp(
-        locale: const Locale('en'),
-        localizationsDelegates: const [
-          AppLocalizations.delegate,
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
-        supportedLocales: AppLocalizations.supportedLocales,
-        home: HomeScreen(
-          store: store,
-          settings: settings,
-          onToggleLanguage: () {},
+      await tester.pumpWidget(
+        MaterialApp(
+          locale: const Locale('en'),
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: HomeScreen(
+            store: store,
+            settings: settings,
+            onToggleLanguage: () {},
+          ),
         ),
-      ),
-    );
-    await tester.pump();
+      );
+      await tester.pump();
 
-    expect(find.byType(GameResourcePanel), findsNWidgets(3));
-    expect(find.byType(GameActionPanel), findsNWidgets(3));
-    expect(find.byType(Scrollable), findsNothing);
-    expect(tester.takeException(), isNull);
-  });
+      expect(find.byType(GameResourcePanel), findsNWidgets(3));
+      expect(find.byType(GameActionPanel), findsNWidgets(3));
+      expect(find.byType(Scrollable), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
 }
