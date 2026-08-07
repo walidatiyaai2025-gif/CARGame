@@ -6,8 +6,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 Future<ProgressStore> _store() async {
   SharedPreferences.setMockInitialValues(<String, Object>{});
-  final preferences = await SharedPreferences.getInstance();
-  return ProgressStore(preferences)..initialize();
+  final store = ProgressStore();
+  await store.load();
+  return store;
 }
 
 Future<void> _pumpProgress(
@@ -18,6 +19,7 @@ Future<void> _pumpProgress(
 }) async {
   await tester.binding.setSurfaceSize(size);
   final store = await _store();
+  addTearDown(store.dispose);
 
   await tester.pumpWidget(
     MaterialApp(
@@ -58,7 +60,10 @@ void main() {
 
     expect(tester.takeException(), isNull);
     expect(find.text('تقدم اللاعب'), findsOneWidget);
-    expect(Directionality.of(tester.element(find.text('تقدم اللاعب'))), TextDirection.rtl);
+    expect(
+      Directionality.of(tester.element(find.text('تقدم اللاعب'))),
+      TextDirection.rtl,
+    );
   });
 
   testWidgets('progress hub survives large text on a tablet', (tester) async {
