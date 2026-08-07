@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/motion/ambient_motion_background.dart';
+import '../../core/navigation/game_navigator.dart';
 import '../../core/settings/app_settings_store.dart';
 import '../../core/storage/progress_store.dart';
 import '../../core/theme/app_theme.dart';
@@ -194,6 +195,8 @@ class _WorldSection extends StatelessWidget {
   final bool isArabic;
   final GameSkin skin;
 
+  final String _briefingRoutePrefix = '/briefing/level/';
+
   @override
   Widget build(BuildContext context) {
     final unlocked = store.highestUnlockedLevel >= levels.first.number;
@@ -326,14 +329,15 @@ class _WorldSection extends StatelessWidget {
                         skin: skin,
                         isArabic: isArabic,
                         onTap: cityUnlocked
-                            ? () async {
-                                await Navigator.of(context).push(
-                                  MaterialPageRoute<void>(
-                                    builder: (_) => CityBriefingScreen(
-                                      level: level,
-                                      store: store,
-                                      settings: settings,
-                                    ),
+                            ? () {
+                                GameNavigator.push<void>(
+                                  context,
+                                  name: '$_briefingRoutePrefix${level.number}',
+                                  guardKey: 'briefing:${level.number}',
+                                  builder: (_) => CityBriefingScreen(
+                                    level: level,
+                                    store: store,
+                                    settings: settings,
                                   ),
                                 );
                               }
