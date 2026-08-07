@@ -35,6 +35,9 @@ jobs:
       - name: Verify dynamic Android targets
         run: dart run tool/verify_dynamic_android_targets.dart
 
+      - name: Verify secret hygiene
+        run: dart run tool/verify_secret_hygiene.dart
+
       - name: Restore packages
         run: flutter pub get
 
