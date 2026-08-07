@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../../core/logging/log_viewer_screen.dart';
+import '../../core/motion/ambient_motion_background.dart';
 import '../../core/storage/progress_store.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/three_d_game_icon.dart';
 import '../../core/widgets/game_button.dart';
-import 'home_ambient_background.dart';
 import '../../l10n/app_localizations.dart';
 import '../game/city_catalog.dart';
 import '../game/level_data.dart';
@@ -107,7 +107,7 @@ class _HomeScreenState extends State<HomeScreen> {
           return Stack(
             children: [
               Positioned.fill(
-                child: HomeAmbientBackground(
+                child: AmbientMotionBackground(
                   startColor: world.startColor,
                   endColor: world.endColor,
                 ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/motion/ambient_motion_background.dart';
 import '../../core/storage/progress_store.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/game_skin.dart';
@@ -7,7 +8,6 @@ import '../../core/theme/three_d_game_icon.dart';
 import '../game/city_catalog.dart';
 import '../game/level_data.dart';
 import 'city_briefing_screen.dart';
-import 'world_map_ambient_background.dart';
 
 class LevelSelectScreen extends StatelessWidget {
   const LevelSelectScreen({super.key, required this.store});
@@ -30,7 +30,7 @@ class LevelSelectScreen extends StatelessWidget {
           body: Stack(
             children: [
               Positioned.fill(
-                child: WorldMapAmbientBackground(
+                child: AmbientMotionBackground(
                   startColor: skin.primary,
                   endColor: skin.secondary,
                 ),

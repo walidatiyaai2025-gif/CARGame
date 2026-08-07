@@ -2,10 +2,11 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../../core/motion/game_motion.dart';
+import 'game_motion.dart';
 
-class HomeAmbientBackground extends StatefulWidget {
-  const HomeAmbientBackground({
+/// Low-cost ambient scene shared by the home and world-map surfaces.
+class AmbientMotionBackground extends StatefulWidget {
+  const AmbientMotionBackground({
     super.key,
     required this.startColor,
     required this.endColor,
@@ -15,10 +16,11 @@ class HomeAmbientBackground extends StatefulWidget {
   final Color endColor;
 
   @override
-  State<HomeAmbientBackground> createState() => _HomeAmbientBackgroundState();
+  State<AmbientMotionBackground> createState() =>
+      _AmbientMotionBackgroundState();
 }
 
-class _HomeAmbientBackgroundState extends State<HomeAmbientBackground>
+class _AmbientMotionBackgroundState extends State<AmbientMotionBackground>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   bool _reducedMotion = false;
@@ -41,8 +43,9 @@ class _HomeAmbientBackgroundState extends State<HomeAmbientBackground>
     }
     _reducedMotion = reducedMotion;
     if (reducedMotion) {
-      _controller.stop();
-      _controller.value = 0;
+      _controller
+        ..stop()
+        ..value = 0;
     } else if (!_controller.isAnimating) {
       _controller.repeat();
     }
@@ -60,7 +63,7 @@ class _HomeAmbientBackgroundState extends State<HomeAmbientBackground>
       child: AnimatedBuilder(
         animation: _controller,
         builder: (context, _) => CustomPaint(
-          painter: _HomeAmbientPainter(
+          painter: _AmbientMotionPainter(
             progress: _controller.value,
             startColor: widget.startColor,
             endColor: widget.endColor,
@@ -73,8 +76,8 @@ class _HomeAmbientBackgroundState extends State<HomeAmbientBackground>
   }
 }
 
-class _HomeAmbientPainter extends CustomPainter {
-  const _HomeAmbientPainter({
+class _AmbientMotionPainter extends CustomPainter {
+  const _AmbientMotionPainter({
     required this.progress,
     required this.startColor,
     required this.endColor,
@@ -154,7 +157,7 @@ class _HomeAmbientPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _HomeAmbientPainter oldDelegate) =>
+  bool shouldRepaint(covariant _AmbientMotionPainter oldDelegate) =>
       oldDelegate.progress != progress ||
       oldDelegate.startColor != startColor ||
       oldDelegate.endColor != endColor ||
