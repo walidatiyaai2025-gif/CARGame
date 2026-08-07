@@ -6,9 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   Widget host(Widget child) => MaterialApp(
     home: Scaffold(
-      body: Center(
-        child: SizedBox(width: 360, child: child),
-      ),
+      body: Center(child: SizedBox(width: 360, child: child)),
     ),
   );
 
