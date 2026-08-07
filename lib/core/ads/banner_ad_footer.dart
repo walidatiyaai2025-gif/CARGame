@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
+import '../config/app_build_config.dart';
 import 'ad_service.dart';
 
 class BannerAdFooter extends StatefulWidget {
@@ -17,6 +18,7 @@ class _BannerAdFooterState extends State<BannerAdFooter> {
   bool _dismissed = false;
 
   bool get _supported =>
+      AppBuildConfig.current.enableAds &&
       !kIsWeb &&
       (defaultTargetPlatform == TargetPlatform.android ||
           defaultTargetPlatform == TargetPlatform.iOS);
