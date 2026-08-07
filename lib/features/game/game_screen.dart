@@ -312,23 +312,27 @@ class _GameScreenState extends State<GameScreen> {
       ..showSnackBar(SnackBar(content: Text(text)));
   }
 
+  void _dismissResultSheet(BuildContext sheetContext) {
+    final route = ModalRoute.of(sheetContext);
+    if (route == null) return;
+    Navigator.of(sheetContext).removeRoute(route);
+  }
+
   Future<void> _closeResultAndReturnToMap(BuildContext sheetContext) async {
     if (_resultActionBusy) return;
     _resultActionBusy = true;
 
-    Navigator.of(sheetContext).pop();
-    await Future<void>.delayed(const Duration(milliseconds: 260));
+    final navigator = Navigator.of(context);
+    _dismissResultSheet(sheetContext);
     if (!mounted) return;
-
-    await Navigator.of(context).maybePop();
+    navigator.pop();
   }
 
   Future<void> _retryFromResult(BuildContext sheetContext) async {
     if (_resultActionBusy) return;
     _resultActionBusy = true;
 
-    Navigator.of(sheetContext).pop();
-    await Future<void>.delayed(const Duration(milliseconds: 220));
+    _dismissResultSheet(sheetContext);
     if (!mounted) return;
     setState(() => _reset());
   }
@@ -478,7 +482,7 @@ class _GameScreenState extends State<GameScreen> {
                         onPressed: _resultActionBusy
                             ? null
                             : () {
-                                Navigator.of(sheetContext).pop();
+                                _dismissResultSheet(sheetContext);
                                 _ads.showRewarded(
                                   onReward: () {
                                     if (!mounted) return;
