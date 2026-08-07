@@ -87,8 +87,9 @@ class ProgressStore extends ChangeNotifier {
   bool get canClaimDailyReward => _lastDailyRewardDate != _today;
 
   Duration get timeUntilNextHeart {
-    if (hearts >= maxHearts || _heartRefillTimestamp == null)
+    if (hearts >= maxHearts || _heartRefillTimestamp == null) {
       return Duration.zero;
+    }
     final elapsed = DateTime.now().difference(_heartRefillTimestamp!);
     final remaining = heartRefillInterval - elapsed;
     return remaining.isNegative ? Duration.zero : remaining;
