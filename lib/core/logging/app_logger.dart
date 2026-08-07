@@ -6,6 +6,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 
+import '../security/secret_redactor.dart';
+
 class LoggedAppError {
   const LoggedAppError({
     required this.level,
@@ -67,7 +69,7 @@ class AppLogger extends ChangeNotifier {
       );
 
       if (await _logFile!.exists()) {
-        final existing = await _logFile!.readAsString();
+        final existing = SecretRedactor.redact(await _logFile!.readAsString());
         if (existing.trim().isNotEmpty) {
           _entries.add(existing.trim());
         }
@@ -175,7 +177,14 @@ class AppLogger extends ChangeNotifier {
     bool notifyUser = false,
   }) async {
     final timestamp = DateTime.now();
-    final entry = _format(level, message, details, timestamp: timestamp);
+    final safeMessage = SecretRedactor.redact(message);
+    final safeDetails = SecretRedactor.redact(details);
+    final entry = _format(
+      level,
+      safeMessage,
+      safeDetails,
+      timestamp: timestamp,
+    );
 
     _entries.add(entry);
     if (_entries.length > 300) {
@@ -200,8 +209,8 @@ class AppLogger extends ChangeNotifier {
       _runtimeErrors.add(
         LoggedAppError(
           level: level,
-          message: message,
-          details: details,
+          message: safeMessage,
+          details: safeDetails,
           timestamp: timestamp,
         ),
       );
@@ -217,13 +226,15 @@ class AppLogger extends ChangeNotifier {
     DateTime? timestamp,
   }) {
     final time = (timestamp ?? DateTime.now()).toIso8601String();
+    final safeMessage = SecretRedactor.redact(message);
+    final safeDetails = SecretRedactor.redact(details);
     final buffer = StringBuffer()
       ..writeln('[$time] [$level]')
-      ..writeln(message.trim());
-    if (details.trim().isNotEmpty) {
+      ..writeln(safeMessage.trim());
+    if (safeDetails.trim().isNotEmpty) {
       buffer
         ..writeln('--- Details ---')
-        ..write(details.trim());
+        ..write(safeDetails.trim());
     }
     return buffer.toString();
   }
