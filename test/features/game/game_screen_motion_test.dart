@@ -19,6 +19,9 @@ void main() {
   testWidgets('gameplay ignores warehouse input while cargo is resolving', (
     tester,
   ) async {
+    await tester.binding.setSurfaceSize(const Size(800, 1000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
     final cargo = productCatalog.first;
     final level = LevelData(
       number: 1,
