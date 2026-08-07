@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/logging/log_viewer_screen.dart';
 import '../../core/motion/ambient_motion_background.dart';
+import '../../core/settings/app_settings_store.dart';
 import '../../core/storage/progress_store.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/three_d_game_icon.dart';
@@ -17,10 +18,12 @@ class HomeScreen extends StatefulWidget {
   const HomeScreen({
     super.key,
     required this.store,
+    required this.settings,
     required this.onToggleLanguage,
   });
 
   final ProgressStore store;
+  final AppSettingsStore settings;
   final VoidCallback onToggleLanguage;
 
   @override
@@ -38,7 +41,8 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       await Navigator.of(context).push(
         MaterialPageRoute<void>(
-          builder: (_) => LevelSelectScreen(store: store),
+          builder: (_) =>
+              LevelSelectScreen(store: store, settings: widget.settings),
         ),
       );
     } finally {

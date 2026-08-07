@@ -150,6 +150,14 @@ Implemented checkpoint `MOT-006`:
 - Duplicate cargo instances use the selected board index, so only the tapped item lifts and resolves.
 - Reduced motion keeps a brief destination fade and the same one-time completion contract.
 
+Implemented checkpoint `MOT-007`:
+
+- `GameActionFeedback` owns correct bounce/glow/sparkles, wrong recoil, and explicit non-color result cues without owning gameplay state.
+- Combo intensity escalates through eight bounded visual/haptic tiers while the displayed and persisted combo remains exact.
+- A typed optional sound hook and settings-aware haptics dispatch once with the visual event; centralized audio remains under `AV-001`/`AV-006`.
+- The gameplay resolution lock spans travel and feedback so repeated input and result presentation cannot overlap the event.
+- Localized live-region labels expose the result without requiring motion, and Reduced Motion uses a bounded ticker-free presentation with disposal-safe completion.
+
 ### Victory
 
 Sequence:

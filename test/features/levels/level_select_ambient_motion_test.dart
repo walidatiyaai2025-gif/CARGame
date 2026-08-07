@@ -1,4 +1,5 @@
 import 'package:cargo_sort_game/core/motion/ambient_motion_background.dart';
+import 'package:cargo_sort_game/core/settings/app_settings_store.dart';
 import 'package:cargo_sort_game/core/storage/progress_store.dart';
 import 'package:cargo_sort_game/features/levels/level_select_screen.dart';
 import 'package:flutter/material.dart';
@@ -24,7 +25,10 @@ void main() {
       MaterialApp(
         home: MediaQuery(
           data: const MediaQueryData(disableAnimations: true),
-          child: LevelSelectScreen(store: ProgressStore()),
+          child: LevelSelectScreen(
+            store: ProgressStore(),
+            settings: AppSettingsStore(),
+          ),
         ),
       ),
     );

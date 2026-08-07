@@ -1,4 +1,5 @@
 import 'package:cargo_sort_game/core/ads/ad_service.dart';
+import 'package:cargo_sort_game/core/motion/game_action_feedback.dart';
 import 'package:cargo_sort_game/core/motion/game_travel_motion.dart';
 import 'package:cargo_sort_game/core/storage/progress_store.dart';
 import 'package:cargo_sort_game/features/game/game_screen.dart';
@@ -23,6 +24,7 @@ void main() {
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     final cargo = productCatalog.first;
+    final sounds = <(GameActionFeedbackKind, int)>[];
     final level = LevelData(
       number: 1,
       world: 1,
@@ -37,6 +39,8 @@ void main() {
           level: level,
           store: ProgressStore(),
           adService: _FakeAdService(),
+          hapticsEnabled: false,
+          onPlacementSound: (kind, intensity) => sounds.add((kind, intensity)),
         ),
       ),
     );
@@ -60,7 +64,21 @@ void main() {
     await tester.pump();
 
     expect(find.byType(GameTravelMotion), findsNothing);
+    expect(find.byType(GameActionFeedback), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('warehouse-1')));
+    await tester.pump();
     expect(find.byKey(const ValueKey('cargo-1-0')), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('game-moves')),
+        matching: find.text('3'),
+      ),
+      findsOneWidget,
+    );
+    expect(sounds, [(GameActionFeedbackKind.correct, 1)]);
+
+    await tester.pump(const Duration(milliseconds: 720));
+    expect(find.byType(GameActionFeedback), findsNothing);
     expect(
       find.descendant(
         of: find.byKey(const ValueKey('game-moves')),

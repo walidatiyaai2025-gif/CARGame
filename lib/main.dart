@@ -527,7 +527,11 @@ class _CargoSortAppState extends State<CargoSortApp>
       home: MotionLifecycleScope(
         child: Stack(
           children: [
-            HomeScreen(store: widget.store, onToggleLanguage: _toggleLanguage),
+            HomeScreen(
+              store: widget.store,
+              settings: widget.settings,
+              onToggleLanguage: _toggleLanguage,
+            ),
             PositionedDirectional(
               top: 66,
               end: 16,

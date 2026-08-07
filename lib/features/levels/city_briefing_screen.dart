@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/settings/app_settings_store.dart';
 import '../../core/storage/progress_store.dart';
 import '../../core/theme/game_skin.dart';
 import '../../core/theme/three_d_game_icon.dart';
@@ -14,10 +15,12 @@ class CityBriefingScreen extends StatefulWidget {
     super.key,
     required this.level,
     required this.store,
+    required this.settings,
   });
 
   final LevelData level;
   final ProgressStore store;
+  final AppSettingsStore settings;
 
   @override
   State<CityBriefingScreen> createState() => _CityBriefingScreenState();
@@ -50,6 +53,8 @@ class _CityBriefingScreenState extends State<CityBriefingScreen> {
           builder: (_) => GameScreen(
             level: widget.level,
             store: widget.store,
+            hapticsEnabled: widget.settings.vibrationEnabled,
+            soundEnabled: widget.settings.soundEnabled,
             loadout: MissionLoadout(
               smartHint: _hint,
               extraMoves: _moves,

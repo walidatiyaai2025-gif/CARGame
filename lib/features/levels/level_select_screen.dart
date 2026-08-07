@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/motion/ambient_motion_background.dart';
+import '../../core/settings/app_settings_store.dart';
 import '../../core/storage/progress_store.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/game_skin.dart';
@@ -10,9 +11,14 @@ import '../game/level_data.dart';
 import 'city_briefing_screen.dart';
 
 class LevelSelectScreen extends StatelessWidget {
-  const LevelSelectScreen({super.key, required this.store});
+  const LevelSelectScreen({
+    super.key,
+    required this.store,
+    required this.settings,
+  });
 
   final ProgressStore store;
+  final AppSettingsStore settings;
 
   @override
   Widget build(BuildContext context) {
@@ -47,6 +53,7 @@ class LevelSelectScreen extends StatelessWidget {
                           .where((level) => level.world == world.number)
                           .toList(),
                       store: store,
+                      settings: settings,
                       isArabic: isArabic,
                       skin: skin,
                     ),
@@ -175,6 +182,7 @@ class _WorldSection extends StatelessWidget {
     required this.world,
     required this.levels,
     required this.store,
+    required this.settings,
     required this.isArabic,
     required this.skin,
   });
@@ -182,6 +190,7 @@ class _WorldSection extends StatelessWidget {
   final GameWorld world;
   final List<LevelData> levels;
   final ProgressStore store;
+  final AppSettingsStore settings;
   final bool isArabic;
   final GameSkin skin;
 
@@ -323,6 +332,7 @@ class _WorldSection extends StatelessWidget {
                                     builder: (_) => CityBriefingScreen(
                                       level: level,
                                       store: store,
+                                      settings: settings,
                                     ),
                                   ),
                                 );

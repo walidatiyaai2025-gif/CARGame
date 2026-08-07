@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -7,19 +8,33 @@ import 'game_motion.dart';
 
 enum GameActionFeedbackKind { correct, wrong }
 
+typedef GameActionFeedbackSoundHook =
+    FutureOr<void> Function(GameActionFeedbackKind kind, int comboIntensity);
+
 class GameActionFeedback extends StatefulWidget {
   const GameActionFeedback({
     super.key,
     required this.kind,
     required this.combo,
     required this.onCompleted,
+    required this.semanticLabel,
+    this.hapticsEnabled = true,
     this.onSound,
   });
+
+  static const int maxComboIntensity = 8;
 
   final GameActionFeedbackKind kind;
   final int combo;
   final VoidCallback onCompleted;
-  final VoidCallback? onSound;
+  final String semanticLabel;
+  final bool hapticsEnabled;
+  final GameActionFeedbackSoundHook? onSound;
+
+  static int comboIntensityFor(int combo) {
+    if (combo <= 0) return 0;
+    return combo >= maxComboIntensity ? maxComboIntensity : combo;
+  }
 
   @override
   State<GameActionFeedback> createState() => _GameActionFeedbackState();
@@ -28,10 +43,11 @@ class GameActionFeedback extends StatefulWidget {
 class _GameActionFeedbackState extends State<GameActionFeedback>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
+  Timer? _reducedMotionTimer;
   bool _started = false;
   bool _completed = false;
 
-  int get _cappedCombo => widget.combo.clamp(0, 8);
+  int get _cappedCombo => GameActionFeedback.comboIntensityFor(widget.combo);
 
   @override
   void initState() {
@@ -46,13 +62,15 @@ class _GameActionFeedbackState extends State<GameActionFeedback>
     if (_started) return;
     _started = true;
 
-    widget.onSound?.call();
-    _triggerHaptic();
+    unawaited(_dispatchFeedback());
 
     final profile = GameMotion.of(context);
     if (profile.reducedMotion) {
-      _controller.value = 1;
-      WidgetsBinding.instance.addPostFrameCallback((_) => _finishOnce());
+      _controller.value = .5;
+      _reducedMotionTimer = Timer(
+        profile.duration(GameMotionDurations.standard),
+        _finishOnce,
+      );
       return;
     }
 
@@ -60,16 +78,35 @@ class _GameActionFeedbackState extends State<GameActionFeedback>
     _controller.forward();
   }
 
-  void _triggerHaptic() {
+  Future<void> _dispatchFeedback() async {
+    final actions = <Future<void>>[];
+    if (widget.hapticsEnabled) actions.add(_triggerHaptic());
+    final sound = widget.onSound;
+    if (sound != null) {
+      actions.add(Future<void>.sync(() => sound(widget.kind, _cappedCombo)));
+    }
+    try {
+      await Future.wait(actions);
+    } on Object catch (error, stackTrace) {
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: error,
+          stack: stackTrace,
+          library: 'CARGame action feedback',
+          context: ErrorDescription('while dispatching optional feedback'),
+        ),
+      );
+    }
+  }
+
+  Future<void> _triggerHaptic() {
     if (widget.kind == GameActionFeedbackKind.wrong) {
-      HapticFeedback.heavyImpact();
-      return;
+      return HapticFeedback.heavyImpact();
     }
     if (_cappedCombo >= 5) {
-      HapticFeedback.mediumImpact();
-    } else {
-      HapticFeedback.lightImpact();
+      return HapticFeedback.mediumImpact();
     }
+    return HapticFeedback.lightImpact();
   }
 
   void _handleStatus(AnimationStatus status) {
@@ -77,13 +114,14 @@ class _GameActionFeedbackState extends State<GameActionFeedback>
   }
 
   void _finishOnce() {
-    if (_completed) return;
+    if (_completed || !mounted) return;
     _completed = true;
     widget.onCompleted();
   }
 
   @override
   void dispose() {
+    _reducedMotionTimer?.cancel();
     _controller
       ..removeStatusListener(_handleStatus)
       ..dispose();
@@ -98,88 +136,93 @@ class _GameActionFeedbackState extends State<GameActionFeedback>
 
     return Positioned.fill(
       child: IgnorePointer(
-        child: ExcludeSemantics(
-          child: AnimatedBuilder(
-            animation: _controller,
-            builder: (context, _) {
-              final value = _controller.value;
-              final entrance = Curves.easeOutBack.transform(
-                math.min(1, value / .38),
-              );
-              final fade = value < .72 ? 1.0 : 1 - ((value - .72) / .28);
-              final recoil = correct
-                  ? 0.0
-                  : math.sin(value * math.pi * 7) * (1 - value) * 16;
-              final scale = profile.reducedMotion
-                  ? 1.0
-                  : .72 + entrance * (.28 + _cappedCombo * .012);
+        child: Semantics(
+          container: true,
+          liveRegion: true,
+          label: widget.semanticLabel,
+          child: ExcludeSemantics(
+            child: AnimatedBuilder(
+              animation: _controller,
+              builder: (context, _) {
+                final value = _controller.value;
+                final entrance = Curves.easeOutBack.transform(
+                  math.min(1, value / .38),
+                );
+                final fade = value < .72 ? 1.0 : 1 - ((value - .72) / .28);
+                final recoil = correct
+                    ? 0.0
+                    : math.sin(value * math.pi * 7) * (1 - value) * 16;
+                final scale = profile.reducedMotion
+                    ? 1.0
+                    : .72 + entrance * (.28 + _cappedCombo * .012);
 
-              return Stack(
-                alignment: Alignment.center,
-                children: [
-                  if (correct && !profile.reducedMotion)
-                    for (var index = 0; index < 8; index++)
-                      _Sparkle(
-                        progress: value,
-                        index: index,
-                        intensity: 1 + _cappedCombo * .08,
-                        color: accent,
-                      ),
-                  Transform.translate(
-                    offset: Offset(recoil, 0),
-                    child: Opacity(
-                      opacity: fade.clamp(0, 1),
-                      child: Transform.scale(
-                        scale: scale,
-                        child: Container(
-                          constraints: const BoxConstraints(
-                            minWidth: 118,
-                            minHeight: 92,
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 14,
-                          ),
-                          decoration: BoxDecoration(
-                            color: accent.withValues(alpha: .94),
-                            borderRadius: BorderRadius.circular(28),
-                            border: Border.all(color: Colors.white, width: 3),
-                            boxShadow: [
-                              BoxShadow(
-                                color: accent.withValues(alpha: .42),
-                                blurRadius: 28,
-                                spreadRadius: 4,
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                correct
-                                    ? Icons.check_rounded
-                                    : Icons.close_rounded,
-                                color: Colors.white,
-                                size: 42,
-                              ),
-                              if (correct && widget.combo >= 2)
-                                Text(
-                                  'COMBO x${widget.combo}',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w900,
-                                  ),
+                return Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    if (correct && !profile.reducedMotion)
+                      for (var index = 0; index < 8; index++)
+                        _Sparkle(
+                          progress: value,
+                          index: index,
+                          intensity: 1 + _cappedCombo * .08,
+                          color: accent,
+                        ),
+                    Transform.translate(
+                      offset: Offset(recoil, 0),
+                      child: Opacity(
+                        opacity: fade.clamp(0, 1),
+                        child: Transform.scale(
+                          scale: scale,
+                          child: Container(
+                            constraints: const BoxConstraints(
+                              minWidth: 118,
+                              minHeight: 92,
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 14,
+                            ),
+                            decoration: BoxDecoration(
+                              color: accent.withValues(alpha: .94),
+                              borderRadius: BorderRadius.circular(28),
+                              border: Border.all(color: Colors.white, width: 3),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: accent.withValues(alpha: .42),
+                                  blurRadius: 28,
+                                  spreadRadius: 4,
                                 ),
-                            ],
+                              ],
+                            ),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  correct
+                                      ? Icons.check_rounded
+                                      : Icons.close_rounded,
+                                  color: Colors.white,
+                                  size: 42,
+                                ),
+                                if (correct && widget.combo >= 2)
+                                  Text(
+                                    'COMBO x${widget.combo}',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
-                ],
-              );
-            },
+                  ],
+                );
+              },
+            ),
           ),
         ),
       ),

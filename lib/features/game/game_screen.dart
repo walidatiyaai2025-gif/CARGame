@@ -22,12 +22,18 @@ class GameScreen extends StatefulWidget {
     required this.store,
     this.loadout = MissionLoadout.empty,
     this.adService,
+    this.hapticsEnabled = true,
+    this.soundEnabled = true,
+    this.onPlacementSound,
   });
 
   final LevelData level;
   final ProgressStore store;
   final MissionLoadout loadout;
   final AdService? adService;
+  final bool hapticsEnabled;
+  final bool soundEnabled;
+  final GameActionFeedbackSoundHook? onPlacementSound;
 
   @override
   State<GameScreen> createState() => _GameScreenState();
@@ -753,6 +759,13 @@ class _GameScreenState extends State<GameScreen> {
                 key: ValueKey(_feedbackSequence),
                 kind: feedbackKind,
                 combo: _feedbackCombo,
+                semanticLabel: feedbackKind == GameActionFeedbackKind.correct
+                    ? (ar
+                          ? 'وضع صحيح، سلسلة $_feedbackCombo'
+                          : 'Correct placement, combo $_feedbackCombo')
+                    : (ar ? 'وضع غير صحيح' : 'Wrong placement'),
+                hapticsEnabled: widget.hapticsEnabled,
+                onSound: widget.soundEnabled ? widget.onPlacementSound : null,
                 onCompleted: () => _completeActionFeedback(_feedbackSequence),
               ),
           ],

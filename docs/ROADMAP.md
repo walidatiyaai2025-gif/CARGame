@@ -47,7 +47,7 @@ These gates are tracked in the catalog and apply across phases rather than only 
 |---|---|---|
 | A | Baseline, architecture, persistence, environments, secrets, CI, analytics/crash boundaries, offline isolation, developer tooling | Reproducible clean-machine workflow with safe data and optional-service failure isolation. |
 | B | Shared 3D tokens/components and complete UI states | Responsive reusable primitives pass tests; no competing visual system. |
-| C | Shared motion, ambient home/world scenes, causal cargo pickup/travel/placement, feedback, transitions, and lifecycle/interruption safety; synchronized correct/wrong/combo feedback is next | Immediate feedback, reduced motion, no leaks, safe interruption. |
+| C | Shared motion, ambient home/world scenes, causal cargo travel, synchronized correct/wrong/capped-combo feedback, transitions, and lifecycle/interruption safety; shared screen transitions remain | Immediate feedback, reduced motion, no leaks, safe interruption. |
 | D | Typed asset registry, optimized packs, fallbacks, provenance/licensing, CI checks | Missing assets are safe; assets meet rights, format, memory, and load budgets. |
 | E | Home, current journey, onboarding/resume, navigation/deep-link safety | Every entry works without overflow or duplicate navigation. |
 | F | Six worlds/150 cities, unlocks, bosses, scroll restoration, content migration | Progress remains valid across map/content updates. |
