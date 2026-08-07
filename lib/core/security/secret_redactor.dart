@@ -30,8 +30,8 @@ final class SecretRedactor {
   );
 
   static final RegExp _unixUserPath = RegExp(
-    r'/(?:Users|home)/[^/\s]+(?:/[^\s\r\n]*)?',
-    caseSensitive: true,
+    r'''(^|[\s"'=:(])/(?:Users|home)/[^/\s]+(?:/[^\s\r\n]*)?''',
+    multiLine: true,
   );
 
   static String redact(String input) {
@@ -57,7 +57,10 @@ final class SecretRedactor {
     );
 
     output = output.replaceAll(_windowsUserPath, userPath);
-    output = output.replaceAll(_unixUserPath, userPath);
+    output = output.replaceAllMapped(
+      _unixUserPath,
+      (match) => '${match.group(1) ?? ''}$userPath',
+    );
 
     return output;
   }
