@@ -103,9 +103,7 @@ final class GameAssetView extends StatelessWidget {
         child: SizedBox(
           width: width,
           height: height,
-          child: Center(
-            child: Icon(icon, size: _fallbackIconSize),
-          ),
+          child: Center(child: Icon(icon, size: _fallbackIconSize)),
         ),
       ),
     );
@@ -146,7 +144,10 @@ final class GameAssetView extends StatelessWidget {
   }) {
     return Semantics(
       image: true,
-      label: semanticLabel ?? descriptor?.semantics.englishConcept ?? 'Game asset unavailable',
+      label:
+          semanticLabel ??
+          descriptor?.semantics.englishConcept ??
+          'Game asset unavailable',
       value: reason,
       child: DecoratedBox(
         decoration: BoxDecoration(
@@ -157,7 +158,10 @@ final class GameAssetView extends StatelessWidget {
           width: width,
           height: height,
           child: Center(
-            child: Icon(Icons.image_not_supported_rounded, size: _fallbackIconSize),
+            child: Icon(
+              Icons.image_not_supported_rounded,
+              size: _fallbackIconSize,
+            ),
           ),
         ),
       ),
@@ -176,12 +180,14 @@ final class GameAssetView extends StatelessWidget {
   }
 
   double get _fallbackIconSize {
-    final shortest = switch ((width, height)) {
-      (final double w, final double h) => w < h ? w : h,
-      (final double w, null) => w,
-      (null, final double h) => h,
-      _ => 40.0,
-    };
-    return (shortest * 0.45).clamp(20.0, 56.0);
+    double shortest = 40;
+    if (width != null && height != null) {
+      shortest = width! < height! ? width! : height!;
+    } else if (width != null) {
+      shortest = width!;
+    } else if (height != null) {
+      shortest = height!;
+    }
+    return (shortest * 0.45).clamp(20.0, 56.0).toDouble();
   }
 }
