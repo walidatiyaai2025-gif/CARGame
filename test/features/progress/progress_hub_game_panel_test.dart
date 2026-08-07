@@ -1,5 +1,7 @@
 import 'package:cargo_sort_game/core/storage/progress_store.dart';
+import 'package:cargo_sort_game/core/widgets/game_hero_panel.dart';
 import 'package:cargo_sort_game/core/widgets/game_panel.dart';
+import 'package:cargo_sort_game/core/widgets/game_stat_panel.dart';
 import 'package:cargo_sort_game/features/progress/progress_hub_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -15,7 +17,7 @@ void main() {
   });
 
   testWidgets(
-    'progress hub adopts GamePanel while preserving long-form scrolling',
+    'progress hub adopts shared 3D panels while preserving long-form scrolling',
     (tester) async {
       final store = ProgressStore();
 
@@ -28,7 +30,11 @@ void main() {
       final scrollable = find.byType(Scrollable);
       expect(list, findsOneWidget);
       expect(scrollable, findsOneWidget);
-      expect(find.byType(GamePanel), findsAtLeastNWidgets(4));
+      expect(find.byType(GameHeroPanel), findsNWidgets(2));
+      expect(find.byType(GameStatPanel), findsNWidgets(3));
+      expect(find.byType(GamePanel), findsAtLeastNWidgets(6));
+      expect(find.text('Player Level'), findsOneWidget);
+      expect(find.text('Performance Summary'), findsOneWidget);
       expect(find.text('Daily Mission'), findsOneWidget);
       expect(find.text('Win 3 cities'), findsOneWidget);
 
