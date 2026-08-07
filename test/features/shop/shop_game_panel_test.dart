@@ -22,9 +22,25 @@ void main() {
     await tester.pumpWidget(MaterialApp(home: ShopScreen(store: store)));
     await tester.pump();
 
+    final list = find.byType(ListView);
+    expect(list, findsOneWidget);
     expect(find.text('Smart Hint Pack'), findsOneWidget);
     expect(find.text('Extra Moves Pack'), findsOneWidget);
+
+    await tester.scrollUntilVisible(
+      find.text('Combo Shield'),
+      250,
+      scrollable: list,
+    );
+    await tester.pumpAndSettle();
+
     expect(find.text('Combo Shield'), findsOneWidget);
-    expect(find.byType(GamePanel), findsNWidgets(3));
+    expect(
+      find.ancestor(
+        of: find.text('Combo Shield'),
+        matching: find.byType(GamePanel),
+      ),
+      findsOneWidget,
+    );
   });
 }
