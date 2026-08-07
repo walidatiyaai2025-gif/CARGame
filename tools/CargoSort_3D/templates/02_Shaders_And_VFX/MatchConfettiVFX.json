@@ -1,0 +1,11 @@
+{
+  "schemaVersion":"1.0.0",
+  "system":"MatchConfettiVFX",
+  "mobileBudget":{"maximumSimultaneousParticles":320,"preferredDrawCalls":2,"simulationSpace":"World","useGPUInstancing":true,"collisionEnabled":false},
+  "matchClear":{"burstCount":36,"lifetime":{"min":0.7,"max":1.35},"startSpeed":{"min":3.4,"max":7.5},"startSize":{"min":0.06,"max":0.16},"gravityModifier":0.72,"shape":{"type":"Cone","angle":24,"radius":0.18}},
+  "combo":{"baseBurstCount":18,"additionalParticlesPerCombo":8,"maximumBurstCount":74,"velocityMultiplierPerCombo":0.055,"scaleMultiplierPerCombo":0.025,"screenShake":{"enabled":true,"baseAmplitude":0.08,"maximumAmplitude":0.23,"duration":0.14}},
+  "levelComplete":{"burstCount":110,"lifetime":{"min":1.2,"max":2.8},"startSpeed":{"min":5.0,"max":10.0},"emissionDuration":0.65,"gravityModifier":0.48},
+  "palette":["#55D8FF","#7F73FF","#FFD857","#FF75C3","#55E69A","#FFFFFF"],
+  "audioSync":{"matchPitchBase":1.0,"comboPitchStep":0.055,"maximumPitch":1.38},
+  "haptics":{"match":"LightImpact","combo3":"MediumImpact","combo5":"HeavyImpact","levelComplete":"Success"}
+}
