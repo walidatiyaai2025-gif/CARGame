@@ -29,7 +29,7 @@ void main() {
     expect(find.byType(SingleChildScrollView), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox.shrink());
-    await tester.pump(const Duration(seconds: 7));
+    await tester.pump(const Duration(seconds: 12));
   });
 
   testWidgets('startup splash supports large text on a tablet', (tester) async {
@@ -55,6 +55,6 @@ void main() {
     expect(tester.takeException(), isNull);
 
     await tester.pumpWidget(const SizedBox.shrink());
-    await tester.pump(const Duration(seconds: 7));
+    await tester.pump(const Duration(seconds: 12));
   });
 }
