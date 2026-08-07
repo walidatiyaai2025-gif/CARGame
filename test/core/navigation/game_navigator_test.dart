@@ -170,6 +170,38 @@ void main() {
     expect(find.text('Replacement'), findsOneWidget);
     expect(find.text('Replace'), findsNothing);
   });
+
+  testWidgets('replaceNamed applies a stable replacement route name', (
+    tester,
+  ) async {
+    String? observedName;
+    final routeName = GameRouteNames.game(7);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        navigatorObservers: [_RouteNameObserver((name) => observedName = name)],
+        home: Builder(
+          builder: (context) => TextButton(
+            onPressed: () => GameNavigator.replaceNamed<void, void>(
+              context,
+              name: routeName,
+              builder: (_) => const Scaffold(
+                body: Text('Named replacement'),
+              ),
+            ),
+            child: const Text('Replace named'),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Replace named'));
+    await tester.pumpAndSettle();
+
+    expect(observedName, routeName);
+    expect(find.text('Named replacement'), findsOneWidget);
+    expect(find.text('Replace named'), findsNothing);
+  });
 }
 
 final class _RouteNameObserver extends NavigatorObserver {
