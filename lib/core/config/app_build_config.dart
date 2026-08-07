@@ -27,13 +27,26 @@ final class AdMobUnitIds {
     required this.iosInterstitial,
   });
 
+  static const googleTestAndroidBanner =
+      'ca-app-pub-3940256099942544/6300978111';
+  static const googleTestIosBanner =
+      'ca-app-pub-3940256099942544/2934735716';
+  static const googleTestAndroidRewarded =
+      'ca-app-pub-3940256099942544/5224354917';
+  static const googleTestIosRewarded =
+      'ca-app-pub-3940256099942544/1712485313';
+  static const googleTestAndroidInterstitial =
+      'ca-app-pub-3940256099942544/1033173712';
+  static const googleTestIosInterstitial =
+      'ca-app-pub-3940256099942544/4411468910';
+
   static const googleTest = AdMobUnitIds(
-    androidBanner: 'ca-app-pub-3940256099942544/6300978111',
-    iosBanner: 'ca-app-pub-3940256099942544/2934735716',
-    androidRewarded: 'ca-app-pub-3940256099942544/5224354917',
-    iosRewarded: 'ca-app-pub-3940256099942544/1712485313',
-    androidInterstitial: 'ca-app-pub-3940256099942544/1033173712',
-    iosInterstitial: 'ca-app-pub-3940256099942544/4411468910',
+    androidBanner: googleTestAndroidBanner,
+    iosBanner: googleTestIosBanner,
+    androidRewarded: googleTestAndroidRewarded,
+    iosRewarded: googleTestIosRewarded,
+    androidInterstitial: googleTestAndroidInterstitial,
+    iosInterstitial: googleTestIosInterstitial,
   );
 
   final String androidBanner;
@@ -79,27 +92,27 @@ final class AppBuildConfig {
     adMob: const AdMobUnitIds(
       androidBanner: String.fromEnvironment(
         'ADMOB_ANDROID_BANNER_ID',
-        defaultValue: AdMobUnitIds.googleTest.androidBanner,
+        defaultValue: AdMobUnitIds.googleTestAndroidBanner,
       ),
       iosBanner: String.fromEnvironment(
         'ADMOB_IOS_BANNER_ID',
-        defaultValue: AdMobUnitIds.googleTest.iosBanner,
+        defaultValue: AdMobUnitIds.googleTestIosBanner,
       ),
       androidRewarded: String.fromEnvironment(
         'ADMOB_ANDROID_REWARDED_ID',
-        defaultValue: AdMobUnitIds.googleTest.androidRewarded,
+        defaultValue: AdMobUnitIds.googleTestAndroidRewarded,
       ),
       iosRewarded: String.fromEnvironment(
         'ADMOB_IOS_REWARDED_ID',
-        defaultValue: AdMobUnitIds.googleTest.iosRewarded,
+        defaultValue: AdMobUnitIds.googleTestIosRewarded,
       ),
       androidInterstitial: String.fromEnvironment(
         'ADMOB_ANDROID_INTERSTITIAL_ID',
-        defaultValue: AdMobUnitIds.googleTest.androidInterstitial,
+        defaultValue: AdMobUnitIds.googleTestAndroidInterstitial,
       ),
       iosInterstitial: String.fromEnvironment(
         'ADMOB_IOS_INTERSTITIAL_ID',
-        defaultValue: AdMobUnitIds.googleTest.iosInterstitial,
+        defaultValue: AdMobUnitIds.googleTestIosInterstitial,
       ),
     ),
   );
