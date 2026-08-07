@@ -8,7 +8,8 @@ This document is the operational summary. Detailed feature tracking remains in `
 |---|---|
 | Current phase | C — Motion and living interface |
 | Completed checkpoint | `MOT-001` Motion tokens and reusable animation primitives |
-| Status | IMPLEMENTED — awaiting final CI and physical-device motion review |
+| Status | IMPLEMENTED — CI verification started; physical-device motion review remains |
+| Implementation commit | `33416064a1c1b24844ab784c4f9aa0524f658e8a` |
 | Next recommended feature | `MOT-010` Animation lifecycle and interruption safety |
 | Build foundation | `ENG-002` moved to IMPLEMENTED; Windows device verification remains |
 
@@ -28,10 +29,11 @@ This document is the operational summary. Detailed feature tracking remains in `
 | Date | Verification | Result |
 |---|---|---|
 | 2026-08-07 | Motion-token static integration review | PASSED |
-| 2026-08-07 | Motion budget and reduced-motion tests | PENDING in Flutter CI |
-| 2026-08-07 | Existing GameButton tests | PENDING in Flutter CI |
-| 2026-08-07 | Full Flutter test suite | PENDING in Flutter CI |
-| 2026-08-07 | Debug APK build | PENDING in Flutter CI |
+| 2026-08-07 | Patch application, Dart format, and whitespace validation | PASSED |
+| 2026-08-07 | Motion budget and reduced-motion tests | RUNNING in Flutter CI |
+| 2026-08-07 | Existing GameButton tests | RUNNING in Flutter CI |
+| 2026-08-07 | Full Flutter test suite | RUNNING in Flutter CI |
+| 2026-08-07 | Debug APK build | RUNNING in Flutter CI |
 | 2026-08-07 | Dashboard schema | PASSED — six-column tables and phases A–S preserved |
 
 ## Known limitations and next work
