@@ -1,4 +1,4 @@
-import 'package:cargo_sort_game_v1/core/security/secret_redactor.dart';
+import 'package:cargo_sort_game/core/security/secret_redactor.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
