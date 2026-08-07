@@ -47,6 +47,7 @@ final class GameAssetRegistry {
 
     final assets = <GameAssetDescriptor>[];
     final ids = <String>{};
+    final paths = <String>{};
     for (var index = 0; index < rawAssets.length; index++) {
       final descriptor = GameAssetDescriptor.fromJson(rawAssets[index]);
       if (!ids.add(descriptor.id)) {
@@ -54,7 +55,29 @@ final class GameAssetRegistry {
           'Duplicate stable asset id at assets[$index]: ${descriptor.id}',
         );
       }
+      if (!paths.add(descriptor.path)) {
+        throw FormatException(
+          'Duplicate runtime asset path at assets[$index]: ${descriptor.path}',
+        );
+      }
       assets.add(descriptor);
+    }
+
+    for (final descriptor in assets) {
+      final fallback = descriptor.fallback;
+      if (fallback.kind != GameAssetFallbackKind.asset) {
+        continue;
+      }
+      if (fallback.token == descriptor.id) {
+        throw FormatException(
+          'Asset ${descriptor.id} cannot use itself as its fallback.',
+        );
+      }
+      if (!ids.contains(fallback.token)) {
+        throw FormatException(
+          'Asset ${descriptor.id} references an unregistered fallback asset: ${fallback.token}',
+        );
+      }
     }
 
     return GameAssetRegistry._(schemaVersion: version, assets: assets);
