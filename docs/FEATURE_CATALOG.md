@@ -63,7 +63,7 @@ Codex must not mark a feature complete merely because UI code exists.
 |---|---|---:|---|---|---|
 | UI3D-001 | Central colors, gradients, shadows, spacing, typography | P0 | IMPLEMENTED | ENG-001 | Shared design tokens exist and are used by core screens; consolidation review remains. |
 | UI3D-002 | Reusable 3D icon component | P0 | IMPLEMENTED | UI3D-001 | Hearts, coins, stars, rewards, cities, bosses, and boosters have reusable 3D widgets. |
-| UI3D-003 | Reusable 3D button system | P1 | PLANNED | UI3D-001, MOT-001 | Press depth, disabled, loading, focus, RTL, semantics, and responsive states pass widget tests. |
+| UI3D-003 | Reusable 3D button system | P1 | IMPLEMENTED | UI3D-001, MOT-001 | Shared `GameButton` provides depth, spring release, hover, disabled/loading states, ripple, haptics, sound hook, async tap guard, RTL, semantics, theme inputs, and focused widget tests; full CTA adoption remains. |
 | UI3D-004 | Reusable 3D card and panel system | P1 | PLANNED | UI3D-001 | Unified depth, highlights, border, clipping, skeleton, error, and interaction states exist. |
 | UI3D-005 | Resource chips | P1 | IMPLEMENTED | UI3D-002 | Heart, coin, star, XP, and booster chips use shared rules; full-screen adoption remains. |
 | UI3D-006 | Responsive screen shell and safe areas | P0 | PLANNED | UI3D-001 | Narrow phones, tall phones, tablets, large text, RTL/LTR, keyboard, and cutouts pass. |
@@ -76,8 +76,8 @@ Codex must not mark a feature complete merely because UI code exists.
 | ID | Function | Priority | Status | Dependencies | Acceptance / evidence |
 |---|---|---:|---|---|---|
 | MOT-001 | Motion tokens and reusable animation primitives | P0 | READY | UI3D-001 | Central durations, curves, springs, stagger, amplitude, and reduced-motion behavior exist. |
-| MOT-002 | Button press and release feedback | P0 | PLANNED | MOT-001, UI3D-003 | Visible response occurs within 100 ms with no delayed or duplicate tap. |
-| MOT-003 | Resource value interpolation and pulse | P1 | PLANNED | MOT-001, UI3D-005 | Coins, hearts, XP, and stars animate accurately from old to new values. |
+| MOT-002 | Button press and release feedback primitive | P0 | IMPLEMENTED | UI3D-003 | `GameButton` responds within 100 ms, springs on release, and guards delayed or duplicate async taps; wider screen adoption remains under MOT-003. |
+| MOT-003 | Universal Button Motion System | P0 | IN PROGRESS | UI3D-003, MOT-002 | All major Start, launch, Next, Retry, purchase, and settings actions use shared `GameButton` behavior with no duplicated button-motion implementation; Settings adoption and 5 focused tests are complete. |
 | MOT-004 | Screen transitions | P1 | PLANNED | MOT-001 | Shared-axis/fade-through transitions are guarded, interruptible, and RTL-aware. |
 | MOT-005 | Ambient home/world motion | P1 | PLANNED | MOT-001, UI3D-007 | Low-density particles, parallax, and light sweeps pause off-screen. |
 | MOT-006 | Product pickup, travel, placement, settle | P0 | PLANNED | GAME-003, MOT-001 | Every gameplay action shows cause/result while board state remains deterministic. |
@@ -85,6 +85,7 @@ Codex must not mark a feature complete merely because UI code exists.
 | MOT-008 | Reward flight and reveal sequences | P1 | PLANNED | REW-001, MOT-001 | Coins fly to wallet, stars reveal, XP interpolates, and rewards remain idempotent. |
 | MOT-009 | Boss/world completion cinematic | P2 | PLANNED | WORLD-006, MOT-008 | Sequence lasts 1.2–2.5 seconds, is skippable after first view, and never duplicates rewards. |
 | MOT-010 | Animation lifecycle and interruption safety | P0 | PLANNED | MOT-001 | Controllers dispose correctly; background, route changes, pause, and app lifecycle do not leak or corrupt state. |
+| MOT-011 | Resource value interpolation and pulse | P1 | PLANNED | MOT-001, UI3D-005 | Coins, hearts, XP, and stars animate accurately from old to new values without changing wallet truth or duplicating rewards. |
 
 # D. 3D asset pipeline
 
@@ -331,6 +332,7 @@ Codex must not mark a feature complete merely because UI code exists.
 
 - `ENG-002` Stable Android build toolchain.
 - `REL-001` Dynamic ADB/device scripts.
+- `MOT-003` Universal Button Motion System adoption.
 
 ## NEXT READY
 
