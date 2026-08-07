@@ -52,7 +52,14 @@ void main() {
 
     Future<void> expectRoute(Finder trigger, String expectedName) async {
       await tester.tap(trigger);
-      await tester.pump();
+
+      for (var attempt = 0; attempt < 10; attempt++) {
+        await tester.pump(const Duration(milliseconds: 50));
+        if (observedNames.isNotEmpty && observedNames.last == expectedName) {
+          break;
+        }
+      }
+
       expect(observedNames.last, expectedName);
       Navigator.of(tester.element(find.byType(HomeScreen))).pop();
       await tester.pump(const Duration(milliseconds: 400));
