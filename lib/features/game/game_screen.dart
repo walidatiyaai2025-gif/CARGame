@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 import '../../core/ads/ad_service.dart';
+import '../../core/motion/game_action_feedback.dart';
 import '../../core/motion/game_travel_motion.dart';
 import '../../core/storage/progress_store.dart';
 import '../../core/theme/app_theme.dart';
@@ -42,6 +43,10 @@ class _GameScreenState extends State<GameScreen> {
   Offset? _selectedOrigin;
   _CargoFlight? _flight;
   int _flightSequence = 0;
+  GameActionFeedbackKind? _feedbackKind;
+  int _feedbackCombo = 0;
+  int _feedbackSequence = 0;
+  Completer<void>? _feedbackCompleter;
   late int _moves;
   int _combo = 0;
   int _bestCombo = 0;
@@ -88,6 +93,13 @@ class _GameScreenState extends State<GameScreen> {
     _selectedIndex = null;
     _selectedOrigin = null;
     _flight = null;
+    _feedbackKind = null;
+    _feedbackCombo = 0;
+    final pendingFeedback = _feedbackCompleter;
+    if (pendingFeedback != null && !pendingFeedback.isCompleted) {
+      pendingFeedback.complete();
+    }
+    _feedbackCompleter = null;
     _combo = 0;
     _bestCombo = 0;
     _finished = false;
@@ -147,6 +159,9 @@ class _GameScreenState extends State<GameScreen> {
     if (!mounted || _flight?.id != flight.id) return;
 
     final correct = flight.item.id == flight.warehouse.id;
+    final feedbackCompleter = Completer<void>();
+    final feedbackSequence = ++_feedbackSequence;
+    _feedbackCompleter = feedbackCompleter;
     setState(() {
       _moves--;
       if (correct) {
@@ -170,14 +185,34 @@ class _GameScreenState extends State<GameScreen> {
       _selectedIndex = null;
       _selectedOrigin = null;
       _flight = null;
-      _resolving = false;
+      _feedbackKind = correct
+          ? GameActionFeedbackKind.correct
+          : GameActionFeedbackKind.wrong;
+      _feedbackCombo = correct ? _combo : 0;
     });
+
+    await feedbackCompleter.future;
+    if (!mounted || feedbackSequence != _feedbackSequence) return;
+    _resolving = false;
 
     if (_remaining.isEmpty) {
       await _finishWin();
     } else if (_moves <= 0) {
       await _finishLoss();
     }
+  }
+
+  void _completeActionFeedback(int sequence) {
+    if (!mounted || sequence != _feedbackSequence) return;
+    final completer = _feedbackCompleter;
+    setState(() {
+      _feedbackKind = null;
+      _feedbackCombo = 0;
+    });
+    if (completer != null && !completer.isCompleted) {
+      completer.complete();
+    }
+    _feedbackCompleter = null;
   }
 
   Future<void> _finishWin() async {
@@ -546,6 +581,10 @@ class _GameScreenState extends State<GameScreen> {
 
   @override
   void dispose() {
+    final pendingFeedback = _feedbackCompleter;
+    if (pendingFeedback != null && !pendingFeedback.isCompleted) {
+      pendingFeedback.complete();
+    }
     _ads.dispose();
     super.dispose();
   }
@@ -708,6 +747,13 @@ class _GameScreenState extends State<GameScreen> {
                 size: 58,
                 onCompleted: () => unawaited(_completeFlight(flight)),
                 child: _FlightCargo(item: flight.item),
+              ),
+            if (_feedbackKind case final feedbackKind?)
+              GameActionFeedback(
+                key: ValueKey(_feedbackSequence),
+                kind: feedbackKind,
+                combo: _feedbackCombo,
+                onCompleted: () => _completeActionFeedback(_feedbackSequence),
               ),
           ],
         ),
