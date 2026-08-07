@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/storage/progress_store.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/three_d_game_icon.dart';
+import '../../core/widgets/game_button.dart';
 import '../../core/widgets/game_panel.dart';
 
 class ProgressHubScreen extends StatelessWidget {
@@ -159,15 +160,38 @@ class ProgressHubScreen extends StatelessWidget {
               icon: Icons.monetization_on_rounded,
             ),
             const SizedBox(height: 10),
-            FilledButton.icon(
+            GameButton(
+              semanticLabel: store.missionClaimed
+                  ? (ar ? 'تم استلام مكافأة المهمة' : 'Mission reward claimed')
+                  : (ar ? 'استلم 200 عملة' : 'Claim 200 Coins'),
               onPressed: store.dailyMissionComplete && !store.missionClaimed
                   ? () => _claimMission(context)
                   : null,
-              icon: const Icon(Icons.redeem_rounded),
-              label: Text(
-                store.missionClaimed
-                    ? (ar ? 'تم الاستلام' : 'Claimed')
-                    : (ar ? 'استلم 200 عملة' : 'Claim 200 Coins'),
+              enabled: store.dailyMissionComplete && !store.missionClaimed,
+              expand: true,
+              height: 54,
+              borderRadius: BorderRadius.circular(18),
+              backgroundColor: AppTheme.orange,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.redeem_rounded, color: Colors.white),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      store.missionClaimed
+                          ? (ar ? 'تم الاستلام' : 'Claimed')
+                          : (ar ? 'استلم 200 عملة' : 'Claim 200 Coins'),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 22),
@@ -487,28 +511,42 @@ class _Achievement extends StatelessWidget {
   final String title;
   final bool unlocked;
   final IconData icon;
+
   @override
-  Widget build(BuildContext context) => Card(
-    child: ListTile(
-      leading: CircleAvatar(
-        backgroundColor: unlocked
-            ? AppTheme.orange.withValues(alpha: .16)
-            : Colors.black12,
-        child: Icon(
-          unlocked ? icon : Icons.lock_rounded,
-          color: unlocked ? AppTheme.orange : Colors.black38,
-        ),
-      ),
-      title: Text(
-        title,
-        style: TextStyle(
-          fontWeight: FontWeight.w800,
-          color: unlocked ? AppTheme.navy : Colors.black38,
-        ),
-      ),
-      trailing: Icon(
-        unlocked ? Icons.check_circle_rounded : Icons.lock_outline_rounded,
-        color: unlocked ? AppTheme.green : Colors.black26,
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(bottom: 8),
+    child: GamePanel(
+      semanticLabel: unlocked ? '$title unlocked' : '$title locked',
+      enabled: true,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      child: Row(
+        children: [
+          CircleAvatar(
+            backgroundColor: unlocked
+                ? AppTheme.orange.withValues(alpha: .16)
+                : Colors.black12,
+            child: Icon(
+              unlocked ? icon : Icons.lock_rounded,
+              color: unlocked ? AppTheme.orange : Colors.black38,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontWeight: FontWeight.w800,
+                color: unlocked ? AppTheme.navy : Colors.black38,
+              ),
+            ),
+          ),
+          Icon(
+            unlocked ? Icons.check_circle_rounded : Icons.lock_outline_rounded,
+            color: unlocked ? AppTheme.green : Colors.black26,
+          ),
+        ],
       ),
     ),
   );
