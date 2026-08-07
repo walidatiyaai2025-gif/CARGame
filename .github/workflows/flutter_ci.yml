@@ -21,6 +21,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
@@ -44,8 +46,26 @@ jobs:
       - name: Generate localization
         run: flutter gen-l10n
 
-      - name: Format Dart sources
-        run: dart format lib test tool
+      - name: Verify changed Dart formatting
+        shell: bash
+        run: |
+          base_ref="HEAD^"
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            base_ref="HEAD^1"
+          fi
+
+          mapfile -t dart_files < <(
+            git diff --name-only --diff-filter=ACMR "$base_ref" HEAD -- '*.dart'
+          )
+
+          if (( ${#dart_files[@]} == 0 )); then
+            echo "No changed Dart files to format-check."
+            exit 0
+          fi
+
+          printf 'Checking Dart formatting for:\n'
+          printf ' - %s\n' "${dart_files[@]}"
+          dart format --output=none --set-exit-if-changed "${dart_files[@]}"
 
       - name: Verify whitespace integrity
         run: git diff --check
