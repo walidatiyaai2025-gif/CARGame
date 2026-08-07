@@ -81,7 +81,8 @@ void main() {
       padding: const EdgeInsets.only(top: 44, left: 8, right: 8, bottom: 24),
     );
 
-    expect(find.byType(SafeArea), findsOneWidget);
+    expect(find.byType(SafeArea), findsWidgets);
+    expect(find.byType(GameFitView), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
