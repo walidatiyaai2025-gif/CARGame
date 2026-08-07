@@ -15,8 +15,6 @@ class WorldMapAmbientBackground extends StatelessWidget {
   final Color endColor;
 
   @override
-  Widget build(BuildContext context) => HomeAmbientBackground(
-    startColor: startColor,
-    endColor: endColor,
-  );
+  Widget build(BuildContext context) =>
+      HomeAmbientBackground(startColor: startColor, endColor: endColor);
 }

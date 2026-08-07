@@ -24,7 +24,13 @@ class CargoMotionTile extends StatelessWidget {
       duration: motion.duration(GameMotionDurations.fast),
       curve: motion.curve(GameMotionCurves.enter),
       child: AnimatedScale(
-        scale: motion.scale(active ? 1.07 : busy ? 0.96 : 1),
+        scale: motion.scale(
+          active
+              ? 1.07
+              : busy
+              ? 0.96
+              : 1,
+        ),
         duration: motion.duration(GameMotionDurations.fast),
         curve: motion.curve(GameMotionCurves.springRelease),
         child: AnimatedOpacity(

@@ -3,10 +3,12 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 import '../../core/ads/ad_service.dart';
+import '../../core/motion/game_motion.dart';
 import '../../core/storage/progress_store.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/game_skin.dart';
 import '../../core/widgets/game_button.dart';
+import 'cargo_motion_tile.dart';
 import 'city_catalog.dart';
 import 'level_data.dart';
 import 'mission_loadout.dart';
@@ -41,6 +43,9 @@ class _GameScreenState extends State<GameScreen> {
   bool _madeWrongMove = false;
   bool _resultActionBusy = false;
   bool _resultVisible = false;
+  bool _cargoActionBusy = false;
+  int? _activeWarehouseId;
+  bool _placementCorrect = false;
 
   int get _matchedCount => widget.level.items.length - _remaining.length;
   double get _progress => widget.level.items.isEmpty
@@ -80,6 +85,9 @@ class _GameScreenState extends State<GameScreen> {
     _madeWrongMove = false;
     _resultActionBusy = false;
     _resultVisible = false;
+    _cargoActionBusy = false;
+    _activeWarehouseId = null;
+    _placementCorrect = false;
   }
 
   List<CargoItem> get _warehouses {
@@ -91,15 +99,32 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   void _choosePackage(CargoItem item) {
-    if (_finished || _moves <= 0 || _resultVisible) return;
+    if (_finished || _moves <= 0 || _resultVisible || _cargoActionBusy) {
+      return;
+    }
     setState(() => _selected = item);
   }
 
   Future<void> _chooseWarehouse(CargoItem warehouse) async {
     final selected = _selected;
-    if (selected == null || _finished || _moves <= 0 || _resultVisible) return;
+    if (selected == null ||
+        _finished ||
+        _moves <= 0 ||
+        _resultVisible ||
+        _cargoActionBusy) {
+      return;
+    }
 
     final correct = selected.id == warehouse.id;
+    final motion = GameMotion.of(context);
+    setState(() {
+      _cargoActionBusy = true;
+      _activeWarehouseId = warehouse.id;
+      _placementCorrect = correct;
+    });
+    await Future<void>.delayed(motion.duration(GameMotionDurations.standard));
+    if (!mounted) return;
+
     setState(() {
       _moves--;
       if (correct) {
@@ -115,6 +140,9 @@ class _GameScreenState extends State<GameScreen> {
         }
       }
       _selected = null;
+      _cargoActionBusy = false;
+      _activeWarehouseId = null;
+      _placementCorrect = false;
     });
 
     if (_remaining.isEmpty) {
@@ -575,6 +603,7 @@ class _GameScreenState extends State<GameScreen> {
                           selected: _selected,
                           onTap: _choosePackage,
                           compact: compact,
+                          busy: _cargoActionBusy,
                         ),
                       ),
                       SizedBox(height: compact ? 7 : 12),
@@ -584,6 +613,9 @@ class _GameScreenState extends State<GameScreen> {
                           warehouses: _warehouses,
                           onTap: _chooseWarehouse,
                           compact: compact,
+                          busy: _cargoActionBusy,
+                          activeWarehouseId: _activeWarehouseId,
+                          placementCorrect: _placementCorrect,
                         ),
                       ),
                       SizedBox(height: compact ? 7 : 12),
@@ -681,12 +713,14 @@ class _CargoBoard extends StatelessWidget {
     required this.selected,
     required this.onTap,
     required this.compact,
+    required this.busy,
   });
 
   final List<CargoItem> items;
   final CargoItem? selected;
   final ValueChanged<CargoItem> onTap;
   final bool compact;
+  final bool busy;
 
   @override
   Widget build(BuildContext context) => Container(
@@ -713,12 +747,12 @@ class _CargoBoard extends StatelessWidget {
       itemBuilder: (_, index) {
         final item = items[index];
         final selectedItem = identical(item, selected);
-        return InkWell(
-          onTap: () => onTap(item),
-          borderRadius: BorderRadius.circular(18),
-          child: AnimatedScale(
-            scale: selectedItem ? 1.05 : 1,
-            duration: const Duration(milliseconds: 150),
+        return CargoMotionTile(
+          selected: selectedItem,
+          busy: busy,
+          child: InkWell(
+            onTap: busy ? null : () => onTap(item),
+            borderRadius: BorderRadius.circular(18),
             child: Container(
               padding: EdgeInsets.all(compact ? 5 : 8),
               decoration: BoxDecoration(
@@ -761,11 +795,17 @@ class _WarehouseBoard extends StatelessWidget {
     required this.warehouses,
     required this.onTap,
     required this.compact,
+    required this.busy,
+    required this.activeWarehouseId,
+    required this.placementCorrect,
   });
 
   final List<CargoItem> warehouses;
   final ValueChanged<CargoItem> onTap;
   final bool compact;
+  final bool busy;
+  final int? activeWarehouseId;
+  final bool placementCorrect;
 
   @override
   Widget build(BuildContext context) => GridView.builder(
@@ -778,36 +818,40 @@ class _WarehouseBoard extends StatelessWidget {
     ),
     itemBuilder: (_, index) {
       final item = warehouses[index];
-      return InkWell(
-        onTap: () => onTap(item),
-        borderRadius: BorderRadius.circular(18),
-        child: Ink(
-          padding: EdgeInsets.all(compact ? 5 : 7),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: item.color, width: 3),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.warehouse_rounded,
-                color: item.color,
-                size: compact ? 28 : 38,
-              ),
-              const SizedBox(height: 3),
-              Text(
-                item.category,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
+      return WarehouseMotionTarget(
+        active: activeWarehouseId == item.id,
+        correct: placementCorrect,
+        child: InkWell(
+          onTap: busy ? null : () => onTap(item),
+          borderRadius: BorderRadius.circular(18),
+          child: Ink(
+            padding: EdgeInsets.all(compact ? 5 : 7),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: item.color, width: 3),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.warehouse_rounded,
                   color: item.color,
-                  fontSize: compact ? 8 : 9,
-                  fontWeight: FontWeight.w900,
+                  size: compact ? 28 : 38,
                 ),
-              ),
-            ],
+                const SizedBox(height: 3),
+                Text(
+                  item.category,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: item.color,
+                    fontSize: compact ? 8 : 9,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       );
