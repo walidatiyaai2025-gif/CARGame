@@ -9,6 +9,7 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | Current phase | C — Motion and living interface |
 | Completed checkpoint | `MOT-010` Animation lifecycle and interruption safety |
 | Status | IMPLEMENTED — CI and physical-device lifecycle review pending |
+| Implementation commit | `09053eae70de3518f2baa45887f38a83cf960f0a` |
 | Previous checkpoint | `MOT-001` shared motion tokens; Analyze and full tests passed before MOT-010 |
 | Next recommended feature | `MOT-006` Product pickup, travel, placement, settle |
 
@@ -28,8 +29,8 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | 2026-08-07 | Pre-checkpoint Flutter Analyze | PASSED |
 | 2026-08-07 | Pre-checkpoint full Flutter tests | PASSED |
 | 2026-08-07 | MOT-010 format and static integration | PASSED in implementation workflow |
-| 2026-08-07 | MOT-010 focused lifecycle tests | PENDING in Flutter CI |
-| 2026-08-07 | Full test suite and Debug APK | PENDING in Flutter CI |
+| 2026-08-07 | MOT-010 focused lifecycle tests | RUNNING in Flutter CI |
+| 2026-08-07 | Full test suite and Debug APK | RUNNING in Flutter CI |
 | 2026-08-07 | Dashboard schema | PASSED — six-column tables and phases A–S preserved |
 
 ## Test locally
