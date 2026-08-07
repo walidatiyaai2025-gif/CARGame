@@ -14,20 +14,19 @@ void main() {
         InMemorySharedPreferencesAsync.empty();
   });
 
-  testWidgets(
-    'shop booster offers use the shared GamePanel shell',
-    (tester) async {
-      final store = ProgressStore();
+  testWidgets('shop booster offers use the shared GamePanel shell', (
+    tester,
+  ) async {
+    final store = ProgressStore();
 
-      await tester.pumpWidget(
-        MaterialApp(home: ShopScreen(store: store)),
-      );
-      await tester.pump();
+    await tester.pumpWidget(
+      MaterialApp(home: ShopScreen(store: store)),
+    );
+    await tester.pump();
 
-      expect(find.text('Smart Hint Pack'), findsOneWidget);
-      expect(find.text('Extra Moves Pack'), findsOneWidget);
-      expect(find.text('Combo Shield'), findsOneWidget);
-      expect(find.byType(GamePanel), findsNWidgets(3));
-    },
-  );
+    expect(find.text('Smart Hint Pack'), findsOneWidget);
+    expect(find.text('Extra Moves Pack'), findsOneWidget);
+    expect(find.text('Combo Shield'), findsOneWidget);
+    expect(find.byType(GamePanel), findsNWidgets(3));
+  });
 }
