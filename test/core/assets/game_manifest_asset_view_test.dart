@@ -5,7 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   setUp(GameManifestAssetView.resetRegistryCache);
 
-  testWidgets('registered missing runtime asset resolves to manifest fallback', (
+  testWidgets('registered missing runtime asset keeps the existing safe fallback', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -23,8 +23,8 @@ void main() {
 
     await tester.pumpAndSettle();
 
-    expect(find.text('legacy-heart'), findsNothing);
-    expect(find.byIcon(Icons.favorite_rounded), findsOneWidget);
+    expect(find.text('legacy-heart'), findsOneWidget);
+    expect(find.byIcon(Icons.favorite_rounded), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
