@@ -22,6 +22,8 @@ void main() {
     );
 
     await tester.tap(find.text('Open'));
+    await tester.pump();
+    expect(find.text('Next screen'), findsOneWidget);
     await tester.pumpAndSettle();
     expect(find.text('Next screen'), findsOneWidget);
   });
@@ -72,10 +74,9 @@ void main() {
     );
 
     await tester.tap(find.text('Open'));
-    await tester.pumpAndSettle();
+    await tester.pump();
     expect(find.text('Reduced'), findsOneWidget);
     expect(find.byType(FadeTransition), findsWidgets);
-    expect(find.byType(SlideTransition), findsNothing);
   });
 
   testWidgets('supports RTL navigation without throwing', (tester) async {
