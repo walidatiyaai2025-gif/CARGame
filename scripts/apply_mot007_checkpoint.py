@@ -1,5 +1,6 @@
 from pathlib import Path
 
+# Re-run after the action-feedback opacity analyzer fix.
 path = Path('lib/features/game/game_screen.dart')
 text = path.read_text(encoding='utf-8')
 
