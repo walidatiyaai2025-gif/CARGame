@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../motion/game_route.dart';
+import 'game_route_names.dart';
 
 /// Central navigation façade for CARGame.
 ///
@@ -35,6 +36,24 @@ final class GameNavigator {
         _activeGuards.remove(key);
       }
     }
+  }
+
+  /// Pushes one of the stable named destinations through the shared route policy.
+  ///
+  /// Named destinations are duplicate-guarded by default so repeated taps cannot
+  /// stack the same destination while its first push remains active.
+  static Future<T?> pushNamed<T>(
+    BuildContext context, {
+    required String name,
+    required WidgetBuilder builder,
+    bool guardDuplicates = true,
+  }) {
+    return push<T>(
+      context,
+      name: name,
+      guardKey: guardDuplicates ? GameRouteNames.guard(name) : null,
+      builder: builder,
+    );
   }
 
   static Future<T?> replace<T, TO>(

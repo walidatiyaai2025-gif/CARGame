@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../core/ads/banner_ad_footer.dart';
 import '../../core/logging/log_viewer_screen.dart';
 import '../../core/motion/ambient_motion_background.dart';
+import '../../core/navigation/game_navigator.dart';
+import '../../core/navigation/game_route_names.dart';
 import '../../core/settings/app_settings_store.dart';
 import '../../core/storage/progress_store.dart';
 import '../../core/theme/app_theme.dart';
@@ -44,11 +46,11 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_openingJourney || store.hearts <= 0) return;
     setState(() => _openingJourney = true);
     try {
-      await Navigator.of(context).push(
-        MaterialPageRoute<void>(
-          builder: (_) =>
-              LevelSelectScreen(store: store, settings: widget.settings),
-        ),
+      await GameNavigator.pushNamed<void>(
+        context,
+        name: GameRouteNames.worldMap,
+        builder: (_) =>
+            LevelSelectScreen(store: store, settings: widget.settings),
       );
     } finally {
       if (mounted) setState(() => _openingJourney = false);
@@ -88,13 +90,29 @@ class _HomeScreenState extends State<HomeScreen> {
         : 'Next heart $minutes:$seconds';
   }
 
-  void _openShop() => Navigator.of(
-    context,
-  ).push(MaterialPageRoute<void>(builder: (_) => ShopScreen(store: store)));
+  void _openShop() {
+    GameNavigator.pushNamed<void>(
+      context,
+      name: GameRouteNames.shop,
+      builder: (_) => ShopScreen(store: store),
+    );
+  }
 
-  void _openProgress() => Navigator.of(context).push(
-    MaterialPageRoute<void>(builder: (_) => ProgressHubScreen(store: store)),
-  );
+  void _openProgress() {
+    GameNavigator.pushNamed<void>(
+      context,
+      name: GameRouteNames.progress,
+      builder: (_) => ProgressHubScreen(store: store),
+    );
+  }
+
+  void _openLogs() {
+    GameNavigator.pushNamed<void>(
+      context,
+      name: GameRouteNames.logs,
+      builder: (_) => const LogViewerScreen(),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -144,11 +162,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               compact: compact,
                               onShop: _openShop,
                               onProgress: _openProgress,
-                              onLogs: () => Navigator.of(context).push(
-                                MaterialPageRoute<void>(
-                                  builder: (_) => const LogViewerScreen(),
-                                ),
-                              ),
+                              onLogs: _openLogs,
                               onLanguage: widget.onToggleLanguage,
                             ),
                             const SizedBox(height: 8),
