@@ -15,7 +15,7 @@ final class SecretRedactor {
   );
 
   static final RegExp _credentialAssignment = RegExp(
-    r'''\b(password|passwd|pwd|token|access[_-]?token|refresh[_-]?token|api[_-]?key|apikey|client[_-]?secret|secret|authorization)\b(\s*[:=]\s*)(["']?)([^\s,"';}{]{4,})(["']?)''',
+    r'''\b(password|passwd|pwd|token|access[_-]?token|refresh[_-]?token|api[_-]?key|apikey|client[_-]?secret|secret|authorization)\b(\s*[:=]\s*)(["']?)([^\s,"';}{&?]{4,})(["']?)''',
     caseSensitive: false,
   );
 
