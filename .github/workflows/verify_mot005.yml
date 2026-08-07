@@ -1,0 +1,43 @@
+name: Verify MOT-005
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'lib/features/levels/**'
+      - 'lib/features/home/**'
+      - 'test/features/levels/**'
+      - 'test/features/home/**'
+      - 'docs/FEATURE_CATALOG.md'
+      - '.github/workflows/verify_mot005.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.44.8
+          cache: true
+      - name: Restore packages
+        run: flutter pub get
+      - name: Generate localization
+        run: flutter gen-l10n
+      - name: Verify format
+        run: dart format --output=none --set-exit-if-changed lib test
+      - name: Analyze
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+      - name: Test Home ambient motion
+        run: flutter test test/features/home/home_ambient_background_test.dart
+      - name: Test World Map ambient motion
+        run: flutter test test/features/levels/world_map_ambient_background_test.dart
+      - name: Run full test suite
+        run: flutter test
+      - name: Build Debug APK
+        run: flutter build apk --debug --no-pub
