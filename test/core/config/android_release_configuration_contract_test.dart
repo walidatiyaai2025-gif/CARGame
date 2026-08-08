@@ -5,15 +5,17 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   const googleTestAppId = 'ca-app-pub-3940256099942544~3347511713';
 
+  String read(String path) => File(path).readAsStringSync();
+
   test('main manifest externalizes the AdMob application id', () {
-    final manifest = File('android/app/src/main/AndroidManifest.xml').readAsStringSync();
+    final manifest = read('android/app/src/main/AndroidManifest.xml');
 
     expect(manifest, contains(r'android:value="${admobApplicationId}"'));
     expect(manifest, isNot(contains(googleTestAppId)));
   });
 
   test('Gradle release configuration never falls back to debug signing', () {
-    final gradle = File('android/app/build.gradle.kts').readAsStringSync();
+    final gradle = read('android/app/build.gradle.kts');
 
     expect(gradle, contains('ADMOB_ANDROID_APP_ID'));
     expect(gradle, contains('validateReleaseConfiguration'));
@@ -23,7 +25,7 @@ void main() {
   });
 
   test('RC builder forces release runtime configuration and external inputs', () {
-    final script = File('BUILD_RC.ps1').readAsStringSync();
+    final script = read('BUILD_RC.ps1');
 
     expect(script, contains('--dart-define=APP_ENV=release'));
     expect(script, contains('AndroidAdMobAppId'));
@@ -33,7 +35,7 @@ void main() {
   });
 
   test('generic release builds cannot inherit debug runtime defaults', () {
-    final script = File('BUILD_COMMON.ps1').readAsStringSync();
+    final script = read('BUILD_COMMON.ps1');
 
     expect(script, contains('--dart-define=APP_ENV=release'));
     expect(script, contains('--dart-define=ENABLE_ADS=false'));
