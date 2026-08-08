@@ -36,33 +36,30 @@ void main() {
     expect(await prefs.containsKey(pendingPurchaseKey), isFalse);
   });
 
-  test(
-    'load completes an interrupted booster purchase idempotently',
-    () async {
-      final prefs = SharedPreferencesAsync();
-      await prefs.setInt('coins', 100);
-      await prefs.setInt('booster_free_hints', 4);
-      await prefs.setString(
-        pendingPurchaseKey,
-        jsonEncode({
-          'version': 1,
-          'reason': 'booster:hint',
-          'values': {'booster_free_hints': 4, 'coins': 75},
-        }),
-      );
+  test('load completes an interrupted booster purchase idempotently', () async {
+    final prefs = SharedPreferencesAsync();
+    await prefs.setInt('coins', 100);
+    await prefs.setInt('booster_free_hints', 4);
+    await prefs.setString(
+      pendingPurchaseKey,
+      jsonEncode({
+        'version': 1,
+        'reason': 'booster:hint',
+        'values': {'booster_free_hints': 4, 'coins': 75},
+      }),
+    );
 
-      final recovered = ProgressStore();
-      await recovered.load();
-      expect(recovered.coins, 75);
-      expect(recovered.freeHints, 4);
-      expect(await prefs.containsKey(pendingPurchaseKey), isFalse);
+    final recovered = ProgressStore();
+    await recovered.load();
+    expect(recovered.coins, 75);
+    expect(recovered.freeHints, 4);
+    expect(await prefs.containsKey(pendingPurchaseKey), isFalse);
 
-      final secondLoad = ProgressStore();
-      await secondLoad.load();
-      expect(secondLoad.coins, 75);
-      expect(secondLoad.freeHints, 4);
-    },
-  );
+    final secondLoad = ProgressStore();
+    await secondLoad.load();
+    expect(secondLoad.coins, 75);
+    expect(secondLoad.freeHints, 4);
+  });
 
   test(
     'load completes an interrupted theme purchase without double debit',
