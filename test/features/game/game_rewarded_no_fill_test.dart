@@ -63,12 +63,22 @@ void main() {
     await _pumpUntil(tester, watchAd);
     expect(retry, findsOneWidget);
 
+    final resultScrollable = find.ancestor(
+      of: watchAd,
+      matching: find.byType(Scrollable),
+    );
+    expect(resultScrollable, findsWidgets);
+
     await tester.scrollUntilVisible(
       watchAd,
       250,
-      scrollable: find.byType(Scrollable).last,
+      scrollable: resultScrollable.last,
     );
-    await tester.tap(watchAd);
+    await tester.pump(const Duration(milliseconds: 200));
+
+    final visibleWatchAd = watchAd.hitTestable();
+    expect(visibleWatchAd, findsOneWidget);
+    await tester.tap(visibleWatchAd);
     await tester.pump();
 
     expect(ads.showRewardedCalls, 1);
