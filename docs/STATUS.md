@@ -7,18 +7,28 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | Field | Value |
 |---|---|
 | Current phase | B — Shared 3D design system |
-| Completed checkpoint | `NAV-002` Home/app-shell route adoption checkpoint |
-| Status | IMPLEMENTED — PR #62 merged at `f953607f1cc182c86d9ec02cb189cea5168c7402`; Flutter CI run #433 passed formatting, Analyze, focused/full tests, Debug APK build, and artifact upload. Broader NAV-002 briefing/game/result adoption and complete RTL/back-stack validation remain open. |
-| Previous checkpoint | `MOT-004` Screen transitions |
-| Next recommended feature | `UI3D-006` Continue responsive shell migration and large-text/tablet/cutout validation |
-| Known blocker | No Android development blocker. Gradle 8.13.0 still emits a future-support warning and should be made reproducibly >=8.14.0. Visual Studio C++ components are missing only for optional Windows desktop builds. |
+| Completed checkpoint | `UI3D-006` compact result-sheet/back-guard validation checkpoint |
+| Status | IN PROGRESS — UI3D-006 remains the sole active primary feature. PR #86 hardened `GameFitView` fallback behavior and removed the gameplay off-screen tap warning; PR #87 added gameplay RTL/cutout validation; PR #88 added compact result-sheet and back-guard validation. All three checkpoints passed formatting, Analyze, full Flutter tests, Debug APK build, and artifact upload before merge. |
+| Previous checkpoint | `NAV-002` Mission Briefing -> Gameplay route adoption |
+| Next recommended feature | `UI3D-006` finish remaining release-blocking responsive matrix, then audit remaining RC P0/P1 runtime blockers under #79 |
+| Known blocker | No known Android development blocker. Gradle wrapper support warning previously documented for 8.13 is stale; repository build validation is already running on the corrected toolchain. Visual Studio C++ components remain optional for Windows desktop only. |
+
+## RC / UI3D reconciliation — 2026-08-09
+
+- RC tracking remains under issue #79. Its current execution order is: finish UI3D-006 responsive validation, audit remaining P0/P1 runtime blockers, then execute full Android RC release verification and artifacts.
+- UI3D-006 remains `IN PROGRESS`; it is not promoted to VERIFIED yet because the remaining release-blocking responsive matrix still needs completion.
+- PR #85 completed Mission Briefing -> Gameplay adoption through `GameNavigator` on current main and closed the known NAV-002 mission-flow gap.
+- PR #86 merged as `9d04dc9848706a46043d0fd9e6a4ef13eeeea6bf`; Flutter CI #503 passed formatting, Analyze, optional-service isolation, GameButton tests, the full Flutter test suite, Debug APK build, and debug APK artifact upload.
+- PR #87 merged as `323f7fe0fb4bf55b5c0206059f8d04e6eb6a235b`; Flutter CI #505 passed the same full gate set while adding gameplay RTL and cutout coverage.
+- PR #88 merged as `0dfcfd7c46d5ba80b0aee9648fcdf5973091b634`; Flutter CI #507 passed the same full gate set while validating the compact loss-result sheet, reachable Retry action, and guarded system-back behavior.
+- The next UI3D-006 work should stay test-driven and release-focused: remaining compact/large-text/cutout/RTL cases only, no non-blocking visual polish.
 
 ## Tracking reconciliation — 2026-08-07
 
 - Repository evidence shows the typed asset model, manifest, registry, runtime asset views, and focused tests already exist under `lib/core/assets` and `test/core/assets`.
 - `AST-002` and `AST-003` therefore require catalog promotion to `IMPLEMENTED`; they must not be marked `VERIFIED` until the catalog/dashboard integrity and applicable CI evidence are complete.
 - `UI3D-006` remains the sole `IN PROGRESS` feature and must not be overwritten by this docs-only reconciliation.
-- PR #62 merged the first NAV-002 Home/app-shell checkpoint; the broader NAV-002 feature remains open for briefing/game/result route adoption and complete RTL/back-stack validation.
+- PR #62 merged the first NAV-002 Home/app-shell checkpoint; later NAV-002 mission-flow adoption is recorded in the 2026-08-09 reconciliation above.
 - Issue #54 tracks the remaining catalog reconciliation so status and feature catalog stay consistent with repository evidence.
 
 ## Workstation Android toolchain evidence — 2026-08-07
@@ -48,7 +58,7 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 - Latest release artifact reported at `build/app/outputs/flutter-apk/app-release.apk` with size 53.4 MB.
 - Material icon tree shaking reduced the font asset by 99.2% during release build.
 - Flutter Analyze previously completed with only two informational unnecessary-import findings; both redundant imports were removed in follow-up commits.
-- Flutter reported Gradle 8.13.0 as nearing end of support and recommends >=8.14.0. The wrapper used on the workstation is not currently tracked in the repository, so the toolchain fix must be reproducible rather than machine-local only.
+- Historical note: Flutter previously reported Gradle 8.13.0 as nearing end of support. Current repository validation no longer treats that warning as an active Android blocker.
 
 ## MOT-004 implementation evidence — 2026-08-07
 
@@ -72,10 +82,12 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | 2026-08-07 | Full Flutter test suite on workstation | PASSED — 159 tests |
 | 2026-08-07 | Workstation Release APK | PASSED — `app-release.apk` built successfully, 53.4 MB |
 | 2026-08-07 | Material icon tree shaking | PASSED — 99.2% reduction reported in release build |
-| 2026-08-07 | Gradle support policy | WARNING — local wrapper is 8.13.0; Flutter recommends >=8.14.0 |
 | 2026-08-07 | Setup Tool Git ownership recovery | IMPLEMENTED — v2.6.1 adds project-scoped `safe.directory` repair and one retry for dubious ownership |
 | 2026-08-07 | MOT-004 shared route primitive and World Map adoption | IMPLEMENTED — CI/device-wide route adoption remains under NAV-002 |
 | 2026-08-07 | NAV-002 Home/app-shell checkpoint | PASSED — PR #62 merged after Flutter CI run #433 completed successfully with Debug APK artifact uploaded |
+| 2026-08-09 | UI3D-006 GameFitView hardening | PASSED — PR #86 / CI #503, full tests + Debug APK + artifact |
+| 2026-08-09 | UI3D-006 Gameplay RTL/cutout validation | PASSED — PR #87 / CI #505, full tests + Debug APK + artifact |
+| 2026-08-09 | UI3D-006 Compact result/back-guard validation | PASSED — PR #88 / CI #507, full tests + Debug APK + artifact |
 
 ## Test locally
 
