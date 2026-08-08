@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cargo_sort_game/core/navigation/game_route_names.dart';
 import 'package:cargo_sort_game/core/settings/app_settings_store.dart';
 import 'package:cargo_sort_game/core/storage/progress_store.dart';
@@ -116,7 +118,7 @@ void main() {
 
     final button = tester.widget<GameButton>(startButton);
     expect(button.onPressed, isNotNull);
-    await button.onPressed!.call();
+    unawaited(Future<void>.sync(button.onPressed!.call));
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
 
