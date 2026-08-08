@@ -478,10 +478,10 @@ class _GameScreenState extends State<GameScreen> {
                         onPressed: _resultActionBusy
                             ? null
                             : () {
-                                Navigator.of(sheetContext).pop();
-                                _ads.showRewarded(
+                                final started = _ads.showRewarded(
                                   onReward: () {
                                     if (!mounted) return;
+                                    Navigator.of(sheetContext).pop();
                                     setState(() {
                                       _finished = false;
                                       _resultVisible = false;
@@ -489,6 +489,13 @@ class _GameScreenState extends State<GameScreen> {
                                     });
                                   },
                                 );
+                                if (!started) {
+                                  _message(
+                                    ar
+                                        ? 'الإعلان غير متاح الآن. جرّب مرة أخرى أو أعد المحاولة.'
+                                        : 'Rewarded ad is not available yet. Try again or retry.',
+                                  );
+                                }
                               },
                         enabled: !_resultActionBusy,
                         expand: true,
