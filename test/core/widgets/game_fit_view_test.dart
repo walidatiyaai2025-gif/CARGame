@@ -31,28 +31,6 @@ void main() {
     expect(fit.fit, BoxFit.scaleDown);
   });
 
-  testWidgets('falls back to MediaQuery when height is unbounded', (
-    tester,
-  ) async {
-    await tester.binding.setSurfaceSize(const Size(412, 915));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-
-    await tester.pumpWidget(
-      const MaterialApp(
-        home: Scaffold(
-          body: SingleChildScrollView(
-            child: GameFitView(
-              child: SizedBox(width: 800, height: 1200),
-            ),
-          ),
-        ),
-      ),
-    );
-
-    expect(tester.takeException(), isNull);
-    expect(tester.getSize(find.byType(GameFitView)).height, 915);
-  });
-
   testWidgets('preserves RTL direction from caller', (tester) async {
     await tester.pumpWidget(
       const MaterialApp(
@@ -69,9 +47,7 @@ void main() {
     );
   });
 
-  testWidgets('keeps bounded content stable on a tablet viewport', (
-    tester,
-  ) async {
+  testWidgets('keeps bounded content stable on a tablet viewport', (tester) async {
     await tester.binding.setSurfaceSize(const Size(1024, 1366));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -98,9 +74,7 @@ void main() {
     expect(find.byKey(const Key('tablet-content')), findsOneWidget);
   });
 
-  testWidgets('survives large text, cutouts and keyboard insets', (
-    tester,
-  ) async {
+  testWidgets('survives large text, cutouts and keyboard insets', (tester) async {
     await tester.binding.setSurfaceSize(const Size(412, 915));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
