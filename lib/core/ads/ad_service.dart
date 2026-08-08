@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 import '../config/app_build_config.dart';
+import 'reward_grant_guard.dart';
 
 class AdService {
   static String get bannerId => Platform.isAndroid
@@ -51,17 +52,15 @@ class AdService {
   }
 
   void showRewarded({required void Function() onReward}) {
-    if (!AppBuildConfig.current.enableAds) {
-      onReward();
-      return;
-    }
+    if (!AppBuildConfig.current.enableAds) return;
 
     final ad = _rewarded;
     if (ad == null) {
-      onReward(); // Keeps the MVP testable without ad inventory.
       _loadRewarded();
       return;
     }
+
+    final rewardGuard = RewardGrantGuard();
     ad.fullScreenContentCallback = FullScreenContentCallback(
       onAdDismissedFullScreenContent: (ad) {
         ad.dispose();
@@ -71,11 +70,16 @@ class AdService {
       onAdFailedToShowFullScreenContent: (ad, _) {
         ad.dispose();
         _rewarded = null;
-        onReward();
         _loadRewarded();
       },
     );
-    ad.show(onUserEarnedReward: (_, _) => onReward());
+    ad.show(
+      onUserEarnedReward: (_, _) {
+        if (rewardGuard.claim()) {
+          onReward();
+        }
+      },
+    );
   }
 
   void showInterstitial() {
