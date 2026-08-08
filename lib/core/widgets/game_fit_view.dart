@@ -36,10 +36,7 @@ class GameFitView extends StatelessWidget {
               fit: BoxFit.scaleDown,
               alignment: alignment,
               child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxWidth: width,
-                  maxHeight: height,
-                ),
+                constraints: BoxConstraints(maxWidth: width, maxHeight: height),
                 child: child,
               ),
             ),
