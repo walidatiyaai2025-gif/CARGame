@@ -1,3 +1,5 @@
+import java.util.Properties
+import org.gradle.api.GradleException
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -11,6 +13,32 @@ kotlin {
         jvmTarget.set(JvmTarget.JVM_17)
     }
 }
+
+val googleTestAdMobApplicationId = "ca-app-pub-3940256099942544~3347511713"
+val releaseAdMobApplicationId =
+    providers.environmentVariable("ADMOB_ANDROID_APP_ID").orNull?.trim().orEmpty()
+
+val signingProperties = Properties()
+val signingPropertiesFile = rootProject.file("key.properties")
+if (signingPropertiesFile.exists()) {
+    signingPropertiesFile.inputStream().use(signingProperties::load)
+}
+
+fun signingValue(propertyName: String, environmentName: String): String =
+    providers.environmentVariable(environmentName).orNull?.trim()
+        ?.takeIf { it.isNotEmpty() }
+        ?: signingProperties.getProperty(propertyName)?.trim().orEmpty()
+
+val releaseStorePath = signingValue("storeFile", "ANDROID_KEYSTORE_PATH")
+val releaseStorePassword = signingValue("storePassword", "ANDROID_KEYSTORE_PASSWORD")
+val releaseKeyAlias = signingValue("keyAlias", "ANDROID_KEY_ALIAS")
+val releaseKeyPassword = signingValue("keyPassword", "ANDROID_KEY_PASSWORD")
+val hasCompleteReleaseSigning = listOf(
+    releaseStorePath,
+    releaseStorePassword,
+    releaseKeyAlias,
+    releaseKeyPassword,
+).all { it.isNotBlank() }
 
 android {
     namespace = "com.walka.cargosort"
@@ -28,13 +56,57 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        manifestPlaceholders["admobApplicationId"] = googleTestAdMobApplicationId
+    }
+
+    if (hasCompleteReleaseSigning) {
+        signingConfigs.create("release") {
+            storeFile = file(releaseStorePath)
+            storePassword = releaseStorePassword
+            keyAlias = releaseKeyAlias
+            keyPassword = releaseKeyPassword
+        }
     }
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.getByName("debug")
+            manifestPlaceholders["admobApplicationId"] = releaseAdMobApplicationId
+            if (hasCompleteReleaseSigning) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
+}
+
+val validateReleaseConfiguration = tasks.register("validateReleaseConfiguration") {
+    doLast {
+        if (releaseAdMobApplicationId.isBlank()) {
+            throw GradleException(
+                "ADMOB_ANDROID_APP_ID is required for Android release builds.",
+            )
+        }
+        if (releaseAdMobApplicationId == googleTestAdMobApplicationId ||
+            releaseAdMobApplicationId.startsWith("ca-app-pub-3940256099942544~")) {
+            throw GradleException(
+                "Google test AdMob application IDs are forbidden in Android release builds.",
+            )
+        }
+        if (!hasCompleteReleaseSigning) {
+            throw GradleException(
+                "Android release signing is incomplete. Provide android/key.properties " +
+                    "or ANDROID_KEYSTORE_PATH, ANDROID_KEYSTORE_PASSWORD, " +
+                    "ANDROID_KEY_ALIAS and ANDROID_KEY_PASSWORD.",
+            )
+        }
+        val store = file(releaseStorePath)
+        if (!store.isFile) {
+            throw GradleException("Android release keystore was not found: ${store.absolutePath}")
+        }
+    }
+}
+
+tasks.matching { it.name == "preReleaseBuild" }.configureEach {
+    dependsOn(validateReleaseConfiguration)
 }
 
 flutter {
