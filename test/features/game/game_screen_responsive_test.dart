@@ -30,6 +30,9 @@ Future<void> _pumpGame(
   WidgetTester tester, {
   required Size size,
   TextScaler textScaler = TextScaler.noScaling,
+  EdgeInsets padding = EdgeInsets.zero,
+  Locale locale = const Locale('en'),
+  TextDirection textDirection = TextDirection.ltr,
 }) async {
   await tester.binding.setSurfaceSize(size);
   addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -40,11 +43,23 @@ Future<void> _pumpGame(
   await tester.pumpWidget(
     MaterialApp(
       home: MediaQuery(
-        data: MediaQueryData(size: size, textScaler: textScaler),
-        child: GameScreen(
-          level: levels.first,
-          store: store,
-          adService: _NoopAdService(),
+        data: MediaQueryData(
+          size: size,
+          padding: padding,
+          viewPadding: padding,
+          textScaler: textScaler,
+        ),
+        child: Localizations.override(
+          context: tester.element(find.byType(MaterialApp)),
+          locale: locale,
+          child: Directionality(
+            textDirection: textDirection,
+            child: GameScreen(
+              level: levels.first,
+              store: store,
+              adService: _NoopAdService(),
+            ),
+          ),
         ),
       ),
     ),
@@ -70,6 +85,35 @@ void main() {
       tester,
       size: const Size(1024, 1366),
       textScaler: const TextScaler.linear(1.8),
+    );
+
+    expect(tester.takeException(), isNull);
+    expect(find.byType(GameScreen), findsOneWidget);
+  });
+
+  testWidgets('gameplay preserves Arabic RTL on a tall phone', (tester) async {
+    await _pumpGame(
+      tester,
+      size: const Size(412, 915),
+      locale: const Locale('ar'),
+      textDirection: TextDirection.rtl,
+    );
+
+    expect(tester.takeException(), isNull);
+    expect(find.byType(GameScreen), findsOneWidget);
+    expect(
+      Directionality.of(tester.element(find.byType(GameScreen))),
+      TextDirection.rtl,
+    );
+  });
+
+  testWidgets('gameplay respects cutout safe areas without overflow', (
+    tester,
+  ) async {
+    await _pumpGame(
+      tester,
+      size: const Size(412, 915),
+      padding: const EdgeInsets.only(top: 44, bottom: 34),
     );
 
     expect(tester.takeException(), isNull);
