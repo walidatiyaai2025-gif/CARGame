@@ -6,30 +6,34 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 
 | Field | Value |
 |---|---|
-| Current phase | B — Shared 3D design system |
-| Completed checkpoint | `UI3D-006` compact result-sheet/back-guard validation checkpoint |
-| Status | IN PROGRESS — UI3D-006 remains the sole active primary feature. PR #86 hardened `GameFitView` fallback behavior and removed the gameplay off-screen tap warning; PR #87 added gameplay RTL/cutout validation; PR #88 added compact result-sheet and back-guard validation. All three checkpoints passed formatting, Analyze, full Flutter tests, Debug APK build, and artifact upload before merge. |
-| Previous checkpoint | `NAV-002` Mission Briefing -> Gameplay route adoption |
-| Next recommended feature | `UI3D-006` finish remaining release-blocking responsive matrix, then audit remaining RC P0/P1 runtime blockers under #79 |
-| Known blocker | No known Android development blocker. Gradle wrapper support warning previously documented for 8.13 is stale; repository build validation is already running on the corrected toolchain. Visual Studio C++ components remain optional for Windows desktop only. |
+| Current phase | Android RC hardening — issue #79 |
+| Completed checkpoint | `UI3D-006` responsive screen shell and safe-area automated matrix |
+| Status | VERIFIED — UI3D-006 acceptance is complete. PRs #86–#92 cover shared fit behavior, gameplay/result reachability, compact/reference/tablet sizes, large text, safe-area cutouts, keyboard/view insets, RTL, and intentionally scrollable Shop/Progress cases. Applicable checkpoints passed formatting, Analyze, full Flutter tests, Debug APK build, and artifact upload before merge. |
+| Previous checkpoint | PR #92 Settings RTL validation merged as `88c17828afa4fd7de52cfe29550a107cb34d1ee3` after Flutter CI #522 passed the complete gate set |
+| Next recommended feature | RC-001: audit remaining P0/P1 runtime blockers under #79, select the highest-priority unblocked catalog item, then execute full Android RC release verification/artifacts |
+| Known blocker | No known Android development blocker. Physical-device and signed-release validation remain part of the broader RC/release gates, not UI3D-006. Visual Studio C++ components remain optional for Windows desktop only. |
 
 ## RC / UI3D reconciliation — 2026-08-09
 
-- RC tracking remains under issue #79. Its current execution order is: finish UI3D-006 responsive validation, audit remaining P0/P1 runtime blockers, then execute full Android RC release verification and artifacts.
-- UI3D-006 remains `IN PROGRESS`; it is not promoted to VERIFIED yet because the remaining release-blocking responsive matrix still needs completion.
-- PR #85 completed Mission Briefing -> Gameplay adoption through `GameNavigator` on current main and closed the known NAV-002 mission-flow gap.
+- RC tracking remains under issue #79. UI3D-006 automated responsive acceptance is complete; execution now advances to the remaining P0/P1 runtime-blocker audit, followed by full Android RC release verification and artifacts.
+- `docs/work/UI3D-006.md` already records the feature as VERIFIED; `docs/FEATURE_CATALOG.md` is reconciled to the same state in the UI3D-006 closeout change.
+- PR #85 completed Mission Briefing -> Gameplay adoption through `GameNavigator` and closed the known NAV-002 mission-flow gap.
 - PR #86 merged as `9d04dc9848706a46043d0fd9e6a4ef13eeeea6bf`; Flutter CI #503 passed formatting, Analyze, optional-service isolation, GameButton tests, the full Flutter test suite, Debug APK build, and debug APK artifact upload.
 - PR #87 merged as `323f7fe0fb4bf55b5c0206059f8d04e6eb6a235b`; Flutter CI #505 passed the same full gate set while adding gameplay RTL and cutout coverage.
 - PR #88 merged as `0dfcfd7c46d5ba80b0aee9648fcdf5973091b634`; Flutter CI #507 passed the same full gate set while validating the compact loss-result sheet, reachable Retry action, and guarded system-back behavior.
-- The next UI3D-006 work should stay test-driven and release-focused: remaining compact/large-text/cutout/RTL cases only, no non-blocking visual polish.
+- PR #90 merged as `ffc437dc486cf560383e27e38c15b3db676516ce`; Flutter CI #511 passed the full gate set while validating Shop RTL and cutout layouts.
+- PR #91 merged as `7eb16d6cf747d9db23fa15703386cfbbf67d9da8`; Flutter CI #516 passed the full gate set while validating Progress Hub cutout/safe-area behavior and scroll reachability.
+- PR #92 merged as `88c17828afa4fd7de52cfe29550a107cb34d1ee3`; Flutter CI #522 passed formatting, whitespace, Analyze, focused tests, full Flutter tests, Debug APK build, and artifact upload while validating Settings RTL layout.
+- CI #522 artifact `cargame-debug-apk`: artifact id `9029071810`, 80,509,116 bytes, SHA-256 `c70c51470539b1de3a8594023a6bf149c17958b64826618dc9dbcb45231d1792`.
+- Physical-device visual review remains part of RC/device verification and does not reopen the automated UI3D-006 feature acceptance.
 
 ## Tracking reconciliation — 2026-08-07
 
 - Repository evidence shows the typed asset model, manifest, registry, runtime asset views, and focused tests already exist under `lib/core/assets` and `test/core/assets`.
 - `AST-002` and `AST-003` therefore require catalog promotion to `IMPLEMENTED`; they must not be marked `VERIFIED` until the catalog/dashboard integrity and applicable CI evidence are complete.
-- `UI3D-006` remains the sole `IN PROGRESS` feature and must not be overwritten by this docs-only reconciliation.
+- UI3D-006 was the sole active feature during the responsive workstream; it is now VERIFIED by the 2026-08-09 reconciliation above.
 - PR #62 merged the first NAV-002 Home/app-shell checkpoint; later NAV-002 mission-flow adoption is recorded in the 2026-08-09 reconciliation above.
-- Issue #54 tracks the remaining catalog reconciliation so status and feature catalog stay consistent with repository evidence.
+- Issue #54 tracks the remaining historical catalog reconciliation so status and feature catalog stay consistent with repository evidence.
 
 ## Workstation Android toolchain evidence — 2026-08-07
 
@@ -88,6 +92,9 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | 2026-08-09 | UI3D-006 GameFitView hardening | PASSED — PR #86 / CI #503, full tests + Debug APK + artifact |
 | 2026-08-09 | UI3D-006 Gameplay RTL/cutout validation | PASSED — PR #87 / CI #505, full tests + Debug APK + artifact |
 | 2026-08-09 | UI3D-006 Compact result/back-guard validation | PASSED — PR #88 / CI #507, full tests + Debug APK + artifact |
+| 2026-08-09 | UI3D-006 Shop RTL/cutout validation | PASSED — PR #90 / CI #511, full tests + Debug APK + artifact |
+| 2026-08-09 | UI3D-006 Progress Hub cutout validation | PASSED — PR #91 / CI #516, full tests + Debug APK + artifact |
+| 2026-08-09 | UI3D-006 Settings RTL validation | PASSED — PR #92 / CI #522, full tests + Debug APK + artifact `9029071810` / SHA-256 `c70c51470539b1de3a8594023a6bf149c17958b64826618dc9dbcb45231d1792` |
 
 ## Test locally
 
@@ -115,6 +122,6 @@ flutter run
 ## UI3D-006 fit shell checkpoint — 2026-08-07
 
 - Added reusable `GameFitView` for bounded game screens that must remain fully visible without a scroll container.
-- Home now uses the shared fit primitive instead of a screen-local FittedBox implementation.
-- Mission Briefing replaces its ListView with the shared fit primitive and tighter vertical rhythm while preserving boosters, wallet, RTL/LTR, SafeArea, and guarded mission launch.
-- UI3D-006 remains IN PROGRESS until remaining short screens and large-text/tablet/cutout cases are migrated and verified.
+- Home uses the shared fit primitive instead of a screen-local FittedBox implementation.
+- Mission Briefing uses the shared fit primitive with tighter vertical rhythm while preserving boosters, wallet, RTL/LTR, SafeArea, and guarded mission launch.
+- The automated responsive matrix is now VERIFIED; physical-device visual review is carried by the broader RC/device validation gates.
