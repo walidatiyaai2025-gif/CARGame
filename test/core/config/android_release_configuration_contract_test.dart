@@ -24,15 +24,18 @@ void main() {
     expect(gradle, isNot(contains('signingConfigs.getByName("debug")')));
   });
 
-  test('RC builder forces release runtime configuration and external inputs', () {
-    final script = read('BUILD_RC.ps1');
+  test(
+    'RC builder forces release runtime configuration and external inputs',
+    () {
+      final script = read('BUILD_RC.ps1');
 
-    expect(script, contains('--dart-define=APP_ENV=release'));
-    expect(script, contains('AndroidAdMobAppId'));
-    expect(script, contains('ADMOB_ANDROID_APP_ID'));
-    expect(script, contains('Assert-ReleaseSigningConfigured'));
-    expect(script, contains('ANDROID_KEYSTORE_PASSWORD'));
-  });
+      expect(script, contains('--dart-define=APP_ENV=release'));
+      expect(script, contains('AndroidAdMobAppId'));
+      expect(script, contains('ADMOB_ANDROID_APP_ID'));
+      expect(script, contains('Assert-ReleaseSigningConfigured'));
+      expect(script, contains('ANDROID_KEYSTORE_PASSWORD'));
+    },
+  );
 
   test('generic release builds cannot inherit debug runtime defaults', () {
     final script = read('BUILD_COMMON.ps1');
