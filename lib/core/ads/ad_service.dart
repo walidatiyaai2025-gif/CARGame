@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 import '../config/app_build_config.dart';
+import 'reward_grant_guard.dart';
 
 class AdService {
   static String get bannerId => Platform.isAndroid
@@ -19,6 +20,9 @@ class AdService {
 
   RewardedAd? _rewarded;
   InterstitialAd? _interstitial;
+
+  bool get rewardedReady =>
+      AppBuildConfig.current.enableAds && _rewarded != null;
 
   void preload() {
     if (!AppBuildConfig.current.enableAds) return;
@@ -50,32 +54,35 @@ class AdService {
     );
   }
 
-  void showRewarded({required void Function() onReward}) {
-    if (!AppBuildConfig.current.enableAds) {
-      onReward();
-      return;
-    }
+  bool showRewarded({required void Function() onReward}) {
+    if (!AppBuildConfig.current.enableAds) return false;
 
     final ad = _rewarded;
     if (ad == null) {
-      onReward(); // Keeps the MVP testable without ad inventory.
       _loadRewarded();
-      return;
+      return false;
     }
+
+    final rewardGuard = RewardGrantGuard();
+    _rewarded = null;
     ad.fullScreenContentCallback = FullScreenContentCallback(
       onAdDismissedFullScreenContent: (ad) {
         ad.dispose();
-        _rewarded = null;
         _loadRewarded();
       },
       onAdFailedToShowFullScreenContent: (ad, _) {
         ad.dispose();
-        _rewarded = null;
-        onReward();
         _loadRewarded();
       },
     );
-    ad.show(onUserEarnedReward: (_, _) => onReward());
+    ad.show(
+      onUserEarnedReward: (_, _) {
+        if (rewardGuard.claim()) {
+          onReward();
+        }
+      },
+    );
+    return true;
   }
 
   void showInterstitial() {
@@ -86,15 +93,14 @@ class AdService {
       _loadInterstitial();
       return;
     }
+    _interstitial = null;
     ad.fullScreenContentCallback = FullScreenContentCallback(
       onAdDismissedFullScreenContent: (ad) {
         ad.dispose();
-        _interstitial = null;
         _loadInterstitial();
       },
       onAdFailedToShowFullScreenContent: (ad, _) {
         ad.dispose();
-        _interstitial = null;
         _loadInterstitial();
       },
     );

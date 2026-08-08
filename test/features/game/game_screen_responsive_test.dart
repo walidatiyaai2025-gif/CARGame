@@ -15,7 +15,7 @@ final class _NoopAdService extends AdService {
   void showInterstitial() {}
 
   @override
-  void showRewarded({required void Function() onReward}) => onReward();
+  bool showRewarded({required void Function() onReward}) => false;
 }
 
 Future<ProgressStore> _store() async {
