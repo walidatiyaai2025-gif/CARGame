@@ -38,10 +38,6 @@ final class GameNavigator {
     }
   }
 
-  /// Pushes one of the stable named destinations through the shared route policy.
-  ///
-  /// Named destinations are duplicate-guarded by default so repeated taps cannot
-  /// stack the same destination while its first push remains active.
   static Future<T?> pushNamed<T>(
     BuildContext context, {
     required String name,
@@ -64,6 +60,24 @@ final class GameNavigator {
   }) {
     return Navigator.of(context).pushReplacement<T, TO>(
       GameRoute.build<T>(context: context, builder: builder, name: name),
+      result: result,
+    );
+  }
+
+  /// Replaces the current destination using a stable named route contract.
+  ///
+  /// Used for one-way flows such as Briefing -> Gameplay where the previous
+  /// screen should not remain in the back stack.
+  static Future<T?> replaceNamed<T, TO>(
+    BuildContext context, {
+    required String name,
+    required WidgetBuilder builder,
+    TO? result,
+  }) {
+    return replace<T, TO>(
+      context,
+      name: name,
+      builder: builder,
       result: result,
     );
   }
