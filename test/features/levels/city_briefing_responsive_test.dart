@@ -1,6 +1,11 @@
+import 'dart:async';
+
+import 'package:cargo_sort_game/core/navigation/game_route_names.dart';
 import 'package:cargo_sort_game/core/settings/app_settings_store.dart';
 import 'package:cargo_sort_game/core/storage/progress_store.dart';
+import 'package:cargo_sort_game/core/widgets/game_button.dart';
 import 'package:cargo_sort_game/core/widgets/game_fit_view.dart';
+import 'package:cargo_sort_game/features/game/game_screen.dart';
 import 'package:cargo_sort_game/features/game/level_data.dart';
 import 'package:cargo_sort_game/features/levels/city_briefing_screen.dart';
 import 'package:flutter/material.dart';
@@ -94,5 +99,36 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(find.byType(GameFitView), findsOneWidget);
     expect(find.text('Choose Mission Loadout'), findsOneWidget);
+  });
+
+  testWidgets('briefing replaces itself with the stable gameplay route', (
+    tester,
+  ) async {
+    await _pumpBriefing(
+      tester,
+      size: const Size(412, 915),
+      locale: const Locale('en'),
+    );
+
+    final startButton = find.ancestor(
+      of: find.text('START MISSION'),
+      matching: find.byType(GameButton),
+    );
+    expect(startButton, findsOneWidget);
+
+    final button = tester.widget<GameButton>(startButton);
+    expect(button.onPressed, isNotNull);
+    unawaited(Future<void>.sync(button.onPressed!.call));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+
+    expect(tester.takeException(), isNull);
+    expect(find.byType(GameScreen), findsOneWidget);
+    final gameContext = tester.element(find.byType(GameScreen));
+    expect(
+      ModalRoute.of(gameContext)?.settings.name,
+      GameRouteNames.game(levels.first.number),
+    );
+    expect(find.byType(CityBriefingScreen), findsNothing);
   });
 }
