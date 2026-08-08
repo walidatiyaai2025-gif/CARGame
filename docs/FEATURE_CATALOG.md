@@ -50,7 +50,7 @@ Codex must not mark a feature complete merely because UI code exists.
 | ENG-006 | Dependency and package governance | P1 | PLANNED | ENG-001 | Dependencies are reviewed, pinned sensibly, licensed, and upgrade policy is documented. |
 | ENG-007 | CI verification workflow | P1 | PLANNED | ENG-002 | CI runs format, analyze, tests, dashboard parser validation, debug build, and protected release checks. |
 | ENG-008 | Migration-safe local persistence | P0 | IMPLEMENTED | ENG-001 | Existing keys remain readable and new schema versions have tested safe defaults/migrations. |
-| ENG-009 | Environment and build configuration | P0 | PLANNED | ENG-002 | Debug/staging/release configuration is typed, documented, and contains no local paths or production secrets. |
+| ENG-009 | Environment and build configuration | P0 | IN PROGRESS | ENG-002 | RC audit #94 is hardening Android release configuration: release variants must use external non-test AdMob application configuration and external signing material, must never silently fall back to Google test app IDs or the debug signing key, and debug CI must remain unaffected. |
 | ENG-010 | Secret and credential handling | P0 | PLANNED | ENG-009 | No secret is committed; local/CI injection, rotation, and redaction rules are documented and tested. |
 | ENG-011 | Developer tooling and documentation | P1 | PLANNED | ENG-001 | Setup, run, repair, dashboard, release, and troubleshooting workflows are reproducible on a clean machine. |
 | ENG-012 | Analytics event schema and privacy gating | P1 | PLANNED | ENG-005, PRIV-001 | Versioned event names/properties exist; collection is disabled until consent/config permits it. |
@@ -331,17 +331,17 @@ Codex must not mark a feature complete merely because UI code exists.
 
 ## IN PROGRESS
 
-- None. UI3D-006 automated acceptance is complete; RC-001 now moves to the remaining P0/P1 runtime-blocker audit under issue #79.
+- `ENG-009` RC release configuration hardening under issue #94: remove test AdMob app configuration from release variants, eliminate debug signing fallback, and require external release inputs without breaking debug CI.
 
 ## NEXT READY
 
-1. `RC-001` Audit remaining P0/P1 runtime blockers and select the highest-priority unblocked catalog item.
+1. `RC-001` Continue the remaining P0/P1 runtime-blocker audit after ENG-009/#94.
 2. `TEST-001` Add progress/economy unit tests where RC audit confirms remaining integrity gaps.
 3. `AST-004` Implement bounded asset precache and memory policy on top of the existing typed registry when it becomes release-critical.
 
 ## BLOCKED
 
-- None recorded.
+- Release artifact verification will require external production AdMob application configuration and external signing material; neither belongs in source control.
 
 ## Recently verified
 
