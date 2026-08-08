@@ -3,9 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('uses viewport height when parent height is unbounded', (
-    tester,
-  ) async {
+  testWidgets('uses viewport for unbounded height', (tester) async {
     await tester.binding.setSurfaceSize(const Size(412, 915));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
