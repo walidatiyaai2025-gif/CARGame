@@ -21,7 +21,8 @@ class AdService {
   RewardedAd? _rewarded;
   InterstitialAd? _interstitial;
 
-  bool get rewardedReady => AppBuildConfig.current.enableAds && _rewarded != null;
+  bool get rewardedReady =>
+      AppBuildConfig.current.enableAds && _rewarded != null;
 
   void preload() {
     if (!AppBuildConfig.current.enableAds) return;
