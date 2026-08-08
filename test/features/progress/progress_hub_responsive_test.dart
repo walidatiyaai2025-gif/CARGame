@@ -19,6 +19,7 @@ Future<void> _pumpProgress(
   required Size size,
   required Locale locale,
   TextScaler textScaler = TextScaler.noScaling,
+  EdgeInsets padding = EdgeInsets.zero,
 }) async {
   await tester.binding.setSurfaceSize(size);
   addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -32,7 +33,12 @@ Future<void> _pumpProgress(
       supportedLocales: const [Locale('en'), Locale('ar')],
       localizationsDelegates: GlobalMaterialLocalizations.delegates,
       home: MediaQuery(
-        data: MediaQueryData(size: size, textScaler: textScaler),
+        data: MediaQueryData(
+          size: size,
+          textScaler: textScaler,
+          padding: padding,
+          viewPadding: padding,
+        ),
         child: ProgressHubScreen(store: store),
       ),
     ),
@@ -89,5 +95,26 @@ void main() {
 
     expect(tester.takeException(), isNull);
     expect(find.text('Achievements'), findsOneWidget);
+  });
+
+  testWidgets('progress hub respects cutout safe areas and remains reachable', (
+    tester,
+  ) async {
+    await _pumpProgress(
+      tester,
+      size: const Size(412, 915),
+      locale: const Locale('en'),
+      padding: const EdgeInsets.only(top: 48, left: 8, right: 8, bottom: 28),
+    );
+
+    expect(tester.takeException(), isNull);
+    expect(find.byType(SafeArea), findsWidgets);
+    expect(find.text('Player Progress'), findsOneWidget);
+
+    await tester.drag(find.byType(ListView), const Offset(0, -800));
+    await tester.pump();
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('Daily Mission'), findsOneWidget);
   });
 }
