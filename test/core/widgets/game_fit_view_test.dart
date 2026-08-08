@@ -69,7 +69,9 @@ void main() {
     );
   });
 
-  testWidgets('keeps bounded content stable on a tablet viewport', (tester) async {
+  testWidgets('keeps bounded content stable on a tablet viewport', (
+    tester,
+  ) async {
     await tester.binding.setSurfaceSize(const Size(1024, 1366));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -96,7 +98,9 @@ void main() {
     expect(find.byKey(const Key('tablet-content')), findsOneWidget);
   });
 
-  testWidgets('survives large text, cutouts and keyboard insets', (tester) async {
+  testWidgets('survives large text, cutouts and keyboard insets', (
+    tester,
+  ) async {
     await tester.binding.setSurfaceSize(const Size(412, 915));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
