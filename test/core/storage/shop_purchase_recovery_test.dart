@@ -36,72 +36,81 @@ void main() {
     expect(await prefs.containsKey(pendingPurchaseKey), isFalse);
   });
 
-  test('load completes an interrupted booster purchase idempotently', () async {
-    final prefs = SharedPreferencesAsync();
-    await prefs.setInt('coins', 100);
-    await prefs.setInt('booster_free_hints', 4);
-    await prefs.setString(
-      pendingPurchaseKey,
-      jsonEncode({
-        'version': 1,
-        'reason': 'booster:hint',
-        'values': {'booster_free_hints': 4, 'coins': 75},
-      }),
-    );
+  test(
+    'load completes an interrupted booster purchase idempotently',
+    () async {
+      final prefs = SharedPreferencesAsync();
+      await prefs.setInt('coins', 100);
+      await prefs.setInt('booster_free_hints', 4);
+      await prefs.setString(
+        pendingPurchaseKey,
+        jsonEncode({
+          'version': 1,
+          'reason': 'booster:hint',
+          'values': {'booster_free_hints': 4, 'coins': 75},
+        }),
+      );
 
-    final recovered = ProgressStore();
-    await recovered.load();
-    expect(recovered.coins, 75);
-    expect(recovered.freeHints, 4);
-    expect(await prefs.containsKey(pendingPurchaseKey), isFalse);
+      final recovered = ProgressStore();
+      await recovered.load();
+      expect(recovered.coins, 75);
+      expect(recovered.freeHints, 4);
+      expect(await prefs.containsKey(pendingPurchaseKey), isFalse);
 
-    final secondLoad = ProgressStore();
-    await secondLoad.load();
-    expect(secondLoad.coins, 75);
-    expect(secondLoad.freeHints, 4);
-  });
+      final secondLoad = ProgressStore();
+      await secondLoad.load();
+      expect(secondLoad.coins, 75);
+      expect(secondLoad.freeHints, 4);
+    },
+  );
 
-  test('load completes an interrupted theme purchase without double debit', () async {
-    final prefs = SharedPreferencesAsync();
-    await prefs.setInt('coins', 100);
-    await prefs.setStringList('unlocked_shop_themes', ['classic', 'sunset']);
-    await prefs.setString('selected_shop_theme', 'classic');
-    await prefs.setString(
-      pendingPurchaseKey,
-      jsonEncode({
-        'version': 1,
-        'reason': 'theme:sunset',
-        'values': {
-          'unlocked_shop_themes': ['classic', 'sunset'],
-          'selected_shop_theme': 'sunset',
-          'coins': 40,
-        },
-      }),
-    );
+  test(
+    'load completes an interrupted theme purchase without double debit',
+    () async {
+      final prefs = SharedPreferencesAsync();
+      await prefs.setInt('coins', 100);
+      await prefs.setStringList('unlocked_shop_themes', ['classic', 'sunset']);
+      await prefs.setString('selected_shop_theme', 'classic');
+      await prefs.setString(
+        pendingPurchaseKey,
+        jsonEncode({
+          'version': 1,
+          'reason': 'theme:sunset',
+          'values': {
+            'unlocked_shop_themes': ['classic', 'sunset'],
+            'selected_shop_theme': 'sunset',
+            'coins': 40,
+          },
+        }),
+      );
 
-    final recovered = ProgressStore();
-    await recovered.load();
-    expect(recovered.coins, 40);
-    expect(recovered.isThemeUnlocked('sunset'), isTrue);
-    expect(recovered.selectedTheme, 'sunset');
-    expect(await prefs.containsKey(pendingPurchaseKey), isFalse);
+      final recovered = ProgressStore();
+      await recovered.load();
+      expect(recovered.coins, 40);
+      expect(recovered.isThemeUnlocked('sunset'), isTrue);
+      expect(recovered.selectedTheme, 'sunset');
+      expect(await prefs.containsKey(pendingPurchaseKey), isFalse);
 
-    final secondLoad = ProgressStore();
-    await secondLoad.load();
-    expect(secondLoad.coins, 40);
-    expect(secondLoad.isThemeUnlocked('sunset'), isTrue);
-    expect(secondLoad.selectedTheme, 'sunset');
-  });
+      final secondLoad = ProgressStore();
+      await secondLoad.load();
+      expect(secondLoad.coins, 40);
+      expect(secondLoad.isThemeUnlocked('sunset'), isTrue);
+      expect(secondLoad.selectedTheme, 'sunset');
+    },
+  );
 
-  test('malformed pending purchase is discarded without changing wallet', () async {
-    final prefs = SharedPreferencesAsync();
-    await prefs.setInt('coins', 90);
-    await prefs.setString(pendingPurchaseKey, '{not-json');
+  test(
+    'malformed pending purchase is discarded without changing wallet',
+    () async {
+      final prefs = SharedPreferencesAsync();
+      await prefs.setInt('coins', 90);
+      await prefs.setString(pendingPurchaseKey, '{not-json');
 
-    final store = ProgressStore();
-    await store.load();
+      final store = ProgressStore();
+      await store.load();
 
-    expect(store.coins, 90);
-    expect(await prefs.containsKey(pendingPurchaseKey), isFalse);
-  });
+      expect(store.coins, 90);
+      expect(await prefs.containsKey(pendingPurchaseKey), isFalse);
+    },
+  );
 }
