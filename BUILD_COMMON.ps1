@@ -243,10 +243,14 @@ function Invoke-FlutterBuildWithRetry {
     Invoke-NativeChecked 'flutter' @('pub','get') $ProjectRoot
     Invoke-NativeChecked 'flutter' @('analyze','--no-fatal-infos','--no-fatal-warnings') $ProjectRoot
 
+    $releaseRuntimeDefines = @(
+        '--dart-define=APP_ENV=release',
+        '--dart-define=ENABLE_ADS=false'
+    )
     $args = switch ($Mode) {
         'debug' { @('build','apk','--debug','--no-pub') }
-        'release' { @('build','apk','--release','--no-pub') }
-        'aab' { @('build','appbundle','--release','--no-pub') }
+        'release' { @('build','apk','--release','--no-pub') + $releaseRuntimeDefines }
+        'aab' { @('build','appbundle','--release','--no-pub') + $releaseRuntimeDefines }
     }
 
     try {
