@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../core/navigation/game_navigator.dart';
+import '../../core/navigation/game_route_names.dart';
 import '../../core/settings/app_settings_store.dart';
 import '../../core/storage/progress_store.dart';
 import '../../core/theme/game_skin.dart';
@@ -49,18 +51,18 @@ class _CityBriefingScreenState extends State<CityBriefingScreen> {
       }
 
       if (!mounted) return;
-      await Navigator.of(context).pushReplacement(
-        MaterialPageRoute<void>(
-          builder: (_) => GameScreen(
-            level: widget.level,
-            store: widget.store,
-            hapticsEnabled: widget.settings.vibrationEnabled,
-            soundEnabled: widget.settings.soundEnabled,
-            loadout: MissionLoadout(
-              smartHint: _hint,
-              extraMoves: _moves,
-              comboShield: _shield,
-            ),
+      await GameNavigator.replaceNamed<void, void>(
+        context,
+        name: GameRouteNames.game(widget.level.number),
+        builder: (_) => GameScreen(
+          level: widget.level,
+          store: widget.store,
+          hapticsEnabled: widget.settings.vibrationEnabled,
+          soundEnabled: widget.settings.soundEnabled,
+          loadout: MissionLoadout(
+            smartHint: _hint,
+            extraMoves: _moves,
+            comboShield: _shield,
           ),
         ),
       );
