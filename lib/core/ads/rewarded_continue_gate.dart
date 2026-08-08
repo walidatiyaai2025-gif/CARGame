@@ -1,8 +1,4 @@
-enum RewardedContinueOutcome {
-  unavailable,
-  started,
-  rewarded,
-}
+enum RewardedContinueOutcome { unavailable, started, rewarded }
 
 /// Coordinates the loss-screen rewarded-continue flow without mutating
 /// gameplay state until the ad SDK confirms a real reward.
