@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 
 import 'recovering_preferences.dart';
@@ -33,6 +35,7 @@ class ProgressStore extends ChangeNotifier {
   static const _freeHintsKey = 'booster_free_hints';
   static const _extraMovesKey = 'booster_extra_moves';
   static const _comboShieldsKey = 'booster_combo_shields';
+  static const _pendingShopPurchaseKey = 'pending_shop_purchase_v1';
 
   final RecoveringPreferences _prefs = RecoveringPreferences();
   final Map<int, int> _levelStars = <int, int>{};
@@ -64,6 +67,7 @@ class ProgressStore extends ChangeNotifier {
   String? _lastDailyRewardDate;
   String? _missionDate;
   DateTime? _heartRefillTimestamp;
+  bool _purchaseBusy = false;
 
   int get completedLevels => (highestUnlockedLevel - 1).clamp(0, totalLevels);
   double get completionProgress => completedLevels / totalLevels;
@@ -98,6 +102,8 @@ class ProgressStore extends ChangeNotifier {
   }
 
   Future<void> load() async {
+    await _recoverPendingShopPurchase();
+
     highestUnlockedLevel = (await _prefs.getInt(_levelKey) ?? 1).clamp(
       1,
       totalLevels,
@@ -324,39 +330,168 @@ class ProgressStore extends ChangeNotifier {
   }
 
   Future<bool> purchaseTheme(String themeId, int price) async {
-    if (!unlockedThemes.contains(themeId)) {
-      final paid = await spendCoins(price);
-      if (!paid) return false;
-      unlockedThemes.add(themeId);
-      await _prefs.setStringList(_unlockedThemesKey, unlockedThemes.toList());
+    if (_purchaseBusy) return false;
+    _purchaseBusy = true;
+    try {
+      if (unlockedThemes.contains(themeId)) {
+        selectedTheme = themeId;
+        await _prefs.setString(_selectedThemeKey, selectedTheme);
+        notifyListeners();
+        return true;
+      }
+      if (price <= 0 || coins < price) return false;
+
+      final finalCoins = coins - price;
+      final finalThemes = <String>{...unlockedThemes, themeId};
+      await _commitShopPurchase('theme:$themeId', <String, Object?>{
+        _unlockedThemesKey: finalThemes.toList(),
+        _selectedThemeKey: themeId,
+        _coinsKey: finalCoins,
+      });
+
+      unlockedThemes = finalThemes;
+      selectedTheme = themeId;
+      coins = finalCoins;
+      notifyListeners();
+      return true;
+    } finally {
+      _purchaseBusy = false;
     }
-    selectedTheme = themeId;
-    await _prefs.setString(_selectedThemeKey, selectedTheme);
-    notifyListeners();
-    return true;
   }
 
   Future<bool> purchaseBooster(String boosterId, int amount, int price) async {
     if (!const {'hint', 'moves', 'shield'}.contains(boosterId)) {
       throw ArgumentError.value(boosterId, 'boosterId');
     }
-    if (amount <= 0) return false;
-
-    final paid = await spendCoins(price);
-    if (!paid) return false;
-    switch (boosterId) {
-      case 'hint':
-        freeHints += amount;
-        await _prefs.setInt(_freeHintsKey, freeHints);
-      case 'moves':
-        extraMovesBoosters += amount;
-        await _prefs.setInt(_extraMovesKey, extraMovesBoosters);
-      case 'shield':
-        comboShields += amount;
-        await _prefs.setInt(_comboShieldsKey, comboShields);
+    if (amount <= 0 || price <= 0 || coins < price || _purchaseBusy) {
+      return false;
     }
-    notifyListeners();
-    return true;
+
+    _purchaseBusy = true;
+    try {
+      final finalCoins = coins - price;
+      final inventoryKey = switch (boosterId) {
+        'hint' => _freeHintsKey,
+        'moves' => _extraMovesKey,
+        'shield' => _comboShieldsKey,
+        _ => throw StateError('Unsupported booster: $boosterId'),
+      };
+      final currentInventory = switch (boosterId) {
+        'hint' => freeHints,
+        'moves' => extraMovesBoosters,
+        'shield' => comboShields,
+        _ => throw StateError('Unsupported booster: $boosterId'),
+      };
+      final finalInventory = currentInventory + amount;
+
+      await _commitShopPurchase('booster:$boosterId', <String, Object?>{
+        inventoryKey: finalInventory,
+        _coinsKey: finalCoins,
+      });
+
+      coins = finalCoins;
+      switch (boosterId) {
+        case 'hint':
+          freeHints = finalInventory;
+        case 'moves':
+          extraMovesBoosters = finalInventory;
+        case 'shield':
+          comboShields = finalInventory;
+      }
+      notifyListeners();
+      return true;
+    } finally {
+      _purchaseBusy = false;
+    }
+  }
+
+  Future<void> _commitShopPurchase(
+    String reason,
+    Map<String, Object?> values,
+  ) async {
+    final validated = _validateShopPurchaseValues(values);
+    final journal = <String, Object?>{
+      'version': 1,
+      'reason': reason,
+      'values': validated,
+    };
+    await _prefs.setString(_pendingShopPurchaseKey, jsonEncode(journal));
+    await _applyShopPurchaseValues(validated);
+    await _prefs.remove(_pendingShopPurchaseKey);
+  }
+
+  Future<void> _recoverPendingShopPurchase() async {
+    final payload = await _prefs.getString(_pendingShopPurchaseKey);
+    if (payload == null) return;
+
+    try {
+      final decoded = jsonDecode(payload);
+      if (decoded is! Map<String, dynamic> || decoded['version'] != 1) {
+        throw const FormatException('Unsupported shop purchase journal.');
+      }
+      final rawValues = decoded['values'];
+      if (rawValues is! Map<String, dynamic>) {
+        throw const FormatException('Shop purchase journal has no values.');
+      }
+      final values = _validateShopPurchaseValues(rawValues);
+      await _applyShopPurchaseValues(values);
+      await _prefs.remove(_pendingShopPurchaseKey);
+    } on FormatException {
+      await _prefs.remove(_pendingShopPurchaseKey);
+    }
+  }
+
+  Map<String, Object?> _validateShopPurchaseValues(Map values) {
+    final validated = <String, Object?>{};
+    for (final entry in values.entries) {
+      final key = entry.key;
+      final value = entry.value;
+      if (key is! String) {
+        throw const FormatException('Shop purchase key must be a string.');
+      }
+      switch (key) {
+        case _coinsKey:
+        case _freeHintsKey:
+        case _extraMovesKey:
+        case _comboShieldsKey:
+          if (value is! int || value < 0) {
+            throw FormatException('Invalid non-negative integer for $key.');
+          }
+          validated[key] = value;
+        case _selectedThemeKey:
+          if (value is! String || value.isEmpty) {
+            throw const FormatException('Invalid selected theme.');
+          }
+          validated[key] = value;
+        case _unlockedThemesKey:
+          if (value is! List || value.any((item) => item is! String)) {
+            throw const FormatException('Invalid unlocked themes.');
+          }
+          final themes = value.cast<String>().toSet()..add('classic');
+          validated[key] = themes.toList();
+        default:
+          throw FormatException('Unsupported shop purchase key: $key');
+      }
+    }
+    if (!validated.containsKey(_coinsKey)) {
+      throw const FormatException('Shop purchase journal has no wallet value.');
+    }
+    return validated;
+  }
+
+  Future<void> _applyShopPurchaseValues(Map<String, Object?> values) async {
+    for (final entry in values.entries) {
+      final value = entry.value;
+      if (value is int) {
+        await _prefs.setInt(entry.key, value);
+      } else if (value is String) {
+        await _prefs.setString(entry.key, value);
+      } else if (value is List<String>) {
+        await _prefs.setStringList(entry.key, value);
+      } else {
+        throw FormatException('Unsupported shop purchase value: ${entry.key}');
+      }
+    }
   }
 
   Future<bool> useFreeHint() async {
