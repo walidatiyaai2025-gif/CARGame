@@ -17,6 +17,8 @@ Future<void> _pumpShop(
   WidgetTester tester, {
   required Size size,
   TextScaler textScaler = TextScaler.noScaling,
+  TextDirection textDirection = TextDirection.ltr,
+  EdgeInsets padding = EdgeInsets.zero,
 }) async {
   await tester.binding.setSurfaceSize(size);
   addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -26,9 +28,17 @@ Future<void> _pumpShop(
 
   await tester.pumpWidget(
     MaterialApp(
-      home: MediaQuery(
-        data: MediaQueryData(size: size, textScaler: textScaler),
-        child: ShopScreen(store: store),
+      home: Directionality(
+        textDirection: textDirection,
+        child: MediaQuery(
+          data: MediaQueryData(
+            size: size,
+            textScaler: textScaler,
+            padding: padding,
+            viewPadding: padding,
+          ),
+          child: ShopScreen(store: store),
+        ),
       ),
     ),
   );
@@ -65,6 +75,45 @@ void main() {
     expect(find.text('Available balance'), findsOneWidget);
 
     await tester.drag(find.byType(ListView), const Offset(0, -1200));
+    await tester.pump();
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('Visual Themes'), findsOneWidget);
+  });
+
+  testWidgets('shop remains overflow-free in RTL on a tall phone', (
+    tester,
+  ) async {
+    await _pumpShop(
+      tester,
+      size: const Size(412, 915),
+      textDirection: TextDirection.rtl,
+    );
+
+    expect(tester.takeException(), isNull);
+    expect(find.byType(ListView), findsOneWidget);
+
+    await tester.drag(find.byType(ListView), const Offset(0, -1400));
+    await tester.pump();
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('Visual Themes'), findsOneWidget);
+  });
+
+  testWidgets('shop respects cutout safe area and keeps content reachable', (
+    tester,
+  ) async {
+    await _pumpShop(
+      tester,
+      size: const Size(412, 915),
+      padding: const EdgeInsets.only(top: 48, left: 8, right: 8, bottom: 28),
+    );
+
+    expect(tester.takeException(), isNull);
+    expect(find.byType(SafeArea), findsWidgets);
+    expect(find.byType(ListView), findsOneWidget);
+
+    await tester.drag(find.byType(ListView), const Offset(0, -1400));
     await tester.pump();
 
     expect(tester.takeException(), isNull);
