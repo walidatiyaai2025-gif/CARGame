@@ -20,23 +20,27 @@ void main() {
     TextScaler textScaler = TextScaler.noScaling,
     EdgeInsets padding = EdgeInsets.zero,
     EdgeInsets viewInsets = EdgeInsets.zero,
+    TextDirection textDirection = TextDirection.ltr,
   }) async {
     await tester.binding.setSurfaceSize(size);
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     await tester.pumpWidget(
       MaterialApp(
-        home: MediaQuery(
-          data: MediaQueryData(
-            size: size,
-            textScaler: textScaler,
-            padding: padding,
-            viewPadding: padding,
-            viewInsets: viewInsets,
-          ),
-          child: SettingsScreen(
-            settings: AppSettingsStore(),
-            onToggleLanguage: () {},
+        home: Directionality(
+          textDirection: textDirection,
+          child: MediaQuery(
+            data: MediaQueryData(
+              size: size,
+              textScaler: textScaler,
+              padding: padding,
+              viewPadding: padding,
+              viewInsets: viewInsets,
+            ),
+            child: SettingsScreen(
+              settings: AppSettingsStore(),
+              onToggleLanguage: () {},
+            ),
           ),
         ),
       ),
@@ -62,7 +66,9 @@ void main() {
     );
   }
 
-  testWidgets('settings tolerates large text on a compact phone', (tester) async {
+  testWidgets('settings tolerates large text on a compact phone', (
+    tester,
+  ) async {
     await pumpSettings(
       tester,
       size: const Size(360, 640),
@@ -74,7 +80,9 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('settings respects cutout safe area without overflow', (tester) async {
+  testWidgets('settings respects cutout safe area without overflow', (
+    tester,
+  ) async {
     await pumpSettings(
       tester,
       size: const Size(360, 640),
@@ -97,6 +105,21 @@ void main() {
 
     expect(find.byType(GameFitView), findsOneWidget);
     expect(find.byType(ListView), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('settings remains overflow-free in RTL layout', (tester) async {
+    await pumpSettings(
+      tester,
+      size: const Size(412, 915),
+      textDirection: TextDirection.rtl,
+    );
+
+    final fitView = find.byType(GameFitView);
+    expect(fitView, findsOneWidget);
+    expect(find.byType(ListView), findsNothing);
+    expect(find.byType(SingleChildScrollView), findsNothing);
+    expect(Directionality.of(tester.element(fitView)), TextDirection.rtl);
     expect(tester.takeException(), isNull);
   });
 }
