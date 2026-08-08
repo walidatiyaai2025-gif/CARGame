@@ -11,9 +11,7 @@ void main() {
       const MaterialApp(
         home: Scaffold(
           body: SingleChildScrollView(
-            child: GameFitView(
-              child: SizedBox(width: 800, height: 1200),
-            ),
+            child: GameFitView(child: SizedBox(width: 800, height: 1200)),
           ),
         ),
       ),
