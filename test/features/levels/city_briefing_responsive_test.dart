@@ -1,3 +1,4 @@
+import 'package:cargo_sort_game/core/navigation/game_route_names.dart';
 import 'package:cargo_sort_game/core/settings/app_settings_store.dart';
 import 'package:cargo_sort_game/core/storage/progress_store.dart';
 import 'package:cargo_sort_game/core/widgets/game_fit_view.dart';
@@ -22,6 +23,7 @@ Future<void> _pumpBriefing(
   required Size size,
   required Locale locale,
   TextScaler textScaler = TextScaler.noScaling,
+  List<NavigatorObserver> navigatorObservers = const <NavigatorObserver>[],
 }) async {
   await tester.binding.setSurfaceSize(size);
   addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -36,6 +38,7 @@ Future<void> _pumpBriefing(
       locale: locale,
       supportedLocales: const [Locale('en'), Locale('ar')],
       localizationsDelegates: GlobalMaterialLocalizations.delegates,
+      navigatorObservers: navigatorObservers,
       home: MediaQuery(
         data: MediaQueryData(size: size, textScaler: textScaler),
         child: CityBriefingScreen(
@@ -95,4 +98,39 @@ void main() {
     expect(find.byType(GameFitView), findsOneWidget);
     expect(find.text('Choose Mission Loadout'), findsOneWidget);
   });
+
+  testWidgets('briefing replaces itself with the stable gameplay route', (
+    tester,
+  ) async {
+    String? observedRouteName;
+
+    await _pumpBriefing(
+      tester,
+      size: const Size(412, 915),
+      locale: const Locale('en'),
+      navigatorObservers: [
+        _RouteNameObserver((name) => observedRouteName = name),
+      ],
+    );
+
+    await tester.tap(find.text('START MISSION'));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+
+    expect(tester.takeException(), isNull);
+    expect(observedRouteName, GameRouteNames.game(levels.first.number));
+    expect(find.byType(CityBriefingScreen), findsNothing);
+  });
+}
+
+final class _RouteNameObserver extends NavigatorObserver {
+  _RouteNameObserver(this.onName);
+
+  final ValueChanged<String?> onName;
+
+  @override
+  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    onName(route.settings.name);
+    super.didPush(route, previousRoute);
+  }
 }
