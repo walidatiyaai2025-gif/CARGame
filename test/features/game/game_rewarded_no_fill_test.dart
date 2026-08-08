@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:cargo_sort_game/core/ads/ad_service.dart';
 import 'package:cargo_sort_game/core/motion/game_action_feedback.dart';
 import 'package:cargo_sort_game/core/storage/progress_store.dart';
+import 'package:cargo_sort_game/core/widgets/game_button.dart';
 import 'package:cargo_sort_game/features/game/game_screen.dart';
 import 'package:cargo_sort_game/features/game/level_data.dart';
 import 'package:flutter/material.dart';
@@ -63,22 +64,32 @@ void main() {
     await _pumpUntil(tester, watchAd);
     expect(retry, findsOneWidget);
 
-    final resultScrollable = find.ancestor(
+    final rewardedButton = find.ancestor(
       of: watchAd,
+      matching: find.byType(GameButton),
+    );
+    expect(rewardedButton, findsOneWidget);
+
+    final resultScrollable = find.ancestor(
+      of: rewardedButton,
       matching: find.byType(Scrollable),
     );
     expect(resultScrollable, findsWidgets);
 
     await tester.scrollUntilVisible(
-      watchAd,
+      rewardedButton,
       250,
       scrollable: resultScrollable.last,
     );
     await tester.pump(const Duration(milliseconds: 200));
 
-    final visibleWatchAd = watchAd.hitTestable();
-    expect(visibleWatchAd, findsOneWidget);
-    await tester.tap(visibleWatchAd);
+    final rewardedInkWell = find.descendant(
+      of: rewardedButton,
+      matching: find.byType(InkWell),
+    );
+    final visibleRewardedInkWell = rewardedInkWell.hitTestable();
+    expect(visibleRewardedInkWell, findsOneWidget);
+    await tester.tap(visibleRewardedInkWell);
     await tester.pump();
 
     expect(ads.showRewardedCalls, 1);
