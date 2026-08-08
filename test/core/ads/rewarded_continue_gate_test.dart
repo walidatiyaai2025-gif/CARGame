@@ -6,10 +6,7 @@ void main() {
     test('keeps loss result available when no rewarded ad starts', () {
       final gate = RewardedContinueGate();
 
-      expect(
-        gate.markStart(false),
-        RewardedContinueOutcome.unavailable,
-      );
+      expect(gate.markStart(false), RewardedContinueOutcome.unavailable);
       expect(gate.started, isFalse);
       expect(gate.rewarded, isFalse);
     });
@@ -25,10 +22,7 @@ void main() {
     test('cannot grant a reward before the ad started', () {
       final gate = RewardedContinueGate();
 
-      expect(
-        gate.markRewarded(),
-        RewardedContinueOutcome.unavailable,
-      );
+      expect(gate.markRewarded(), RewardedContinueOutcome.unavailable);
       expect(gate.rewarded, isFalse);
     });
 
