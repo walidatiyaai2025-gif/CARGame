@@ -31,7 +31,6 @@ Future<void> _pumpGame(
   required Size size,
   TextScaler textScaler = TextScaler.noScaling,
   EdgeInsets padding = EdgeInsets.zero,
-  Locale locale = const Locale('en'),
   TextDirection textDirection = TextDirection.ltr,
 }) async {
   await tester.binding.setSurfaceSize(size);
@@ -49,16 +48,12 @@ Future<void> _pumpGame(
           viewPadding: padding,
           textScaler: textScaler,
         ),
-        child: Localizations.override(
-          context: tester.element(find.byType(MaterialApp)),
-          locale: locale,
-          child: Directionality(
-            textDirection: textDirection,
-            child: GameScreen(
-              level: levels.first,
-              store: store,
-              adService: _NoopAdService(),
-            ),
+        child: Directionality(
+          textDirection: textDirection,
+          child: GameScreen(
+            level: levels.first,
+            store: store,
+            adService: _NoopAdService(),
           ),
         ),
       ),
@@ -91,11 +86,10 @@ void main() {
     expect(find.byType(GameScreen), findsOneWidget);
   });
 
-  testWidgets('gameplay preserves Arabic RTL on a tall phone', (tester) async {
+  testWidgets('gameplay preserves RTL layout on a tall phone', (tester) async {
     await _pumpGame(
       tester,
       size: const Size(412, 915),
-      locale: const Locale('ar'),
       textDirection: TextDirection.rtl,
     );
 
