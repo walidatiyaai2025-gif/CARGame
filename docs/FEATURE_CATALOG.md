@@ -66,7 +66,7 @@ Codex must not mark a feature complete merely because UI code exists.
 | UI3D-003 | Reusable 3D button system | P1 | IMPLEMENTED | UI3D-001, MOT-001 | Shared `GameButton` provides depth, spring release, hover, disabled/loading states, ripple, haptics, sound hook, async tap guard, RTL, semantics, theme inputs, and focused widget tests; full CTA adoption remains. |
 | UI3D-004 | Reusable 3D card and panel system | P1 | IMPLEMENTED | UI3D-001 | `GamePanel`, `GameResourcePanel`, `GameActionPanel`, `GameStatPanel`, and `GameHeroPanel` provide shared depth, highlights, border, clipping, loading/error states, semantics and interaction; adopted in Home, Shop, and Progress Hub with regression tests; latest Flutter CI/device verification pending. |
 | UI3D-005 | Resource chips | P1 | IMPLEMENTED | UI3D-002 | Heart, coin, star, XP, and booster chips use shared rules; full-screen adoption remains. |
-| UI3D-006 | Responsive screen shell and safe areas | P0 | IN PROGRESS | UI3D-001 | Shared `GameFitView` keeps bounded screens visible without scroll and is adopted by Home and Mission Briefing; 360x640/412x915 regression coverage, tablets, large text, keyboard, cutouts, and remaining short screens still require validation. |
+| UI3D-006 | Responsive screen shell and safe areas | P0 | VERIFIED | UI3D-001 | Shared `GameFitView` keeps bounded screens visible without unnecessary scroll; automated coverage spans compact/reference/tablet viewports, large text, keyboard/view insets, safe-area cutouts and RTL. Gameplay/result, Shop, Progress Hub and Settings checkpoints through PRs #86–#92 passed formatting, Analyze, full Flutter tests, Debug APK build and artifact upload. Physical-device visual review remains under the broader RC/device verification work, not this feature. |
 | UI3D-007 | Reduced motion and low-performance visual mode | P1 | PLANNED | MOT-001 | User setting and automatic graceful degradation affect all shared visual effects. |
 | UI3D-008 | Remove production emoji and primary flat icons | P1 | PLANNED | AST-001 | Primary game visuals use approved 3D assets/components with accessible fallbacks. |
 | UI3D-009 | Loading, empty, error, and retry visual states | P1 | PLANNED | UI3D-004 | Shared states are consistent, localized, responsive, and do not block offline core play. |
@@ -115,7 +115,7 @@ Codex must not mark a feature complete merely because UI code exists.
 | HOME-005 | Daily mission entry | P1 | IMPLEMENTED | RET-002 | Progress and claim state are visible; final design/motion remains. |
 | HOME-006 | Shop and progress navigation | P1 | IMPLEMENTED | SHOP-001, PROG-001 | Navigation exists and must adopt shared transitions. |
 | NAV-001 | Navigation guard framework | P0 | IMPLEMENTED | ENG-003 | Double push/pop and result action races are prevented; regression tests remain. |
-| NAV-002 | Unified animated route transitions | P1 | IMPLEMENTED | MOT-004 | Home/app-shell Journey, Shop, Progress, Logs, Settings, and runtime Log Viewer now use `GameNavigator` with stable names and duplicate-push guards; PR #62 merged after Flutter CI #433 passed full tests, debug APK build, and artifact upload. Briefing/game/result adoption plus complete RTL/back-stack validation remain. |
+| NAV-002 | Unified animated route transitions | P1 | IMPLEMENTED | MOT-004 | Home/app-shell Journey, Shop, Progress, Logs, Settings, and runtime Log Viewer now use `GameNavigator` with stable names and duplicate-push guards; Mission Briefing→Gameplay also uses the shared named route. Result/back-guard regression coverage is present; broader device validation remains in RC-001. |
 | NAV-003 | Deep-link and notification route safety | P2 | PLANNED | NAV-001, RET-008 | External entry opens only allowed destinations and never duplicates navigation. |
 | HOME-007 | First-run onboarding and returning-player resume | P1 | PLANNED | GAME-013, ENG-008 | New players receive concise onboarding; returning players resume the correct journey safely. |
 
@@ -331,13 +331,13 @@ Codex must not mark a feature complete merely because UI code exists.
 
 ## IN PROGRESS
 
-- `UI3D-006` remains the sole active catalog item from the responsive-shell workstream.
+- None. UI3D-006 automated acceptance is complete; RC-001 now moves to the remaining P0/P1 runtime-blocker audit under issue #79.
 
 ## NEXT READY
 
-1. `NAV-002` Continue the remaining briefing/game/result route adoption and complete RTL/back-stack validation.
-2. `TEST-001` Add progress/economy unit tests.
-3. `AST-004` Implement bounded asset precache and memory policy on top of the existing typed registry.
+1. `RC-001` Audit remaining P0/P1 runtime blockers and select the highest-priority unblocked catalog item.
+2. `TEST-001` Add progress/economy unit tests where RC audit confirms remaining integrity gaps.
+3. `AST-004` Implement bounded asset precache and memory policy on top of the existing typed registry when it becomes release-critical.
 
 ## BLOCKED
 
@@ -345,12 +345,13 @@ Codex must not mark a feature complete merely because UI code exists.
 
 ## Recently verified
 
+- `UI3D-006` Responsive screen shell and safe areas — shared fit-shell acceptance plus compact/reference/tablet, large-text, cutout/view-inset, RTL, gameplay/result and scrollable-screen regressions passed through PRs #86–#92; latest CI #522 built and uploaded the Debug APK successfully.
 - `AST-001` Asset folder taxonomy and naming standard — production paths, stable names/IDs, render profiles, lighting, export budgets, accessibility, and provenance handoff are documented and mechanically validated.
 - `ENG-001` Repository audit and baseline — architecture, commands, tooling, assets, persistence keys, debt, and risks are recorded in human- and machine-readable evidence.
 
 ## Recently implemented
 
-- `NAV-002` Home/app-shell checkpoint — Journey, Shop, Progress, Logs, Settings, and runtime Log Viewer now use the shared guarded navigator; PR #62 merged after Flutter CI #433 passed the full suite, Debug APK build, and artifact upload. Remaining briefing/game/result adoption and full RTL/back-stack validation stay open under NAV-002.
+- `NAV-002` Shared route adoption — Home/app-shell and Mission Briefing→Gameplay use the guarded navigator with stable route names; result/back-guard regression coverage is present, while device-wide RC validation remains under #79.
 - `AST-002` Asset manifest and typed registry — typed asset metadata, manifest, and registry implementation plus focused tests are present; release/device verification remains before VERIFIED.
 - `AST-003` Missing-asset fallback — runtime asset views provide visible fallback behavior with focused widget coverage; release/device verification remains before VERIFIED.
 - `MOT-004` Screen transitions — shared RTL-aware route motion, Reduced Motion fallback, central navigator façade, duplicate-push guards, named World Map→Briefing integration, and focused navigation tests added; latest Flutter CI/device verification pending.
