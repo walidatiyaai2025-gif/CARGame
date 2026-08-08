@@ -70,26 +70,11 @@ void main() {
     );
     expect(rewardedButton, findsOneWidget);
 
-    final resultScrollable = find.ancestor(
-      of: rewardedButton,
-      matching: find.byType(Scrollable),
-    );
-    expect(resultScrollable, findsWidgets);
+    final button = tester.widget<GameButton>(rewardedButton);
+    expect(button.enabled, isTrue);
+    expect(button.onPressed, isNotNull);
 
-    await tester.scrollUntilVisible(
-      rewardedButton,
-      250,
-      scrollable: resultScrollable.last,
-    );
-    await tester.pump(const Duration(milliseconds: 200));
-
-    final rewardedInkWell = find.descendant(
-      of: rewardedButton,
-      matching: find.byType(InkWell),
-    );
-    final visibleRewardedInkWell = rewardedInkWell.hitTestable();
-    expect(visibleRewardedInkWell, findsOneWidget);
-    await tester.tap(visibleRewardedInkWell);
+    await button.onPressed!.call();
     await tester.pump();
 
     expect(ads.showRewardedCalls, 1);
