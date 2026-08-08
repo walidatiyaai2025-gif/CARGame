@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:cargo_sort_game/core/ads/ad_service.dart';
 import 'package:cargo_sort_game/core/motion/game_action_feedback.dart';
 import 'package:cargo_sort_game/core/storage/progress_store.dart';
@@ -33,6 +35,9 @@ void main() {
       items: [first, second],
       difficulty: 1,
     );
+    final shuffled = [...level.items]..shuffle(Random(level.number * 41));
+    final selected = shuffled.first;
+    final wrongWarehouse = selected.id == first.id ? second : first;
 
     await tester.pumpWidget(
       MaterialApp(
@@ -46,9 +51,9 @@ void main() {
     );
     await tester.pump();
 
-    await tester.tap(find.byKey(ValueKey('cargo-${first.id}-0')));
+    await tester.tap(find.byKey(ValueKey('cargo-${selected.id}-0')));
     await tester.pump();
-    await tester.tap(find.byKey(ValueKey('warehouse-${second.id}')));
+    await tester.tap(find.byKey(ValueKey('warehouse-${wrongWarehouse.id}')));
 
     await _pumpUntil(tester, find.byType(GameActionFeedback));
     await _pumpUntilAbsent(tester, find.byType(GameActionFeedback));
