@@ -21,6 +21,8 @@ class AdService {
   RewardedAd? _rewarded;
   InterstitialAd? _interstitial;
 
+  bool get rewardedReady => AppBuildConfig.current.enableAds && _rewarded != null;
+
   void preload() {
     if (!AppBuildConfig.current.enableAds) return;
     _loadRewarded();
@@ -51,25 +53,24 @@ class AdService {
     );
   }
 
-  void showRewarded({required void Function() onReward}) {
-    if (!AppBuildConfig.current.enableAds) return;
+  bool showRewarded({required void Function() onReward}) {
+    if (!AppBuildConfig.current.enableAds) return false;
 
     final ad = _rewarded;
     if (ad == null) {
       _loadRewarded();
-      return;
+      return false;
     }
 
     final rewardGuard = RewardGrantGuard();
+    _rewarded = null;
     ad.fullScreenContentCallback = FullScreenContentCallback(
       onAdDismissedFullScreenContent: (ad) {
         ad.dispose();
-        _rewarded = null;
         _loadRewarded();
       },
       onAdFailedToShowFullScreenContent: (ad, _) {
         ad.dispose();
-        _rewarded = null;
         _loadRewarded();
       },
     );
@@ -80,6 +81,7 @@ class AdService {
         }
       },
     );
+    return true;
   }
 
   void showInterstitial() {
@@ -90,15 +92,14 @@ class AdService {
       _loadInterstitial();
       return;
     }
+    _interstitial = null;
     ad.fullScreenContentCallback = FullScreenContentCallback(
       onAdDismissedFullScreenContent: (ad) {
         ad.dispose();
-        _interstitial = null;
         _loadInterstitial();
       },
       onAdFailedToShowFullScreenContent: (ad, _) {
         ad.dispose();
-        _interstitial = null;
         _loadInterstitial();
       },
     );
