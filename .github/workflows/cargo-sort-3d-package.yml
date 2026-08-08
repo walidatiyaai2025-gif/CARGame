@@ -1,0 +1,49 @@
+name: Cargo Sort 3D Package
+
+on:
+  push:
+    branches:
+      - agent/cargo-sort-3d-design-package
+  pull_request:
+    paths:
+      - 'tools/CargoSort_3D/**'
+      - '.github/workflows/cargo-sort-3d-package.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Build Cargo Sort 3D package
+        run: node tools/CargoSort_3D/build_cargo_sort_3D.js
+
+      - name: Validate generated package
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f CargoSort_3D_Design_Package.zip
+          test -f CargoSort_3D/01_Design_System/ColorPalette.json
+          test -f CargoSort_3D/02_Shaders_And_VFX/ItemHighlight.shader
+          test -f CargoSort_3D/02_Shaders_And_VFX/ButtonLightSweep.shader
+          test -f CargoSort_3D/03_Core_3D_Logic/DragAndDrop3D.cs
+          test -f CargoSort_3D/04_UI_And_Screens/LevelClearModal.cs
+          unzip -t CargoSort_3D_Design_Package.zip
+
+      - name: Upload Cargo Sort 3D ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: CargoSort_3D_Design_Package
+          path: CargoSort_3D_Design_Package.zip
+          if-no-files-found: error
+          retention-days: 30

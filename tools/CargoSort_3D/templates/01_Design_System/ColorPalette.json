@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "1.0.0",
+  "project": "Cargo Sort 3D",
+  "renderPipeline": "Unity URP",
+  "colors": {
+    "backgroundTop": "#102342", "backgroundBottom": "#07111F",
+    "surfacePrimary": "#172A46", "surfaceElevated": "#294767",
+    "textPrimary": "#F7FBFF", "textSecondary": "#B8C8D9",
+    "accentPrimary": "#55D8FF", "accentSecondary": "#7F73FF",
+    "success": "#55E69A", "warning": "#FFD166", "danger": "#FF6584",
+    "coin": "#FFD857", "combo": "#FF84E8"
+  },
+  "cargoColors": [
+    {"name":"Coral","base":"#FF6B6B","highlight":"#FFAAA4","shadow":"#B63B50"},
+    {"name":"Ocean","base":"#4D96FF","highlight":"#9FD0FF","shadow":"#2757B5"},
+    {"name":"Mint","base":"#5BE7A9","highlight":"#B5F8D7","shadow":"#29966B"},
+    {"name":"Sun","base":"#FFD166","highlight":"#FFF0AD","shadow":"#BA8126"},
+    {"name":"Violet","base":"#9B72FF","highlight":"#D2C2FF","shadow":"#6243B8"},
+    {"name":"Candy","base":"#FF85C2","highlight":"#FFC0E0","shadow":"#B83F7C"}
+  ],
+  "gradients": {
+    "mainBackground": {"angle":180,"stops":[{"position":0,"color":"#102342"},{"position":1,"color":"#07111F"}]},
+    "primaryCTA": {"angle":45,"stops":[{"position":0,"color":"#43D4FF"},{"position":1,"color":"#7D72FF"}]},
+    "victory": {"angle":45,"stops":[{"position":0,"color":"#FFD857"},{"position":0.5,"color":"#FFAA5C"},{"position":1,"color":"#FF75C3"}]}
+  },
+  "glassmorphism": {
+    "panel": {"background":"#17324C","opacity":0.68,"blurRadiusPx":24,"borderColor":"#FFFFFF","borderOpacity":0.16,"borderWidthPx":1.5,"cornerRadiusPx":28,"shadowOpacity":0.28,"shadowBlurPx":36,"shadowOffsetY":12},
+    "button": {"background":"#FFFFFF","opacity":0.12,"borderOpacity":0.20,"cornerRadiusPx":22}
+  },
+  "lighting": {"environmentIntensity":0.78,"keyLightColor":"#FFF1DC","keyLightIntensity":1.25,"fillLightColor":"#77B9FF","fillLightIntensity":0.38,"shadowStrength":0.72,"recommendedColorSpace":"Linear"}
+}
