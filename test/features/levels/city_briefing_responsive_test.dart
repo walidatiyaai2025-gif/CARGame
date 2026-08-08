@@ -133,4 +133,10 @@ final class _RouteNameObserver extends NavigatorObserver {
     onName(route.settings.name);
     super.didPush(route, previousRoute);
   }
+
+  @override
+  void didReplace({Route<dynamic>? newRoute, Route<dynamic>? oldRoute}) {
+    onName(newRoute?.settings.name);
+    super.didReplace(newRoute: newRoute, oldRoute: oldRoute);
+  }
 }
