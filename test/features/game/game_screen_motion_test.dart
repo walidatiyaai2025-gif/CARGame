@@ -65,7 +65,10 @@ void main() {
 
     expect(find.byType(GameTravelMotion), findsNothing);
     expect(find.byType(GameActionFeedback), findsOneWidget);
-    await tester.tap(find.byKey(const ValueKey('warehouse-1')));
+
+    final currentVisibleTarget = tester.getRect(warehouse).intersect(viewport);
+    expect(currentVisibleTarget.isEmpty, isFalse);
+    await tester.tapAt(currentVisibleTarget.center);
     await tester.pump();
     expect(find.byKey(const ValueKey('cargo-1-0')), findsOneWidget);
     expect(
