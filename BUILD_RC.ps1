@@ -12,57 +12,6 @@ $PSNativeCommandUseErrorActionPreference = $false
 Set-Location $PSScriptRoot
 . (Join-Path $PSScriptRoot 'BUILD_COMMON.ps1')
 
-function Assert-ProductionAdUnitId {
-    param(
-        [Parameter(Mandatory)][string]$Name,
-        [Parameter(Mandatory)][string]$Value
-    )
-
-    if ([string]::IsNullOrWhiteSpace($Value)) {
-        throw "$Name is required when -EnableAds is used."
-    }
-
-    $trimmed = $Value.Trim()
-    if ($trimmed.StartsWith('ca-app-pub-3940256099942544/')) {
-        throw "$Name uses a Google test AdMob unit ID. Production test IDs are forbidden in an RC build."
-    }
-}
-
-function Assert-ProductionAdMobAppId {
-    param([Parameter(Mandatory)][string]$Value)
-
-    if ([string]::IsNullOrWhiteSpace($Value)) {
-        throw 'AndroidAdMobAppId is required for every RC build. Pass the production AdMob Android application ID.'
-    }
-
-    $trimmed = $Value.Trim()
-    if ($trimmed.StartsWith('ca-app-pub-3940256099942544~')) {
-        throw 'AndroidAdMobAppId uses Google''s test application ID. Production test IDs are forbidden in an RC build.'
-    }
-}
-
-function Assert-ReleaseSigningConfigured {
-    $keyPropertiesPath = Join-Path $PSScriptRoot 'android\key.properties'
-    if (Test-Path $keyPropertiesPath) {
-        return
-    }
-
-    $requiredEnvironment = @(
-        'ANDROID_KEYSTORE_PATH',
-        'ANDROID_KEYSTORE_PASSWORD',
-        'ANDROID_KEY_ALIAS',
-        'ANDROID_KEY_PASSWORD'
-    )
-    $missing = @(
-        $requiredEnvironment | Where-Object {
-            [string]::IsNullOrWhiteSpace([Environment]::GetEnvironmentVariable($_))
-        }
-    )
-    if ($missing.Count -gt 0) {
-        throw "Android release signing is not configured. Create android\key.properties from android\key.properties.example or set all signing environment variables. Missing: $($missing -join ', ')"
-    }
-}
-
 $previousAdMobAppId = $env:ADMOB_ANDROID_APP_ID
 
 try {
@@ -75,13 +24,22 @@ try {
         throw "pubspec.yaml was not found in $PSScriptRoot"
     }
 
-    Assert-ProductionAdMobAppId $AndroidAdMobAppId
-    Assert-ReleaseSigningConfigured
+    $preflightScript = Join-Path $PSScriptRoot 'VERIFY_RELEASE_INPUTS.ps1'
+    if (-not (Test-Path -LiteralPath $preflightScript -PathType Leaf)) {
+        throw "Release input preflight was not found: $preflightScript"
+    }
 
-    if ($EnableAds) {
-        Assert-ProductionAdUnitId 'AndroidBannerId' $AndroidBannerId
-        Assert-ProductionAdUnitId 'AndroidRewardedId' $AndroidRewardedId
-        Assert-ProductionAdUnitId 'AndroidInterstitialId' $AndroidInterstitialId
+    $preflightArguments = @{
+        ProjectRoot = $PSScriptRoot
+        AndroidAdMobAppId = $AndroidAdMobAppId
+        EnableAds = $EnableAds
+        AndroidBannerId = $AndroidBannerId
+        AndroidRewardedId = $AndroidRewardedId
+        AndroidInterstitialId = $AndroidInterstitialId
+    }
+    $preflight = & $preflightScript @preflightArguments
+    if (-not $preflight.Ready) {
+        throw 'Android release input preflight did not report a ready configuration.'
     }
 
     $env:ADMOB_ANDROID_APP_ID = $AndroidAdMobAppId.Trim()
