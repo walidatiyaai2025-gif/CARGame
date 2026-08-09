@@ -7,12 +7,24 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | Field | Value |
 |---|---|
 | Current phase | Android RC hardening — issue #79 |
-| Primary feature | None; `PRIV-001` is VERIFIED after issue #32 / PR #126 current-main refresh. |
-| Completed checkpoint | `PRIV-001` privacy inventory current-main reconciliation — PR #126 merged as `dd076dd383d6c3cd0dd33986f980e8b4f012b38b` after Flutter CI #651 passed the strengthened privacy drift gate, security cross-check, full Flutter suite, Debug APK and artifact upload. |
-| Status | Privacy inventory is synchronized with the current 33 persisted key/prefix families and mechanically drift-protected; Google Mobile Ads is the sole declared network processor. ADS-007 ad-consent/bootstrap gating, ENG-013 diagnostics gating, PRIV-003 in-app data controls, and PRIV-002 store/policy mapping remain explicit follow-ups. |
-| Previous checkpoint | `ECON-005` versioned economy configuration — PR #124 merged as `2091cf35ff9b4a261fa76f9d90975735711c58e3` after Flutter CI #647. |
-| Next recommended feature | `SEC-001` mobile security baseline and threat model current-main reconciliation: historical PR #35 exists, but it must be checked against the refreshed privacy processor/gating truth and later release-hardening changes. |
+| Primary feature | None; `SEC-001` is VERIFIED after issue #34 / PR #128 current-main refresh. |
+| Completed checkpoint | `SEC-001` mobile security baseline current-main reconciliation — PR #128 merged as `c0e7c561e0bafa810ef9248322102b10b684a490` after Flutter CI #655 passed privacy/security runtime parity, full Flutter tests, Debug APK build and artifact upload. |
+| Status | Security baseline now mirrors PRIV-001 runtime truth, classifies current transaction/reward/recovery assets, and mechanically validates network/trust-boundary, protected-asset, privacy-gap, threat, and secret-policy parity. ADS-007, ENG-013, SEC-002, SEC-003, PRIV-002, and TEST-011 remain explicit downstream gates. |
+| Previous checkpoint | `PRIV-001` privacy inventory current-main reconciliation — PR #126 merged as `dd076dd383d6c3cd0dd33986f980e8b4f012b38b` after Flutter CI #651. |
+| Next recommended feature | `AST-011` asset licensing and provenance: `AST-001` is VERIFIED and commercial-use provenance is the next unblocked release-critical P0 prerequisite. |
 | Known blocker | `REL-007`/`REL-008` require real production AdMob/signing inputs and a production-signed candidate; final install/upgrade/device smoke requires an Android device or testing track. `TEST-009` also remains dependency-blocked while `PERF-001` is PLANNED. Visual Studio C++ components remain optional for Windows desktop only. |
+
+## SEC-001 mobile security baseline current-main verification — 2026-08-09
+
+- Historical PR #35 established the original human/machine mobile threat model and CI security-baseline gate; issue #34 was reopened because later privacy, persistence, transaction, economy, signing, and secret-hardening work changed current-main security truth.
+- PR #128 reconciles the client/local-storage/Google Mobile Ads/CI-secret-store/future-backend trust boundaries and classifies six protected asset groups, including transaction/reward recovery state and the storage-recovery snapshot.
+- The threat model now distinguishes `AdService` request/load/show gating from the still-ungated `MobileAds` SDK bootstrap, and records the ineffective `ENABLE_DIAGNOSTICS` bootstrap gate while preserving redacted local-only diagnostics. Owners remain ADS-007 and ENG-013.
+- `tool/verify_security_baseline.py` cross-checks security runtime-control truth against PRIV-001, network processors against trust boundaries, protected-asset ownership/location, security-relevant privacy gap ownership, required threat categories/structure, and ENG-010 secret-policy controls.
+- REL-004, SHOP-002, REW-007, ECON-005, REL-006, and ENG-010 are reflected as verified mitigation inputs without falsely completing SEC-002, SEC-003, ADS-007, ENG-013, PRIV-002, or TEST-011.
+- Final implementation head `e25c4f8239635981d43e7c0865c2f9f04c3e8b8e` passed Flutter CI #655 / run `31300172519`, including privacy/security validation, formatting, Analyze, full Flutter tests, Debug APK build, and upload.
+- Debug artifact #9034317021 is 80,544,512 bytes with SHA-256 `67938778535d63de844f455b324796a4488b1a33efe20ea004fe9894d9db135d`.
+- PR #128 squash-merged to `main` as `c0e7c561e0bafa810ef9248322102b10b684a490`; `SEC-001` is VERIFIED.
+- Next release-critical unblocked P0 selected for audit: `AST-011`.
 
 ## PRIV-001 privacy inventory current-main verification — 2026-08-09
 
@@ -216,6 +228,7 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | 2026-08-09 | REL-006 signing/key-management verification | PASSED — PR #102 / Flutter CI #544 + Release Packaging Smoke #4 / debug artifact #9030167112 / release evidence #9030181913 |
 | 2026-08-09 | TEST-001 progress/economy + legacy-save compatibility | PASSED — PR #104 / Flutter CI #546 / full suite + Debug APK artifact #9030311765 / SHA-256 `cdef9c5c5fbc9576d1760009956aab53ab6e63491248a2ba43ea5288797855b7` |
 | 2026-08-09 | REL-001 dynamic Android targets | PASSED — Flutter CI #546 validated 38 PowerShell/batch scripts with no fixed emulator/AVD/adb target |
+| 2026-08-09 | SEC-001 mobile security baseline current-main reconciliation | PASSED — PR #128 / Flutter CI #655 / run `31300172519` / debug artifact #9034317021 / SHA-256 `67938778535d63de844f455b324796a4488b1a33efe20ea004fe9894d9db135d` |
 | 2026-08-09 | PRIV-001 privacy inventory current-main reconciliation | PASSED — PR #126 / Flutter CI #651 / run `31299285194` / debug artifact #9034063433 / SHA-256 `6fc839b195551ffcdbb0bd30b69bb9f29124aa5b9f5277ab8aa981d3508f4f9c` |
 | 2026-08-09 | ECON-005 versioned economy configuration | PASSED — PR #124 / Flutter CI #647 / run `31296918681` / debug artifact #9033326885 / SHA-256 `bbca79f780b9effc07a93ecc8a5a0b0dd73b523e6706531fe292127165d2872a` |
 
