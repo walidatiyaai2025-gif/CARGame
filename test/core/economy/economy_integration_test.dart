@@ -47,6 +47,21 @@ void main() {
   );
 
   test(
+    'invalid economy version markers fail closed without rewrites',
+    () async {
+      final prefs = SharedPreferencesAsync();
+      await prefs.setInt('coins', 444);
+      await prefs.setInt('economy_config_version', 0);
+
+      final store = ProgressStore();
+      await expectLater(store.load(), throwsStateError);
+
+      expect(await prefs.getInt('coins'), 444);
+      expect(await prefs.getInt('economy_config_version'), 0);
+    },
+  );
+
+  test(
     'future economy versions fail closed without rewriting wallet',
     () async {
       final prefs = SharedPreferencesAsync();

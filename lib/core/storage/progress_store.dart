@@ -268,9 +268,12 @@ class ProgressStore extends ChangeNotifier {
   Future<void> _ensureEconomyConfigVersion() async {
     final currentVersion = EconomyConfig.current.schemaVersion;
     final savedVersion = await _prefs.getInt(_economyConfigVersionKey);
-    if (savedVersion == null || savedVersion <= 0) {
+    if (savedVersion == null) {
       await _prefs.setInt(_economyConfigVersionKey, currentVersion);
       return;
+    }
+    if (savedVersion <= 0) {
+      throw StateError('Invalid economy config version: $savedVersion.');
     }
     if (savedVersion > currentVersion) {
       throw StateError(
@@ -486,11 +489,28 @@ class ProgressStore extends ChangeNotifier {
 
   Future<bool> purchaseShopHeartOffer(String offerId) async {
     final offer = EconomyConfig.current.heartOfferById(offerId);
-    if (hearts >= maxHearts) return false;
-    final paid = await spendCoins(offer.price);
-    if (!paid) return false;
-    await addHearts(offer.amount);
-    return true;
+    if (_purchaseBusy || hearts >= maxHearts || coins < offer.price) {
+      return false;
+    }
+
+    _purchaseBusy = true;
+    try {
+      final finalCoins = coins - offer.price;
+      final finalHearts = (hearts + offer.amount).clamp(0, maxHearts);
+      await _commitShopPurchase('heart:${offer.id}', <String, Object?>{
+        _heartsKey: finalHearts,
+        if (finalHearts >= maxHearts) _heartTimestampKey: null,
+        _coinsKey: finalCoins,
+      });
+
+      coins = finalCoins;
+      hearts = finalHearts;
+      if (hearts >= maxHearts) _heartRefillTimestamp = null;
+      notifyListeners();
+      return true;
+    } finally {
+      _purchaseBusy = false;
+    }
   }
 
   Future<bool> purchaseShopBooster(String boosterId) async {
@@ -632,6 +652,18 @@ class ProgressStore extends ChangeNotifier {
             throw FormatException('Invalid non-negative integer for $key.');
           }
           validated[key] = value;
+        case _heartsKey:
+          if (value is! int || value < 0 || value > maxHearts) {
+            throw const FormatException('Invalid shop heart value.');
+          }
+          validated[key] = value;
+        case _heartTimestampKey:
+          if (value != null) {
+            throw const FormatException(
+              'Shop purchases may only clear the heart refill timestamp.',
+            );
+          }
+          validated[key] = null;
         case _selectedThemeKey:
           if (value is! String || value.isEmpty) {
             throw const FormatException('Invalid selected theme.');
@@ -662,6 +694,8 @@ class ProgressStore extends ChangeNotifier {
         await _prefs.setString(entry.key, value);
       } else if (value is List<String>) {
         await _prefs.setStringList(entry.key, value);
+      } else if (value == null && entry.key == _heartTimestampKey) {
+        await _prefs.remove(entry.key);
       } else {
         throw FormatException('Unsupported shop purchase value: ${entry.key}');
       }

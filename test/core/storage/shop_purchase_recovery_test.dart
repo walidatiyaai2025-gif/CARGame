@@ -97,6 +97,61 @@ void main() {
   );
 
   test(
+    'configured heart purchase persists wallet and hearts together',
+    () async {
+      final prefs = SharedPreferencesAsync();
+      await prefs.setInt('coins', 500);
+      await prefs.setInt('hearts', 2);
+      await prefs.setString(
+        'heart_refill_timestamp',
+        DateTime.now().toIso8601String(),
+      );
+
+      final store = ProgressStore();
+      await store.load();
+      expect(await store.purchaseShopHeartOffer('heart_single'), isTrue);
+      expect(store.coins, 380);
+      expect(store.hearts, 3);
+      expect(await prefs.containsKey(pendingPurchaseKey), isFalse);
+
+      final reloaded = ProgressStore();
+      await reloaded.load();
+      expect(reloaded.coins, 380);
+      expect(reloaded.hearts, 3);
+    },
+  );
+
+  test('load completes an interrupted heart purchase idempotently', () async {
+    final prefs = SharedPreferencesAsync();
+    await prefs.setInt('coins', 500);
+    await prefs.setInt('hearts', 2);
+    await prefs.setString(
+      'heart_refill_timestamp',
+      DateTime.now().toIso8601String(),
+    );
+    await prefs.setString(
+      pendingPurchaseKey,
+      jsonEncode({
+        'version': 1,
+        'reason': 'heart:heart_full',
+        'values': {'hearts': 5, 'heart_refill_timestamp': null, 'coins': 50},
+      }),
+    );
+
+    final recovered = ProgressStore();
+    await recovered.load();
+    expect(recovered.coins, 50);
+    expect(recovered.hearts, 5);
+    expect(await prefs.containsKey('heart_refill_timestamp'), isFalse);
+    expect(await prefs.containsKey(pendingPurchaseKey), isFalse);
+
+    final secondLoad = ProgressStore();
+    await secondLoad.load();
+    expect(secondLoad.coins, 50);
+    expect(secondLoad.hearts, 5);
+  });
+
+  test(
     'malformed pending purchase is discarded without changing wallet',
     () async {
       final prefs = SharedPreferencesAsync();

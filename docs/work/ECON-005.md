@@ -36,3 +36,9 @@ Tracking: issue #122 / RC-001 #79
 - Re-loading the same v1 marker is a no-op.
 - A save stamped with a future economy schema fails closed before reward/shop recovery so an older build cannot silently apply stale prices or reward formulas.
 - Future positive versions below the runtime schema require an explicit registered migration before the runtime may advance the marker; implicit balance rewrites are forbidden.
+
+## Review hardening
+
+- A present non-positive `economy_config_version` is treated as corrupted metadata and fails closed; only an absent marker is considered a legacy v1 save.
+- Configured heart purchases now debit coins and grant hearts inside the existing SHOP-002 absolute-state purchase journal, including atomic refill-timestamp clearing when the cap is reached.
+- The v1 schema keeps non-negative price validation semantics; shipped balance values are unchanged.
