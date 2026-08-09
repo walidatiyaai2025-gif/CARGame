@@ -16,6 +16,38 @@ void main() {
   });
 
   test(
+    'legacy save keeps existing progress and defaults newer economy fields',
+    () async {
+      final prefs = SharedPreferencesAsync();
+      await prefs.setInt('highest_unlocked_level', 18);
+      await prefs.setInt('coins', 725);
+      await prefs.setInt('hearts', 3);
+      await prefs.setInt('stats_games', 22);
+      await prefs.setInt('stats_wins', 14);
+      await prefs.setInt('level_stars_1', 3);
+      await prefs.setInt('level_stars_17', 2);
+
+      final store = ProgressStore();
+      await store.load();
+
+      expect(store.highestUnlockedLevel, 18);
+      expect(store.coins, 725);
+      expect(store.hearts, 3);
+      expect(store.gamesPlayed, 22);
+      expect(store.wins, 14);
+      expect(store.starsForLevel(1), 3);
+      expect(store.starsForLevel(17), 2);
+
+      expect(store.freeHints, 2);
+      expect(store.extraMovesBoosters, 1);
+      expect(store.comboShields, 1);
+      expect(store.selectedTheme, 'classic');
+      expect(store.unlockedThemes, {'classic'});
+      expect(store.recoveryEvents, isEmpty);
+    },
+  );
+
+  test(
     'load clamps persisted wallet, hearts, boosters and level bounds',
     () async {
       final prefs = SharedPreferencesAsync();
