@@ -1,0 +1,28 @@
+name: Temporary ENG-010 tracking start
+
+on:
+  push:
+    branches:
+      - agent/eng-010-secret-handling-current
+    paths:
+      - .github/workflows/_temporary_start_eng010.yml
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/eng-010-secret-handling-current
+          fetch-depth: 0
+      - run: python3 tool/_start_eng010.py
+      - run: |
+          git rm .github/workflows/_temporary_start_eng010.yml tool/_start_eng010.py
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/FEATURE_CATALOG.md docs/STATUS.md
+          git commit -m 'docs: start ENG-010 secret handling audit'
+          git push origin HEAD:agent/eng-010-secret-handling-current
