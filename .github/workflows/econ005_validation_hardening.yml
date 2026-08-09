@@ -1,4 +1,4 @@
-name: ECON005 Validation Hardening
+name: ECON005 Review Hardening
 
 on:
   push:
@@ -21,14 +21,15 @@ jobs:
           channel: stable
           flutter-version: 3.44.8
           cache: true
-      - name: Harden economy transaction validation
+      - name: Harden migration and configured heart purchases
         shell: bash
         run: |
           set -euo pipefail
           python3 tools/econ005_validation_hardening.py
           dart format \
-            lib/core/economy/economy_config.dart \
-            test/core/economy/economy_config_test.dart
+            lib/core/storage/progress_store.dart \
+            test/core/economy/economy_integration_test.dart \
+            test/core/storage/shop_purchase_recovery_test.dart
           git diff --check
           flutter pub get
           flutter gen-l10n
@@ -45,7 +46,9 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add \
-            lib/core/economy/economy_config.dart \
-            test/core/economy/economy_config_test.dart
-          git commit -m 'fix: align economy validation with runtime transactions'
+            lib/core/storage/progress_store.dart \
+            test/core/economy/economy_integration_test.dart \
+            test/core/storage/shop_purchase_recovery_test.dart \
+            docs/work/ECON-005.md
+          git commit -m 'fix: harden economy migration and heart purchases'
           git push origin HEAD:agent/econ-005-versioned-economy-config
