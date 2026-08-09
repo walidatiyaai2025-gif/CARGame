@@ -32,9 +32,16 @@ jobs:
           text = path.read_text()
 
           for line in [
+              "import 'package:flutter_localizations/flutter_localizations.dart';\n",
+              "import 'core/logging/log_viewer_screen.dart';\n",
+              "import 'core/navigation/game_navigator.dart';\n",
+              "import 'core/navigation/game_route_names.dart';\n",
               "import 'core/services/optional_service_coordinator.dart';\n",
               "import 'core/settings/app_settings_store.dart';\n",
               "import 'core/storage/progress_store.dart';\n",
+              "import 'features/home/home_screen.dart';\n",
+              "import 'features/settings/settings_screen.dart';\n",
+              "import 'l10n/app_localizations.dart';\n",
           ]:
               if line not in text:
                   raise SystemExit(f'main import not found: {line.strip()}')
@@ -42,10 +49,18 @@ jobs:
 
           anchor = "import 'core/logging/app_logger.dart';\n"
           composition_import = "import 'bootstrap/app_composition.dart';\n"
+          app_shell_import = "import 'bootstrap/cargo_sort_app.dart';\n"
           if anchor not in text:
               raise SystemExit('main import anchor not found')
           if composition_import not in text:
-              text = text.replace(anchor, composition_import + anchor, 1)
+              text = text.replace(anchor, composition_import + app_shell_import + anchor, 1)
+          elif app_shell_import not in text:
+              text = text.replace(composition_import, composition_import + app_shell_import, 1)
+
+          export_line = "export 'bootstrap/cargo_sort_app.dart' show CargoSortApp;\n"
+          if export_line not in text:
+              first_const = text.index("const String appVersion")
+              text = text[:first_const] + export_line + '\n' + text[first_const:]
 
           start = text.index('class _BootstrapAppState')
           end = text.index('\nclass _PremiumSplash', start)
@@ -75,6 +90,9 @@ jobs:
           segment = segment.replace('_settings', '_composition.settingsStore')
           text = text[:start] + segment + text[end:]
 
+          app_start = text.index('\nclass CargoSortApp extends StatefulWidget {')
+          text = text[:app_start].rstrip() + '\n'
+
           forbidden = [
               'core/storage/progress_store.dart',
               'core/settings/app_settings_store.dart',
@@ -85,6 +103,8 @@ jobs:
                   raise SystemExit(f'main still imports concrete adapter: {value}')
           if 'AppComposition.production()' not in text:
               raise SystemExit('composition root not wired')
+          if 'class CargoSortApp' in text:
+              raise SystemExit('CargoSortApp still declared in main')
 
           path.write_text(text)
           PY
@@ -92,6 +112,7 @@ jobs:
           dart format \
             lib/main.dart \
             lib/bootstrap/app_composition.dart \
+            lib/bootstrap/cargo_sort_app.dart \
             lib/core/domain/optional_service_state.dart \
             lib/core/application/optional_service_port.dart \
             lib/core/services/optional_service_coordinator.dart \
@@ -103,6 +124,7 @@ jobs:
           flutter test test/bootstrap/app_composition_test.dart
           flutter test test/core/services/optional_service_coordinator_test.dart
           flutter test test/bootstrap_splash_responsive_test.dart
+          flutter test test/widget_test.dart
           flutter analyze
           git diff --check
 
@@ -111,6 +133,7 @@ jobs:
           git add \
             lib/main.dart \
             lib/bootstrap/app_composition.dart \
+            lib/bootstrap/cargo_sort_app.dart \
             lib/core/domain/optional_service_state.dart \
             lib/core/application/optional_service_port.dart \
             lib/core/services/optional_service_coordinator.dart \
