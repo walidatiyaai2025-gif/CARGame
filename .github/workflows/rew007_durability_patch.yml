@@ -11,7 +11,7 @@ permissions:
 jobs:
   patch:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 10
     steps:
       - name: Checkout branch
         uses: actions/checkout@v4
@@ -21,6 +21,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
+          flutter-version: 3.44.8
           cache: true
       - name: Apply durability hardening
         shell: bash
@@ -28,36 +29,33 @@ jobs:
           set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
-          import re
 
           progress = Path('lib/core/storage/progress_store.dart')
           text = progress.read_text()
-          sentinel = 'final updated = <String>{..._completedRewardTransactions, idempotencyKey};'
-          already_hardened = sentinel in text and 'Future<bool> grantHearts(' in text
 
-          if not already_hardened:
-              old_commit = '''    await _prefs.setString(_pendingRewardTransactionKey, jsonEncode(journal));
+          old_commit = '''    await _prefs.setString(_pendingRewardTransactionKey, jsonEncode(journal));
               await _applyRewardTransactionValues(validated);
               await _recordCompletedRewardTransaction(idempotencyKey);
               await _prefs.remove(_pendingRewardTransactionKey);
               return true;
           '''
-              new_commit = '''    await _prefs.setString(_pendingRewardTransactionKey, jsonEncode(journal));
+          new_commit = '''    await _prefs.setString(_pendingRewardTransactionKey, jsonEncode(journal));
               await _applyRewardTransactionValues(validated);
               await _recordCompletedRewardTransaction(idempotencyKey);
               try {
                 await _prefs.remove(_pendingRewardTransactionKey);
               } catch (_) {
-                // The persisted completed ledger is authoritative. A stale pending
-                // journal is safe and will be cleaned during the next recovery pass.
+                // The durable completed ledger is authoritative. Recovery can
+                // safely discard a stale pending journal on the next load/retry.
               }
               return true;
           '''
-              if old_commit not in text:
-                  raise SystemExit('Reward commit cleanup block did not match.')
+          if old_commit in text:
               text = text.replace(old_commit, new_commit, 1)
+          elif 'The durable completed ledger is authoritative.' not in text:
+              raise SystemExit('Reward commit cleanup block did not match.')
 
-              old_record = '''  Future<void> _recordCompletedRewardTransaction(String idempotencyKey) async {
+          old_record = '''  Future<void> _recordCompletedRewardTransaction(String idempotencyKey) async {
               await _ensureRewardLedgerLoaded();
               if (!_completedRewardTransactions.add(idempotencyKey)) return;
               while (_completedRewardTransactions.length >
@@ -70,67 +68,60 @@ jobs:
               );
             }
           '''
-              new_record = '''  Future<void> _recordCompletedRewardTransaction(String idempotencyKey) async {
+          new_record = '''  Future<void> _recordCompletedRewardTransaction(String idempotencyKey) async {
               await _ensureRewardLedgerLoaded();
               if (_completedRewardTransactions.contains(idempotencyKey)) return;
 
-              final updated = <String>{..._completedRewardTransactions, idempotencyKey};
+              final updated = <String>{
+                ..._completedRewardTransactions,
+                idempotencyKey,
+              };
               while (updated.length > _rewardTransactionLedgerLimit) {
                 updated.remove(updated.first);
               }
-              await _prefs.setStringList(_rewardTransactionLedgerKey, updated.toList());
+              await _prefs.setStringList(
+                _rewardTransactionLedgerKey,
+                updated.toList(),
+              );
               _completedRewardTransactions
                 ..clear()
                 ..addAll(updated);
             }
           '''
-              if old_record not in text:
-                  raise SystemExit('Completed reward ledger block did not match.')
+          if old_record in text:
               text = text.replace(old_record, new_record, 1)
+          elif 'final updated = <String>{' not in text:
+              raise SystemExit('Completed reward ledger block did not match.')
 
-              anchor = '      if (_rewardNonNegativeIntKeys.contains(key)) {'
-              heart_validator = '''      if (key == _heartsKey) {
-                if (value is! int || value < 0 || value > maxHearts) {
-                  throw const FormatException('Invalid heart reward value.');
-                }
-                validated[key] = value;
-                continue;
-              }
+          old_hearts = '''  Future<void> addHearts(int amount, {String? transactionId}) =>
+              _serializeReward<void>(() async {
+                await _ensureRewardLedgerLoaded();
+                await _recoverPendingRewardTransaction();
 
-              if (_rewardNonNegativeIntKeys.contains(key)) {'''
-              if anchor not in text:
-                  raise SystemExit('Reward validator anchor did not match.')
-              text = text.replace(anchor, heart_validator, 1)
+                final transactionKey = _rewardTransactionKey(
+                  reason: 'heart_grant',
+                  idempotencyKey: transactionId,
+                );
+                if (_completedRewardTransactions.contains(transactionKey)) return;
 
-              requirement_pattern = re.compile(
-                  r"    if \(!validated\.containsKey\(_coinsKey\)\) \{\s*"
-                  r"throw const FormatException\('Reward transaction has no wallet value\.'\);\s*"
-                  r"\}\s*return validated;"
-              )
-              replacement = '''    if (!validated.containsKey(_coinsKey) &&
-                !validated.containsKey(_heartsKey)) {
-              throw const FormatException(
-                'Reward transaction has no wallet or heart value.',
-              );
-            }
-            return validated;'''
-              text, count = requirement_pattern.subn(replacement, text, count=1)
-              if count != 1:
-                  raise SystemExit('Reward transaction value requirement did not match.')
+                final nextHearts = (hearts + amount).clamp(0, maxHearts);
+                final values = <String, Object?>{
+                  _heartsKey: nextHearts,
+                  if (nextHearts >= maxHearts) _heartTimestampKey: null,
+                };
+                final committed = await _commitRewardTransaction(
+                  reason: 'heart_grant',
+                  idempotencyKey: transactionKey,
+                  values: values,
+                );
+                if (!committed) return;
 
-              memory_anchor = '''        case _levelKey:
-                  highestUnlockedLevel = value as int;
-                case _coinsKey:'''
-              memory_replacement = '''        case _levelKey:
-                  highestUnlockedLevel = value as int;
-                case _heartsKey:
-                  hearts = value as int;
-                case _coinsKey:'''
-              if memory_anchor not in text:
-                  raise SystemExit('Reward memory apply anchor did not match.')
-              text = text.replace(memory_anchor, memory_replacement, 1)
-
-              add_hearts = '''  Future<void> addHearts(int amount) async {
+                hearts = nextHearts;
+                if (hearts >= maxHearts) _heartRefillTimestamp = null;
+                notifyListeners();
+              });
+          '''
+          new_hearts = '''  Future<void> addHearts(int amount) async {
               hearts = (hearts + amount).clamp(0, maxHearts);
               if (hearts >= maxHearts) {
                 _heartRefillTimestamp = null;
@@ -139,8 +130,6 @@ jobs:
               await _prefs.setInt(_heartsKey, hearts);
               notifyListeners();
             }
-          '''
-              grant_hearts = add_hearts + '''
 
             Future<bool> grantHearts(
               int amount, {
@@ -155,105 +144,98 @@ jobs:
                 reason: 'heart:$reason',
                 idempotencyKey: transactionId,
               );
-              if (_completedRewardTransactions.contains(transactionKey)) return false;
+              if (_completedRewardTransactions.contains(transactionKey)) {
+                return false;
+              }
 
               final nextHearts = (hearts + amount).clamp(0, maxHearts);
               if (nextHearts == hearts) return false;
               final committed = await _commitRewardTransaction(
                 reason: 'heart_grant:$reason',
                 idempotencyKey: transactionKey,
-                values: <String, Object?>{_heartsKey: nextHearts},
+                values: <String, Object?>{
+                  _heartsKey: nextHearts,
+                  if (nextHearts >= maxHearts) _heartTimestampKey: null,
+                },
               );
               if (!committed) return false;
 
               hearts = nextHearts;
-              if (hearts >= maxHearts) {
-                _heartRefillTimestamp = null;
-                try {
-                  await _prefs.remove(_heartTimestampKey);
-                } catch (_) {
-                  // A stale refill timestamp cannot duplicate the heart grant.
-                }
-              }
+              if (hearts >= maxHearts) _heartRefillTimestamp = null;
               notifyListeners();
               return true;
             });
           '''
-              if add_hearts not in text:
-                  raise SystemExit('addHearts block did not match.')
-              text = text.replace(add_hearts, grant_hearts, 1)
+          if old_hearts in text:
+              text = text.replace(old_hearts, new_hearts, 1)
+          elif 'Future<bool> grantHearts(' not in text:
+              raise SystemExit('Heart grant block did not match.')
 
-              dead_start = text.find('  Future<void> _saveProgressAndStats() async {')
-              if dead_start != -1:
-                  dead_end = text.find('  Future<bool> spendCoins', dead_start)
-                  if dead_end == -1:
-                      raise SystemExit('Could not bound dead save helper.')
-                  text = text[:dead_start] + text[dead_end:]
+          dead_start = text.find('  Future<void> _saveProgressAndStats() async {')
+          if dead_start != -1:
+              dead_end = text.find('  Future<bool> spendCoins', dead_start)
+              if dead_end == -1:
+                  raise SystemExit('Could not bound dead save helper.')
+              text = text[:dead_start] + text[dead_end:]
 
-              progress.write_text(text)
+          progress.write_text(text)
 
           tests = Path('test/core/storage/reward_transaction_recovery_test.dart')
           test_text = tests.read_text()
-          if "heart reward grant is idempotent" not in test_text:
-              insert = '''
-
-            test('heart reward grant is idempotent and reload-safe', () async {
-              final store = ProgressStore();
-              await store.load();
-              expect(await store.spendHeart(), isTrue);
-              expect(await store.spendHeart(), isTrue);
-              expect(store.hearts, 3);
-
+          old_test = '''    await store.addHearts(2, transactionId: 'revive-001');
+              expect(store.hearts, 4);
+              await store.addHearts(2, transactionId: 'revive-001');
+              expect(store.hearts, 4);
               expect(
+                store.completedRewardTransactions,
+                contains('heart_grant:revive-001'),
+              );
+          '''
+          new_test = '''    expect(
                 await store.grantHearts(
-                  1,
-                  transactionId: 'rewarded-continue-001',
+                  2,
+                  transactionId: 'revive-001',
                   reason: 'rewarded_continue',
                 ),
                 isTrue,
               );
               expect(store.hearts, 4);
               expect(
-                store.completedRewardTransactions,
-                contains('heart:rewarded_continue:rewarded-continue-001'),
-              );
-
-              expect(
                 await store.grantHearts(
-                  1,
-                  transactionId: 'rewarded-continue-001',
+                  2,
+                  transactionId: 'revive-001',
                   reason: 'rewarded_continue',
                 ),
                 isFalse,
               );
               expect(store.hearts, 4);
-
-              final reloaded = ProgressStore();
-              await reloaded.load();
-              expect(reloaded.hearts, 4);
-            });
+              expect(
+                store.completedRewardTransactions,
+                contains('heart:rewarded_continue:revive-001'),
+              );
           '''
-              index = test_text.rfind('\n}')
-              if index == -1:
-                  raise SystemExit('Could not find test file closing brace.')
-              tests.write_text(test_text[:index] + insert + test_text[index:])
+          if old_test in test_text:
+              test_text = test_text.replace(old_test, new_test, 1)
+          elif 'heart:rewarded_continue:revive-001' not in test_text:
+              raise SystemExit('Heart reward test block did not match.')
+          tests.write_text(test_text)
 
           work = Path('docs/work/REW-007.md')
           work_text = work.read_text()
           if '## Review hardening' not in work_text:
               work.write_text(work_text.rstrip() + '''
 
-            ## Review hardening
+          ## Review hardening
 
-            - Completed transaction IDs are now persisted before the in-memory ledger is mutated, so a transient ledger-write failure cannot create a false completed state inside the running process.
-            - Pending-journal cleanup is best-effort after the completed ledger is durable; cleanup failure no longer turns a successfully committed reward into an application-level failure.
-            - Added an explicit idempotent `grantHearts()` reward path while keeping `addHearts()` for non-reward adjustments.
+          - Completed transaction IDs are persisted before the in-memory ledger is mutated, preventing a transient ledger-write failure from creating a false completed state inside the running process.
+          - Pending-journal cleanup is best-effort after the completed ledger is durable; cleanup failure no longer turns a committed reward into an application-level failure.
+          - Rewarded heart grants use explicit `grantHearts()` reason/idempotency semantics while `addHearts()` remains available for non-reward adjustments.
           ''' + '\n')
           PY
           dart format lib/core/storage/progress_store.dart test/core/storage/reward_transaction_recovery_test.dart
           git diff --check
           if git diff --quiet; then
-            echo "No durability patch changes required."
+            echo "No durability changes required."
             exit 0
           fi
           git config user.name "github-actions[bot]"
