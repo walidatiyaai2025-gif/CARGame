@@ -1,118 +1,25 @@
 from pathlib import Path
-import subprocess
-
-config_path = Path('lib/core/economy/economy_config.dart')
-text = config_path.read_text()
-old = """    nonNegative('hintCoinCost', gameplay.hintCoinCost);
-    positive('extraMovesPerBooster', gameplay.extraMovesPerBooster);
-"""
-new = """    if (gameplay.hintCoinCost <= 0) {
-      throw ArgumentError.value(gameplay.hintCoinCost, 'hintCoinCost');
-    }
-    positive('extraMovesPerBooster', gameplay.extraMovesPerBooster);
-"""
-if text.count(old) != 1:
-    raise SystemExit('gameplay validation anchor did not match')
-text = text.replace(old, new, 1)
-old = """      positive('offer.amount', offer.amount);
-      nonNegative('offer.price', offer.price);
-      if (offer.kind != EconomyShopOfferKind.hearts) {
-"""
-new = """      positive('offer.amount', offer.amount);
-      final zeroPricedClassicTheme =
-          offer.kind == EconomyShopOfferKind.theme &&
-          targetId == 'classic' &&
-          offer.price == 0;
-      if (offer.price < 0 || (offer.price == 0 && !zeroPricedClassicTheme)) {
-        throw ArgumentError.value(offer.price, 'offer.price');
-      }
-      if (offer.kind != EconomyShopOfferKind.hearts) {
-"""
-if text.count(old) != 1:
-    raise SystemExit('shop price validation anchor did not match')
-config_path.write_text(text)
 
 
-test_path = Path('test/core/economy/economy_config_test.dart')
-test_text = test_path.read_text()
-marker = """    test('rejects unsafe formula inputs and unknown offers', () {
-"""
-addition = """    test('rejects a zero-cost gameplay hint sink', () {
-      expect(
-        () => EconomyConfig.validated(
-          schemaVersion: 1,
-          player: v1.player,
-          rewards: v1.rewards,
-          gameplay: const EconomyGameplayRules(
-            hintCoinCost: 0,
-            extraMovesPerBooster: 5,
-            preparedHintUses: 1,
-          ),
-          shopOffers: v1.shopOffers,
-        ),
-        throwsArgumentError,
-      );
-    });
-
-    test('rejects zero-priced booster offers', () {
-      expect(
-        () => EconomyConfig.validated(
-          schemaVersion: 1,
-          player: v1.player,
-          rewards: v1.rewards,
-          gameplay: v1.gameplay,
-          shopOffers: const <EconomyShopOffer>[
-            EconomyShopOffer(
-              id: 'invalid_zero_booster',
-              kind: EconomyShopOfferKind.booster,
-              targetId: 'hint',
-              amount: 1,
-              price: 0,
-            ),
-          ],
-        ),
-        throwsArgumentError,
-      );
-    });
-
-    test('only the shipped classic theme may be zero-priced', () {
-      expect(
-        () => EconomyConfig.validated(
-          schemaVersion: 1,
-          player: v1.player,
-          rewards: v1.rewards,
-          gameplay: v1.gameplay,
-          shopOffers: const <EconomyShopOffer>[
-            EconomyShopOffer(
-              id: 'invalid_zero_paid_theme',
-              kind: EconomyShopOfferKind.theme,
-              targetId: 'sunset',
-              amount: 1,
-              price: 0,
-            ),
-          ],
-        ),
-        throwsArgumentError,
-      );
-    });
-
-"""
-if addition not in test_text:
-    if test_text.count(marker) != 1:
-        raise SystemExit('test insertion marker did not match')
-    test_text = test_text.replace(marker, addition + marker, 1)
-test_path.write_text(test_text)
+def replace_once(text: str, old: str, new: str, label: str) -> str:
+    count = text.count(old)
+    if count != 1:
+        raise SystemExit(f'{label}: expected one match, found {count}')
+    return text.replace(old, new, 1)
 
 
 progress_path = Path('lib/core/storage/progress_store.dart')
 progress = progress_path.read_text()
-old = """    if (savedVersion == null || savedVersion <= 0) {
+
+progress = replace_once(
+    progress,
+    """    if (savedVersion == null || savedVersion <= 0) {
       await _prefs.setInt(_economyConfigVersionKey, currentVersion);
       return;
     }
     if (savedVersion > currentVersion) {
-"""
-new = """    if (savedVersion == null) {
+""",
+    """    if (savedVersion == null) {
       await _prefs.setInt(_economyConfigVersionKey, currentVersion);
       return;
     }
@@ -120,19 +27,115 @@ new = """    if (savedVersion == null) {
       throw StateError('Invalid economy config version: $savedVersion.');
     }
     if (savedVersion > currentVersion) {
-"""
-if progress.count(old) != 1:
-    raise SystemExit('economy version migration anchor did not match')
-progress_path.write_text(progress.replace(old, new, 1))
+""",
+    'economy version migration',
+)
+
+progress = replace_once(
+    progress,
+    """  Future<bool> purchaseShopHeartOffer(String offerId) async {
+    final offer = EconomyConfig.current.heartOfferById(offerId);
+    if (hearts >= maxHearts) return false;
+    final paid = await spendCoins(offer.price);
+    if (!paid) return false;
+    await addHearts(offer.amount);
+    return true;
+  }
+""",
+    """  Future<bool> purchaseShopHeartOffer(String offerId) async {
+    final offer = EconomyConfig.current.heartOfferById(offerId);
+    if (_purchaseBusy || hearts >= maxHearts || coins < offer.price) {
+      return false;
+    }
+
+    _purchaseBusy = true;
+    try {
+      final finalCoins = coins - offer.price;
+      final finalHearts = (hearts + offer.amount).clamp(0, maxHearts);
+      await _commitShopPurchase('heart:${offer.id}', <String, Object?>{
+        _heartsKey: finalHearts,
+        if (finalHearts >= maxHearts) _heartTimestampKey: null,
+        _coinsKey: finalCoins,
+      });
+
+      coins = finalCoins;
+      hearts = finalHearts;
+      if (hearts >= maxHearts) _heartRefillTimestamp = null;
+      notifyListeners();
+      return true;
+    } finally {
+      _purchaseBusy = false;
+    }
+  }
+""",
+    'atomic heart purchase',
+)
+
+progress = replace_once(
+    progress,
+    """        case _coinsKey:
+        case _freeHintsKey:
+        case _extraMovesKey:
+        case _comboShieldsKey:
+          if (value is! int || value < 0) {
+            throw FormatException('Invalid non-negative integer for $key.');
+          }
+          validated[key] = value;
+        case _selectedThemeKey:
+""",
+    """        case _coinsKey:
+        case _freeHintsKey:
+        case _extraMovesKey:
+        case _comboShieldsKey:
+          if (value is! int || value < 0) {
+            throw FormatException('Invalid non-negative integer for $key.');
+          }
+          validated[key] = value;
+        case _heartsKey:
+          if (value is! int || value < 0 || value > maxHearts) {
+            throw const FormatException('Invalid shop heart value.');
+          }
+          validated[key] = value;
+        case _heartTimestampKey:
+          if (value != null) {
+            throw const FormatException(
+              'Shop purchases may only clear the heart refill timestamp.',
+            );
+          }
+          validated[key] = null;
+        case _selectedThemeKey:
+""",
+    'shop journal heart validation',
+)
+
+progress = replace_once(
+    progress,
+    """      } else if (value is List<String>) {
+        await _prefs.setStringList(entry.key, value);
+      } else {
+        throw FormatException('Unsupported shop purchase value: ${entry.key}');
+      }
+""",
+    """      } else if (value is List<String>) {
+        await _prefs.setStringList(entry.key, value);
+      } else if (value == null && entry.key == _heartTimestampKey) {
+        await _prefs.remove(entry.key);
+      } else {
+        throw FormatException('Unsupported shop purchase value: ${entry.key}');
+      }
+""",
+    'shop journal heart timestamp apply',
+)
+progress_path.write_text(progress)
 
 
 integration_path = Path('test/core/economy/economy_integration_test.dart')
 integration = integration_path.read_text()
-marker = """  test(
+future_marker = """  test(
     'future economy versions fail closed without rewriting wallet',
     () async {
 """
-addition = """  test(
+version_test = """  test(
     'invalid economy version markers fail closed without rewrites',
     () async {
       final prefs = SharedPreferencesAsync();
@@ -148,27 +151,91 @@ addition = """  test(
   );
 
 """
-if addition not in integration:
-    if integration.count(marker) != 1:
+if version_test not in integration:
+    if integration.count(future_marker) != 1:
         raise SystemExit('migration test insertion marker did not match')
-    integration = integration.replace(marker, addition + marker, 1)
+    integration = integration.replace(future_marker, version_test + future_marker, 1)
 integration_path.write_text(integration)
 
-subprocess.run(
-    [
-        'dart',
-        'format',
-        'lib/core/storage/progress_store.dart',
-        'test/core/economy/economy_integration_test.dart',
-    ],
-    check=True,
-)
-subprocess.run(
-    [
-        'git',
-        'add',
-        'lib/core/storage/progress_store.dart',
-        'test/core/economy/economy_integration_test.dart',
-    ],
-    check=True,
-)
+
+shop_test_path = Path('test/core/storage/shop_purchase_recovery_test.dart')
+shop_test = shop_test_path.read_text()
+malformed_marker = """  test(
+    'malformed pending purchase is discarded without changing wallet',
+"""
+heart_tests = """  test('configured heart purchase persists wallet and hearts together', () async {
+    final prefs = SharedPreferencesAsync();
+    await prefs.setInt('coins', 500);
+    await prefs.setInt('hearts', 2);
+    await prefs.setString(
+      'heart_refill_timestamp',
+      DateTime.now().toIso8601String(),
+    );
+
+    final store = ProgressStore();
+    await store.load();
+    expect(await store.purchaseShopHeartOffer('heart_single'), isTrue);
+    expect(store.coins, 380);
+    expect(store.hearts, 3);
+    expect(await prefs.containsKey(pendingPurchaseKey), isFalse);
+
+    final reloaded = ProgressStore();
+    await reloaded.load();
+    expect(reloaded.coins, 380);
+    expect(reloaded.hearts, 3);
+  });
+
+  test('load completes an interrupted heart purchase idempotently', () async {
+    final prefs = SharedPreferencesAsync();
+    await prefs.setInt('coins', 500);
+    await prefs.setInt('hearts', 2);
+    await prefs.setString(
+      'heart_refill_timestamp',
+      DateTime.now().toIso8601String(),
+    );
+    await prefs.setString(
+      pendingPurchaseKey,
+      jsonEncode({
+        'version': 1,
+        'reason': 'heart:heart_full',
+        'values': {
+          'hearts': 5,
+          'heart_refill_timestamp': null,
+          'coins': 50,
+        },
+      }),
+    );
+
+    final recovered = ProgressStore();
+    await recovered.load();
+    expect(recovered.coins, 50);
+    expect(recovered.hearts, 5);
+    expect(await prefs.containsKey('heart_refill_timestamp'), isFalse);
+    expect(await prefs.containsKey(pendingPurchaseKey), isFalse);
+
+    final secondLoad = ProgressStore();
+    await secondLoad.load();
+    expect(secondLoad.coins, 50);
+    expect(secondLoad.hearts, 5);
+  });
+
+"""
+if heart_tests not in shop_test:
+    if shop_test.count(malformed_marker) != 1:
+        raise SystemExit('shop recovery insertion marker did not match')
+    shop_test = shop_test.replace(malformed_marker, heart_tests + malformed_marker, 1)
+shop_test_path.write_text(shop_test)
+
+
+work_path = Path('docs/work/ECON-005.md')
+work = work_path.read_text().rstrip()
+if '## Review hardening' not in work:
+    work += """
+
+## Review hardening
+
+- A present non-positive `economy_config_version` is treated as corrupted metadata and fails closed; only an absent marker is considered a legacy v1 save.
+- Configured heart purchases now debit coins and grant hearts inside the existing SHOP-002 absolute-state purchase journal, including atomic refill-timestamp clearing when the cap is reached.
+- The v1 schema keeps non-negative price validation semantics; shipped balance values are unchanged.
+"""
+work_path.write_text(work.rstrip() + '\n')
