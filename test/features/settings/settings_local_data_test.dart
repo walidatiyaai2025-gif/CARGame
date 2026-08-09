@@ -22,12 +22,24 @@ void main() {
   });
 
   tearDown(() async {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(SystemChannels.platform, null);
     await AppLogger.instance.clear();
   });
 
   testWidgets('privacy sheet copies a versioned local data export', (
     tester,
   ) async {
+    String? copiedText;
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(SystemChannels.platform, (call) async {
+          if (call.method == 'Clipboard.setData') {
+            final arguments = call.arguments as Map<Object?, Object?>?;
+            copiedText = arguments?['text'] as String?;
+          }
+          return null;
+        });
+
     final prefs = SharedPreferencesAsync();
     await prefs.setInt('coins', 456);
 
@@ -53,8 +65,8 @@ void main() {
     await tester.tap(exportButton);
     await _pumpUi(tester);
 
-    final clipboard = await Clipboard.getData(Clipboard.kTextPlain);
-    final decoded = jsonDecode(clipboard!.text!) as Map<String, dynamic>;
+    expect(copiedText, isNotNull);
+    final decoded = jsonDecode(copiedText!) as Map<String, dynamic>;
     expect(decoded['schemaVersion'], LocalDataController.exportSchemaVersion);
     expect(decoded['networkTransfer'], isFalse);
     expect(
@@ -62,6 +74,8 @@ void main() {
       456,
     );
     expect(find.text('Local data export copied as JSON.'), findsOneWidget);
+
+    await _disposeUi(tester);
   });
 
   testWidgets(
@@ -115,6 +129,8 @@ void main() {
       expect(await prefs.getKeys(), isEmpty);
       expect(AppLogger.instance.entries, isEmpty);
       expect(rehydrateCalls, 1);
+
+      await _disposeUi(tester);
     },
   );
 }
@@ -133,4 +149,9 @@ Future<void> _openPrivacySheet(WidgetTester tester) async {
 Future<void> _pumpUi(WidgetTester tester) async {
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 500));
+}
+
+Future<void> _disposeUi(WidgetTester tester) async {
+  await tester.pumpWidget(const SizedBox.shrink());
+  await tester.pump();
 }
