@@ -1,0 +1,130 @@
+name: ENG-005 Apply Push
+
+on:
+  push:
+    branches:
+      - agent/eng-005-architecture-boundaries
+    paths:
+      - .github/workflows/eng005_apply_push.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/eng-005-architecture-boundaries
+          fetch-depth: 0
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Wire composition root and verify architecture
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('lib/main.dart')
+          text = path.read_text()
+
+          for line in [
+              "import 'core/services/optional_service_coordinator.dart';\n",
+              "import 'core/settings/app_settings_store.dart';\n",
+              "import 'core/storage/progress_store.dart';\n",
+          ]:
+              if line not in text:
+                  raise SystemExit(f'main import not found: {line.strip()}')
+              text = text.replace(line, '', 1)
+
+          anchor = "import 'core/logging/app_logger.dart';\n"
+          composition_import = "import 'bootstrap/app_composition.dart';\n"
+          if anchor not in text:
+              raise SystemExit('main import anchor not found')
+          if composition_import not in text:
+              text = text.replace(anchor, composition_import + anchor, 1)
+
+          start = text.index('class _BootstrapAppState')
+          end = text.index('\nclass _PremiumSplash', start)
+          segment = text[start:end]
+
+          old_fields = '''  final ProgressStore _store = ProgressStore();
+          final AppSettingsStore _settings = AppSettingsStore();
+          final OptionalServiceCoordinator _optionalServices =
+              OptionalServiceCoordinator(
+                defaultTimeout: const Duration(seconds: 20),
+                maxAttempts: 3,
+              );'''.replace('          ', '')
+          new_fields = '  final AppComposition _composition = AppComposition.production();'
+          if old_fields not in segment:
+              raise SystemExit('bootstrap dependency construction block not found')
+          segment = segment.replace(old_fields, new_fields, 1)
+
+          old_dispose = '    unawaited(_optionalServices.dispose());'
+          if old_dispose not in segment:
+              raise SystemExit('optional service disposal line not found')
+          segment = segment.replace(
+              old_dispose,
+              '    unawaited(_composition.dispose());',
+              1,
+          )
+          segment = segment.replace(
+              '_optionalServices',
+              '_composition.optionalServices',
+          )
+          segment = segment.replace('_store', '_composition.progressStore')
+          segment = segment.replace('_settings', '_composition.settingsStore')
+          text = text[:start] + segment + text[end:]
+
+          forbidden = [
+              'core/storage/progress_store.dart',
+              'core/settings/app_settings_store.dart',
+              'core/services/optional_service_coordinator.dart',
+          ]
+          for value in forbidden:
+              if value in text:
+                  raise SystemExit(f'main still imports concrete adapter: {value}')
+          if 'AppComposition.production()' not in text:
+              raise SystemExit('composition root not wired')
+
+          path.write_text(text)
+          PY
+
+          dart format \
+            lib/main.dart \
+            lib/bootstrap/app_composition.dart \
+            lib/core/domain/optional_service_state.dart \
+            lib/core/application/optional_service_port.dart \
+            lib/core/services/optional_service_coordinator.dart \
+            tool/architecture/architecture_contract.dart \
+            test/core/architecture/architecture_dependency_test.dart \
+            test/bootstrap/app_composition_test.dart
+          flutter pub get
+          flutter test test/core/architecture/architecture_dependency_test.dart
+          flutter test test/bootstrap/app_composition_test.dart
+          flutter test test/core/services/optional_service_coordinator_test.dart
+          flutter test test/bootstrap_splash_responsive_test.dart
+          flutter analyze
+          git diff --check
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            lib/main.dart \
+            lib/bootstrap/app_composition.dart \
+            lib/core/domain/optional_service_state.dart \
+            lib/core/application/optional_service_port.dart \
+            lib/core/services/optional_service_coordinator.dart \
+            tool/architecture/architecture_contract.dart \
+            test/core/architecture/architecture_dependency_test.dart \
+            test/bootstrap/app_composition_test.dart \
+            docs/ARCHITECTURE_BOUNDARIES.md \
+            docs/FEATURE_CATALOG.md \
+            docs/STATUS.md \
+            docs/work/ENG-005.md
+          git rm .github/workflows/eng005_apply_push.yml
+          git commit -m 'ENG-005: enforce architecture composition boundaries'
+          git push origin HEAD:agent/eng-005-architecture-boundaries
