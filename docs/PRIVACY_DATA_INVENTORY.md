@@ -10,7 +10,7 @@ Google Mobile Ads is the only intentional third-party network data processor in 
 
 ENG-012 defines a first-party analytics schema and application boundary without enabling first-party collection. `ENABLE_ANALYTICS` defaults to `false`; production runtime analytics privacy eligibility is deny-all and no outward analytics emitter, processor, persistence queue, or network transport is installed. Google UMP advertising consent is not reused as first-party analytics consent. The machine-readable inventory therefore correctly keeps `analyticsEnabled: false` and declares no analytics processor or data flow.
 
-`ENABLE_DIAGNOSTICS` also exists in `AppBuildConfig`, but current bootstrap installs the local `AppLogger` unconditionally. Diagnostics remain local-only and redacted; ENG-013 owns any future privacy-gated remote crash/non-fatal reporting and the effective build/runtime diagnostics gate.
+`ENABLE_DIAGNOSTICS` now effectively gates local `AppLogger` initialization/retention while the error boundary remains installed. ENG-013 also adds a separate `ENABLE_REMOTE_DIAGNOSTICS=false` eligibility gate and privacy-gated crash/non-fatal contract; production runtime privacy is deny-all and no remote emitter, SDK, processor, persistence queue, or upload path is installed.
 
 PRIV-003 adds an explicit first-party local-data boundary: `LocalDataController` can produce a versioned JSON export without network transfer and can clear CARGame-managed SharedPreferences plus local diagnostic logs. Settings exposes both actions under Privacy; destructive reset requires confirmation, serializes concurrent delete attempts, reconstructs fresh progress/settings stores, and returns to the default route so stale in-memory reward/recovery state cannot be written back after deletion.
 
@@ -92,7 +92,7 @@ Storage: application-support `logs/app_error.log` plus a bounded in-memory list 
 
 Network transfer: none. There is currently no remote crash-reporting or diagnostic-upload SDK.
 
-Current gate truth: local logging is installed during bootstrap. `ENABLE_DIAGNOSTICS` is represented in build configuration but is not currently an effective bootstrap gate; this gap is recorded for ENG-013 rather than hidden by the inventory.
+Current gate truth: the error boundary remains installed, but `ENABLE_DIAGNOSTICS` controls whether `AppLogger` retains or persists local diagnostics. Remote crash/non-fatal reporting is independently build/privacy gated, redacted, and bounded before any future emitter; current production has deny-all runtime eligibility and no emitter/processor.
 
 Deletion: `LocalDataController.deleteAllLocalData()` calls `AppLogger.clear()` as part of the confirmed Settings reset. Direct `AppLogger.clear()`, application-data clearing, and uninstall also remain effective.
 
@@ -145,7 +145,7 @@ No application feature currently collects, stores, or transmits account registra
 
 ## Known privacy gaps and owners
 
-- **ENG-013 — diagnostics gate:** `ENABLE_DIAGNOSTICS` exists but is not currently wired to suppress bootstrap installation of the local logger. Remote crash reporting remains absent.
+- No repository-owned ENG-013 diagnostics gap remains. Remote diagnostic upload is intentionally absent; any future processor requires a new privacy/security/disclosure review before enablement.
 
 The previous PRIV-003 in-app data-controls gap is closed by the source-controlled local export/delete/reset implementation. No account/backend/cloud-save deletion gap exists because those first-party remote data paths are absent.
 
@@ -181,9 +181,11 @@ No other network data processor is declared by the current production dependency
 
 `tool/verify_analytics_privacy.py` additionally enforces the ENG-012 checkpoint: analytics remains disabled in the machine inventory, known analytics SDKs/processors are absent, schema version 1 is explicit, `ENABLE_ANALYTICS` defaults false, the analytics adapter is independent of ads/storage/network APIs, and production composition keeps runtime privacy deny-all with no emitter.
 
+`tool/verify_crash_reporting_privacy.py` additionally enforces ENG-013: local diagnostics gating is effective, remote diagnostics defaults off, known crash SDKs/processors remain absent, crash payload redaction/bounds are present, production has no emitter, and version/build correlation defaults match `pubspec.yaml`.
+
 `tool/verify_privacy_disclosures.py` additionally requires the local deletion mechanism to remain available, rejects reintroduction of the completed `in-app-data-controls` gap, and verifies the source anchors for `LocalDataController` plus Settings export/delete/confirmation controls.
 
-This keeps PRIV-001/PRIV-002/PRIV-003/ENG-012 aligned with current source instead of relying on a one-time prose audit.
+This keeps PRIV-001/PRIV-002/PRIV-003/ENG-012/ENG-013 aligned with current source instead of relying on a one-time prose audit.
 
 ## Follow-up gates
 
@@ -191,5 +193,5 @@ This keeps PRIV-001/PRIV-002/PRIV-003/ENG-012 aligned with current source instea
 - PRIV-002: privacy policy and Play Data Safety/store disclosure mapping remain IMPLEMENTED pending publication/store evidence.
 - PRIV-003: first-party local reset/export/deletion readiness is source-complete and subject to repository verification evidence.
 - ENG-012: versioned schema/port and fail-closed build/runtime eligibility exist, while production collection intentionally remains disabled; any future first-party collector/processor requires an explicit privacy decision, inventory/disclosure update, and reviewed transport integration before it can be enabled.
-- ENG-013: effective diagnostics gating and any future privacy-gated remote crash reporting.
+- ENG-013: effective local diagnostics gating and a default-off privacy-gated crash/non-fatal reporting boundary are VERIFIED; any future remote processor/emitter remains a separate reviewed privacy/security/disclosure decision.
 - TEST-011: release privacy/consent/security verification.
