@@ -62,6 +62,7 @@ class _GameScreenState extends State<GameScreen> {
   bool _madeWrongMove = false;
   bool _resultActionBusy = false;
   bool _resultVisible = false;
+  bool _resultSheetDismissed = false;
   bool _resolving = false;
 
   int get _matchedCount => widget.level.items.length - _remaining.length;
@@ -312,23 +313,36 @@ class _GameScreenState extends State<GameScreen> {
       ..showSnackBar(SnackBar(content: Text(text)));
   }
 
+  void _dismissResultSheet(BuildContext sheetContext) {
+    if (_resultSheetDismissed) return;
+    final route = ModalRoute.of(sheetContext);
+    if (route == null || !route.isActive) {
+      _resultSheetDismissed = true;
+      return;
+    }
+    _resultSheetDismissed = true;
+    Navigator.of(sheetContext).removeRoute(route);
+  }
+
   Future<void> _closeResultAndReturnToMap(BuildContext sheetContext) async {
     if (_resultActionBusy) return;
     _resultActionBusy = true;
 
-    Navigator.of(sheetContext).pop();
-    await Future<void>.delayed(const Duration(milliseconds: 260));
+    final route = ModalRoute.of(context);
+    if (route == null) return;
+    final navigator = Navigator.of(context);
+    _dismissResultSheet(sheetContext);
+    await WidgetsBinding.instance.endOfFrame;
     if (!mounted) return;
-
-    await Navigator.of(context).maybePop();
+    navigator.removeRoute(route);
   }
 
   Future<void> _retryFromResult(BuildContext sheetContext) async {
     if (_resultActionBusy) return;
     _resultActionBusy = true;
 
-    Navigator.of(sheetContext).pop();
-    await Future<void>.delayed(const Duration(milliseconds: 220));
+    _dismissResultSheet(sheetContext);
+    await WidgetsBinding.instance.endOfFrame;
     if (!mounted) return;
     setState(() => _reset());
   }
@@ -342,6 +356,7 @@ class _GameScreenState extends State<GameScreen> {
     if (_resultVisible || !mounted) return;
     _resultVisible = true;
     _resultActionBusy = false;
+    _resultSheetDismissed = false;
 
     final skin = gameSkinById(widget.store.selectedTheme);
     final ar = Localizations.localeOf(context).languageCode == 'ar';
@@ -481,7 +496,7 @@ class _GameScreenState extends State<GameScreen> {
                                 final started = _ads.showRewarded(
                                   onReward: () {
                                     if (!mounted) return;
-                                    Navigator.of(sheetContext).pop();
+                                    _dismissResultSheet(sheetContext);
                                     setState(() {
                                       _finished = false;
                                       _resultVisible = false;

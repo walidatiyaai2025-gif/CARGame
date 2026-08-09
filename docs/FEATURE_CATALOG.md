@@ -285,7 +285,7 @@ Codex must not mark a feature complete merely because UI code exists.
 | REL-001 | ADB/device scripts remain dynamic | P0 | VERIFIED | ENG-002 | `tool/verify_dynamic_android_targets.dart` rejects fixed emulator serials, literal AVD arguments/defaults, and fixed `adb -s` targets; Flutter CI #546 passed the dynamic-target gate across 38 scripts on the merged TEST-001 checkpoint. |
 | REL-002 | Kotlin incremental-cache recovery | P0 | IMPLEMENTED | ENG-002 | Shared build repair performs cleanup/retry; multi-machine verification remains. |
 | REL-003 | Runtime resilience and watchdog policy | P1 | PLANNED | ENG-004, ENG-014 | Recoverable failures surface actionable UI/logs without restart loops or data loss. |
-| REL-004 | Storage corruption backup/recovery | P0 | PLANNED | ENG-008 | Invalid local data is detected, backed up when possible, migrated/reset safely, and diagnosed. |
+| REL-004 | Storage corruption backup/recovery | P0 | VERIFIED | ENG-008 | PR #107 verifies versioned pre-repair snapshots, single-backup preservation across multiple repairs, safe normalization/removal, diagnostics, unrelated-state preservation, and continued recovery when snapshot creation fails. Flutter CI #551 passed formatting, Analyze, the full Flutter suite, Debug APK build, and artifact upload before merge. |
 
 # R. Testing and quality gates
 
@@ -294,7 +294,7 @@ Codex must not mark a feature complete merely because UI code exists.
 | TEST-001 | Progress/economy unit tests | P0 | VERIFIED | ENG-008 | `progress_store_test.dart` covers wallet bounds, hearts, boosters, best-star persistence, milestone/world first-clear rewards, final-level bounds, duplicate daily-mission claims, corrupt-value backup/repair, and legacy-save compatibility with safe defaults for newer fields. PR #97 adds interruption-safe shop purchase/recovery coverage; PR #104 added explicit legacy-save migration compatibility. Flutter CI #546 passed Analyze, the full Flutter suite, Debug APK build, and artifact upload. |
 | TEST-002 | Level generator and solvability tests | P0 | PLANNED | LEVEL-003 | Levels 1, 25, 26, 150 and every generated configuration validate. |
 | TEST-003 | Core screen widget tests | P1 | PLANNED | UI3D-006 | Home, map, briefing, game, result, and shop pass key sizes/languages. |
-| TEST-004 | Navigation race regression tests | P0 | PLANNED | NAV-001 | Repeated Next/Retry/Start and external entry cannot duplicate actions/routes. |
+| TEST-004 | Navigation race regression tests | P0 | VERIFIED | NAV-001 | PR #109 hardens result-route dismissal against repeated actions and adds deterministic integration coverage for repeated Next, Retry, and Home Start actions; existing `GameNavigator` tests cover concurrent/named duplicate-push guards. Flutter CI #571 passed formatting, Analyze, the full 214-test Flutter suite, Debug APK build, and artifact upload. Debug artifact #9031075109 is 80,515,902 bytes with SHA-256 `299e710a467672c57c91fd956669d67506cf5534b8741499066032ff9e60b539`. |
 | TEST-005 | Missing asset tests | P1 | PLANNED | AST-003 | Missing/corrupt asset fallback remains visible and functional. |
 | TEST-006 | Golden visual tests | P2 | PLANNED | UI3D-004 | Critical screens have stable EN/AR snapshots at representative sizes. |
 | TEST-007 | Integration and end-to-end critical path | P0 | PLANNED | TEST-001, TEST-003 | First run through level completion, reward, shop, restart, and restore passes. |
