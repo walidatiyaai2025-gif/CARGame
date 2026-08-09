@@ -33,12 +33,10 @@ final class AdMobUnitIds {
 
   static const googleTestAndroidBanner =
       'ca-app-pub-3940256099942544/6300978111';
-  static const googleTestIosBanner =
-      'ca-app-pub-3940256099942544/2934735716';
+  static const googleTestIosBanner = 'ca-app-pub-3940256099942544/2934735716';
   static const googleTestAndroidRewarded =
       'ca-app-pub-3940256099942544/5224354917';
-  static const googleTestIosRewarded =
-      'ca-app-pub-3940256099942544/1712485313';
+  static const googleTestIosRewarded = 'ca-app-pub-3940256099942544/1712485313';
   static const googleTestAndroidInterstitial =
       'ca-app-pub-3940256099942544/1033173712';
   static const googleTestIosInterstitial =
@@ -87,8 +85,9 @@ final class AdMobUnitIds {
   }
 
   bool isCompleteFor(AdMobPlatform? platform) =>
-      (platform == null ? values : valuesFor(platform))
-          .every((value) => value.trim().isNotEmpty);
+      (platform == null ? values : valuesFor(platform)).every(
+        (value) => value.trim().isNotEmpty,
+      );
 
   bool usesGoogleTestIdsFor(AdMobPlatform? platform) =>
       (platform == null ? values : valuesFor(platform)).any(

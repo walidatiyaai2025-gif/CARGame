@@ -116,10 +116,7 @@ void main() {
 
       expect(config.isRelease, isTrue);
       expect(config.adMobPlatform, AdMobPlatform.android);
-      expect(
-        config.adMob.usesGoogleTestIdsFor(AdMobPlatform.android),
-        isFalse,
-      );
+      expect(config.adMob.usesGoogleTestIdsFor(AdMobPlatform.android), isFalse);
       expect(config.adMob.usesGoogleTestIdsFor(AdMobPlatform.ios), isTrue);
     });
 
