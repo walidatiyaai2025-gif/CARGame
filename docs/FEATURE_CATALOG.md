@@ -162,7 +162,7 @@ Codex must not mark a feature complete merely because UI code exists.
 | GAME-013 | Gameplay tutorial | P1 | PLANNED | GAME-003 | Interactive first-level tutorial and contextual onboarding are skippable/replayable. |
 | GAME-014 | Accessibility feedback | P2 | PLANNED | GAME-003, A11Y-001 | Semantics, non-color cues, scalable text, and reduced motion cover the core loop. |
 | GAME-015 | App interruption and recovery | P0 | PLANNED | GAME-009, ENG-008 | Backgrounding, phone interruptions, process restart, and route loss cannot corrupt/duplicate a run. |
-| GAME-016 | Input determinism and anti-spam state machine | P0 | IN PROGRESS | GAME-003, GAME-011 | Issue #110: rapid taps/gestures during cargo travel, placement feedback, and result boundaries must be ignored or handled deterministically with exactly one move/feedback/result transition. Existing warehouse-spam coverage is being expanded to cargo reselection and boundary regressions. |
+| GAME-016 | Input determinism and anti-spam state machine | P0 | VERIFIED | GAME-003, GAME-011 | Issue #110 / PR #111 verify deterministic input locking across cargo travel and placement feedback: repeated warehouse taps and cargo reselection attempts cannot consume a second move, replace selection, or emit duplicate feedback; gameplay boosters, restart, and back are disabled while resolving, and TEST-004 verifies result-boundary action races. Flutter CI #580 passed formatting, Analyze, all 215 Flutter tests, Debug APK build, and artifact upload. Debug artifact #9031438726 is 80,515,901 bytes with SHA-256 `afa0597b32a4d08f5fdaf76f109c92821eb84f3ad6b4e0a388b9b29d7fee1ae6`. |
 
 # I. Level design and content
 
@@ -331,13 +331,13 @@ Codex must not mark a feature complete merely because UI code exists.
 
 ## IN PROGRESS
 
-- None during this evidence-only reconciliation.
+- None after `GAME-016` verification.
 
 ## NEXT READY
 
-1. `REL-004` Reconcile storage corruption backup/recovery evidence and fill only any remaining P0 persistence gap.
-2. `TEST-004` Reconcile navigation-race coverage and add only missing repeated-action regressions.
-3. `GAME-016` Audit remaining rapid-input state-machine gaps in the core loop.
+1. `ENG-010` Secret and credential handling — `ENG-009` is VERIFIED; audit injection, redaction, rotation, and CI protection gaps.
+2. `PRIV-001` Privacy inventory, consent, and data minimization — `ENG-001` is VERIFIED and the current privacy inventory gate provides a baseline for reconciliation.
+3. `ADS-002` Debug test IDs and release configuration — `ADS-001` and `ENG-009` are implemented/verified; reconcile remaining release-ad configuration evidence.
 
 ## BLOCKED
 
@@ -347,6 +347,7 @@ Codex must not mark a feature complete merely because UI code exists.
 
 ## Recently verified
 
+- `GAME-016` Input determinism and anti-spam state machine — PR #111 merged after Flutter CI #580 passed all 215 tests plus Debug APK build/upload; cargo/warehouse spam, selection locking, resolution input disablement, and result-boundary guards are deterministic.
 - `REL-006` Android signing and key-management procedure — PR #102 merged as `8f2e4ddb69d339938ba05911fb297960859e1a77`; Flutter CI #544 and Release Packaging Smoke #4 passed the redacted preflight, contract, APK/AAB packaging and evidence gates.
 - `TEST-001` Progress/economy unit tests — PR #104 merged as `2ab3578ecc214f995f194eff95f1a27b7cc3f442`; Flutter CI #546 passed full tests and Debug APK after adding explicit legacy-save/default migration coverage.
 - `REL-001` ADB/device scripts remain dynamic — current CI validates all discovered PowerShell/batch scripts against fixed emulator/AVD/adb-target patterns; CI #546 passed 38 scripts.
