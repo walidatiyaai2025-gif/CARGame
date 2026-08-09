@@ -26,6 +26,7 @@ jobs:
         run: |
           set -euo pipefail
           python3 tools/econ005_integrate.py
+          python3 tools/econ005_fix.py
           dart format \
             lib/core/economy/economy_config.dart \
             lib/core/storage/progress_store.dart \
@@ -43,7 +44,10 @@ jobs:
             test/core/storage/progress_store_test.dart \
             test/core/storage/shop_purchase_recovery_test.dart \
             test/core/storage/reward_transaction_recovery_test.dart
-          git rm .github/workflows/econ005_integrate.yml tools/econ005_integrate.py
+          git rm \
+            .github/workflows/econ005_integrate.yml \
+            tools/econ005_integrate.py \
+            tools/econ005_fix.py
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add \
