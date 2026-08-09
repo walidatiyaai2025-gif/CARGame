@@ -3,13 +3,16 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 
+import '../economy/economy_config.dart';
 import 'recovering_preferences.dart';
 
 class ProgressStore extends ChangeNotifier {
   static const int totalLevels = 150;
-  static const int maxStarsPerLevel = 3;
-  static const int maxHearts = 5;
-  static const Duration heartRefillInterval = Duration(minutes: 30);
+  static int get maxStarsPerLevel =>
+      EconomyConfig.current.player.maxStarsPerLevel;
+  static int get maxHearts => EconomyConfig.current.player.maxHearts;
+  static Duration get heartRefillInterval =>
+      EconomyConfig.current.player.heartRefillInterval;
 
   static const _levelKey = 'highest_unlocked_level';
   static const _coinsKey = 'coins';
@@ -39,6 +42,7 @@ class ProgressStore extends ChangeNotifier {
   static const _pendingShopPurchaseKey = 'pending_shop_purchase_v1';
   static const _pendingRewardTransactionKey = 'pending_reward_transaction_v1';
   static const _rewardTransactionLedgerKey = 'reward_transaction_ledger_v1';
+  static const _economyConfigVersionKey = 'economy_config_version';
   static const int _rewardTransactionLedgerLimit = 128;
 
   static const Set<String> _rewardNonNegativeIntKeys = <String>{
@@ -65,8 +69,8 @@ class ProgressStore extends ChangeNotifier {
   final Set<String> _completedRewardTransactions = <String>{};
 
   int highestUnlockedLevel = 1;
-  int coins = 100;
-  int hearts = maxHearts;
+  int coins = EconomyConfig.current.player.startingCoins;
+  int hearts = EconomyConfig.current.player.startingHearts;
   int gamesPlayed = 0;
   int wins = 0;
   int losses = 0;
@@ -79,9 +83,10 @@ class ProgressStore extends ChangeNotifier {
   int missionWins = 0;
   int missionStars = 0;
   int missionCoins = 0;
-  int freeHints = 2;
-  int extraMovesBoosters = 1;
-  int comboShields = 1;
+  int freeHints = EconomyConfig.current.player.startingFreeHints;
+  int extraMovesBoosters =
+      EconomyConfig.current.player.startingExtraMovesBoosters;
+  int comboShields = EconomyConfig.current.player.startingComboShields;
   int lastCompletionBonus = 0;
   int lastCompletionBonusXp = 0;
   bool lastCompletionWasWorldReward = false;
@@ -100,13 +105,22 @@ class ProgressStore extends ChangeNotifier {
   double get completionProgress => completedLevels / totalLevels;
   int get totalStars => _levelStars.values.fold(0, (sum, stars) => sum + stars);
   int get maximumStars => totalLevels * maxStarsPerLevel;
-  int get worldsCompleted => completedLevels ~/ 25;
+  int get worldsCompleted =>
+      completedLevels ~/ EconomyConfig.current.rewards.worldInterval;
   double get winRate => gamesPlayed == 0 ? 0 : wins / gamesPlayed;
-  bool get dailyMissionComplete =>
-      missionWins >= 3 && missionStars >= 6 && missionCoins >= 150;
-  int get playerLevel => 1 + (playerXp ~/ 500);
-  int get xpIntoCurrentLevel => playerXp % 500;
-  double get playerLevelProgress => xpIntoCurrentLevel / 500;
+  bool get dailyMissionComplete {
+    final rules = EconomyConfig.current.player;
+    return missionWins >= rules.dailyMissionWinsRequired &&
+        missionStars >= rules.dailyMissionStarsRequired &&
+        missionCoins >= rules.dailyMissionCoinsRequired;
+  }
+
+  int get playerLevel =>
+      1 + (playerXp ~/ EconomyConfig.current.player.xpPerPlayerLevel);
+  int get xpIntoCurrentLevel =>
+      playerXp % EconomyConfig.current.player.xpPerPlayerLevel;
+  double get playerLevelProgress =>
+      xpIntoCurrentLevel / EconomyConfig.current.player.xpPerPlayerLevel;
   List<StorageRecoveryEvent> get recoveryEvents => _prefs.recoveryEvents;
   List<String> get completedRewardTransactions =>
       List<String>.unmodifiable(_completedRewardTransactions);
@@ -131,6 +145,7 @@ class ProgressStore extends ChangeNotifier {
   }
 
   Future<void> load() async {
+    await _ensureEconomyConfigVersion();
     await _ensureRewardLedgerLoaded();
     await _recoverPendingRewardTransaction();
     await _recoverPendingShopPurchase();
@@ -140,8 +155,13 @@ class ProgressStore extends ChangeNotifier {
       totalLevels,
     );
     final savedCoins = await _prefs.getInt(_coinsKey);
-    coins = savedCoins == null ? 100 : (savedCoins < 0 ? 0 : savedCoins);
-    hearts = (await _prefs.getInt(_heartsKey) ?? maxHearts).clamp(0, maxHearts);
+    coins = savedCoins == null
+        ? EconomyConfig.current.player.startingCoins
+        : (savedCoins < 0 ? 0 : savedCoins);
+    hearts =
+        (await _prefs.getInt(_heartsKey) ??
+                EconomyConfig.current.player.startingHearts)
+            .clamp(0, maxHearts);
     final heartTimestampText = await _prefs.getString(_heartTimestampKey);
     _heartRefillTimestamp = heartTimestampText == null
         ? null
@@ -167,12 +187,14 @@ class ProgressStore extends ChangeNotifier {
     final savedHints = await _prefs.getInt(_freeHintsKey);
     final savedMoves = await _prefs.getInt(_extraMovesKey);
     final savedShields = await _prefs.getInt(_comboShieldsKey);
-    freeHints = savedHints == null ? 2 : (savedHints < 0 ? 0 : savedHints);
+    freeHints = savedHints == null
+        ? EconomyConfig.current.player.startingFreeHints
+        : (savedHints < 0 ? 0 : savedHints);
     extraMovesBoosters = savedMoves == null
-        ? 1
+        ? EconomyConfig.current.player.startingExtraMovesBoosters
         : (savedMoves < 0 ? 0 : savedMoves);
     comboShields = savedShields == null
-        ? 1
+        ? EconomyConfig.current.player.startingComboShields
         : (savedShields < 0 ? 0 : savedShields);
 
     lastCompletionBonus = 0;
@@ -243,6 +265,26 @@ class ProgressStore extends ChangeNotifier {
     await _prefs.setBool(_missionClaimedKey, false);
   }
 
+  Future<void> _ensureEconomyConfigVersion() async {
+    final currentVersion = EconomyConfig.current.schemaVersion;
+    final savedVersion = await _prefs.getInt(_economyConfigVersionKey);
+    if (savedVersion == null || savedVersion <= 0) {
+      await _prefs.setInt(_economyConfigVersionKey, currentVersion);
+      return;
+    }
+    if (savedVersion > currentVersion) {
+      throw StateError(
+        'Unsupported future economy config version: $savedVersion.',
+      );
+    }
+    if (savedVersion < currentVersion) {
+      throw StateError(
+        'No economy migration registered from version $savedVersion '
+        'to $currentVersion.',
+      );
+    }
+  }
+
   Future<void> completeLevel(
     int level,
     int reward, {
@@ -295,22 +337,22 @@ class ProgressStore extends ChangeNotifier {
     var completionBonusXp = 0;
     var completionWasWorldReward = false;
 
-    if (firstClear && level % 25 == 0) {
-      final worldNumber = level ~/ 25;
-      completionBonus = 300 + worldNumber * 100;
-      completionBonusXp = 150 + worldNumber * 25;
+    final economy = EconomyConfig.current;
+    if (firstClear && economy.isWorldLevel(level)) {
+      completionBonus = economy.worldCoinsForLevel(level);
+      completionBonusXp = economy.worldXpForLevel(level);
       completionWasWorldReward = true;
 
       nextCoins += completionBonus;
       nextPlayerXp += completionBonusXp;
       nextLifetimeCoinsEarned += completionBonus;
       nextMissionCoins += completionBonus;
-      nextFreeHints++;
-      nextExtraMovesBoosters++;
-      nextComboShields++;
-    } else if (firstClear && level % 5 == 0) {
-      completionBonus = 50 + (level ~/ 5) * 5;
-      completionBonusXp = 25;
+      nextFreeHints += economy.rewards.worldFreeHints;
+      nextExtraMovesBoosters += economy.rewards.worldExtraMovesBoosters;
+      nextComboShields += economy.rewards.worldComboShields;
+    } else if (firstClear && economy.isMilestoneLevel(level)) {
+      completionBonus = economy.milestoneCoinsForLevel(level);
+      completionBonusXp = economy.milestoneXpForLevel(level);
       nextCoins += completionBonus;
       nextPlayerXp += completionBonusXp;
       nextLifetimeCoinsEarned += completionBonus;
@@ -323,7 +365,8 @@ class ProgressStore extends ChangeNotifier {
     }
 
     final nextMissionStars = missionStars + safeStars;
-    final nextPerfectWins = perfectWins + (safeStars == 3 ? 1 : 0);
+    final nextPerfectWins =
+        perfectWins + (safeStars == maxStarsPerLevel ? 1 : 0);
     final nextLevelStars = safeStars > previousStars
         ? safeStars
         : previousStars;
@@ -412,7 +455,7 @@ class ProgressStore extends ChangeNotifier {
       return null;
     }
 
-    const reward = 200;
+    final reward = EconomyConfig.current.rewards.dailyMissionRewardCoins;
     final nextCoins = coins + reward;
     final nextLifetimeCoinsEarned = lifetimeCoinsEarned + reward;
     final committed = await _commitRewardTransaction(
@@ -433,32 +476,31 @@ class ProgressStore extends ChangeNotifier {
     return reward;
   });
 
-  Future<void> _saveProgressAndStats() async {
-    await _prefs.setInt(_levelKey, highestUnlockedLevel);
-    await _prefs.setInt(_coinsKey, coins);
-    await _prefs.setInt(_gamesKey, gamesPlayed);
-    await _prefs.setInt(_winsKey, wins);
-    await _prefs.setInt(_lossesKey, losses);
-    await _prefs.setInt(_coinsEarnedKey, lifetimeCoinsEarned);
-    await _prefs.setInt(_perfectWinsKey, perfectWins);
-    await _prefs.setInt(_bestComboKey, bestCombo);
-    await _prefs.setInt(_winStreakKey, currentWinStreak);
-    await _prefs.setInt(_bestWinStreakKey, bestWinStreak);
-    await _prefs.setInt(_xpKey, playerXp);
-    await _prefs.setInt(_missionWinsKey, missionWins);
-    await _prefs.setInt(_missionStarsKey, missionStars);
-    await _prefs.setInt(_missionCoinsKey, missionCoins);
-    await _prefs.setInt(_freeHintsKey, freeHints);
-    await _prefs.setInt(_extraMovesKey, extraMovesBoosters);
-    await _prefs.setInt(_comboShieldsKey, comboShields);
-  }
-
   Future<bool> spendCoins(int amount) async {
     if (amount <= 0 || coins < amount) return false;
     coins -= amount;
     await _prefs.setInt(_coinsKey, coins);
     notifyListeners();
     return true;
+  }
+
+  Future<bool> purchaseShopHeartOffer(String offerId) async {
+    final offer = EconomyConfig.current.heartOfferById(offerId);
+    if (hearts >= maxHearts) return false;
+    final paid = await spendCoins(offer.price);
+    if (!paid) return false;
+    await addHearts(offer.amount);
+    return true;
+  }
+
+  Future<bool> purchaseShopBooster(String boosterId) async {
+    final offer = EconomyConfig.current.boosterOfferFor(boosterId);
+    return purchaseBooster(offer.targetId, offer.amount, offer.price);
+  }
+
+  Future<bool> purchaseShopTheme(String themeId) async {
+    final offer = EconomyConfig.current.themeOfferFor(themeId);
+    return purchaseTheme(offer.targetId, offer.price);
   }
 
   Future<bool> purchaseTheme(String themeId, int price) async {
@@ -1026,7 +1068,7 @@ class ProgressStore extends ChangeNotifier {
       return null;
     }
 
-    const reward = 50;
+    final reward = EconomyConfig.current.rewards.dailyRewardCoins;
     final nextCoins = coins + reward;
     final nextLifetimeCoinsEarned = lifetimeCoinsEarned + reward;
     final committed = await _commitRewardTransaction(

@@ -13,53 +13,59 @@ void main() {
         InMemorySharedPreferencesAsync.empty();
   });
 
-  test('legacy save adopts v1 marker without rewriting player economy', () async {
-    final prefs = SharedPreferencesAsync();
-    await prefs.setInt('coins', 725);
-    await prefs.setInt('hearts', 3);
-    await prefs.setInt('booster_free_hints', 8);
-    await prefs.setInt('booster_extra_moves', 4);
-    await prefs.setInt('booster_combo_shields', 6);
+  test(
+    'legacy save adopts v1 marker without rewriting player economy',
+    () async {
+      final prefs = SharedPreferencesAsync();
+      await prefs.setInt('coins', 725);
+      await prefs.setInt('hearts', 3);
+      await prefs.setInt('booster_free_hints', 8);
+      await prefs.setInt('booster_extra_moves', 4);
+      await prefs.setInt('booster_combo_shields', 6);
 
-    final store = ProgressStore();
-    await store.load();
+      final store = ProgressStore();
+      await store.load();
 
-    expect(store.coins, 725);
-    expect(store.hearts, 3);
-    expect(store.freeHints, 8);
-    expect(store.extraMovesBoosters, 4);
-    expect(store.comboShields, 6);
-    expect(
-      await prefs.getInt('economy_config_version'),
-      EconomyConfig.current.schemaVersion,
-    );
+      expect(store.coins, 725);
+      expect(store.hearts, 3);
+      expect(store.freeHints, 8);
+      expect(store.extraMovesBoosters, 4);
+      expect(store.comboShields, 6);
+      expect(
+        await prefs.getInt('economy_config_version'),
+        EconomyConfig.current.schemaVersion,
+      );
 
-    final reloaded = ProgressStore();
-    await reloaded.load();
-    expect(reloaded.coins, 725);
-    expect(reloaded.hearts, 3);
-    expect(reloaded.freeHints, 8);
-    expect(reloaded.extraMovesBoosters, 4);
-    expect(reloaded.comboShields, 6);
-  });
+      final reloaded = ProgressStore();
+      await reloaded.load();
+      expect(reloaded.coins, 725);
+      expect(reloaded.hearts, 3);
+      expect(reloaded.freeHints, 8);
+      expect(reloaded.extraMovesBoosters, 4);
+      expect(reloaded.comboShields, 6);
+    },
+  );
 
-  test('future economy versions fail closed without rewriting wallet', () async {
-    final prefs = SharedPreferencesAsync();
-    await prefs.setInt('coins', 333);
-    await prefs.setInt(
-      'economy_config_version',
-      EconomyConfig.current.schemaVersion + 1,
-    );
+  test(
+    'future economy versions fail closed without rewriting wallet',
+    () async {
+      final prefs = SharedPreferencesAsync();
+      await prefs.setInt('coins', 333);
+      await prefs.setInt(
+        'economy_config_version',
+        EconomyConfig.current.schemaVersion + 1,
+      );
 
-    final store = ProgressStore();
-    await expectLater(store.load(), throwsStateError);
+      final store = ProgressStore();
+      await expectLater(store.load(), throwsStateError);
 
-    expect(await prefs.getInt('coins'), 333);
-    expect(
-      await prefs.getInt('economy_config_version'),
-      EconomyConfig.current.schemaVersion + 1,
-    );
-  });
+      expect(await prefs.getInt('coins'), 333);
+      expect(
+        await prefs.getInt('economy_config_version'),
+        EconomyConfig.current.schemaVersion + 1,
+      );
+    },
+  );
 
   test('shop production wrappers use authoritative v1 offer values', () async {
     final prefs = SharedPreferencesAsync();
@@ -91,7 +97,10 @@ void main() {
       store.purchaseShopHeartOffer('not-an-offer'),
       throwsArgumentError,
     );
-    await expectLater(store.purchaseShopBooster('unknown'), throwsArgumentError);
+    await expectLater(
+      store.purchaseShopBooster('unknown'),
+      throwsArgumentError,
+    );
     await expectLater(store.purchaseShopTheme('unknown'), throwsArgumentError);
   });
 }

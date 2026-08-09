@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/economy/economy_config.dart';
 import '../../core/storage/progress_store.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/game_skin.dart';
@@ -12,7 +13,7 @@ class ShopScreen extends StatelessWidget {
 
   final ProgressStore store;
 
-  Future<void> _buyHearts(BuildContext context, int amount, int price) async {
+  Future<void> _buyHearts(BuildContext context, String offerId) async {
     final messenger = ScaffoldMessenger.of(context);
     if (store.hearts >= ProgressStore.maxHearts) {
       messenger.showSnackBar(
@@ -20,27 +21,20 @@ class ShopScreen extends StatelessWidget {
       );
       return;
     }
-    final paid = await store.spendCoins(price);
+    final paid = await store.purchaseShopHeartOffer(offerId);
     if (!paid) {
       messenger.showSnackBar(
         const SnackBar(content: Text('Not enough coins.')),
       );
       return;
     }
-    await store.addHearts(amount);
     messenger.showSnackBar(
       const SnackBar(content: Text('Hearts added successfully.')),
     );
   }
 
-  Future<void> _buyBooster(
-    BuildContext context,
-    String id,
-    int amount,
-    int price,
-    String name,
-  ) async {
-    final paid = await store.purchaseBooster(id, amount, price);
+  Future<void> _buyBooster(BuildContext context, String id, String name) async {
+    final paid = await store.purchaseShopBooster(id);
     if (!context.mounted) return;
     _message(context, paid ? '$name added.' : 'Not enough coins.');
   }
@@ -49,7 +43,7 @@ class ShopScreen extends StatelessWidget {
     BuildContext context,
     _ThemeOffer offer,
   ) async {
-    final success = await store.purchaseTheme(offer.id, offer.price);
+    final success = await store.purchaseShopTheme(offer.id);
     if (!context.mounted) return;
     _message(
       context,
@@ -63,6 +57,12 @@ class ShopScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final economy = EconomyConfig.current;
+    final singleHeart = economy.heartOfferById('heart_single');
+    final fullHearts = economy.heartOfferById('heart_full');
+    final hintBooster = economy.boosterOfferFor('hint');
+    final movesBooster = economy.boosterOfferFor('moves');
+    final shieldBooster = economy.boosterOfferFor('shield');
     final skin = gameSkinById(store.selectedTheme);
     return Scaffold(
       appBar: AppBar(title: const Text('Cargo Shop'), centerTitle: true),
@@ -86,9 +86,9 @@ class ShopScreen extends StatelessWidget {
                   Expanded(
                     child: _OfferCard(
                       iconType: ThreeDIconType.heart,
-                      title: '+1 Heart',
-                      subtitle: '120 coins',
-                      onTap: () => _buyHearts(context, 1, 120),
+                      title: '+${singleHeart.amount} Heart',
+                      subtitle: '${singleHeart.price} coins',
+                      onTap: () => _buyHearts(context, singleHeart.id),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -96,9 +96,8 @@ class ShopScreen extends StatelessWidget {
                     child: _OfferCard(
                       iconType: ThreeDIconType.heart,
                       title: 'Full Hearts',
-                      subtitle: '450 coins',
-                      onTap: () =>
-                          _buyHearts(context, ProgressStore.maxHearts, 450),
+                      subtitle: '${fullHearts.price} coins',
+                      onTap: () => _buyHearts(context, fullHearts.id),
                     ),
                   ),
                 ],
@@ -113,34 +112,29 @@ class ShopScreen extends StatelessWidget {
               _BoosterTile(
                 iconType: ThreeDIconType.hint,
                 title: 'Smart Hint Pack',
-                description: '3 free hints without spending coins',
+                description:
+                    '${hintBooster.amount} free hints without spending coins',
                 inventory: store.freeHints,
-                price: 180,
-                onTap: () =>
-                    _buyBooster(context, 'hint', 3, 180, 'Smart hints'),
+                price: hintBooster.price,
+                onTap: () => _buyBooster(context, 'hint', 'Smart hints'),
               ),
               _BoosterTile(
                 iconType: ThreeDIconType.extraMoves,
                 title: 'Extra Moves Pack',
-                description: 'Adds 5 moves during a city mission',
+                description:
+                    'Adds ${economy.gameplay.extraMovesPerBooster} moves during a city mission',
                 inventory: store.extraMovesBoosters,
-                price: 260,
-                onTap: () => _buyBooster(
-                  context,
-                  'moves',
-                  1,
-                  260,
-                  'Extra moves booster',
-                ),
+                price: movesBooster.price,
+                onTap: () =>
+                    _buyBooster(context, 'moves', 'Extra moves booster'),
               ),
               _BoosterTile(
                 iconType: ThreeDIconType.shield,
                 title: 'Combo Shield',
                 description: 'Protects one combo from a wrong match',
                 inventory: store.comboShields,
-                price: 220,
-                onTap: () =>
-                    _buyBooster(context, 'shield', 1, 220, 'Combo shield'),
+                price: shieldBooster.price,
+                onTap: () => _buyBooster(context, 'shield', 'Combo shield'),
               ),
               const SizedBox(height: 24),
               const _SectionTitle(
@@ -556,7 +550,6 @@ class _ThemeOffer {
     required this.icon,
     required this.start,
     required this.end,
-    required this.price,
   });
 
   final String id;
@@ -565,7 +558,8 @@ class _ThemeOffer {
   final IconData icon;
   final Color start;
   final Color end;
-  final int price;
+
+  int get price => EconomyConfig.current.themeOfferFor(id).price;
 }
 
 const _themeOffers = <_ThemeOffer>[
@@ -576,7 +570,6 @@ const _themeOffers = <_ThemeOffer>[
     icon: Icons.warehouse_rounded,
     start: Color(0xFF1E3A5F),
     end: Color(0xFF4F86B8),
-    price: 0,
   ),
   _ThemeOffer(
     id: 'sunset',
@@ -585,7 +578,6 @@ const _themeOffers = <_ThemeOffer>[
     icon: Icons.wb_sunny_rounded,
     start: Color(0xFFD85B24),
     end: Color(0xFFFFB347),
-    price: 700,
   ),
   _ThemeOffer(
     id: 'neon',
@@ -594,6 +586,5 @@ const _themeOffers = <_ThemeOffer>[
     icon: Icons.auto_awesome_rounded,
     start: Color(0xFF4B2A86),
     end: Color(0xFF00A6A6),
-    price: 1200,
   ),
 ];

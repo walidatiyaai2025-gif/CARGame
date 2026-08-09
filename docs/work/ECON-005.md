@@ -29,3 +29,10 @@ Tracking: issue #122 / RC-001 #79
 - Existing REW-007 and SHOP-002 recovery/idempotency suites remain green.
 - Formatting, Analyze, full Flutter suite, Debug APK build, and artifact upload.
 - Catalog/status reconciliation after merge.
+
+## Migration policy
+
+- Legacy saves without `economy_config_version` are adopted as v1 by writing only the version marker; wallet, hearts, boosters, themes, progression, and reward state are not rewritten.
+- Re-loading the same v1 marker is a no-op.
+- A save stamped with a future economy schema fails closed before reward/shop recovery so an older build cannot silently apply stale prices or reward formulas.
+- Future positive versions below the runtime schema require an explicit registered migration before the runtime may advance the marker; implicit balance rewrites are forbidden.

@@ -323,11 +323,8 @@ final class EconomyConfig {
     return offer;
   }
 
-  EconomyShopOffer boosterOfferFor(String boosterId) => _offerForTarget(
-    EconomyShopOfferKind.booster,
-    boosterId,
-    'boosterId',
-  );
+  EconomyShopOffer boosterOfferFor(String boosterId) =>
+      _offerForTarget(EconomyShopOfferKind.booster, boosterId, 'boosterId');
 
   EconomyShopOffer themeOfferFor(String themeId) =>
       _offerForTarget(EconomyShopOfferKind.theme, themeId, 'themeId');
@@ -341,12 +338,20 @@ final class EconomyConfig {
     for (final offer in shopOffers) {
       if (offer.kind == kind && offer.targetId == normalized) return offer;
     }
-    throw ArgumentError.value(targetId, argumentName, 'Unknown economy target.');
+    throw ArgumentError.value(
+      targetId,
+      argumentName,
+      'Unknown economy target.',
+    );
   }
 
   int _worldNumberForLevel(int level) {
     if (!isWorldLevel(level)) {
-      throw ArgumentError.value(level, 'level', 'Not a world-completion level.');
+      throw ArgumentError.value(
+        level,
+        'level',
+        'Not a world-completion level.',
+      );
     }
     return level ~/ rewards.worldInterval;
   }
@@ -379,8 +384,7 @@ final class EconomyConfig {
     positive('schemaVersion', schemaVersion);
     nonNegative('startingCoins', player.startingCoins);
     positive('maxHearts', player.maxHearts);
-    if (player.startingHearts < 0 ||
-        player.startingHearts > player.maxHearts) {
+    if (player.startingHearts < 0 || player.startingHearts > player.maxHearts) {
       throw ArgumentError.value(player.startingHearts, 'startingHearts');
     }
     if (player.heartRefillInterval.inMicroseconds <= 0) {
@@ -431,10 +435,7 @@ final class EconomyConfig {
     nonNegative('worldBaseXp', rewards.worldBaseXp);
     nonNegative('worldXpPerWorld', rewards.worldXpPerWorld);
     nonNegative('worldFreeHints', rewards.worldFreeHints);
-    nonNegative(
-      'worldExtraMovesBoosters',
-      rewards.worldExtraMovesBoosters,
-    );
+    nonNegative('worldExtraMovesBoosters', rewards.worldExtraMovesBoosters);
     nonNegative('worldComboShields', rewards.worldComboShields);
 
     nonNegative('hintCoinCost', gameplay.hintCoinCost);

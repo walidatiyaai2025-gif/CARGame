@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 import '../../core/ads/ad_service.dart';
+import '../../core/economy/economy_config.dart';
 import '../../core/motion/game_action_feedback.dart';
 import '../../core/motion/game_travel_motion.dart';
 import '../../core/storage/progress_store.dart';
@@ -80,8 +81,11 @@ class _GameScreenState extends State<GameScreen> {
     return 1;
   }
 
-  int get _xpEarned =>
-      50 + widget.level.difficulty * 10 + _earnedStars * 15 + _bestCombo * 3;
+  int get _xpEarned => EconomyConfig.current.levelXpReward(
+    difficulty: widget.level.difficulty,
+    stars: _earnedStars,
+    combo: _bestCombo,
+  );
 
   @override
   void initState() {
@@ -96,10 +100,15 @@ class _GameScreenState extends State<GameScreen> {
         'level-${widget.level.number}-attempt-${DateTime.now().toUtc().microsecondsSinceEpoch}-${_rewardAttemptSequence++}';
     _remaining = [...widget.level.items]
       ..shuffle(Random(widget.level.number * 41));
+    final economy = EconomyConfig.current;
     _moves =
         widget.level.moves +
-        (applyLoadout && widget.loadout.extraMoves ? 5 : 0);
-    _preparedHints = applyLoadout && widget.loadout.smartHint ? 1 : 0;
+        (applyLoadout && widget.loadout.extraMoves
+            ? economy.gameplay.extraMovesPerBooster
+            : 0);
+    _preparedHints = applyLoadout && widget.loadout.smartHint
+        ? economy.gameplay.preparedHintUses
+        : 0;
     _selected = null;
     _selectedIndex = null;
     _selectedOrigin = null;
@@ -231,7 +240,11 @@ class _GameScreenState extends State<GameScreen> {
     _finished = true;
 
     final stars = _earnedStars;
-    final reward = 25 + widget.level.number * 5 + stars * 10 + _bestCombo * 2;
+    final reward = EconomyConfig.current.levelCoinReward(
+      level: widget.level.number,
+      stars: stars,
+      combo: _bestCombo,
+    );
     final xp = _xpEarned;
 
     await widget.store.completeLevel(
@@ -274,7 +287,9 @@ class _GameScreenState extends State<GameScreen> {
       used = await widget.store.useFreeHint();
     }
     if (!used) {
-      used = await widget.store.spendCoins(10);
+      used = await widget.store.spendCoins(
+        EconomyConfig.current.gameplay.hintCoinCost,
+      );
     }
     if (!used) {
       _message('Not enough coins or hints.');
@@ -291,8 +306,9 @@ class _GameScreenState extends State<GameScreen> {
       return;
     }
     if (!mounted) return;
-    setState(() => _moves += 5);
-    _message('+5 moves added.');
+    final extraMoves = EconomyConfig.current.gameplay.extraMovesPerBooster;
+    setState(() => _moves += extraMoves);
+    _message('+$extraMoves moves added.');
   }
 
   Future<void> _useComboShield() async {

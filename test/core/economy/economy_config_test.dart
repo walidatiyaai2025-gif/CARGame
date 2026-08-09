@@ -121,10 +121,7 @@ void main() {
           player: v1.player,
           rewards: v1.rewards,
           gameplay: v1.gameplay,
-          shopOffers: <EconomyShopOffer>[
-            ...v1.shopOffers,
-            v1.shopOffers.first,
-          ],
+          shopOffers: <EconomyShopOffer>[...v1.shopOffers, v1.shopOffers.first],
         ),
         throwsArgumentError,
       );
