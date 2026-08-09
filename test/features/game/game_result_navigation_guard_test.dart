@@ -113,10 +113,20 @@ void main() {
 
     final resultScroll = find.byType(SingleChildScrollView);
     expect(resultScroll, findsOneWidget);
-    await tester.drag(resultScroll, const Offset(0, -1200));
-    await tester.pump();
-
     final viewport = Offset.zero & tester.binding.renderViews.single.size;
+
+    for (var attempt = 0; attempt < 4; attempt++) {
+      final visibleNext = tester.getRect(next).intersect(viewport);
+      if (!visibleNext.isEmpty) break;
+
+      final visibleScroll = tester.getRect(resultScroll).intersect(viewport);
+      expect(visibleScroll.isEmpty, isFalse);
+      final gesture = await tester.startGesture(visibleScroll.center);
+      await gesture.moveBy(const Offset(0, -500));
+      await gesture.up();
+      await tester.pump();
+    }
+
     final visibleNext = tester.getRect(next).intersect(viewport);
     expect(visibleNext.isEmpty, isFalse);
 
