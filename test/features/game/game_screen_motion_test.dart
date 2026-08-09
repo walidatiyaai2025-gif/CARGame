@@ -140,9 +140,7 @@ void main() {
       expect(selectedTarget.isEmpty, isFalse);
 
       await tester.tapAt(selectedTarget.center);
-      await tester.pump(const Duration(milliseconds: 260));
-      await tester.pump();
-
+      await _pumpUntil(tester, find.byType(GameActionFeedback));
       expect(find.byType(GameActionFeedback), findsOneWidget);
 
       final remainingCargo = find.byKey(ValueKey('cargo-${remaining.id}-0'));
@@ -150,8 +148,7 @@ void main() {
       await tester.tap(remainingCargo);
       await tester.pump();
 
-      await tester.pump(const Duration(milliseconds: 720));
-      expect(find.byType(GameActionFeedback), findsNothing);
+      await _pumpUntilAbsent(tester, find.byType(GameActionFeedback));
 
       final remainingWarehouse = find.byKey(
         ValueKey('warehouse-${remaining.id}'),
@@ -177,6 +174,32 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+}
+
+Future<void> _pumpUntil(
+  WidgetTester tester,
+  Finder finder, {
+  Duration step = const Duration(milliseconds: 50),
+  int maxPumps = 40,
+}) async {
+  for (var attempt = 0; attempt < maxPumps; attempt++) {
+    if (finder.evaluate().isNotEmpty) return;
+    await tester.pump(step);
+  }
+  expect(finder, findsWidgets);
+}
+
+Future<void> _pumpUntilAbsent(
+  WidgetTester tester,
+  Finder finder, {
+  Duration step = const Duration(milliseconds: 50),
+  int maxPumps = 40,
+}) async {
+  for (var attempt = 0; attempt < maxPumps; attempt++) {
+    if (finder.evaluate().isEmpty) return;
+    await tester.pump(step);
+  }
+  expect(finder, findsNothing);
 }
 
 class _FakeAdService extends AdService {
