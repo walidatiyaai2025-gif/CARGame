@@ -10,12 +10,16 @@ final class StorageRecoveryEvent {
 }
 
 final class RecoveringPreferences {
-  RecoveringPreferences({SharedPreferencesAsync? delegate})
-    : _delegate = delegate;
+  RecoveringPreferences({
+    SharedPreferencesAsync? delegate,
+    Future<Map<String, Object?>> Function()? snapshotProvider,
+  }) : _delegate = delegate,
+       _snapshotProvider = snapshotProvider;
 
   static const backupKey = 'storage_recovery_backup_v1';
 
   SharedPreferencesAsync? _delegate;
+  final Future<Map<String, Object?>> Function()? _snapshotProvider;
   final List<StorageRecoveryEvent> _events = <StorageRecoveryEvent>[];
   bool _backupWritten = false;
 
@@ -158,7 +162,9 @@ final class RecoveringPreferences {
     _backupWritten = true;
 
     try {
-      final snapshot = await _store.getAll();
+      final snapshot = _snapshotProvider == null
+          ? await _store.getAll()
+          : await _snapshotProvider();
       snapshot.remove(backupKey);
       final payload = <String, Object?>{
         'schemaVersion': 1,
