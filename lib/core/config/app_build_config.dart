@@ -109,6 +109,7 @@ final class AppBuildConfig {
     required this.environment,
     required this.enableDiagnostics,
     required this.enableAds,
+    required this.enableAnalytics,
     required this.adMob,
     required this.adMobPlatform,
   });
@@ -123,6 +124,10 @@ final class AppBuildConfig {
       defaultValue: true,
     ),
     enableAds: const bool.fromEnvironment('ENABLE_ADS', defaultValue: true),
+    enableAnalytics: const bool.fromEnvironment(
+      'ENABLE_ANALYTICS',
+      defaultValue: false,
+    ),
     adMobPlatform: Platform.isAndroid
         ? AdMobPlatform.android
         : Platform.isIOS
@@ -160,6 +165,7 @@ final class AppBuildConfig {
     required String environmentName,
     required bool enableDiagnostics,
     required bool enableAds,
+    bool enableAnalytics = false,
     required AdMobUnitIds adMob,
     AdMobPlatform? adMobPlatform,
   }) {
@@ -168,6 +174,7 @@ final class AppBuildConfig {
       environment: environment,
       enableDiagnostics: enableDiagnostics,
       enableAds: enableAds,
+      enableAnalytics: enableAnalytics,
       adMob: adMob,
       adMobPlatform: adMobPlatform,
     );
@@ -178,6 +185,7 @@ final class AppBuildConfig {
   final AppEnvironment environment;
   final bool enableDiagnostics;
   final bool enableAds;
+  final bool enableAnalytics;
   final AdMobUnitIds adMob;
   final AdMobPlatform? adMobPlatform;
 
