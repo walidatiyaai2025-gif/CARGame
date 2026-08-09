@@ -37,9 +37,9 @@ void main() {
     test('redacts high-confidence standalone credentials', () {
       const input =
           'github=ghp_ABCDEFGHIJKLMNOPQRSTUVWX ' // secret-scan: allow
-          'aws=AKIAABCDEFGHIJKLMNOP '
-          'google=AIzaABCDEFGHIJKLMNOPQRSTUVWXYZ123456 '
-          'slack=xoxb-12345678901234567890';
+          'aws=AKIAABCDEFGHIJKLMNOP ' // secret-scan: allow
+          'google=AIzaABCDEFGHIJKLMNOPQRSTUVWXYZ123456 ' // secret-scan: allow
+          'slack=xoxb-12345678901234567890'; // secret-scan: allow
 
       final output = SecretRedactor.redact(input);
 
