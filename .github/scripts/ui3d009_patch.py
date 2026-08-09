@@ -1,5 +1,101 @@
 from pathlib import Path
 
+debrief_path = Path('lib/features/game/gameplay_result_debrief.dart')
+debrief = debrief_path.read_text()
+
+old_header = '''              Row(
+                children: [
+                  _HeaderPill(
+                    icon: won
+                        ? Icons.check_circle_rounded
+                        : Icons.warning_amber_rounded,
+                    text: isArabic ? 'تقرير المهمة' : 'MISSION DEBRIEF',
+                  ),
+                  const Spacer(),
+                  _HeaderPill(
+                    icon: Icons.tag_rounded,
+                    text: '${isArabic ? 'مرحلة' : 'LEVEL'} $levelNumber',
+                  ),
+                ],
+              ),'''
+new_header = '''              Row(
+                children: [
+                  Flexible(
+                    child: Align(
+                      alignment: AlignmentDirectional.centerStart,
+                      child: _HeaderPill(
+                        icon: won
+                            ? Icons.check_circle_rounded
+                            : Icons.warning_amber_rounded,
+                        text: isArabic ? 'تقرير المهمة' : 'MISSION DEBRIEF',
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Align(
+                      alignment: AlignmentDirectional.centerEnd,
+                      child: _HeaderPill(
+                        icon: Icons.tag_rounded,
+                        text: '${isArabic ? 'مرحلة' : 'LEVEL'} $levelNumber',
+                      ),
+                    ),
+                  ),
+                ],
+              ),'''
+if old_header not in debrief:
+    raise SystemExit('debrief header row not found')
+debrief = debrief.replace(old_header, new_header, 1)
+
+old_status = '''                        Text(
+                          won
+                              ? worldReward
+                                    ? (isArabic
+                                          ? 'اكتمل العالم'
+                                          : 'WORLD COMPLETE')
+                                    : (isArabic
+                                          ? 'تم تأمين المسار'
+                                          : 'ROUTE SECURED')
+                              : (isArabic
+                                    ? 'المهمة متوقفة'
+                                    : 'MISSION INTERRUPTED'),
+                          style: TextStyle(
+                            color: won ? skin.accent : const Color(0xFFFFD5DA),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: .8,
+                          ),
+                        ),'''
+new_status = '''                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: AlignmentDirectional.centerStart,
+                          child: Text(
+                            won
+                                ? worldReward
+                                      ? (isArabic
+                                            ? 'اكتمل العالم'
+                                            : 'WORLD COMPLETE')
+                                      : (isArabic
+                                            ? 'تم تأمين المسار'
+                                            : 'ROUTE SECURED')
+                                : (isArabic
+                                      ? 'المهمة متوقفة'
+                                      : 'MISSION INTERRUPTED'),
+                            style: TextStyle(
+                              color: won
+                                  ? skin.accent
+                                  : const Color(0xFFFFD5DA),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: .8,
+                            ),
+                          ),
+                        ),'''
+if old_status not in debrief:
+    raise SystemExit('debrief status label not found')
+debrief = debrief.replace(old_status, new_status, 1)
+debrief_path.write_text(debrief)
+
 path = Path('lib/features/game/game_screen.dart')
 text = path.read_text()
 
