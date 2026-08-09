@@ -137,10 +137,7 @@ void main() {
     );
 
     test('generated collections are immutable', () {
-      expect(
-        () => levels.add(generateLevel(1)),
-        throwsUnsupportedError,
-      );
+      expect(() => levels.add(generateLevel(1)), throwsUnsupportedError);
       expect(
         () => generateLevel(1).items.add(productCatalog.first),
         throwsUnsupportedError,
