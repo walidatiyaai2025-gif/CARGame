@@ -53,7 +53,8 @@ void main() {
     );
 
     final secret = 'ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ123456';
-    final longMessage = 'failure token=$secret ${'x' * 700}';
+    final longMessage =
+        'failure token=$secret ${List<String>.filled(700, 'x').join()}';
     await reporter.capture(
       report(
         message: longMessage,
