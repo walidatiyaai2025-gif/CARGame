@@ -112,7 +112,7 @@ Codex must not mark a feature complete merely because UI code exists.
 | HOME-002 | Responsive Start button | P0 | IMPLEMENTED | HOME-001 | Home is fit-to-screen without a scroll container on 360x640 and 412x915 regression sizes; compact resources/hero preserve the guarded Start action; physical-device matrix remains. |
 | HOME-003 | Current world and next-city hero | P1 | IMPLEMENTED | WORLD-001 | Current journey/next target are shown; production city assets remain. |
 | HOME-004 | Daily reward entry | P1 | IMPLEMENTED | RET-001 | Entry reflects availability; animated claim flow remains. |
-| HOME-005 | Daily mission entry | P1 | IMPLEMENTED | RET-002 | Progress and claim state are visible; final design/motion remains. |
+| HOME-005 | Daily mission entry | P1 | IMPLEMENTED | RET-002 | Progress and claim state are visible; final UI/tests remain. |
 | HOME-006 | Shop and progress navigation | P1 | IMPLEMENTED | SHOP-001, PROG-001 | Navigation exists and must adopt shared transitions. |
 | NAV-001 | Navigation guard framework | P0 | IMPLEMENTED | ENG-003 | Double push/pop and result action races are prevented; regression tests remain. |
 | NAV-002 | Unified animated route transitions | P1 | IMPLEMENTED | MOT-004 | Home/app-shell Journey, Shop, Progress, Logs, Settings, and runtime Log Viewer now use `GameNavigator` with stable names and duplicate-push guards; Mission Briefing→Gameplay also uses the shared named route. Result/back-guard regression coverage is present; broader device validation remains in RC-001. |
@@ -316,7 +316,7 @@ Codex must not mark a feature complete merely because UI code exists.
 | SEC-003 | App integrity, obfuscation, and release hardening | P1 | PLANNED | SEC-001, REL-008 | R8/obfuscation/integrity choices are tested without breaking ads, logging, or stack traces. |
 | LEGAL-001 | Open-source notices and content rights | P0 | PLANNED | ENG-006, AST-011, AV-007 | Third-party licenses, asset/audio rights, notices, trademarks, and age-rating inputs are complete. |
 | REL-005 | Versioning and release notes | P1 | PLANNED | ENG-007 | Version/build are updated consistently and release notes/changelog are generated. |
-| REL-006 | Android signing and key-management procedure | P0 | PLANNED | ENG-002, ENG-010 | Secure local/CI signing, backup, rotation, access, and recovery are documented without committed keys. |
+| REL-006 | Android signing and key-management procedure | P0 | IN PROGRESS | ENG-002, ENG-010 | Issue #101 is implementing a reproducible production signing/key-management procedure, safe preflight, backup/recovery/rotation rules, and production release-input handoff without committed or echoed secrets. |
 | REL-007 | Release APK | P0 | PLANNED | TEST-012, REL-006 | PR #99 proves release-mode APK packaging with ephemeral CI signing (55.8 MB; SHA-256 `2f6b2b5d3eb7de9a9029b0f51ae2e8a7e69a3c3278feb230abb116e4b56778dd`), but this smoke binary is non-distributable. VERIFIED still requires the real production-signed candidate to install, launch, upgrade, and pass device smoke checks. |
 | REL-008 | Release AAB | P0 | PLANNED | REL-006, PERF-007 | PR #99 proves release-mode AAB packaging with ephemeral CI signing (57.0 MB; SHA-256 `957c1d4b696ee2547e97faa796544b3ab514fa2660681d4f01876af83a48c548`), but this smoke bundle is non-distributable. VERIFIED still requires real production signing plus bundle/ABI/API/store validation. |
 | REL-009 | Play Store listing and asset readiness | P1 | PLANNED | REL-008, PRIV-002, LEGAL-001 | Listing copy, screenshots, feature graphic, icon, localization, category, rating, and contact are complete. |
@@ -331,13 +331,13 @@ Codex must not mark a feature complete merely because UI code exists.
 
 ## IN PROGRESS
 
-- None during this documentation-only reconciliation. The next implementation work starts with `REL-006` after the catalog/status PR is green and merged.
+- `REL-006` Android signing and key-management procedure — issue #101. Implement safe reusable release-input preflight, secure key ownership/backup/recovery/rotation procedure, and production handoff checklist without committing or printing secrets.
 
 ## NEXT READY
 
-1. `REL-006` Document and validate Android signing/key-management and production release-input handoff without committing secrets.
-2. `TEST-001` Reconcile and fill the remaining progress/economy coverage gaps before promoting the test feature to VERIFIED.
-3. `TEST-009` Prepare the Android API/ABI/device smoke matrix needed for the production candidate.
+1. `TEST-001` Reconcile and fill the remaining progress/economy coverage gaps before promoting the test feature to VERIFIED.
+2. `TEST-009` Prepare the Android API/ABI/device smoke matrix needed for the production candidate.
+3. `REL-001` Reconcile dynamic ADB/device script evidence while preparing device validation.
 
 ## BLOCKED
 
