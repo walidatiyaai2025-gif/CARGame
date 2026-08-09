@@ -7,12 +7,24 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | Field | Value |
 |---|---|
 | Current phase | Android RC hardening — issue #79 |
-| Primary feature | None; `AST-011` is VERIFIED after current-main reconciliation under issue #130. |
-| Completed checkpoint | `AST-011` asset licensing/provenance current-main reconciliation — current CI #657 proves the admission gate is green with 9 manifest descriptors, 0 approved provenance records, and 0 runtime WebP binaries; no fake provenance was created for descriptor-only placeholders. |
-| Status | Asset admission remains fail-closed: a future runtime WebP must match the manifest and a complete commercial-use provenance record, while orphan provenance is also rejected. Current main intentionally ships zero runtime 3D WebP binaries, so the empty approved provenance catalog is the correct auditable state. |
-| Previous checkpoint | `SEC-001` mobile security baseline current-main reconciliation — PR #128 merged as `c0e7c561e0bafa810ef9248322102b10b684a490` after Flutter CI #655. |
-| Next recommended feature | `LEVEL-003` level solvability validator current-main reconciliation: the validator and 150-level regression suite already exist on main, so verify current acceptance/tracking before adding duplicate code. |
+| Primary feature | None; `LEVEL-003` is VERIFIED after current-main reconciliation under issue #132. |
+| Completed checkpoint | `LEVEL-003` level solvability validator current-main reconciliation — the existing validator plus deterministic 150-level regression suite satisfy the catalog acceptance without duplicate production code. |
+| Status | Structural solvability is mechanically guarded for all 150 generated levels: bounds/world mapping, canonical products, multi-target/non-orphan cargo, sufficient move budgets, uniqueness, and complete level-set coverage are regression-tested. Difficulty balancing remains separate LEVEL-002 work. |
+| Previous checkpoint | `AST-011` asset licensing/provenance current-main reconciliation — PR #131 merged as `9631b43fb697f9819fe83a7991212b490865f525` after Flutter CI #659. |
+| Next recommended feature | `LEVEL-002` difficulty curve: define quantitative difficulty-band targets and add deterministic validation across the 150 generated levels now that LEVEL-003 structural solvability is verified. |
 | Known blocker | `REL-007`/`REL-008` require real production AdMob/signing inputs and a production-signed candidate; final install/upgrade/device smoke requires an Android device or testing track. `TEST-009` also remains dependency-blocked while `PERF-001` is PLANNED. Visual Studio C++ components remain optional for Windows desktop only. |
+
+## LEVEL-003 level solvability validator current-main verification — 2026-08-09
+
+- Historical commit `c06e23ec272a8800a039d99cbdcb02a4b0391670` added `LevelSolvabilityValidator`; current main retains the validator in `lib/features/game/level_validator.dart`.
+- Individual-level validation enforces the 1..150 level range, exact six-world/25-level mapping, difficulty 1..10, non-empty cargo, canonical product identity/metadata, at least two product types, no orphan product occurrences, and a positive move budget at least equal to cargo count.
+- Complete-set validation rejects duplicate level numbers and requires the exact 1..150 set.
+- `test/features/game/level_validator_test.dart` verifies all 150 generated levels, explicitly checks levels 1, 25, 26, 50, 51, 125, 126, and 150, and rejects insufficient moves, empty/single-target layouts, orphan/unknown products, world/difficulty/product mismatches, and duplicate/incomplete sets.
+- `lib/features/game/level_data.dart` deterministically generates the 150 levels from stable level-number-derived inputs, so the suite does not depend on runtime randomness.
+- Current Flutter CI #659 / run `31301158763` passed Analyze, all 240 Flutter tests including this validator suite, Debug APK build, and artifact upload.
+- Debug artifact #9034604961 is 80,544,511 bytes with SHA-256 `79d61a1977614296dd06a38a850e7960a730c6d632890801e77d99d5983ac6b6`.
+- Issue #132 reconciles stale tracking only; no duplicate production validator code was added.
+- `LEVEL-003` is VERIFIED; quantitative difficulty balancing remains a separate `LEVEL-002` P0 task.
 
 ## AST-011 asset licensing and provenance current-main verification — 2026-08-09
 
@@ -240,6 +252,7 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | 2026-08-09 | REL-006 signing/key-management verification | PASSED — PR #102 / Flutter CI #544 + Release Packaging Smoke #4 / debug artifact #9030167112 / release evidence #9030181913 |
 | 2026-08-09 | TEST-001 progress/economy + legacy-save compatibility | PASSED — PR #104 / Flutter CI #546 / full suite + Debug APK artifact #9030311765 / SHA-256 `cdef9c5c5fbc9576d1760009956aab53ab6e63491248a2ba43ea5288797855b7` |
 | 2026-08-09 | REL-001 dynamic Android targets | PASSED — Flutter CI #546 validated 38 PowerShell/batch scripts with no fixed emulator/AVD/adb target |
+| 2026-08-09 | LEVEL-003 level solvability validator current-main reconciliation | PASSED — Flutter CI #659 / run `31301158763` / full 240-test suite including all-150-level validator coverage / debug artifact #9034604961 / SHA-256 `79d61a1977614296dd06a38a850e7960a730c6d632890801e77d99d5983ac6b6` |
 | 2026-08-09 | AST-011 asset licensing/provenance current-main reconciliation | PASSED — current CI #657 / run `31300595956` asset gate reports 9 manifest descriptors / 0 provenance records / 0 runtime WebPs; historical implementation CI #121 / run `31185774162` passed with artifact #8996933307 / SHA-256 `9048ad078046154a0db92dd4d6ed918154e91b15c35c3b60feac2b9b1257d213` |
 | 2026-08-09 | SEC-001 mobile security baseline current-main reconciliation | PASSED — PR #128 / Flutter CI #655 / run `31300172519` / debug artifact #9034317021 / SHA-256 `67938778535d63de844f455b324796a4488b1a33efe20ea004fe9894d9db135d` |
 | 2026-08-09 | PRIV-001 privacy inventory current-main reconciliation | PASSED — PR #126 / Flutter CI #651 / run `31299285194` / debug artifact #9034063433 / SHA-256 `6fc839b195551ffcdbb0bd30b69bb9f29124aa5b9f5277ab8aa981d3508f4f9c` |
