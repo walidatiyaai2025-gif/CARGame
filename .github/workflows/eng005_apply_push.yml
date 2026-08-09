@@ -51,17 +51,13 @@ jobs:
           end = text.index('\nclass _PremiumSplash', start)
           segment = text[start:end]
 
-          old_fields = '''  final ProgressStore _store = ProgressStore();
-          final AppSettingsStore _settings = AppSettingsStore();
-          final OptionalServiceCoordinator _optionalServices =
-              OptionalServiceCoordinator(
-                defaultTimeout: const Duration(seconds: 20),
-                maxAttempts: 3,
-              );'''.replace('          ', '')
-          new_fields = '  final AppComposition _composition = AppComposition.production();'
-          if old_fields not in segment:
-              raise SystemExit('bootstrap dependency construction block not found')
-          segment = segment.replace(old_fields, new_fields, 1)
+          fields_start = segment.index('  final ProgressStore _store = ProgressStore();')
+          fields_end = segment.index("  String _status = 'Preparing your cargo journey...';", fields_start)
+          segment = (
+              segment[:fields_start]
+              + '  final AppComposition _composition = AppComposition.production();\n'
+              + segment[fields_end:]
+          )
 
           old_dispose = '    unawaited(_optionalServices.dispose());'
           if old_dispose not in segment:
