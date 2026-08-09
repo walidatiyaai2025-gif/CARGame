@@ -1,25 +1,10 @@
 import 'dart:async';
 
-enum OptionalServiceStatus { idle, running, ready, unavailable }
+import '../application/optional_service_port.dart';
 
-class OptionalServiceSnapshot {
-  const OptionalServiceSnapshot({
-    required this.name,
-    required this.status,
-    required this.attempts,
-    this.lastError,
-  });
+export '../application/optional_service_port.dart';
 
-  final String name;
-  final OptionalServiceStatus status;
-  final int attempts;
-  final Object? lastError;
-
-  bool get isReady => status == OptionalServiceStatus.ready;
-  bool get canRetry => status == OptionalServiceStatus.unavailable;
-}
-
-class OptionalServiceCoordinator {
+class OptionalServiceCoordinator implements OptionalServicePort {
   OptionalServiceCoordinator({
     this.defaultTimeout = const Duration(seconds: 15),
     this.maxAttempts = 3,
@@ -33,8 +18,10 @@ class OptionalServiceCoordinator {
   final StreamController<OptionalServiceSnapshot> _changes =
       StreamController<OptionalServiceSnapshot>.broadcast(sync: true);
 
+  @override
   Stream<OptionalServiceSnapshot> get changes => _changes.stream;
 
+  @override
   OptionalServiceSnapshot snapshot(String name) =>
       _snapshots[name] ??
       OptionalServiceSnapshot(
@@ -43,6 +30,7 @@ class OptionalServiceCoordinator {
         attempts: 0,
       );
 
+  @override
   Future<bool> initialize(
     String name,
     Future<void> Function() action, {
@@ -61,6 +49,7 @@ class OptionalServiceCoordinator {
     return future;
   }
 
+  @override
   Future<bool> retry(
     String name,
     Future<void> Function() action, {
@@ -109,5 +98,6 @@ class OptionalServiceCoordinator {
     if (!_changes.isClosed) _changes.add(value);
   }
 
+  @override
   Future<void> dispose() => _changes.close();
 }
