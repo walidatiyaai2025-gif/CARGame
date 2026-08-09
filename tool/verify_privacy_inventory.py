@@ -7,6 +7,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 INVENTORY = ROOT / "docs/privacy/data_inventory.json"
 PUBSPEC = ROOT / "pubspec.yaml"
+STORAGE_KEY_PATTERN = re.compile(
+    r"static const\s+([A-Za-z_][A-Za-z0-9_]*(?:Key|Prefix))\s*=\s*'([^']+)'\s*;"
+)
 
 
 def fail(message: str) -> None:
@@ -16,6 +19,45 @@ def fail(message: str) -> None:
 
 def dependency_present(pubspec: str, name: str) -> bool:
     return re.search(rf"^  {re.escape(name)}:", pubspec, re.MULTILINE) is not None
+
+
+def string_list(value: object, label: str) -> list[str]:
+    if not isinstance(value, list):
+        fail(f"{label} must be an array")
+    result: list[str] = []
+    for item in value:
+        if not isinstance(item, str) or not item.strip():
+            fail(f"{label} must contain non-empty strings")
+        result.append(item)
+    return result
+
+
+def declared_storage_keys(flows: list[dict[str, object]]) -> set[str]:
+    keys: set[str] = set()
+    for flow in flows:
+        flow_id = str(flow["id"])
+        for key in string_list(flow.get("storageKeys", []), f"{flow_id}.storageKeys"):
+            if key in keys:
+                fail(f"storage key is inventoried more than once: {key}")
+            keys.add(key)
+    return keys
+
+
+def source_storage_keys(paths: list[str]) -> set[str]:
+    keys: set[str] = set()
+    for relative_path in paths:
+        source = ROOT / relative_path
+        if not source.is_file():
+            fail(f"local persistence source does not exist: {relative_path}")
+        text = source.read_text(encoding="utf-8")
+        matches = STORAGE_KEY_PATTERN.findall(text)
+        if not matches:
+            fail(f"local persistence source exposes no tracked keys: {relative_path}")
+        for _, key in matches:
+            if key in keys:
+                fail(f"storage key is declared by multiple persistence sources: {key}")
+            keys.add(key)
+    return keys
 
 
 def main() -> None:
@@ -39,6 +81,8 @@ def main() -> None:
         fail("dependencyPolicy must be an object")
 
     processor_ids: set[str] = set()
+    processor_network: dict[str, bool] = {}
+    network_processor_dependencies: set[str] = set()
     for processor in processors:
         if not isinstance(processor, dict):
             fail("processor entries must be objects")
@@ -47,10 +91,21 @@ def main() -> None:
             fail("processor id is required")
         if processor_id in processor_ids:
             fail(f"duplicate processor id: {processor_id}")
+        network = processor.get("network")
+        if not isinstance(network, bool):
+            fail(f"processor {processor_id} must declare network as a boolean")
         processor_ids.add(processor_id)
+        processor_network[processor_id] = network
+        if network:
+            dependency = processor.get("dependency")
+            if not isinstance(dependency, str) or not dependency.strip():
+                fail(f"network processor {processor_id} must declare its dependency")
+            network_processor_dependencies.add(dependency)
 
     required_flow_ids = {
         "game-progress",
+        "persistence-integrity",
+        "storage-recovery-backup",
         "app-settings",
         "diagnostic-logs",
         "ad-sdk-processing",
@@ -65,6 +120,7 @@ def main() -> None:
         "deletion",
         "source",
     }
+    typed_flows: list[dict[str, object]] = []
     flow_ids: set[str] = set()
     for flow in flows:
         if not isinstance(flow, dict):
@@ -81,28 +137,81 @@ def main() -> None:
             if not isinstance(value, str) or not value.strip():
                 fail(f"data flow {flow_id} is missing {field}")
 
-        if flow["processor"] not in processor_ids:
+        processor_id = str(flow["processor"])
+        if processor_id not in processor_ids:
             fail(f"data flow {flow_id} references unknown processor")
-        if not (ROOT / flow["source"]).is_file():
+        network = flow.get("network")
+        if not isinstance(network, bool):
+            fail(f"data flow {flow_id} must declare network as a boolean")
+        if network != processor_network[processor_id]:
+            fail(
+                f"data flow {flow_id} network={network} disagrees with "
+                f"processor {processor_id} network={processor_network[processor_id]}"
+            )
+        if not (ROOT / str(flow["source"])).is_file():
             fail(f"data flow {flow_id} source does not exist: {flow['source']}")
+        typed_flows.append(flow)
 
     missing = required_flow_ids - flow_ids
     if missing:
         fail(f"required data flows are missing: {', '.join(sorted(missing))}")
 
     pubspec = PUBSPEC.read_text(encoding="utf-8")
-    declared = set(policy.get("networkDataDependencies", []))
-    declared.update(policy.get("localStorageDependencies", []))
-    for dependency in declared:
+    network_dependencies = set(
+        string_list(
+            policy.get("networkDataDependencies", []),
+            "dependencyPolicy.networkDataDependencies",
+        )
+    )
+    local_dependencies = set(
+        string_list(
+            policy.get("localStorageDependencies", []),
+            "dependencyPolicy.localStorageDependencies",
+        )
+    )
+    declared_dependencies = network_dependencies | local_dependencies
+    for dependency in declared_dependencies:
         if not dependency_present(pubspec, dependency):
             fail(f"inventory declares dependency {dependency} but pubspec does not")
 
-    for dependency in policy.get("forbiddenUnlessInventoryUpdated", []):
+    missing_network_dependencies = network_processor_dependencies - network_dependencies
+    if missing_network_dependencies:
+        fail(
+            "network processor dependencies are not inventoried: "
+            + ", ".join(sorted(missing_network_dependencies))
+        )
+
+    for dependency in string_list(
+        policy.get("forbiddenUnlessInventoryUpdated", []),
+        "dependencyPolicy.forbiddenUnlessInventoryUpdated",
+    ):
         if dependency_present(pubspec, dependency):
             fail(
                 f"dependency {dependency} was added but is still marked "
                 "forbidden-until-reviewed"
             )
+
+    persistence_sources = string_list(
+        policy.get("localPersistenceSources", []),
+        "dependencyPolicy.localPersistenceSources",
+    )
+    if not persistence_sources:
+        fail("at least one local persistence source must be declared")
+
+    inventoried_keys = declared_storage_keys(typed_flows)
+    actual_keys = source_storage_keys(persistence_sources)
+    missing_keys = actual_keys - inventoried_keys
+    stale_keys = inventoried_keys - actual_keys
+    if missing_keys:
+        fail(
+            "persisted keys are missing from the privacy inventory: "
+            + ", ".join(sorted(missing_keys))
+        )
+    if stale_keys:
+        fail(
+            "privacy inventory declares storage keys not found in current sources: "
+            + ", ".join(sorted(stale_keys))
+        )
 
     principles = data.get("principles", {})
     if principles.get("offlineFirst") is not True:
@@ -114,7 +223,8 @@ def main() -> None:
 
     print(
         "Privacy inventory validation PASSED: "
-        f"{len(flows)} flows, {len(processors)} processors."
+        f"{len(flows)} flows, {len(processors)} processors, "
+        f"{len(actual_keys)} persisted key families."
     )
 
 

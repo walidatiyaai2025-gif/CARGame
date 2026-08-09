@@ -1,11 +1,14 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-08-07",
+  "updatedAt": "2026-08-09",
   "principles": {
     "offlineFirst": true,
     "analyticsEnabled": false,
     "cloudSyncEnabled": false,
-    "adsFailClosedByConfig": true,
+    "adsFailClosedByConfig": false,
+    "adRequestsFailClosedByConfig": true,
+    "adSdkInitializationConsentGated": false,
+    "diagnosticsBuildGateEffective": false,
     "diagnosticsRedactedBeforePersistence": true
   },
   "processors": [
@@ -27,20 +30,106 @@
     {
       "id": "game-progress",
       "category": "gameplay_progress",
-      "examples": ["unlocked level", "stars", "coins", "hearts", "XP", "boosters", "win/loss statistics", "daily mission state", "theme unlocks"],
-      "purpose": "Persist offline game progress and economy state",
+      "examples": [
+        "unlocked level and per-level stars",
+        "coins, hearts, and heart refill timestamp",
+        "XP and gameplay statistics",
+        "daily reward and mission state",
+        "booster inventory",
+        "selected and unlocked themes"
+      ],
+      "storageKeys": [
+        "highest_unlocked_level",
+        "coins",
+        "hearts",
+        "heart_refill_timestamp",
+        "daily_reward_date",
+        "level_stars_",
+        "stats_games",
+        "stats_wins",
+        "stats_losses",
+        "stats_coins_earned",
+        "stats_perfect_wins",
+        "stats_best_combo",
+        "stats_win_streak",
+        "stats_best_win_streak",
+        "player_xp",
+        "mission_date",
+        "mission_wins",
+        "mission_stars",
+        "mission_coins",
+        "mission_claimed",
+        "selected_shop_theme",
+        "unlocked_shop_themes",
+        "booster_free_hints",
+        "booster_extra_moves",
+        "booster_combo_shields"
+      ],
+      "purpose": "Persist offline gameplay, progression, rewards, economy, and owned presentation state",
       "processor": "local-device",
       "storage": "SharedPreferences",
       "network": false,
       "consent": "not_required_local_core_function",
-      "retention": "until app data is cleared, app is uninstalled, or an in-app reset/delete path removes it",
+      "retention": "until app data is cleared, app is uninstalled, or a future in-app reset/delete path removes it",
       "deletion": "clear application data/uninstall; product deletion/reset UX is tracked by PRIV-003",
       "source": "lib/core/storage/progress_store.dart"
     },
     {
+      "id": "persistence-integrity",
+      "category": "transaction_and_migration_metadata",
+      "examples": [
+        "pending shop purchase absolute-state journal",
+        "pending reward absolute-state journal",
+        "bounded completed reward transaction IDs",
+        "economy configuration schema version"
+      ],
+      "storageKeys": [
+        "pending_shop_purchase_v1",
+        "pending_reward_transaction_v1",
+        "reward_transaction_ledger_v1",
+        "economy_config_version"
+      ],
+      "purpose": "Prevent duplicate debit/grant operations, recover interrupted writes, and fail closed on incompatible economy schema versions",
+      "processor": "local-device",
+      "storage": "SharedPreferences",
+      "network": false,
+      "consent": "not_required_local_core_integrity",
+      "retention": "pending journals are removed after successful commit/recovery; completed reward transaction IDs are bounded to 128 entries; economy schema version persists with app data",
+      "deletion": "clear application data/uninstall; product deletion/reset UX is tracked by PRIV-003",
+      "source": "lib/core/storage/progress_store.dart"
+    },
+    {
+      "id": "storage-recovery-backup",
+      "category": "local_recovery_snapshot",
+      "examples": [
+        "versioned pre-repair snapshot of local SharedPreferences values",
+        "snapshot capture timestamp"
+      ],
+      "storageKeys": [
+        "storage_recovery_backup_v1"
+      ],
+      "purpose": "Preserve one local pre-repair snapshot before normalization/removal of corrupt persisted values",
+      "processor": "local-device",
+      "storage": "SharedPreferences",
+      "network": false,
+      "consent": "not_required_local_data_integrity",
+      "retention": "persists locally until replaced by a later recovery snapshot or application data is cleared/uninstalled",
+      "deletion": "clear application data/uninstall; product deletion/reset UX is tracked by PRIV-003",
+      "source": "lib/core/storage/recovering_preferences.dart"
+    },
+    {
       "id": "app-settings",
       "category": "preferences",
-      "examples": ["sound enabled", "music enabled", "vibration enabled"],
+      "examples": [
+        "sound enabled",
+        "music enabled",
+        "vibration enabled"
+      ],
+      "storageKeys": [
+        "settings_sound",
+        "settings_music",
+        "settings_vibration"
+      ],
       "purpose": "Remember user-selected game settings",
       "processor": "local-device",
       "storage": "SharedPreferences",
@@ -53,29 +142,56 @@
     {
       "id": "diagnostic-logs",
       "category": "diagnostics",
-      "examples": ["error messages", "stack traces", "timestamps", "runtime checkpoints", "local log file path"],
+      "examples": [
+        "error messages",
+        "stack traces",
+        "timestamps",
+        "runtime checkpoints",
+        "local log file path"
+      ],
       "purpose": "Troubleshoot crashes and non-fatal runtime failures",
       "processor": "local-device",
-      "storage": "application support directory/app_error.log and bounded in-memory entries",
+      "storage": "application support directory/logs/app_error.log and bounded in-memory entries",
       "network": false,
-      "consent": "build_config_gate_ENABLE_DIAGNOSTICS; no remote upload exists",
+      "consent": "local operational diagnostics are not remotely uploaded; the existing ENABLE_DIAGNOSTICS build value is not yet wired to bootstrap logging and ENG-013 owns that future gate",
       "retention": "bounded to 300 in-memory entries; file persists locally until cleared/app data removed",
       "deletion": "AppLogger.clear(), clear application data, or uninstall",
-      "safeguards": ["SecretRedactor before memory/file/debug output/runtime broadcast/clipboard"],
+      "safeguards": [
+        "SecretRedactor before memory/file/debug output/runtime broadcast/clipboard"
+      ],
       "source": "lib/core/logging/app_logger.dart"
     },
     {
       "id": "ad-sdk-processing",
       "category": "advertising",
-      "examples": ["SDK/device/network signals processed by Google Mobile Ads when ad requests are enabled"],
-      "purpose": "Load banner, rewarded, and interstitial advertisements",
+      "examples": [
+        "SDK/device/network signals potentially processed by Google Mobile Ads after SDK bootstrap and when ad requests are enabled"
+      ],
+      "purpose": "Initialize Google Mobile Ads and load banner, rewarded, and interstitial advertisements",
       "processor": "google-mobile-ads",
       "storage": "controlled by Google Mobile Ads SDK/platform",
       "network": true,
-      "consent": "requires ADS-007 consent implementation before production personalized/regulated-region use; ENABLE_ADS can disable requests entirely",
+      "consent": "AdService blocks ad load/show when ENABLE_ADS=false, but current app bootstrap still initializes MobileAds; ADS-007 must add production consent/regulated-region gating before SDK initialization and requests",
       "retention": "third-party processor policy; must be reflected in PRIV-002/store disclosures",
       "deletion": "no first-party server copy exists; SDK/processor controls third-party retention",
       "source": "lib/core/ads/ad_service.dart"
+    }
+  ],
+  "knownGaps": [
+    {
+      "id": "ad-sdk-bootstrap-consent",
+      "owner": "ADS-007",
+      "description": "MobileAds initializes during optional-service bootstrap even when AdService request/load calls are disabled; production consent and regulated-region gating must run before SDK initialization and requests."
+    },
+    {
+      "id": "diagnostics-build-gate",
+      "owner": "ENG-013",
+      "description": "ENABLE_DIAGNOSTICS exists in AppBuildConfig but current bootstrap installs the local logger unconditionally; remote reporting remains absent and future diagnostics gating must be explicit."
+    },
+    {
+      "id": "in-app-data-controls",
+      "owner": "PRIV-003",
+      "description": "Complete local deletion currently relies on OS application-data clearing/uninstall; a consolidated in-app reset/export/delete path is not yet implemented."
     }
   ],
   "explicitlyAbsent": [
@@ -90,8 +206,26 @@
     "remote diagnostic upload"
   ],
   "dependencyPolicy": {
-    "networkDataDependencies": ["google_mobile_ads"],
-    "localStorageDependencies": ["shared_preferences", "path_provider"],
-    "forbiddenUnlessInventoryUpdated": ["firebase_analytics", "firebase_crashlytics", "cloud_firestore", "firebase_auth", "sentry_flutter", "amplitude_flutter", "mixpanel_flutter"]
+    "networkDataDependencies": [
+      "google_mobile_ads"
+    ],
+    "localStorageDependencies": [
+      "shared_preferences",
+      "path_provider"
+    ],
+    "localPersistenceSources": [
+      "lib/core/storage/progress_store.dart",
+      "lib/core/settings/app_settings_store.dart",
+      "lib/core/storage/recovering_preferences.dart"
+    ],
+    "forbiddenUnlessInventoryUpdated": [
+      "firebase_analytics",
+      "firebase_crashlytics",
+      "cloud_firestore",
+      "firebase_auth",
+      "sentry_flutter",
+      "amplitude_flutter",
+      "mixpanel_flutter"
+    ]
   }
 }
