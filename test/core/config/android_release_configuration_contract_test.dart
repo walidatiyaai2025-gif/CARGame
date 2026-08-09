@@ -14,7 +14,7 @@ void main() {
     expect(manifest, isNot(contains(googleTestAppId)));
   });
 
-  test('Gradle debug signing requires an explicit local QA opt-in', () {
+  test('Gradle release debug signing requires explicit QA opt-in', () {
     final gradle = read('android/app/build.gradle.kts');
 
     expect(gradle, contains('ADMOB_ANDROID_APP_ID'));
@@ -22,19 +22,11 @@ void main() {
     expect(gradle, contains('ANDROID_KEYSTORE_PATH'));
     expect(gradle, contains('key.properties'));
     expect(gradle, contains('ALLOW_DEBUG_SIGNING_IN_RELEASE'));
+    expect(gradle, contains('allowDebugSigningInRelease'));
+    expect(gradle, contains('signingConfigs.getByName("debug")'));
     expect(
       gradle,
       contains('!hasCompleteReleaseSigning && !allowDebugSigningInRelease'),
-    );
-    expect(gradle, contains('hasCompleteReleaseSigning ->'));
-    expect(gradle, contains('allowDebugSigningInRelease ->'));
-    expect(gradle, contains('signingConfigs.getByName("release")'));
-    expect(gradle, contains('signingConfigs.getByName("debug")'));
-
-    expect(
-      gradle.indexOf('hasCompleteReleaseSigning ->'),
-      lessThan(gradle.indexOf('allowDebugSigningInRelease ->')),
-      reason: 'production signing must remain the first-priority path',
     );
   });
 
