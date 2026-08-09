@@ -151,10 +151,7 @@ class _GlobalHeader extends StatelessWidget {
             top: -30,
             child: Opacity(
               opacity: .12,
-              child: const ThreeDGameIcon(
-                type: ThreeDIconType.city,
-                size: 210,
-              ),
+              child: const ThreeDGameIcon(type: ThreeDIconType.city, size: 210),
             ),
           ),
           PositionedDirectional(
@@ -888,7 +885,10 @@ class _CityCard extends StatelessWidget {
                 end: 0,
                 top: 0,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     color: unlocked
                         ? accent.withValues(alpha: .12)
@@ -976,7 +976,9 @@ class _CityCard extends StatelessWidget {
                             color: boss && unlocked ? accent : AppTheme.muted,
                             fontSize: 8,
                             height: 1,
-                            fontWeight: boss ? FontWeight.w900 : FontWeight.w600,
+                            fontWeight: boss
+                                ? FontWeight.w900
+                                : FontWeight.w600,
                             letterSpacing: boss ? .3 : 0,
                           ),
                         ),
@@ -986,7 +988,9 @@ class _CityCard extends StatelessWidget {
                           children: List.generate(
                             3,
                             (index) => Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 1),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 1,
+                              ),
                               child: index < stars
                                   ? const ThreeDGameIcon(
                                       type: ThreeDIconType.star,
@@ -995,7 +999,9 @@ class _CityCard extends StatelessWidget {
                                   : Icon(
                                       Icons.star_outline_rounded,
                                       size: 12,
-                                      color: Colors.black.withValues(alpha: .12),
+                                      color: Colors.black.withValues(
+                                        alpha: .12,
+                                      ),
                                     ),
                             ),
                           ),
