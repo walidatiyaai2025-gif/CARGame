@@ -2,7 +2,7 @@
 
 Publication status: DRAFT — NOT YET PUBLISHED
 
-Last updated: August 9, 2026
+Last updated: August 10, 2026
 
 This privacy policy describes the current CARGame Android application behavior represented by this repository. It is a release draft. It must not be presented as the published policy until the publisher contact, target audience, production advertising configuration, public HTTPS URL, and Google Play Data Safety submission are confirmed.
 
@@ -48,11 +48,15 @@ If a future release adds one of these capabilities or adds another network SDK, 
 
 ## Retention and deletion
 
-Gameplay, settings, transaction/recovery metadata, and local logs remain on the device until they are cleared, replaced by bounded recovery state, application data is cleared, or the app is uninstalled, depending on the data type. Diagnostic logs can also be cleared through the app’s diagnostic logging controls.
+Gameplay, settings, transaction/recovery metadata, and local logs remain on the device until they are cleared, replaced by bounded recovery state, the user performs an in-app reset, application data is cleared, or the app is uninstalled, depending on the data type.
 
-CARGame does not currently provide a consolidated in-app export/delete/reset workflow for all local data. That release requirement is explicitly tracked as `PRIV-003`. Until it is implemented, complete local deletion relies on Android application-data clearing or uninstalling the app.
+CARGame provides first-party local data controls under **Settings > Privacy**. **Copy data export** creates a versioned JSON export containing the current CARGame-managed SharedPreferences snapshot and already-redacted local diagnostic entries, then copies that JSON to the clipboard for an explicit user-controlled action. Creating the JSON export does not send it over the network and does not require a CARGame account or backend.
 
-CARGame does not retain a first-party server copy of Google Mobile Ads data. Retention of information processed by Google Mobile Ads is governed by Google and the user’s applicable Google/privacy controls.
+**Delete & reset local data** requires explicit confirmation and clears CARGame-managed local SharedPreferences, including progression/economy values, settings, pending transaction/reward journals, completed reward transaction IDs, economy-version metadata, and the storage-recovery snapshot. It also clears CARGame local diagnostic logs. The app then constructs fresh progress/settings state and returns to the default game state so deleted reward/recovery values are not retained only in memory.
+
+Android application-data clearing or uninstalling the app also removes CARGame first-party local data.
+
+CARGame does not retain a first-party server copy of Google Mobile Ads data. The in-app first-party local reset does not claim to delete processor-side data retained by Google. Retention of information processed by Google Mobile Ads is governed by Google and the user’s applicable Google/privacy controls, including Google UMP privacy choices where available.
 
 ## Security
 
