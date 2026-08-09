@@ -7,12 +7,22 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | Field | Value |
 |---|---|
 | Current phase | Android RC hardening — issue #79 |
-| Primary feature | `ADS-002` debug test IDs and release ad configuration — issue #116. |
+| Primary feature | `ADS-002` verification complete — issue #116 / PR #117; transitioning to the next RC P0. |
 | Completed checkpoint | `GAME-016` input determinism — PR #111 merged as `093d9a9384aec2d18503284a8edc95ba1ce1ecfb` after Flutter CI #580 passed formatting, Analyze, all 215 Flutter tests, Debug APK build, and artifact upload. |
 | Status | `ENG-010` VERIFIED: tracked secret/config artifacts fail closed, scanner policy has focused regression coverage, standalone provider credentials are redacted from diagnostics, and local/CI injection plus rotation/recovery guidance is documented. |
 | Previous checkpoint | `TEST-004` navigation-race verification — PR #109 merged as `24aa922453f88af507e01e950f7d26048e1c6c3f`; its final current-head verification completed on Flutter CI #574. |
-| Next recommended feature | Finish `ADS-002` typed release ad-unit format validation and configuration regression coverage, then reconcile the existing Android manifest/Gradle/preflight evidence. |
+| Next recommended feature | `REW-007` reward transaction ledger and reconciliation: add stable grant reasons/idempotency keys and interruption-safe audit/reconciliation on top of the verified persistence/reward flows. |
 | Known blocker | `REL-007`/`REL-008` require real production AdMob/signing inputs and a production-signed candidate; final install/upgrade/device smoke requires an Android device or testing track. `TEST-009` also remains dependency-blocked while `PERF-001` is PLANNED. Visual Studio C++ components remain optional for Windows desktop only. |
+
+## ADS-002 release ad configuration verification — 2026-08-09
+
+- Issue #116 / PR #117 fixed a release-only configuration defect: Android RC builds inject Android ad-unit IDs only, so typed validation now scopes completeness/test-ID checks to the active runtime platform instead of rejecting valid Android releases because unused iOS defaults remain Google test IDs.
+- Active-platform runtime ad units must match the AdMob `ca-app-pub-<16 digits>/<10 digits>` shape; malformed direct `--dart-define` values fail closed even if a build bypasses the PowerShell RC preflight.
+- Existing defense-in-depth remains: debug uses Google's public test application/ad-unit IDs; Android release app ID and signing are externally injected; Gradle and `VERIFY_RELEASE_INPUTS.ps1` reject missing/test release inputs; `AdService` consumes only `AppBuildConfig.current` IDs; ads-disabled/offline paths remain non-blocking.
+- Flutter CI #595 passed secret/privacy/security gates, formatting, whitespace, Analyze, focused checks, the full Flutter test suite, Debug APK build, and artifact upload on head `26851ed3cba7b6bd04ac24db7f068b6a68efc63c`.
+- Debug artifact #9032228970 is 80,520,644 bytes with SHA-256 `e801630e475047590b2ad97299d912681457aa081f43f2bd87832d4dcad9b459`.
+- PR #117 squash-merged to `main` as `0e2f13329835bfe69c79b985153c65e68ac32bb2`; `ADS-002` is VERIFIED.
+- Next RC P0: `REW-007` reward transaction ledger/reconciliation.
 
 ## ENG-010 secret and credential handling verification — 2026-08-09
 
