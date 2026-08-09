@@ -7,12 +7,25 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | Field | Value |
 |---|---|
 | Current phase | Android RC hardening — issue #79 |
-| Primary feature | `ENG-005` Clean architecture boundaries — Issue #154 / branch `agent/eng-005-architecture-boundaries`. |
-| Completed checkpoint | `UI3D-009` premium Mission Result Debrief — PR #152 merged as `462ec0590866879f654a4e031209731bd4eb84fd` after green Flutter CI #722. |
-| Status | ENG-005 audit is active. First checkpoint isolates application composition from `main.dart`, documents allowed dependency directions, and adds an automated architecture contract before any broader domain/storage migration. |
-| Previous checkpoint | `GAME-003` premium gameplay operations deck and tracking reconciliation — PRs #149/#150; current-main verification completed before UI3D-009. |
-| Next recommended feature | `ENG-005` Clean architecture boundaries — highest-priority dependency-ready catalog item after TEST-002; audit current presentation/domain/application/storage/assets/motion/analytics/service boundaries before changing architecture. |
+| Primary feature | None — `ENG-005` first architecture-boundary checkpoint is merged; `ENG-006` is the next dependency-ready engineering item. |
+| Completed checkpoint | `ENG-005` enforceable clean-architecture boundary checkpoint — PR #155 merged as `07fb50182efe5ce315cdda8bf823ba4da855c2df` after green Flutter CI #726. |
+| Status | ENG-005 is IMPLEMENTED at the core/composition boundary: `main.dart` is thin, process dependencies are owned by `AppComposition`, optional-service state/port live in inward layers, and architecture tests prohibit outward domain/application imports. Presentation-to-adapter migration debt remains, so ENG-005 is not VERIFIED. |
+| Previous checkpoint | `UI3D-009` premium Mission Result Debrief and tracking reconciliation — PRs #152/#153. |
+| Next recommended feature | `ENG-006` Dependency and package governance — review/pin dependency policy, licenses, and safe upgrade workflow now that the architecture boundary is enforceable. |
 | Known blocker | `REL-007`/`REL-008` require real production AdMob/signing inputs and a production-signed candidate; final install/upgrade/device smoke requires an Android device or testing track. `TEST-009` also remains dependency-blocked while `PERF-001` is PLANNED. Visual Studio C++ components remain optional for Windows desktop only. |
+
+## ENG-005 clean architecture boundary checkpoint — 2026-08-09
+
+- Issue #154 / PR #155 document and enforce inward dependency direction: composition root -> adapters/presentation -> application -> domain.
+- `AppComposition` owns ProgressStore, AppSettingsStore, and optional-service construction/disposal; `main.dart` no longer imports or constructs those concrete adapters directly.
+- `CargoSortApp` moved to a bootstrap/presentation shell and remains re-exported from `main.dart` for source compatibility with existing callers/tests.
+- Optional-service state is pure Dart in `core/domain`; `OptionalServicePort` lives in `core/application`; `OptionalServiceCoordinator` remains the outward implementation with a narrow compatibility export.
+- `tool/architecture/architecture_contract.dart` plus focused tests automatically reject Flutter, feature, storage, service implementation, and other outward imports from domain/application code.
+- Focused branch verification passed architecture 4/4, composition 2/2, optional-service 6/6, splash responsive 2/2, Home/widget 3/3, Analyze, and whitespace validation.
+- Flutter CI #726 / run `31322368738` passed dynamic Android, secret/privacy/security/asset gates, formatting, whitespace, Analyze, optional-service isolation, animated GameButton, the full Flutter suite, Debug APK build, and artifact upload on head `4f1a4e2cade00cb8dadbec527aefb8d6a3dfe86f`.
+- Debug artifact #9040624907 is 80,594,413 bytes with SHA-256 `ccae51e0c45fa6062017c07ac2fc9bf95049bbd1e95a7d51705517a36bb82f81`.
+- PR #155 squash-merged to main as `07fb50182efe5ce315cdda8bf823ba4da855c2df`; Issue #154 closed Completed.
+- ENG-005 remains IMPLEMENTED rather than VERIFIED because existing feature presentation still has direct storage/ad adapter dependencies that should migrate behind application ports incrementally.
 
 ## UI3D-009 mission result debrief verification — 2026-08-09
 
