@@ -712,7 +712,7 @@ class ProgressStore extends ChangeNotifier {
     await _prefs.setString(_pendingRewardTransactionKey, jsonEncode(journal));
     await _applyRewardTransactionValues(validated);
     await _recordCompletedRewardTransaction(idempotencyKey);
-    await _prefs.remove(_pendingRewardTransactionKey);
+    await _bestEffortClearPendingRewardTransaction();
     return true;
   }
 
@@ -742,7 +742,7 @@ class ProgressStore extends ChangeNotifier {
       }
 
       if (_completedRewardTransactions.contains(idempotencyKey)) {
-        await _prefs.remove(_pendingRewardTransactionKey);
+        await _bestEffortClearPendingRewardTransaction();
         return;
       }
 
@@ -750,9 +750,9 @@ class ProgressStore extends ChangeNotifier {
       await _applyRewardTransactionValues(values);
       _applyRewardTransactionValuesToMemory(values);
       await _recordCompletedRewardTransaction(idempotencyKey);
-      await _prefs.remove(_pendingRewardTransactionKey);
+      await _bestEffortClearPendingRewardTransaction();
     } on FormatException {
-      await _prefs.remove(_pendingRewardTransactionKey);
+      await _bestEffortClearPendingRewardTransaction();
     }
   }
 
@@ -925,15 +925,24 @@ class ProgressStore extends ChangeNotifier {
 
   Future<void> _recordCompletedRewardTransaction(String idempotencyKey) async {
     await _ensureRewardLedgerLoaded();
-    if (!_completedRewardTransactions.add(idempotencyKey)) return;
-    while (_completedRewardTransactions.length >
-        _rewardTransactionLedgerLimit) {
-      _completedRewardTransactions.remove(_completedRewardTransactions.first);
+    if (_completedRewardTransactions.contains(idempotencyKey)) return;
+
+    final updated = <String>{..._completedRewardTransactions, idempotencyKey};
+    while (updated.length > _rewardTransactionLedgerLimit) {
+      updated.remove(updated.first);
     }
-    await _prefs.setStringList(
-      _rewardTransactionLedgerKey,
-      _completedRewardTransactions.toList(),
-    );
+    await _prefs.setStringList(_rewardTransactionLedgerKey, updated.toList());
+    _completedRewardTransactions
+      ..clear()
+      ..addAll(updated);
+  }
+
+  Future<void> _bestEffortClearPendingRewardTransaction() async {
+    try {
+      await _prefs.remove(_pendingRewardTransactionKey);
+    } catch (_) {
+      // The completed ledger is durable; recovery may clear stale pending state later.
+    }
   }
 
   Future<bool> useFreeHint() async {
