@@ -1,7 +1,10 @@
 import 'dart:convert';
 
+import 'package:cargo_sort_game/core/economy/economy_config.dart';
 import 'package:cargo_sort_game/core/logging/app_logger.dart';
 import 'package:cargo_sort_game/core/privacy/local_data_controller.dart';
+import 'package:cargo_sort_game/core/settings/app_settings_store.dart';
+import 'package:cargo_sort_game/core/storage/progress_store.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
@@ -86,5 +89,34 @@ void main() {
     expect(await prefs.getKeys(), isEmpty);
     expect(AppLogger.instance.entries, isEmpty);
     expect(controller.deleteInProgress, isFalse);
+  });
+
+  test('fresh stores rehydrate safe defaults after destructive reset', () async {
+    final prefs = SharedPreferencesAsync();
+    await prefs.setInt('coins', 9999);
+    await prefs.setInt('highest_unlocked_level', 75);
+    await prefs.setInt('level_stars_1', 3);
+    await prefs.setBool('settings_sound', false);
+    await prefs.setStringList('reward_transaction_ledger_v1', [
+      'daily_reward:2026-8-10',
+    ]);
+    await prefs.setString('storage_recovery_backup_v1', 'old-backup');
+
+    final controller = LocalDataController();
+    await controller.deleteAllLocalData();
+
+    final store = ProgressStore();
+    final settings = AppSettingsStore();
+    await Future.wait<void>([store.load(), settings.load()]);
+
+    expect(store.highestUnlockedLevel, 1);
+    expect(store.coins, EconomyConfig.current.player.startingCoins);
+    expect(store.starsForLevel(1), 0);
+    expect(store.completedRewardTransactions, isEmpty);
+    expect(store.recoveryEvents, isEmpty);
+    expect(settings.soundEnabled, isTrue);
+    expect(settings.musicEnabled, isTrue);
+    expect(settings.vibrationEnabled, isTrue);
+    expect(await prefs.containsKey('storage_recovery_backup_v1'), isFalse);
   });
 }
