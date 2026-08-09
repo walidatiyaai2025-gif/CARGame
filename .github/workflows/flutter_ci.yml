@@ -55,6 +55,12 @@ jobs:
       - name: Verify security baseline
         run: python3 tool/verify_security_baseline.py
 
+      - name: Verify developer workflow documentation
+        run: python3 tool/verify_developer_workflows.py
+
+      - name: Test developer workflow documentation
+        run: python3 tool/test_developer_workflows.py
+
       - name: Restore packages
         shell: bash
         run: |

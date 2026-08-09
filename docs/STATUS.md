@@ -7,12 +7,24 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | Field | Value |
 |---|---|
 | Current phase | Android RC hardening — issue #79 |
-| Primary feature | None — `PRIV-003` first-party local data controls are VERIFIED on PR #172. |
-| Completed checkpoint | `PRIV-003` user data export/deletion readiness — VERIFIED after Flutter CI #768 / run `31338337454`. |
-| Status | PRIV-003 is VERIFIED: Settings now provides zero-network JSON export plus confirmation-guarded deletion/reset of CARGame first-party local progress/economy/settings/transaction/reward/recovery data and diagnostics, followed by fresh-store rehydration. |
-| Previous checkpoint | `PRIV-002` privacy policy and Play Data Safety mapping — IMPLEMENTED after PR #170 / Flutter CI #750; publication/store evidence remains external. |
-| Next recommended feature | `ENG-011` Developer tooling and documentation — P1; ENG-001 is VERIFIED and no higher-priority source-controlled P0 is currently dependency-ready. `TEST-011` now waits only on external production UMP/privacy-message evidence. |
+| Primary feature | None — `ENG-011` developer tooling/documentation is VERIFIED on PR #174. |
+| Completed checkpoint | `ENG-011` canonical developer workflows and documentation drift guard — VERIFIED after Flutter CI #773 / run `31339612397`. |
+| Status | ENG-011 is VERIFIED: README and `docs/DEVELOPER_WORKFLOWS.md` now define the supported setup/run/repair/dashboard/verification/release path, and CI blocks stale or dangerous workflow documentation from returning. |
+| Previous checkpoint | `PRIV-003` user data export/deletion readiness — VERIFIED after PR #172 / Flutter CI #771. |
+| Next recommended feature | `ENG-012` Analytics event schema and privacy gating — P1; ENG-005 is IMPLEMENTED and PRIV-001 is VERIFIED. No first-party analytics implementation exists yet, so the safe next step is a disabled-by-default versioned schema/port with explicit privacy/config eligibility. |
 | Known blocker | `TEST-011` requires real production UMP/privacy-message/regulatory-device verification. `REL-007`/`REL-008` require real production AdMob/signing inputs and a production-signed candidate; final install/upgrade/device smoke requires an Android device or testing track. `TEST-009` also remains dependency-blocked while `PERF-001` is PLANNED. Visual Studio C++ components remain optional for Windows desktop only. |
+
+## ENG-011 developer tooling and documentation — 2026-08-10
+
+- Issue #173 / PR #174 replace obsolete README bootstrap/release instructions with a current canonical developer path over the repository's existing tooling rather than introducing another launcher.
+- `docs/DEVELOPER_WORKFLOWS.md` documents clean checkout/first run, daily Android execution with dynamic target selection, CI-parity verification, Android/Kotlin repair, dashboard access, privacy contracts, guarded APK/AAB release packaging, and a troubleshooting matrix.
+- `README.md` now points to `START_CARGAME_TOOL.bat`, `FIRST_TIME_SETUP_AND_RUN.ps1`, `RUN_ON_EMULATOR.ps1`, repair/dashboard scripts, and the guarded `VERIFY_RELEASE_INPUTS.ps1` / `BUILD_RC.ps1` release path; production signing/AdMob values remain external and ADS-007 UMP integration is treated as authoritative.
+- `tool/verify_developer_workflows.py` protects 16 required entry-point/doc files and current guidance while rejecting project-regeneration commands, obsolete bootstrap guidance, tracked AdMob replacement instructions, manual duplicate UMP integration, hard-coded emulator serials, and direct unguarded release builds.
+- `tool/test_developer_workflows.py` provides 10 focused regressions for valid text/repository contracts and every protected stale/missing workflow class.
+- Flutter CI now runs the developer-workflow validator and regression suite as blocking gates before package restore.
+- Flutter CI #773 / run `31339612397` passed both ENG-011 gates, privacy/security/dependency/dashboard/catalog/assets checks, formatting, whitespace, Analyze, focused privacy/service/widget tests, the full Flutter suite, Debug APK build, packaged-artifact security scan and upload on implementation head `c34881bda12a6a355930755b39e47d09d24f0f3d`.
+- Debug artifact #9045499219 is 80,619,633 bytes with SHA-256 `2baf734f6a3362837f140cbbd25863c7ea189b15de3ea81d75d5b7dde43e7d5b`.
+- Repository search found no current first-party analytics implementation; ENG-012 is the next dependency-ready source-controlled feature and must preserve the existing analytics-disabled privacy posture until an explicit gate permits collection.
 
 ## PRIV-003 user data export/deletion readiness — 2026-08-10
 
@@ -404,6 +416,7 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | 2026-08-09 | ECON-005 versioned economy configuration | PASSED — PR #124 / Flutter CI #647 / run `31296918681` / debug artifact #9033326885 / SHA-256 `bbca79f780b9effc07a93ecc8a5a0b0dd73b523e6706531fe292127165d2872a` |
 | 2026-08-09 | PRIV-002 privacy policy / Play Data Safety contract | PASSED — PR #170 / Flutter CI #746 / run `31335858470` / 12 disclosure regressions + full Flutter suite + Debug APK artifact #9044388801 / SHA-256 `03e81188e97a1b9ab867d18c48894603f7586bd5d0963014516de35e8b8e868a`; source state IMPLEMENTED, external publication/store evidence pending |
 | 2026-08-10 | PRIV-003 local data export/deletion readiness | PASSED — PR #172 / Flutter CI #768 / run `31338337454` / 15 disclosure regressions + focused controller/Settings tests + full Flutter suite + Debug APK artifact #9045113026 / SHA-256 `6c101a90e89053b48836dd48be72b76ceb9290401ae3643310ad46730b653ddf`; repository-owned state VERIFIED |
+| 2026-08-10 | ENG-011 canonical developer workflows | PASSED — PR #174 / Flutter CI #773 / run `31339612397` / 16-entry-point workflow validator + 10 regressions + full Flutter suite + Debug APK artifact #9045499219 / SHA-256 `2baf734f6a3362837f140cbbd25863c7ea189b15de3ea81d75d5b7dde43e7d5b`; repository-owned state VERIFIED |
 
 ## Test locally
 
