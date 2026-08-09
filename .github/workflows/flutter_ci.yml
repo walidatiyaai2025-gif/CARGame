@@ -62,6 +62,12 @@ jobs:
         continue-on-error: true
         run: flutter pub outdated --json
 
+      - name: Verify dashboard and release CI contracts
+        run: python3 tool/verify_ci_integrity.py
+
+      - name: Test dashboard and release CI contracts
+        run: python3 tool/test_ci_integrity.py
+
       - name: Validate 3D asset registry and provenance
         run: dart run tool/validate_asset_pipeline.dart
 
