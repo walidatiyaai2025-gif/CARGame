@@ -7,16 +7,31 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | Field | Value |
 |---|---|
 | Current phase | Android RC hardening — issue #79 |
-| Completed checkpoint | `UI3D-006` responsive screen shell and safe-area automated matrix |
-| Status | VERIFIED — UI3D-006 acceptance is complete. PRs #86–#92 cover shared fit behavior, gameplay/result reachability, compact/reference/tablet sizes, large text, safe-area cutouts, keyboard/view insets, RTL, and intentionally scrollable Shop/Progress cases. Applicable checkpoints passed formatting, Analyze, full Flutter tests, Debug APK build, and artifact upload before merge. |
-| Previous checkpoint | PR #92 Settings RTL validation merged as `88c17828afa4fd7de52cfe29550a107cb34d1ee3` after Flutter CI #522 passed the complete gate set |
-| Next recommended feature | RC-001: audit remaining P0/P1 runtime blockers under #79, select the highest-priority unblocked catalog item, then execute full Android RC release verification/artifacts |
-| Known blocker | No known Android development blocker. Physical-device and signed-release validation remain part of the broader RC/release gates, not UI3D-006. Visual Studio C++ components remain optional for Windows desktop only. |
+| Completed checkpoint | `RC-004` Android release APK/AAB packaging path — PR #99 merged as `35e53031fbf59741da0ace89fad36d84eb738377` after Flutter CI #539 and Android Release Packaging Smoke #2 both passed. |
+| Status | RC P0 audit is materially advanced: responsive acceptance is VERIFIED, Android release configuration is hardened, local shop purchases are interruption-safe, and non-distributable release APK/AAB packaging is proven. Real production/store artifacts still require the actual production AdMob application ID, external release signing material, and device/install smoke validation. |
+| Previous checkpoint | `RC-003` interruption-safe local shop purchases — PR #97 merged as `e5a40cb7e3e5d071bbd42952a288cff793e00818` after Flutter CI #536 passed full tests, Analyze, Debug APK build, and artifact upload. |
+| Next recommended feature | `REL-006` Android signing/key-management procedure and production release-input handoff; then `REL-007`/`REL-008` production-signed candidate build plus `TEST-009`/`TEST-012` device smoke evidence. |
+| Known blocker | No known Android source/build blocker. Distribution-ready APK/AAB verification is externally blocked on production AdMob configuration, real release signing material, and an Android device/test track for install/upgrade smoke. Visual Studio C++ components remain optional for Windows desktop only. |
+
+## RC P0 audit and release reconciliation — 2026-08-09
+
+- Issue #79 remains the Android Release Candidate umbrella.
+- `UI3D-006` responsive acceptance is VERIFIED through PRs #86–#92.
+- PR #95 (`RC-002`) merged as `887739aef683964cf2b54b0684e6ef255d665907` and hardened Android release configuration: debug retains official Google test configuration, while release requires an externally supplied non-test AdMob application ID and external signing values/keystore and no longer falls back to debug signing.
+- `ENG-009` is now VERIFIED: PR #95 implemented the release guards and PR #99 exercised the guarded release APK/AAB packaging path successfully while normal Flutter CI remained green.
+- PR #97 (`RC-003`) merged as `e5a40cb7e3e5d071bbd42952a288cff793e00818`; shop theme/booster purchases now persist an idempotent absolute-state journal, replay interrupted writes safely, reject malformed journals, and serialize overlapping purchases.
+- `SHOP-002` is now VERIFIED by PR #97 plus Flutter CI #536. `TEST-001` is promoted only to IMPLEMENTED because the new transaction-recovery tests materially extend economy coverage but the catalog definition also includes broader heart/milestone/world/migration coverage that still requires reconciliation.
+- PR #99 (`RC-004`) merged as `35e53031fbf59741da0ace89fad36d84eb738377` and added a dedicated release-packaging smoke workflow.
+- Release Packaging Smoke #2 built a non-distributable release APK (55.8 MB, SHA-256 `2f6b2b5d3eb7de9a9029b0f51ae2e8a7e69a3c3278feb230abb116e4b56778dd`) and release AAB (57.0 MB, SHA-256 `957c1d4b696ee2547e97faa796544b3ab514fa2660681d4f01876af83a48c548`).
+- Smoke signing is generated ephemerally inside the runner; generated passwords are masked before build steps. Only checksum/evidence text is uploaded, never the smoke binaries. Evidence artifact #9029778593 has SHA-256 `45e8057fb3a835b946dfe5ae001c48485c463ea4755aa9938b42e5beeb665059`.
+- Flutter CI #539 on the same PR head passed secret/security checks, formatting, Analyze, focused checks, the full Flutter test suite, Debug APK build, and debug artifact upload.
+- `REL-007` and `REL-008` remain PLANNED: packaging is proven, but their acceptance requires a real production-signed candidate and install/store/device validation. The smoke outputs are explicitly non-distributable and do not satisfy those acceptance criteria.
+- The next release-critical work is `REL-006` signing/key-management procedure plus handoff of external production inputs, followed by production candidate/device smoke evidence.
 
 ## RC / UI3D reconciliation — 2026-08-09
 
-- RC tracking remains under issue #79. UI3D-006 automated responsive acceptance is complete; execution now advances to the remaining P0/P1 runtime-blocker audit, followed by full Android RC release verification and artifacts.
-- `docs/work/UI3D-006.md` already records the feature as VERIFIED; `docs/FEATURE_CATALOG.md` is reconciled to the same state in the UI3D-006 closeout change.
+- RC tracking remains under issue #79. UI3D-006 automated responsive acceptance is complete; execution has advanced into P0/P1 runtime and release-hardening work.
+- `docs/work/UI3D-006.md` records the feature as VERIFIED; `docs/FEATURE_CATALOG.md` is reconciled to the same state.
 - PR #85 completed Mission Briefing -> Gameplay adoption through `GameNavigator` and closed the known NAV-002 mission-flow gap.
 - PR #86 merged as `9d04dc9848706a46043d0fd9e6a4ef13eeeea6bf`; Flutter CI #503 passed formatting, Analyze, optional-service isolation, GameButton tests, the full Flutter test suite, Debug APK build, and debug APK artifact upload.
 - PR #87 merged as `323f7fe0fb4bf55b5c0206059f8d04e6eb6a235b`; Flutter CI #505 passed the same full gate set while adding gameplay RTL and cutout coverage.
@@ -30,10 +45,10 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 ## Tracking reconciliation — 2026-08-07
 
 - Repository evidence shows the typed asset model, manifest, registry, runtime asset views, and focused tests already exist under `lib/core/assets` and `test/core/assets`.
-- `AST-002` and `AST-003` therefore require catalog promotion to `IMPLEMENTED`; they must not be marked `VERIFIED` until the catalog/dashboard integrity and applicable CI evidence are complete.
+- `AST-002` and `AST-003` are IMPLEMENTED; they must not be marked VERIFIED until their remaining release/device acceptance is complete.
 - UI3D-006 was the sole active feature during the responsive workstream; it is now VERIFIED by the 2026-08-09 reconciliation above.
 - PR #62 merged the first NAV-002 Home/app-shell checkpoint; later NAV-002 mission-flow adoption is recorded in the 2026-08-09 reconciliation above.
-- Issue #54 tracks the remaining historical catalog reconciliation so status and feature catalog stay consistent with repository evidence.
+- Issue #54 tracks remaining historical catalog reconciliation so status and feature catalog stay consistent with repository evidence.
 
 ## Workstation Android toolchain evidence — 2026-08-07
 
@@ -95,6 +110,12 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | 2026-08-09 | UI3D-006 Shop RTL/cutout validation | PASSED — PR #90 / CI #511, full tests + Debug APK + artifact |
 | 2026-08-09 | UI3D-006 Progress Hub cutout validation | PASSED — PR #91 / CI #516, full tests + Debug APK + artifact |
 | 2026-08-09 | UI3D-006 Settings RTL validation | PASSED — PR #92 / CI #522, full tests + Debug APK + artifact `9029071810` / SHA-256 `c70c51470539b1de3a8594023a6bf149c17958b64826618dc9dbcb45231d1792` |
+| 2026-08-09 | ENG-009 release configuration hardening | PASSED — PR #95 externalized release AdMob/signing inputs and removed debug signing/test-ID fallbacks; subsequent current release-packaging smoke passed |
+| 2026-08-09 | SHOP-002 interruption-safe purchases | PASSED — PR #97 / Flutter CI #536 / full tests + Debug APK + artifact |
+| 2026-08-09 | Android release APK packaging smoke | PASSED — PR #99 / Release Packaging Smoke #2 / 55.8 MB / SHA-256 `2f6b2b5d3eb7de9a9029b0f51ae2e8a7e69a3c3278feb230abb116e4b56778dd` |
+| 2026-08-09 | Android release AAB packaging smoke | PASSED — PR #99 / Release Packaging Smoke #2 / 57.0 MB / SHA-256 `957c1d4b696ee2547e97faa796544b3ab514fa2660681d4f01876af83a48c548` |
+| 2026-08-09 | Release smoke credential redaction | PASSED — ephemeral signing passwords masked as `***`; only checksum evidence artifact #9029778593 uploaded |
+| 2026-08-09 | Flutter CI after release-smoke workflow | PASSED — CI #539 full suite + Debug APK + artifact on PR #99 head |
 
 ## Test locally
 
@@ -106,7 +127,9 @@ flutter pub get
 dart format lib test
 flutter analyze --no-fatal-infos --no-fatal-warnings
 flutter test
-flutter build apk --release --no-pub
+# Production release builds require real external AdMob/signing inputs.
+.\BUILD_RC.ps1 -AndroidAdMobAppId '<production-app-id>'
+.\BUILD_RC.ps1 -BuildAppBundle -AndroidAdMobAppId '<production-app-id>'
 flutter run
 ```
 
