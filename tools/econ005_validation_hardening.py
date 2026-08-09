@@ -16,9 +16,11 @@ old = """      positive('offer.amount', offer.amount);
       if (offer.kind != EconomyShopOfferKind.hearts) {
 """
 new = """      positive('offer.amount', offer.amount);
-      if (offer.kind == EconomyShopOfferKind.theme) {
-        nonNegative('offer.price', offer.price);
-      } else {
+      final zeroPricedClassicTheme =
+          offer.kind == EconomyShopOfferKind.theme &&
+          targetId == 'classic' &&
+          offer.price == 0;
+      if (!zeroPricedClassicTheme) {
         positive('offer.price', offer.price);
       }
       if (offer.kind != EconomyShopOfferKind.hearts) {
@@ -68,6 +70,30 @@ addition = """    test('rejects economy values that runtime cannot transact', ()
           rewards: v1.rewards,
           gameplay: v1.gameplay,
           shopOffers: zeroPricedHint,
+        ),
+        throwsArgumentError,
+      );
+
+      final zeroPricedPaidTheme = v1.shopOffers
+          .map(
+            (offer) => offer.id == 'theme_sunset'
+                ? EconomyShopOffer(
+                    id: offer.id,
+                    kind: offer.kind,
+                    targetId: offer.targetId,
+                    amount: offer.amount,
+                    price: 0,
+                  )
+                : offer,
+          )
+          .toList();
+      expect(
+        () => EconomyConfig.validated(
+          schemaVersion: 1,
+          player: v1.player,
+          rewards: v1.rewards,
+          gameplay: v1.gameplay,
+          shopOffers: zeroPricedPaidTheme,
         ),
         throwsArgumentError,
       );
