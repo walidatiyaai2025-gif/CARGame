@@ -233,7 +233,7 @@ Codex must not mark a feature complete merely because UI code exists.
 | ADS-004 | Rewarded double reward | P2 | PLANNED | ADS-002, REW-001 | One-time doubling uses an idempotency key and survives interruption. |
 | ADS-005 | Rewarded booster | P2 | PLANNED | ADS-002, ECON-004 | Inventory updates only after verified completion. |
 | ADS-006 | Interstitial pacing | P2 | PLANNED | ADS-002 | Never appears during gameplay; frequency/session caps are configurable/tested. |
-| ADS-007 | Consent/privacy integration | P1 | IN PROGRESS | ADS-002, PRIV-001 | Issue #166: UMP consent must gate Mobile Ads initialization and every ad request; privacy options must be re-openable from Settings; first-party analytics remains disabled until ENG-012. |
+| ADS-007 | Consent/privacy integration | P1 | IMPLEMENTED | ADS-002, PRIV-001 | Issue #166 / PR #167 implement Google UMP launch refresh/required forms, `canRequestAds` gating before Mobile Ads initialization and all app-owned banner/rewarded/interstitial requests, runtime revocation disposal, re-openable Settings privacy options, and no first-party analytics. Focused probe `31331329428` passed 12 consent/privacy tests plus privacy/security/Analyze checks. Flutter CI #742 / run `31331414894` passed all gates, full Flutter suite, Debug APK build, SEC-002 artifact scan and upload; artifact #9043116329 is 80,608,682 bytes with SHA-256 `60ec4df1b88a24bfe2b19e0019ba05d07b4c99a17aa6a91479151895a023840a`. PR #167 squash-merged as `865a31a8790c1b93b550f4da49f4e7d9f4720b28`. Client integration is complete; production AdMob Privacy & messaging configuration and regulated-region/device verification remain external before VERIFIED. |
 | ADS-008 | Ad placement analytics and quality safeguards | P2 | PLANNED | ADS-006, ENG-012 | Impression, completion, failure, churn signals are measured without sensitive data. |
 | ADS-009 | Ad-free failure and fallback UX | P1 | PLANNED | ADS-001 | Unavailable/no-fill/network errors return immediately to a valid non-blocking UI state. |
 | ADS-010 | Home banner ad footer | P1 | IMPLEMENTED | ADS-001, ENG-014 | Home uses a Google banner footer with official debug test ID; it reserves no space until loaded and no-fill/offline leaves core play usable. Production ID injection remains governed by ADS-002. |
@@ -335,12 +335,11 @@ Codex must not mark a feature complete merely because UI code exists.
 
 ## NEXT READY
 
-- `ADS-007` Consent/privacy integration — P1; `ADS-002` and `PRIV-001` are VERIFIED. It is the first catalog-ordered dependency-ready blocker remaining before `TEST-011`; `PRIV-003` remains the other required blocker.
+- `PRIV-002` Privacy policy and Play Data safety mapping — P0; `PRIV-001` is VERIFIED and ADS-007 client integration is IMPLEMENTED. It is the highest-priority dependency-ready feature, while final policy publication/store-console evidence remains external.
 
 ## BLOCKED
 
-- `PRIV-002` remains blocked on `ADS-007`; policy/store disclosures must match the final consent-aware ad SDK behavior.
-- `TEST-011` has its declared PRIV-001/SEC-001 prerequisites satisfied and SEC-002 is now VERIFIED, but acceptance remains blocked until ADS-007 consent and PRIV-003 deletion controls are complete.
+- `TEST-011` has its declared PRIV-001/SEC-001 prerequisites satisfied and SEC-002 is VERIFIED, but acceptance still cannot pass until ADS-007 production UMP/privacy-message behavior is verified and PRIV-003 deletion/export controls are complete.
 - `REL-007`/`REL-008` distribution-ready artifact verification requires the actual production AdMob application configuration and real release signing material, both intentionally external to source control.
 - `TEST-009` is not yet ready because its declared `PERF-001` dependency remains PLANNED; physical-device/API matrix work should follow performance-budget definition.
 - Final `TEST-012` install/update/soak evidence also requires an Android device or testing track with the production-signed candidate.
@@ -366,6 +365,7 @@ Codex must not mark a feature complete merely because UI code exists.
 
 ## Recently implemented
 
+- `ADS-007` Consent/privacy integration — issue #166 / PR #167 add UMP consent refresh, fail-closed Mobile Ads request gating, runtime privacy-option changes, responsive Settings privacy controls, and executable privacy/security source contracts. Flutter CI #742 passed full tests and Debug APK artifact scanning; production AdMob Privacy & messaging configuration and regulated-region/device evidence remain before VERIFIED.
 - `NAV-002` Shared route adoption — Home/app-shell and Mission Briefing→Gameplay use the guarded navigator with stable route names; result/back-guard regression coverage is present, while device-wide RC validation remains under #79.
 - `AST-002` Asset manifest and typed registry — typed asset metadata, manifest, and registry implementation plus focused tests are present; release/device verification remains before VERIFIED.
 - `AST-003` Missing-asset fallback — runtime asset views provide visible fallback behavior with focused widget coverage; release/device verification remains before VERIFIED.

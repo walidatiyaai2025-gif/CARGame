@@ -7,12 +7,25 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | Field | Value |
 |---|---|
 | Current phase | Android RC hardening — issue #79 |
-| Primary feature | `ADS-007` Consent/privacy integration — Issue #166 / branch `agent/ads-007-consent-privacy`. |
-| Completed checkpoint | `SEC-002` dependency, secret, and artifact security scans — PR #164 merged as `5b96ee94f1d82a36bb6bbffd53b7719b64c175d3` after green Flutter CI #738 and Release Packaging Smoke #7. |
-| Status | ADS-007 is IN PROGRESS: implement UMP consent before Mobile Ads initialization/requests, runtime fail-closed ad eligibility, and re-openable privacy options from Settings. |
+| Primary feature | None — ADS-007 client integration is IMPLEMENTED; PRIV-002 is the next highest-priority dependency-ready feature. |
+| Completed checkpoint | `ADS-007` consent/privacy client integration — PR #167 merged as `865a31a8790c1b93b550f4da49f4e7d9f4720b28` after green Flutter CI #742. |
+| Status | ADS-007 is IMPLEMENTED: UMP gates Mobile Ads initialization and app-owned ad requests and Settings can re-open required privacy options. Production AdMob Privacy & messaging configuration plus regulated-region/device verification remain external before VERIFIED. |
 | Previous checkpoint | `SEC-002` dependency, secret, and artifact security scans — VERIFIED after PRs #164/#165. |
-| Next recommended feature | Complete `ADS-007` first. `TEST-011` remains blocked by ADS-007 and PRIV-003; PRIV-003 is the next remaining dependency-ready blocker after consent integration. |
+| Next recommended feature | `PRIV-002` Privacy policy and Play Data safety mapping — P0, now dependency-ready after ADS-007 client integration. `TEST-011` remains an acceptance target but still waits on production consent verification and PRIV-003 deletion/export readiness. |
 | Known blocker | `REL-007`/`REL-008` require real production AdMob/signing inputs and a production-signed candidate; final install/upgrade/device smoke requires an Android device or testing track. `TEST-009` also remains dependency-blocked while `PERF-001` is PLANNED. Visual Studio C++ components remain optional for Windows desktop only. |
+
+## ADS-007 consent/privacy client integration — 2026-08-09
+
+- Issue #166 / PR #167 add Google UMP as the runtime privacy source of truth without persisting a duplicate app-side consent-granted value.
+- Launch refreshes consent info and shows required UMP forms before Mobile Ads initialization; `canRequestAds` gates SDK startup plus banner/rewarded/interstitial app-owned request/load/show paths.
+- Loaded app-owned ads are disposed when eligibility is revoked, and Settings exposes a publisher privacy entry that re-opens Google privacy options when required; choices update request eligibility without restart.
+- First-party analytics remains absent/disabled; ENG-012 remains the owner of any future analytics event collection and privacy gate.
+- Focused implementation/UI probe `31331329428` passed 12 consent/request/composition/Settings tests, privacy inventory validation (6 flows, 2 processors, 33 persisted key families), security baseline validation, Analyze and whitespace checks.
+- Flutter CI #742 / run `31331414894` passed privacy/security/dependency/dashboard/assets/format/Analyze gates, the full Flutter suite, Debug APK build, SEC-002 packaged-artifact security scan and upload on head `af3edcba29919151e83a3d59f614faa41eb06a7c`.
+- Debug artifact #9043116329 is 80,608,682 bytes with SHA-256 `60ec4df1b88a24bfe2b19e0019ba05d07b4c99a17aa6a91479151895a023840a`.
+- PR #167 squash-merged to main as `865a31a8790c1b93b550f4da49f4e7d9f4720b28`.
+- ADS-007 remains IMPLEMENTED rather than VERIFIED because actual production AdMob Privacy & messaging configuration and regulated-region/device behavior are external to this repository; Issue #166 remains open for that evidence.
+- Post-merge dependency audit `31331857275` identifies PRIV-002 as the next P0 dependency-ready feature. TEST-011 is not selected despite its declared dependencies because its acceptance still requires production consent verification and PRIV-003 deletion/export controls.
 
 ## SEC-002 security scan verification — 2026-08-09
 
