@@ -1,0 +1,104 @@
+name: Temporary GAME-016 reconciliation
+
+on:
+  push:
+    branches:
+      - agent/game-016-reconcile
+    paths:
+      - .github/workflows/_temporary_game016_reconcile.yml
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/game-016-reconcile
+          fetch-depth: 0
+      - name: Reconcile GAME-016 tracking
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          catalog_path = Path('docs/FEATURE_CATALOG.md')
+          catalog = catalog_path.read_text()
+          old_game = "| GAME-016 | Input determinism and anti-spam state machine | P0 | IN PROGRESS | GAME-003, GAME-011 | Issue #110: rapid taps/gestures during cargo travel, placement feedback, and result boundaries must be ignored or handled deterministically with exactly one move/feedback/result transition. Existing warehouse-spam coverage is being expanded to cargo reselection and boundary regressions. |"
+          new_game = "| GAME-016 | Input determinism and anti-spam state machine | P0 | VERIFIED | GAME-003, GAME-011 | Issue #110 / PR #111 verify deterministic input locking across cargo travel and placement feedback: repeated warehouse taps and cargo reselection attempts cannot consume a second move, replace selection, or emit duplicate feedback; gameplay boosters, restart, and back are disabled while resolving, and TEST-004 already verifies result-boundary action races. Flutter CI #580 passed formatting, Analyze, all 215 Flutter tests, Debug APK build, and artifact upload. Debug artifact #9031438726 is 80,515,901 bytes with SHA-256 `afa0597b32a4d08f5fdaf76f109c92821eb84f3ad6b4e0a388b9b29d7fee1ae6`. |"
+          if old_game not in catalog:
+              raise SystemExit('GAME-016 catalog row not found')
+          catalog = catalog.replace(old_game, new_game, 1)
+
+          old_queue = """## IN PROGRESS
+
+- None during this evidence-only reconciliation.
+
+## NEXT READY
+
+1. `REL-004` Reconcile storage corruption backup/recovery evidence and fill only any remaining P0 persistence gap.
+2. `TEST-004` Reconcile navigation-race coverage and add only missing repeated-action regressions.
+3. `GAME-016` Audit remaining rapid-input state-machine gaps in the core loop.
+"""
+          new_queue = """## IN PROGRESS
+
+- None after `GAME-016` verification.
+
+## NEXT READY
+
+1. `ENG-010` Secret and credential handling — `ENG-009` is VERIFIED; audit injection, redaction, rotation, and CI protection gaps.
+2. `PRIV-001` Privacy inventory, consent, and data minimization — `ENG-001` is VERIFIED and the current privacy inventory gate provides a baseline for reconciliation.
+3. `ADS-002` Debug test IDs and release configuration — `ADS-001` and `ENG-009` are implemented/verified; reconcile remaining release-ad configuration evidence.
+"""
+          if old_queue not in catalog:
+              raise SystemExit('active queue block not found')
+          catalog = catalog.replace(old_queue, new_queue, 1)
+
+          recent = "## Recently verified\n\n"
+          recent_entry = "- `GAME-016` Input determinism and anti-spam state machine — PR #111 merged after Flutter CI #580 passed all 215 tests plus Debug APK build/upload; cargo/warehouse spam, selection locking, resolution input disablement, and result-boundary guards are deterministic.\n"
+          if recent_entry not in catalog:
+              if recent not in catalog:
+                  raise SystemExit('recently verified heading not found')
+              catalog = catalog.replace(recent, recent + recent_entry, 1)
+          catalog_path.write_text(catalog)
+
+          status_path = Path('docs/STATUS.md')
+          status = status_path.read_text()
+          replacements = {
+              "| Primary feature | `GAME-016` input determinism and anti-spam state machine — issue #110. |": "| Primary feature | None after `GAME-016` verification; next RC P0 is `ENG-010` secret and credential handling. |",
+              "| Completed checkpoint | `TEST-001` legacy-save compatibility — PR #104 merged as `2ab3578ecc214f995f194eff95f1a27b7cc3f442` after Flutter CI #546 passed Analyze, the full Flutter suite, Debug APK build, and artifact upload. |": "| Completed checkpoint | `GAME-016` input determinism — PR #111 merged as `093d9a9384aec2d18503284a8edc95ba1ce1ecfb` after Flutter CI #580 passed formatting, Analyze, all 215 Flutter tests, Debug APK build, and artifact upload. |",
+              "| Status | IN PROGRESS — `GAME-016` is extending gameplay resolution anti-spam coverage from repeated warehouse taps to rapid cargo reselection and result-boundary determinism. `TEST-004` is VERIFIED and merged via PR #109. |": "| Status | `GAME-016` VERIFIED: repeated warehouse input and cargo reselection during resolution remain deterministic with exactly one move/feedback event; boosters, restart, and back are disabled while resolving, and result-boundary races remain covered by `TEST-004`. |",
+              "| Previous checkpoint | `REL-006` Android signing/key-management — PR #102 merged as `8f2e4ddb69d339938ba05911fb297960859e1a77`; Flutter CI #544 and Android Release Packaging Smoke #4 both passed. |": "| Previous checkpoint | `TEST-004` navigation-race verification — PR #109 merged as `24aa922453f88af507e01e950f7d26048e1c6c3f`; its final current-head verification completed on Flutter CI #574. |",
+              "| Next recommended feature | Finish `GAME-016` deterministic rapid-input regressions, then continue the remaining unblocked RC P0 gaps. |": "| Next recommended feature | Start `ENG-010` secret and credential handling audit, then continue the remaining unblocked RC P0 gaps. |",
+          }
+          for old, new in replacements.items():
+              if old not in status:
+                  raise SystemExit(f'status row not found: {old}')
+              status = status.replace(old, new, 1)
+
+          marker = "## TEST-004 navigation race verification — 2026-08-09\n"
+          section = """## GAME-016 input determinism verification — 2026-08-09
+
+- Issue #110 / PR #111 extended the existing warehouse-spam regression with deterministic cargo-reselection coverage during placement resolution; attempts made while locked cannot become a latent selection after feedback completes.
+- Existing production guards keep cargo/warehouse selection, boosters, Restart, and Back locked while `_resolving`; no production-code change was required after the regression proved the state machine behavior.
+- `TEST-004` remains the result-boundary companion evidence for repeated Next/Retry/Home Start and idempotent result-sheet dismissal.
+- Flutter CI #580 passed formatting, Analyze, all 215 Flutter tests, Debug APK build, and artifact upload on head `3fdba02dfa101bf9ab2f2e479d6cfabc7859b73b`.
+- Debug artifact #9031438726 is 80,515,901 bytes with SHA-256 `afa0597b32a4d08f5fdaf76f109c92821eb84f3ad6b4e0a388b9b29d7fee1ae6`.
+- PR #111 squash-merged to `main` as `093d9a9384aec2d18503284a8edc95ba1ce1ecfb`; `GAME-016` is VERIFIED.
+
+"""
+          if section not in status:
+              if marker not in status:
+                  raise SystemExit('TEST-004 section marker not found')
+              status = status.replace(marker, section + marker, 1)
+          status_path.write_text(status)
+          PY
+      - name: Commit reconciliation and remove temporary workflow
+        run: |
+          git rm .github/workflows/_temporary_game016_reconcile.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/FEATURE_CATALOG.md docs/STATUS.md
+          git commit -m 'docs: verify GAME-016 input determinism'
+          git push origin HEAD:agent/game-016-reconcile
