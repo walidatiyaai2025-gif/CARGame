@@ -75,7 +75,7 @@ jobs:
           text = work.read_text()
           if text.count('Status: IN PROGRESS  ') != 1:
               raise SystemExit('REW-007 work status did not match')
-          text = text.replace('Status: IN PROGRESS  ', 'Status: VERIFIED  ', 1)
+          text = text.replace('Status: IN PROGRESS  ', 'Status: VERIFIED', 1)
           if '## Final verification evidence' not in text:
               text = text.rstrip() + '''
 
