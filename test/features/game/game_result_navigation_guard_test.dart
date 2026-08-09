@@ -110,6 +110,7 @@ void main() {
     final next = find.bySemanticsLabel('Next and back to map');
     await pumpUntil(next);
     expect(next, findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 500));
 
     final resultScroll = find.byType(SingleChildScrollView);
     expect(resultScroll, findsOneWidget);
