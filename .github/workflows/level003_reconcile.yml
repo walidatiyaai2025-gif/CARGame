@@ -1,0 +1,100 @@
+name: LEVEL003 Tracking Reconciliation
+
+on:
+  push:
+    branches:
+      - agent/level-003-current-main-reconciliation
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Reconcile catalog and status
+        shell: python
+        run: |
+          from pathlib import Path
+
+          catalog_path = Path('docs/FEATURE_CATALOG.md')
+          catalog = catalog_path.read_text(encoding='utf-8')
+          replacements = [
+              (
+                  "| LEVEL-003 | Level solvability validator | P0 | PLANNED | LEVEL-001 | Automated checks reject impossible, invalid, or degenerate configurations. |",
+                  "| LEVEL-003 | Level solvability validator | P0 | VERIFIED | LEVEL-001 | Current main contains `LevelSolvabilityValidator` (historical commit `c06e23ec272a8800a039d99cbdcb02a4b0391670`) plus deterministic regression coverage across all 150 generated levels. The validator enforces level/world/difficulty bounds, canonical product metadata, non-empty multi-target cargo, no orphan products, positive/sufficient moves, unique level numbers, and the complete 1..150 set; tests explicitly cover levels 1, 25, 26, 50, 51, 125, 126 and 150 and reject insufficient moves, empty/single-target layouts, orphan/unknown products, metadata/world/difficulty mismatches, and duplicate/incomplete sets. Flutter CI #659 / run `31301158763` passed all 240 Flutter tests, Analyze, Debug APK build and artifact upload; artifact #9034604961 is 80,544,511 bytes with SHA-256 `79d61a1977614296dd06a38a850e7960a730c6d632890801e77d99d5983ac6b6`. |"
+              ),
+              (
+                  "- None after `AST-011` verification.",
+                  "- None after `LEVEL-003` verification."
+              ),
+              (
+                  "1. `LEVEL-003` Level solvability validator — current main already contains `LevelSolvabilityValidator` plus regressions validating all 150 generated levels and rejecting impossible/invalid configurations; reconcile this stale P0 catalog item before writing duplicate validator code.",
+                  "1. `LEVEL-002` Difficulty curve — `LEVEL-001` is implemented and LEVEL-003 is now VERIFIED; define quantitative tutorial/easy/medium/hard/expert targets and validate the generated 150-level curve instead of relying on generator intuition."
+              ),
+              (
+                  "## Recently verified\n\n- `AST-011` Asset licensing and provenance",
+                  "## Recently verified\n\n- `LEVEL-003` Level solvability validator — issue #132 reconciles the existing validator and deterministic 150-level regression suite to VERIFIED. Current CI #659 passes all 240 tests, including world-boundary and invalid/degenerate-level rejection coverage; no duplicate production validator code was added.\n- `AST-011` Asset licensing and provenance"
+              ),
+          ]
+          for old, new in replacements:
+              count = catalog.count(old)
+              if count != 1:
+                  raise SystemExit(f'catalog replacement expected once, found {count}: {old[:120]}')
+              catalog = catalog.replace(old, new)
+          catalog_path.write_text(catalog, encoding='utf-8')
+
+          status_path = Path('docs/STATUS.md')
+          status = status_path.read_text(encoding='utf-8')
+          status_replacements = [
+              (
+                  "| Primary feature | None; `AST-011` is VERIFIED after current-main reconciliation under issue #130. |",
+                  "| Primary feature | None; `LEVEL-003` is VERIFIED after current-main reconciliation under issue #132. |"
+              ),
+              (
+                  "| Completed checkpoint | `AST-011` asset licensing/provenance current-main reconciliation — current CI #657 proves the admission gate is green with 9 manifest descriptors, 0 approved provenance records, and 0 runtime WebP binaries; no fake provenance was created for descriptor-only placeholders. |",
+                  "| Completed checkpoint | `LEVEL-003` level solvability validator current-main reconciliation — the existing validator plus deterministic 150-level regression suite satisfy the catalog acceptance without duplicate production code. |"
+              ),
+              (
+                  "| Status | Asset admission remains fail-closed: a future runtime WebP must match the manifest and a complete commercial-use provenance record, while orphan provenance is also rejected. Current main intentionally ships zero runtime 3D WebP binaries, so the empty approved provenance catalog is the correct auditable state. |",
+                  "| Status | Structural solvability is mechanically guarded for all 150 generated levels: bounds/world mapping, canonical products, multi-target/non-orphan cargo, sufficient move budgets, uniqueness, and complete level-set coverage are regression-tested. Difficulty balancing remains separate LEVEL-002 work. |"
+              ),
+              (
+                  "| Previous checkpoint | `SEC-001` mobile security baseline current-main reconciliation — PR #128 merged as `c0e7c561e0bafa810ef9248322102b10b684a490` after Flutter CI #655. |",
+                  "| Previous checkpoint | `AST-011` asset licensing/provenance current-main reconciliation — PR #131 merged as `9631b43fb697f9819fe83a7991212b490865f525` after Flutter CI #659. |"
+              ),
+              (
+                  "| Next recommended feature | `LEVEL-003` level solvability validator current-main reconciliation: the validator and 150-level regression suite already exist on main, so verify current acceptance/tracking before adding duplicate code. |",
+                  "| Next recommended feature | `LEVEL-002` difficulty curve: define quantitative difficulty-band targets and add deterministic validation across the 150 generated levels now that LEVEL-003 structural solvability is verified. |"
+              ),
+              (
+                  "## AST-011 asset licensing and provenance current-main verification — 2026-08-09",
+                  "## LEVEL-003 level solvability validator current-main verification — 2026-08-09\n\n- Historical commit `c06e23ec272a8800a039d99cbdcb02a4b0391670` added `LevelSolvabilityValidator`; current main retains the validator in `lib/features/game/level_validator.dart`.\n- Individual-level validation enforces the 1..150 level range, exact six-world/25-level mapping, difficulty 1..10, non-empty cargo, canonical product identity/metadata, at least two product types, no orphan product occurrences, and a positive move budget at least equal to cargo count.\n- Complete-set validation rejects duplicate level numbers and requires the exact 1..150 set.\n- `test/features/game/level_validator_test.dart` verifies all 150 generated levels, explicitly checks levels 1, 25, 26, 50, 51, 125, 126, and 150, and rejects insufficient moves, empty/single-target layouts, orphan/unknown products, world/difficulty/product mismatches, and duplicate/incomplete sets.\n- `lib/features/game/level_data.dart` deterministically generates the 150 levels from stable level-number-derived inputs, so the suite does not depend on runtime randomness.\n- Current Flutter CI #659 / run `31301158763` passed Analyze, all 240 Flutter tests including this validator suite, Debug APK build, and artifact upload.\n- Debug artifact #9034604961 is 80,544,511 bytes with SHA-256 `79d61a1977614296dd06a38a850e7960a730c6d632890801e77d99d5983ac6b6`.\n- Issue #132 reconciles stale tracking only; no duplicate production validator code was added.\n- `LEVEL-003` is VERIFIED; quantitative difficulty balancing remains a separate `LEVEL-002` P0 task.\n\n## AST-011 asset licensing and provenance current-main verification — 2026-08-09"
+              ),
+              (
+                  "| 2026-08-09 | AST-011 asset licensing/provenance current-main reconciliation | PASSED — current CI #657 / run `31300595956` asset gate reports 9 manifest descriptors / 0 provenance records / 0 runtime WebPs; historical implementation CI #121 / run `31185774162` passed with artifact #8996933307 / SHA-256 `9048ad078046154a0db92dd4d6ed918154e91b15c35c3b60feac2b9b1257d213` |",
+                  "| 2026-08-09 | LEVEL-003 level solvability validator current-main reconciliation | PASSED — Flutter CI #659 / run `31301158763` / full 240-test suite including all-150-level validator coverage / debug artifact #9034604961 / SHA-256 `79d61a1977614296dd06a38a850e7960a730c6d632890801e77d99d5983ac6b6` |\n| 2026-08-09 | AST-011 asset licensing/provenance current-main reconciliation | PASSED — current CI #657 / run `31300595956` asset gate reports 9 manifest descriptors / 0 provenance records / 0 runtime WebPs; historical implementation CI #121 / run `31185774162` passed with artifact #8996933307 / SHA-256 `9048ad078046154a0db92dd4d6ed918154e91b15c35c3b60feac2b9b1257d213` |"
+              ),
+          ]
+          for old, new in status_replacements:
+              count = status.count(old)
+              if count != 1:
+                  raise SystemExit(f'status replacement expected once, found {count}: {old[:120]}')
+              status = status.replace(old, new)
+          status_path.write_text(status, encoding='utf-8')
+
+      - name: Commit reconciliation and remove helper
+        shell: bash
+        run: |
+          rm .github/workflows/level003_reconcile.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "docs: reconcile LEVEL-003 verification"
+          git push origin HEAD:${GITHUB_REF_NAME}
