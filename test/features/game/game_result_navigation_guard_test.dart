@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:cargo_sort_game/core/ads/ad_service.dart';
 import 'package:cargo_sort_game/core/motion/game_action_feedback.dart';
@@ -24,30 +25,6 @@ void main() {
   ) async {
     await tester.binding.setSurfaceSize(const Size(800, 1000));
     addTearDown(() => tester.binding.setSurfaceSize(null));
-
-    Future<void> pumpUntil(
-      Finder finder, {
-      Duration step = const Duration(milliseconds: 50),
-      int maxPumps = 40,
-    }) async {
-      for (var attempt = 0; attempt < maxPumps; attempt++) {
-        if (finder.evaluate().isNotEmpty) return;
-        await tester.pump(step);
-      }
-      expect(finder, findsWidgets);
-    }
-
-    Future<void> pumpUntilAbsent(
-      Finder finder, {
-      Duration step = const Duration(milliseconds: 50),
-      int maxPumps = 40,
-    }) async {
-      for (var attempt = 0; attempt < maxPumps; attempt++) {
-        if (finder.evaluate().isEmpty) return;
-        await tester.pump(step);
-      }
-      expect(finder, findsNothing);
-    }
 
     final observer = _GameRouteObserver();
     final cargo = productCatalog.first;
@@ -89,7 +66,7 @@ void main() {
     );
 
     await tester.tap(find.byKey(const ValueKey('open-game')));
-    await pumpUntil(find.byType(GameScreen));
+    await _pumpUntil(tester, find.byType(GameScreen));
     expect(find.byType(GameScreen), findsOneWidget);
 
     Future<void> placeCargo() async {
@@ -102,16 +79,16 @@ void main() {
       expect(target.isEmpty, isFalse);
 
       await tester.tapAt(target.center);
-      await pumpUntil(find.byType(GameActionFeedback));
+      await _pumpUntil(tester, find.byType(GameActionFeedback));
       expect(find.byType(GameActionFeedback), findsOneWidget);
-      await pumpUntilAbsent(find.byType(GameActionFeedback));
+      await _pumpUntilAbsent(tester, find.byType(GameActionFeedback));
     }
 
     await placeCargo();
     await placeCargo();
 
     final next = find.bySemanticsLabel('Next and back to map');
-    await pumpUntil(next);
+    await _pumpUntil(tester, next);
     expect(next, findsOneWidget);
     await tester.pump(const Duration(milliseconds: 500));
 
@@ -132,12 +109,112 @@ void main() {
 
     await tester.pump();
     await Future.wait([firstAction, secondAction]);
-    await pumpUntilAbsent(find.byType(GameScreen));
+    await _pumpUntilAbsent(tester, find.byType(GameScreen));
 
     expect(observer.gameRouteExits, 1);
     expect(find.byType(GameScreen), findsNothing);
     expect(find.byKey(const ValueKey('open-game')), findsOneWidget);
   });
+
+  testWidgets('repeated Retry action resets gameplay without duplicate loss', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(800, 1000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final store = ProgressStore();
+    await store.load();
+    addTearDown(store.dispose);
+    final initialHearts = store.hearts;
+
+    final first = productCatalog[0];
+    final second = productCatalog[1];
+    final level = LevelData(
+      number: 1,
+      world: 1,
+      moves: 1,
+      items: [first, second],
+      difficulty: 1,
+    );
+    final shuffled = [...level.items]..shuffle(Random(level.number * 41));
+    final selected = shuffled.first;
+    final wrongWarehouse = selected.id == first.id ? second : first;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: GameScreen(
+          level: level,
+          store: store,
+          adService: _FakeAdService(),
+          hapticsEnabled: false,
+        ),
+      ),
+    );
+    await tester.pump();
+
+    await tester.tap(find.byKey(ValueKey('cargo-${selected.id}-0')));
+    await tester.pump();
+    await tester.tap(find.byKey(ValueKey('warehouse-${wrongWarehouse.id}')));
+    await _pumpUntil(tester, find.byType(GameActionFeedback));
+    await _pumpUntilAbsent(tester, find.byType(GameActionFeedback));
+
+    final retry = find.bySemanticsLabel('Retry');
+    await _pumpUntil(tester, retry);
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(store.hearts, initialHearts - 1);
+
+    final retryButtonFinder = find.ancestor(
+      of: retry,
+      matching: find.byType(GameButton),
+    );
+    expect(retryButtonFinder, findsOneWidget);
+    final retryButton = tester.widget<GameButton>(retryButtonFinder);
+    expect(retryButton.onPressed, isNotNull);
+
+    await Future.wait([
+      Future<void>.sync(() async => retryButton.onPressed!.call()),
+      Future<void>.sync(() async => retryButton.onPressed!.call()),
+    ]);
+    await tester.pump();
+
+    expect(find.byType(GameScreen), findsOneWidget);
+    expect(retry, findsNothing);
+    expect(store.hearts, initialHearts - 1);
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('game-moves')),
+        matching: find.text('1'),
+      ),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
+}
+
+Future<void> _pumpUntil(
+  WidgetTester tester,
+  Finder finder, {
+  Duration step = const Duration(milliseconds: 50),
+  int maxPumps = 40,
+}) async {
+  for (var attempt = 0; attempt < maxPumps; attempt++) {
+    if (finder.evaluate().isNotEmpty) return;
+    await tester.pump(step);
+  }
+  expect(finder, findsWidgets);
+}
+
+Future<void> _pumpUntilAbsent(
+  WidgetTester tester,
+  Finder finder, {
+  Duration step = const Duration(milliseconds: 50),
+  int maxPumps = 40,
+}) async {
+  for (var attempt = 0; attempt < maxPumps; attempt++) {
+    if (finder.evaluate().isEmpty) return;
+    await tester.pump(step);
+  }
+  expect(finder, findsNothing);
 }
 
 class _GameRouteObserver extends NavigatorObserver {
