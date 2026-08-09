@@ -1,5 +1,6 @@
 import 'package:cargo_sort_game/core/ads/ad_consent_controller.dart';
 import 'package:cargo_sort_game/core/settings/app_settings_store.dart';
+import 'package:cargo_sort_game/core/widgets/game_button.dart';
 import 'package:cargo_sort_game/features/settings/settings_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -36,19 +37,18 @@ void main() {
         ),
       );
       await _pumpTransition(tester);
+      await _openPrivacySheet(tester);
 
-      final privacy = find.text('Privacy');
-      await tester.ensureVisible(privacy);
-      await tester.pump(const Duration(milliseconds: 100));
-      await tester.tap(privacy);
-      await _pumpTransition(tester);
-
-      final button = find.byKey(const ValueKey('privacy-options-button'));
-      expect(button, findsOneWidget);
+      final buttonFinder = find.byKey(
+        const ValueKey('privacy-options-button'),
+      );
+      expect(buttonFinder, findsOneWidget);
       expect(find.text('Manage privacy choices'), findsOneWidget);
       expect(state.canRequestAds, isTrue);
 
-      await tester.tap(button);
+      final button = tester.widget<FilledButton>(buttonFinder);
+      expect(button.onPressed, isNotNull);
+      button.onPressed!.call();
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 200));
 
@@ -83,17 +83,24 @@ void main() {
         ),
       );
       await _pumpTransition(tester);
-
-      final privacy = find.text('Privacy');
-      await tester.ensureVisible(privacy);
-      await tester.pump(const Duration(milliseconds: 100));
-      await tester.tap(privacy);
-      await _pumpTransition(tester);
+      await _openPrivacySheet(tester);
 
       expect(find.byKey(const ValueKey('privacy-options-button')), findsNothing);
       expect(find.text('Privacy & Ads'), findsOneWidget);
     },
   );
+}
+
+Future<void> _openPrivacySheet(WidgetTester tester) async {
+  final privacyButtonFinder = find.ancestor(
+    of: find.text('Privacy'),
+    matching: find.byType(GameButton),
+  );
+  expect(privacyButtonFinder, findsOneWidget);
+  final privacyButton = tester.widget<GameButton>(privacyButtonFinder);
+  expect(privacyButton.onPressed, isNotNull);
+  privacyButton.onPressed!.call();
+  await _pumpTransition(tester);
 }
 
 Future<void> _pumpTransition(WidgetTester tester) async {
