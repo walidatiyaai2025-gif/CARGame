@@ -8,6 +8,8 @@ CARGame is offline-first. Core progression, economy, settings, transaction-recov
 
 Google Mobile Ads is the only intentional third-party network data processor in the current runtime dependency set. ADS-007 uses Google UMP as the privacy source of truth: consent information is refreshed on launch, required forms are shown before ad startup, and `canRequestAds` gates Mobile Ads initialization plus banner/rewarded/interstitial request paths. No duplicate app-side consent-granted value is persisted.
 
+ENG-012 defines a first-party analytics schema and application boundary without enabling first-party collection. `ENABLE_ANALYTICS` defaults to `false`; production runtime analytics privacy eligibility is deny-all and no outward analytics emitter, processor, persistence queue, or network transport is installed. Google UMP advertising consent is not reused as first-party analytics consent. The machine-readable inventory therefore correctly keeps `analyticsEnabled: false` and declares no analytics processor or data flow.
+
 `ENABLE_DIAGNOSTICS` also exists in `AppBuildConfig`, but current bootstrap installs the local `AppLogger` unconditionally. Diagnostics remain local-only and redacted; ENG-013 owns any future privacy-gated remote crash/non-fatal reporting and the effective build/runtime diagnostics gate.
 
 PRIV-003 adds an explicit first-party local-data boundary: `LocalDataController` can produce a versioned JSON export without network transfer and can clear CARGame-managed SharedPreferences plus local diagnostic logs. Settings exposes both actions under Privacy; destructive reset requires confirmation, serializes concurrent delete attempts, reconstructs fresh progress/settings stores, and returns to the default route so stale in-memory reward/recovery state cannot be written back after deletion.
@@ -121,12 +123,12 @@ Current controls and gaps:
 - `AdService` and `BannerAdFooter` refuse request/load/show operations unless both `ENABLE_ADS` and current consent state permit requests, and loaded app-owned ads are disposed when eligibility is revoked.
 - Settings keeps a publisher-rendered privacy entry; when Google reports privacy options are required, the user can re-open the privacy options form and runtime eligibility updates without restarting.
 - Release builds reject Google test ad-unit IDs.
-- No first-party server receives ad identifiers or ad telemetry, and first-party analytics remains absent/disabled until ENG-012 adds a separately privacy-gated design.
+- No first-party server receives ad identifiers or ad telemetry. ENG-012 now defines a separately privacy-gated analytics contract, but production first-party analytics collection remains disabled because the build flag defaults off, runtime privacy is deny-all, and no emitter/processor/persistence/network path is installed.
 - The first-party local reset does not claim to delete processor-side Google data; Google/UMP privacy controls remain separate.
 
 ## Explicitly absent in the current codebase
 
-No application feature currently collects or stores account registration data, email addresses, phone numbers, contacts, precise location, user photos/files, first-party analytics events, cloud-save accounts, or remote diagnostic uploads.
+No application feature currently collects, stores, or transmits account registration data, email addresses, phone numbers, contacts, precise location, user photos/files, first-party analytics events, cloud-save accounts, or remote diagnostic uploads. ENG-012 defines event contracts only; it does not instrument feature screens or install a collector/transport.
 
 ## Data minimization rules
 
@@ -139,6 +141,7 @@ No application feature currently collects or stores account registration data, e
 7. First-party local export must remain user-driven and zero-network; a future remote export/sync path requires a new privacy inventory flow before merge.
 8. First-party local deletion must continue to clear transaction/reward/recovery metadata and local diagnostics and must not imply deletion of third-party processor-side data.
 9. Build-time IDs/configuration are not treated as user data, but secrets and credentials remain governed by ENG-010.
+10. First-party analytics must remain fail-closed unless build configuration, an explicit first-party runtime privacy decision, and an inventoried outward processor/transport all permit collection; Google UMP ad eligibility must not be treated as analytics consent.
 
 ## Known privacy gaps and owners
 
@@ -160,7 +163,7 @@ Google Mobile Ads processor-side retention remains outside the first-party local
 - Local application-support directory — first-party local-only diagnostic log file.
 - Google Mobile Ads — third-party advertising processor initialized only when UMP eligibility permits ad requests.
 
-No other network data processor is declared by the current production dependency set.
+No other network data processor is declared by the current production dependency set. The ENG-012 analytics contract does not itself constitute a processor or data flow because production has no collector, persistence, emitter, or network transport.
 
 ## Mechanical drift protection
 
@@ -176,15 +179,17 @@ No other network data processor is declared by the current production dependency
 - exact coverage of persisted `*Key`/`*Prefix` declarations in `ProgressStore`, `AppSettingsStore`, and `RecoveringPreferences`;
 - offline-first, analytics-disabled, and cloud-sync-disabled principles.
 
+`tool/verify_analytics_privacy.py` additionally enforces the ENG-012 checkpoint: analytics remains disabled in the machine inventory, known analytics SDKs/processors are absent, schema version 1 is explicit, `ENABLE_ANALYTICS` defaults false, the analytics adapter is independent of ads/storage/network APIs, and production composition keeps runtime privacy deny-all with no emitter.
+
 `tool/verify_privacy_disclosures.py` additionally requires the local deletion mechanism to remain available, rejects reintroduction of the completed `in-app-data-controls` gap, and verifies the source anchors for `LocalDataController` plus Settings export/delete/confirmation controls.
 
-This keeps PRIV-001/PRIV-002/PRIV-003 aligned with current source instead of relying on a one-time prose audit.
+This keeps PRIV-001/PRIV-002/PRIV-003/ENG-012 aligned with current source instead of relying on a one-time prose audit.
 
 ## Follow-up gates
 
 - ADS-007: UMP consent and re-openable privacy controls now gate ad SDK initialization/requests; automated verification must remain green and production UMP evidence is still external.
 - PRIV-002: privacy policy and Play Data Safety/store disclosure mapping remain IMPLEMENTED pending publication/store evidence.
 - PRIV-003: first-party local reset/export/deletion readiness is source-complete and subject to repository verification evidence.
-- ENG-012: analytics remains disabled until a privacy-gated schema and consent path exist.
+- ENG-012: versioned schema/port and fail-closed build/runtime eligibility exist, while production collection intentionally remains disabled; any future first-party collector/processor requires an explicit privacy decision, inventory/disclosure update, and reviewed transport integration before it can be enabled.
 - ENG-013: effective diagnostics gating and any future privacy-gated remote crash reporting.
 - TEST-011: release privacy/consent/security verification.
