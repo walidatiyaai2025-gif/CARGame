@@ -5,7 +5,7 @@ Branch: `agent/game-003-gameplay-visual-refresh`
 
 ## State
 
-IN PROGRESS. Final status will be reconciled with the primary catalog after the parallel TEST-002 tracking PR lands.
+IMPLEMENTED. PR #149 passed current-main Flutter CI #718 and squash-merged to `main` as `dfd92944791a35aa3c9b194c6401b3bf17bc5626`. GAME-003 remains IMPLEMENTED until the separate GAME-012/AST-007 authored 3D board/product asset work is complete.
 
 ## Scope
 
@@ -37,3 +37,10 @@ Refresh the presentation layer of the active gameplay screen so it visually cont
 - full Flutter suite;
 - Debug APK build and artifact upload;
 - current-main reconciliation before merge.
+
+## Verification evidence
+
+- Focused branch gate: canonical formatting, gameplay responsive/motion/result/navigation regressions, the operations-deck visual contract, and Analyze passed.
+- Final current-main Flutter CI #718 / run `31312628308`: formatting, whitespace, Analyze, optional-service isolation, animated GameButton, full Flutter suite, Debug APK build, and artifact upload all passed.
+- Debug artifact #9037881344: 80,593,016 bytes; SHA-256 `b408561b1d6234336d180836d47ede432cdac8f4604ac4127caf84cb0ec37381`.
+- Issue #148 closed Completed when PR #149 merged.

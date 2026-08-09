@@ -7,12 +7,24 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | Field | Value |
 |---|---|
 | Current phase | Android RC hardening — issue #79 |
-| Primary feature | None — `TEST-002` is VERIFIED; `ENG-005` is the next dependency-ready catalog item. |
-| Completed checkpoint | `TEST-002` integrated level release contract — PR #144 merged after current-main reconciliation and green Flutter CI #697. |
-| Status | TEST-002 is VERIFIED. One deterministic release gate now proves exact 1..150 identity, regeneration parity, structural solvability, quantitative difficulty acceptance, and boundaries 1/25/26/150 without changing production level content. |
-| Previous checkpoint | `AST-011` asset licensing/provenance current-main reconciliation — PR #131 merged as `9631b43fb697f9819fe83a7991212b490865f525` after Flutter CI #659. |
+| Primary feature | None — `GAME-003` interaction polish is merged; `ENG-005` remains the next dependency-ready catalog item. |
+| Completed checkpoint | `GAME-003` premium gameplay operations deck — PR #149 merged as `dfd92944791a35aa3c9b194c6401b3bf17bc5626` after current-main reconciliation and green Flutter CI #718. |
+| Status | GAME-003 remains IMPLEMENTED with production interaction polish complete: live mission command/telemetry, Cargo Bay, Sorting Docks, premium booster dock, stable motion coordinates, and all deterministic input/result contracts passed the full Flutter suite. Authored 3D board/product assets remain under GAME-012/AST-007. |
+| Previous checkpoint | `TEST-002` integrated production level release contract and verification tracking — PRs #144/#147; current-main reconciliation completed before GAME-003 final CI. |
 | Next recommended feature | `ENG-005` Clean architecture boundaries — highest-priority dependency-ready catalog item after TEST-002; audit current presentation/domain/application/storage/assets/motion/analytics/service boundaries before changing architecture. |
 | Known blocker | `REL-007`/`REL-008` require real production AdMob/signing inputs and a production-signed candidate; final install/upgrade/device smoke requires an Android device or testing track. `TEST-009` also remains dependency-blocked while `PERF-001` is PLANNED. Visual Studio C++ components remain optional for Windows desktop only. |
+
+## GAME-003 gameplay operations deck verification — 2026-08-09
+
+- Issue #148 / PR #149 replace the generic gameplay AppBar/flat board presentation with a premium live operations deck aligned with Home, World Map, and Mission Control.
+- The active run now exposes a mission command bar, live mission banner, moves/cargo/combo/heart-or-shield telemetry, `CARGO BAY`, `SORTING DOCKS`, and a shared `GameButton` / `ThreeDGameIcon` booster dock.
+- Deterministic cargo ordering, move consumption, combo/shield/hint/extra-move rules, reward transaction identity, ads, persistence, result guards, and win/loss behavior were not changed.
+- `game-moves`, `cargo-*`, and `warehouse-*` keys plus `GameTravelMotion` and `GameActionFeedback` authority remain stable for anti-spam and motion regressions.
+- The branch was reconciled with TEST-002 verification main `653f29aca08f1a88a7487695d199448ec0913b85` before the final gate.
+- Flutter CI #718 / run `31312628308` passed formatting, whitespace, Analyze, optional-service isolation, animated GameButton coverage, the full Flutter suite, Debug APK build, and artifact upload on head `3fd8e5627a098df80aef6ed7049621e82f370a73`.
+- Debug artifact #9037881344 is 80,593,016 bytes with SHA-256 `b408561b1d6234336d180836d47ede432cdac8f4604ac4127caf84cb0ec37381`.
+- PR #149 squash-merged to main as `dfd92944791a35aa3c9b194c6401b3bf17bc5626`; Issue #148 closed Completed.
+- GAME-003 remains IMPLEMENTED rather than VERIFIED because authored 3D board/product integration is still owned by GAME-012/AST-007; `ENG-005` remains the next dependency-ready catalog item.
 
 ## TEST-002 integrated level release contract verification — 2026-08-09
 

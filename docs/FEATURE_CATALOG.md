@@ -149,7 +149,7 @@ Codex must not mark a feature complete merely because UI code exists.
 |---|---|---:|---|---|---|
 | GAME-001 | Deterministic level model | P0 | IMPLEMENTED | WORLD-001 | Same level number produces stable valid content; design audit remains. |
 | GAME-002 | Cargo product domain model | P0 | IMPLEMENTED | GAME-001 | Stable product IDs and categories are supported; 100-asset integration remains. |
-| GAME-003 | Core sorting interaction | P0 | IMPLEMENTED | GAME-001 | Player can sort cargo and win/lose; production interaction polish remains. |
+| GAME-003 | Core sorting interaction | P0 | IMPLEMENTED | GAME-001 | Issue #148 / PR #149 complete the production interaction-polish checkpoint with a premium live operations deck, mission telemetry, Cargo Bay, Sorting Docks, shared GameButton/ThreeDGameIcon booster controls, and preserved deterministic sorting/motion/result contracts. Flutter CI #718 passed formatting, Analyze, the full Flutter suite, Debug APK build, and artifact upload; PR #149 squash-merged as `dfd92944791a35aa3c9b194c6401b3bf17bc5626`. Authored 3D board/product assets remain tracked by GAME-012/AST-007. |
 | GAME-004 | Moves and objective tracking | P0 | IMPLEMENTED | GAME-003 | HUD and end conditions operate; tests remain. |
 | GAME-005 | Combo system | P1 | IMPLEMENTED | GAME-003 | Combo count/best combo work; visual/audio escalation remains. |
 | GAME-006 | Smart Hint | P1 | IMPLEMENTED | GAME-003 | Free/loadout hints work without invalid consumption; tests remain. |
