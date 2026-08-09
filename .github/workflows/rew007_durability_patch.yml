@@ -31,64 +31,40 @@ jobs:
           path = Path('lib/core/storage/progress_store.dart')
           text = path.read_text()
 
-          old_commit = '''    await _prefs.setString(_pendingRewardTransactionKey, jsonEncode(journal));
-              await _applyRewardTransactionValues(validated);
-              await _recordCompletedRewardTransaction(idempotencyKey);
-              await _prefs.remove(_pendingRewardTransactionKey);
-              return true;
-          '''
-          new_commit = '''    await _prefs.setString(_pendingRewardTransactionKey, jsonEncode(journal));
-              await _applyRewardTransactionValues(validated);
-              await _recordCompletedRewardTransaction(idempotencyKey);
-              await _bestEffortClearPendingRewardTransaction();
-              return true;
-          '''
-          if old_commit in text:
-              text = text.replace(old_commit, new_commit, 1)
-          elif new_commit not in text:
-              raise SystemExit('commit cleanup block did not match')
+          def section(source, start_marker, end_marker):
+              start = source.index(start_marker)
+              end = source.index(end_marker, start)
+              return start, end, source[start:end]
 
-          old_recovery = '''      if (_completedRewardTransactions.contains(idempotencyKey)) {
-                await _prefs.remove(_pendingRewardTransactionKey);
-                return;
-              }
+          commit_start, commit_end, commit_body = section(
+              text,
+              '  Future<bool> _commitRewardTransaction({',
+              '  Future<void> _recoverPendingRewardTransaction()',
+          )
+          commit_body = commit_body.replace(
+              'await _prefs.remove(_pendingRewardTransactionKey);',
+              'await _bestEffortClearPendingRewardTransaction();',
+          )
+          text = text[:commit_start] + commit_body + text[commit_end:]
 
-              final values = _validateRewardTransactionValues(rawValues);
-              await _applyRewardTransactionValues(values);
-              _applyRewardTransactionValuesToMemory(values);
-              await _recordCompletedRewardTransaction(idempotencyKey);
-              await _prefs.remove(_pendingRewardTransactionKey);
-          '''
-          new_recovery = '''      if (_completedRewardTransactions.contains(idempotencyKey)) {
-                await _bestEffortClearPendingRewardTransaction();
-                return;
-              }
+          recovery_start, recovery_end, recovery_body = section(
+              text,
+              '  Future<void> _recoverPendingRewardTransaction()',
+              '  Map<String, Object?> _validateRewardTransactionValues',
+          )
+          recovery_body = recovery_body.replace(
+              'await _prefs.remove(_pendingRewardTransactionKey);',
+              'await _bestEffortClearPendingRewardTransaction();',
+          )
+          text = text[:recovery_start] + recovery_body + text[recovery_end:]
 
-              final values = _validateRewardTransactionValues(rawValues);
-              await _applyRewardTransactionValues(values);
-              _applyRewardTransactionValuesToMemory(values);
-              await _recordCompletedRewardTransaction(idempotencyKey);
-              await _bestEffortClearPendingRewardTransaction();
-          '''
-          if old_recovery in text:
-              text = text.replace(old_recovery, new_recovery, 1)
-          elif new_recovery not in text:
-              raise SystemExit('recovery cleanup block did not match')
-
-          old_record = '''  Future<void> _recordCompletedRewardTransaction(String idempotencyKey) async {
-              await _ensureRewardLedgerLoaded();
-              if (!_completedRewardTransactions.add(idempotencyKey)) return;
-              while (_completedRewardTransactions.length >
-                  _rewardTransactionLedgerLimit) {
-                _completedRewardTransactions.remove(_completedRewardTransactions.first);
-              }
-              await _prefs.setStringList(
-                _rewardTransactionLedgerKey,
-                _completedRewardTransactions.toList(),
-              );
-            }
-          '''
-          new_record = '''  Future<void> _recordCompletedRewardTransaction(String idempotencyKey) async {
+          record_start, record_end, record_body = section(
+              text,
+              '  Future<void> _recordCompletedRewardTransaction(String idempotencyKey) async {',
+              '  Future<bool> useFreeHint()',
+          )
+          if 'final updated = <String>{' not in record_body:
+              record_body = '''  Future<void> _recordCompletedRewardTransaction(String idempotencyKey) async {
               await _ensureRewardLedgerLoaded();
               if (_completedRewardTransactions.contains(idempotencyKey)) return;
 
@@ -112,16 +88,22 @@ jobs:
               try {
                 await _prefs.remove(_pendingRewardTransactionKey);
               } catch (_) {
-                // The completed ledger is already durable. A stale pending journal
-                // is harmless and recovery can retry cleanup on the next operation.
+                // The completed ledger is durable; recovery may clear stale pending state later.
               }
             }
-          '''
-          if old_record in text:
-              text = text.replace(old_record, new_record, 1)
-          elif new_record not in text:
-              raise SystemExit('completed ledger block did not match')
 
+          '''
+          elif '_bestEffortClearPendingRewardTransaction' not in record_body:
+              record_body += '''  Future<void> _bestEffortClearPendingRewardTransaction() async {
+              try {
+                await _prefs.remove(_pendingRewardTransactionKey);
+              } catch (_) {
+                // The completed ledger is durable; recovery may clear stale pending state later.
+              }
+            }
+
+          '''
+          text = text[:record_start] + record_body + text[record_end:]
           path.write_text(text)
 
           work = Path('docs/work/REW-007.md')
