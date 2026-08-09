@@ -1,0 +1,30 @@
+name: ENG-007 Next Candidate Audit
+
+on:
+  push:
+    branches:
+      - agent/eng-007-reconcile
+    paths:
+      - '.github/workflows/eng007_next_candidate.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/eng-007-reconcile
+          fetch-depth: 0
+      - name: Compute dependency-ready queue
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/eng007_next_candidate.py
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/scripts/eng007_next_candidate.py .github/workflows/eng007_next_candidate.yml
+          git commit -m 'ci: remove ENG-007 next-candidate audit'
+          git push origin HEAD:agent/eng-007-reconcile
