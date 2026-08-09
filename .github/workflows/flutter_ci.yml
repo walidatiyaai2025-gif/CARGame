@@ -120,12 +120,7 @@ jobs:
 
           printf 'Validating Dart formatting for %d changed file(s):\n' "${#dart_files[@]}"
           printf ' - %s\n' "${dart_files[@]}"
-          dart format "${dart_files[@]}"
-          if ! git diff --quiet -- "${dart_files[@]}"; then
-            echo 'Dart formatter diff follows:'
-            git diff -- "${dart_files[@]}"
-            exit 1
-          fi
+          dart format --output=none --set-exit-if-changed "${dart_files[@]}"
 
       - name: Verify whitespace integrity
         run: git diff --check
