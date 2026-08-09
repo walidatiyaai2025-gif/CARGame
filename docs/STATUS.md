@@ -7,12 +7,24 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | Field | Value |
 |---|---|
 | Current phase | Android RC hardening — issue #79 |
-| Primary feature | `ENG-006` Dependency and package governance — Issue #157 / branch `agent/eng-006-dependency-governance`. |
-| Completed checkpoint | `ENG-005` enforceable clean-architecture boundary checkpoint — PR #155 merged as `07fb50182efe5ce315cdda8bf823ba4da855c2df` after green Flutter CI #726. |
-| Status | ENG-006 audit and implementation are active. Direct hosted package sources, lockfile alignment, reviewed license families, and upgrade drift are now enforced/reported by code; no production dependency version change is planned for this checkpoint. |
-| Previous checkpoint | `UI3D-009` premium Mission Result Debrief and tracking reconciliation — PRs #152/#153. |
-| Next recommended feature | Complete `ENG-006` governance verification and full CI/APK before selecting the next dependency-ready catalog item. |
+| Primary feature | None — `ENG-006` dependency/package governance is verified; `ENG-007` CI verification workflow is the next dependency-ready engineering item. |
+| Completed checkpoint | `ENG-006` dependency and package governance — PR #158 merged as `e8e474e54ada81b5936bd5adf0d9aa9e31ff117e` after green Flutter CI #730. |
+| Status | ENG-006 is VERIFIED: normal Flutter CI now enforces approved dependency sources, direct manifest/lock alignment, reviewed direct-package licenses and policy regressions while reporting upstream version drift without auto-upgrading. |
+| Previous checkpoint | `ENG-005` enforceable clean-architecture boundary checkpoint — PRs #155/#156. |
+| Next recommended feature | `ENG-007` CI verification workflow — close the remaining CI acceptance gaps around dashboard/parser validation and protected release checks while preserving the existing green Flutter pipeline. |
 | Known blocker | `REL-007`/`REL-008` require real production AdMob/signing inputs and a production-signed candidate; final install/upgrade/device smoke requires an Android device or testing track. `TEST-009` also remains dependency-blocked while `PERF-001` is PLANNED. Visual Studio C++ components remain optional for Windows desktop only. |
+
+## ENG-006 dependency governance verification — 2026-08-09
+
+- Issue #157 / PR #158 implement dependency governance without changing any production dependency version or runtime behavior.
+- The committed `pubspec.lock` remains authoritative for application builds; direct hosted dependencies must resolve from `https://pub.dev`, match their manifest constraint/direct kind, and have a reviewed installed license family.
+- Git/path/custom-host direct dependencies and `dependency_overrides` are rejected by the governance verifier until explicitly reviewed.
+- The reviewed direct inventory is: Flame 1.38.0 MIT; Google Mobile Ads 9.0.0 Apache-2.0; Shared Preferences 2.5.5 BSD-3-Clause; Path Provider 2.1.6 BSD-3-Clause; Cupertino Icons 1.0.9 MIT; Flutter Lints 6.0.0 BSD-3-Clause; Shared Preferences Platform Interface 2.4.2 BSD-3-Clause.
+- Eight focused policy regressions cover valid hosted resolution, git/custom-source rejection, lock-constraint drift, mandatory license review on direct upgrades, missing/mismatched licenses, and dependency overrides.
+- `flutter pub outdated --json` remains non-blocking review evidence; the baseline reported seven newer versions outside current constraints and all seven are transitive, so ENG-006 intentionally performs no package upgrade.
+- Flutter CI #730 / run `31324376214` passed the new dependency-governance gates, dynamic Android/secret/privacy/security/assets gates, formatting, whitespace, Analyze, optional-service isolation, GameButton coverage, full Flutter suite, Debug APK build, and artifact upload on head `2bf80a697e17a28af9b30a0d479452c1e6dbad24`.
+- Debug artifact #9041192218 is 80,594,411 bytes with SHA-256 `ebd0fefb2d148323693361a68a0e0729b5b8d697863572e5f9584575549e1f0d`.
+- PR #158 squash-merged to main as `e8e474e54ada81b5936bd5adf0d9aa9e31ff117e`; Issue #157 closed Completed. ENG-006 has no remaining acceptance blocker and is VERIFIED.
 
 ## ENG-006 dependency governance audit — 2026-08-09
 
