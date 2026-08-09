@@ -1,0 +1,100 @@
+name: AST011 Tracking Reconciliation
+
+on:
+  push:
+    branches:
+      - agent/ast-011-current-main-reconciliation
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Reconcile catalog and status
+        shell: python
+        run: |
+          from pathlib import Path
+
+          catalog_path = Path('docs/FEATURE_CATALOG.md')
+          catalog = catalog_path.read_text(encoding='utf-8')
+          replacements = [
+              (
+                  "| AST-011 | Asset licensing and provenance | P0 | PLANNED | AST-001 | Every external/generated asset has source, license, authoring prompt/file, and commercial-use record. |",
+                  "| AST-011 | Asset licensing and provenance | P0 | VERIFIED | AST-001 | Historical implementation added the versioned provenance catalog, typed commercial-use validation, `GameAssetAdmission`, focused regressions, and the CI asset-pipeline gate. Current-main issue #130 audit confirms 9 manifest descriptors, 0 approved provenance records, and 0 runtime WebP binaries; current Flutter CI #657 / run `31300595956` reports `ASSET PIPELINE VALIDATION PASSED` with exactly 9/0/0, and the 240-test suite verifies that unregistered/unprovenanced binaries, orphan provenance, missing commercial-use references/hashes, generated records without prompts, and registry mismatches are rejected. No provenance is fabricated for descriptor-only placeholders; any future runtime binary remains fail-closed until a complete matching commercial-use record exists. Historical implementation head `1d6597de0c298b40dd1f1c305f7fdeca26a2d37a` passed Flutter CI #121 / run `31185774162`; artifact #8996933307 is 80,450,231 bytes with SHA-256 `9048ad078046154a0db92dd4d6ed918154e91b15c35c3b60feac2b9b1257d213`. |"
+              ),
+              (
+                  "- None after `SEC-001` verification.",
+                  "- None after `AST-011` verification."
+              ),
+              (
+                  "1. `AST-011` Asset licensing and provenance — `AST-001` is VERIFIED; commercial-use provenance remains a release-critical content-rights prerequisite.",
+                  "1. `LEVEL-003` Level solvability validator — current main already contains `LevelSolvabilityValidator` plus regressions validating all 150 generated levels and rejecting impossible/invalid configurations; reconcile this stale P0 catalog item before writing duplicate validator code."
+              ),
+              (
+                  "## Recently verified\n\n- `SEC-001` Mobile security baseline and threat model",
+                  "## Recently verified\n\n- `AST-011` Asset licensing and provenance — issue #130 reconciles the historical provenance/admission pipeline with current main: 9 typed descriptors, 0 approved provenance records, and 0 runtime WebP binaries. CI #657 reports the 9/0/0 state and proves future binaries remain fail-closed without complete commercial-use provenance; historical CI #121 also passed the original implementation checkpoint.\n- `SEC-001` Mobile security baseline and threat model"
+              ),
+          ]
+          for old, new in replacements:
+              count = catalog.count(old)
+              if count != 1:
+                  raise SystemExit(f'catalog replacement expected once, found {count}: {old[:120]}')
+              catalog = catalog.replace(old, new)
+          catalog_path.write_text(catalog, encoding='utf-8')
+
+          status_path = Path('docs/STATUS.md')
+          status = status_path.read_text(encoding='utf-8')
+          status_replacements = [
+              (
+                  "| Primary feature | None; `SEC-001` is VERIFIED after issue #34 / PR #128 current-main refresh. |",
+                  "| Primary feature | None; `AST-011` is VERIFIED after current-main reconciliation under issue #130. |"
+              ),
+              (
+                  "| Completed checkpoint | `SEC-001` mobile security baseline current-main reconciliation — PR #128 merged as `c0e7c561e0bafa810ef9248322102b10b684a490` after Flutter CI #655 passed privacy/security runtime parity, full Flutter tests, Debug APK build and artifact upload. |",
+                  "| Completed checkpoint | `AST-011` asset licensing/provenance current-main reconciliation — current CI #657 proves the admission gate is green with 9 manifest descriptors, 0 approved provenance records, and 0 runtime WebP binaries; no fake provenance was created for descriptor-only placeholders. |"
+              ),
+              (
+                  "| Status | Security baseline now mirrors PRIV-001 runtime truth, classifies current transaction/reward/recovery assets, and mechanically validates network/trust-boundary, protected-asset, privacy-gap, threat, and secret-policy parity. ADS-007, ENG-013, SEC-002, SEC-003, PRIV-002, and TEST-011 remain explicit downstream gates. |",
+                  "| Status | Asset admission remains fail-closed: a future runtime WebP must match the manifest and a complete commercial-use provenance record, while orphan provenance is also rejected. Current main intentionally ships zero runtime 3D WebP binaries, so the empty approved provenance catalog is the correct auditable state. |"
+              ),
+              (
+                  "| Previous checkpoint | `PRIV-001` privacy inventory current-main reconciliation — PR #126 merged as `dd076dd383d6c3cd0dd33986f980e8b4f012b38b` after Flutter CI #651. |",
+                  "| Previous checkpoint | `SEC-001` mobile security baseline current-main reconciliation — PR #128 merged as `c0e7c561e0bafa810ef9248322102b10b684a490` after Flutter CI #655. |"
+              ),
+              (
+                  "| Next recommended feature | `AST-011` asset licensing and provenance: `AST-001` is VERIFIED and commercial-use provenance is the next unblocked release-critical P0 prerequisite. |",
+                  "| Next recommended feature | `LEVEL-003` level solvability validator current-main reconciliation: the validator and 150-level regression suite already exist on main, so verify current acceptance/tracking before adding duplicate code. |"
+              ),
+              (
+                  "## SEC-001 mobile security baseline current-main verification — 2026-08-09",
+                  "## AST-011 asset licensing and provenance current-main verification — 2026-08-09\n\n- Historical implementation on main added the typed/versioned provenance model, complete commercial-use/source/generated-prompt/hash validation, `GameAssetAdmission`, focused tests, and the `Validate 3D asset registry and provenance` CI gate.\n- Historical implementation head `1d6597de0c298b40dd1f1c305f7fdeca26a2d37a` passed Flutter CI #121 / run `31185774162`; debug artifact #8996933307 is 80,450,231 bytes with SHA-256 `9048ad078046154a0db92dd4d6ed918154e91b15c35c3b60feac2b9b1257d213`.\n- Current-main audit under issue #130 confirms `assets/3d/manifest.json` has 9 stable descriptors, `assets/3d/provenance/catalog.json` has 0 approved records, and `assets/3d/runtime/` is absent, so 0 runtime WebP binaries are currently admitted.\n- The 9/0/0 state is intentional: descriptors support typed binding/fallback before binary art exists. The project does not invent source/license/prompt records for nonexistent binaries.\n- `GameAssetAdmission` rejects runtime WebPs missing manifest/provenance, rejects orphan provenance records without binaries, and enforces matching path/profile/dimensions/revision plus required commercial-use/hash/prompt metadata.\n- Current Flutter CI #657 / run `31300595956` reports `ASSET PIPELINE VALIDATION PASSED`, `Manifest entries : 9`, `Provenance records: 0`, `Runtime WebP files: 0`; it also passed Analyze, all 240 Flutter tests, Debug APK build, and artifact upload.\n- Current debug artifact #9034434441 is 80,544,514 bytes with SHA-256 `5932514475e58a4336d953590dcf9690c0354a19eaf933b870af0c51c7b01c14`.\n- `AST-011` is VERIFIED on current main; issue #130 is a tracking reconciliation and receives a fresh docs-only CI before closure.\n- Next unblocked P0 audit selected: `LEVEL-003`, because current main already contains `LevelSolvabilityValidator` and a regression validating all 150 generated levels.\n\n## SEC-001 mobile security baseline current-main verification — 2026-08-09"
+              ),
+              (
+                  "| 2026-08-09 | SEC-001 mobile security baseline current-main reconciliation | PASSED — PR #128 / Flutter CI #655 / run `31300172519` / debug artifact #9034317021 / SHA-256 `67938778535d63de844f455b324796a4488b1a33efe20ea004fe9894d9db135d` |",
+                  "| 2026-08-09 | AST-011 asset licensing/provenance current-main reconciliation | PASSED — current CI #657 / run `31300595956` asset gate reports 9 manifest descriptors / 0 provenance records / 0 runtime WebPs; historical implementation CI #121 / run `31185774162` passed with artifact #8996933307 / SHA-256 `9048ad078046154a0db92dd4d6ed918154e91b15c35c3b60feac2b9b1257d213` |\n| 2026-08-09 | SEC-001 mobile security baseline current-main reconciliation | PASSED — PR #128 / Flutter CI #655 / run `31300172519` / debug artifact #9034317021 / SHA-256 `67938778535d63de844f455b324796a4488b1a33efe20ea004fe9894d9db135d` |"
+              ),
+          ]
+          for old, new in status_replacements:
+              count = status.count(old)
+              if count != 1:
+                  raise SystemExit(f'status replacement expected once, found {count}: {old[:120]}')
+              status = status.replace(old, new)
+          status_path.write_text(status, encoding='utf-8')
+
+      - name: Commit reconciliation and remove helper
+        shell: bash
+        run: |
+          rm .github/workflows/ast011_reconcile.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "docs: reconcile AST-011 verification"
+          git push origin HEAD:${GITHUB_REF_NAME}
