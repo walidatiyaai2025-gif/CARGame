@@ -125,10 +125,11 @@ class _HomeScreenState extends State<HomeScreen> {
         animation: store,
         builder: (context, _) {
           final unlocked = store.highestUnlockedLevel.clamp(1, levels.length);
-          final worldNumber = ((unlocked - 1) ~/ 25 + 1).clamp(
-            1,
-            gameWorlds.length,
-          );
+          final worldNumber =
+              ((unlocked - 1) ~/ store.economy.worldInterval + 1).clamp(
+                1,
+                gameWorlds.length,
+              );
           final world = gameWorlds[worldNumber - 1];
           final currentCity = levels[unlocked - 1].cityName;
 
@@ -169,7 +170,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             _ResourceStrip(
                               compact: compact,
                               hearts:
-                                  '${store.hearts}/${ProgressStore.maxHearts}',
+                                  '${store.hearts}/${store.economy.maxHearts}',
                               heartLabel: _heartTimer(ar),
                               coins: '${store.coins}',
                               coinLabel: l10n.coins,
@@ -196,7 +197,8 @@ class _HomeScreenState extends State<HomeScreen> {
                               dailyClaimed: !store.canClaimDailyReward,
                               missionClaimed: store.missionClaimed,
                               missionText:
-                                  '${store.missionWins}/3 • ${store.missionStars}/6',
+                                  '${store.missionWins}/${store.economy.dailyMissionRequiredWins} • ${store.missionStars}/${store.economy.dailyMissionRequiredStars}',
+                              dailyRewardCoins: store.economy.dailyRewardCoins,
                               onDaily: _claimDailyReward,
                               onMission: _openProgress,
                               onShop: _openShop,
@@ -576,6 +578,7 @@ class _QuickActions extends StatelessWidget {
     required this.dailyClaimed,
     required this.missionClaimed,
     required this.missionText,
+    required this.dailyRewardCoins,
     required this.onDaily,
     required this.onMission,
     required this.onShop,
@@ -586,6 +589,7 @@ class _QuickActions extends StatelessWidget {
   final bool dailyClaimed;
   final bool missionClaimed;
   final String missionText;
+  final int dailyRewardCoins;
   final VoidCallback onDaily;
   final VoidCallback onMission;
   final VoidCallback onShop;
@@ -596,7 +600,9 @@ class _QuickActions extends StatelessWidget {
       _ActionCard(
         icon: ThreeDIconType.gift,
         title: ar ? 'المكافأة اليومية' : 'Daily reward',
-        subtitle: dailyClaimed ? (ar ? 'تم الاستلام' : 'Claimed') : '+50',
+        subtitle: dailyClaimed
+            ? (ar ? 'تم الاستلام' : 'Claimed')
+            : '+$dailyRewardCoins',
         onTap: onDaily,
       ),
       _ActionCard(

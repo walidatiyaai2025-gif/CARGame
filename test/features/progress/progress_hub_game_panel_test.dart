@@ -1,3 +1,4 @@
+import 'package:cargo_sort_game/core/economy/economy_config.dart';
 import 'package:cargo_sort_game/core/storage/progress_store.dart';
 import 'package:cargo_sort_game/core/widgets/game_hero_panel.dart';
 import 'package:cargo_sort_game/core/widgets/game_panel.dart';
@@ -19,7 +20,15 @@ void main() {
   testWidgets(
     'progress hub adopts shared 3D panels while preserving long-form scrolling',
     (tester) async {
-      final store = ProgressStore();
+      final economy = EconomyConfig.current.copyWith(
+        maxHearts: 7,
+        playerLevelXpStep: 750,
+        dailyMissionRequiredWins: 4,
+        dailyMissionRequiredStars: 8,
+        dailyMissionRequiredCoins: 240,
+        dailyMissionRewardCoins: 333,
+      );
+      final store = ProgressStore(economy: economy);
 
       await tester.pumpWidget(
         MaterialApp(home: ProgressHubScreen(store: store)),
@@ -35,6 +44,7 @@ void main() {
       expect(find.byType(GamePanel), findsAtLeastNWidgets(6));
       expect(find.text('Player Level'), findsOneWidget);
       expect(find.text('Performance Summary'), findsOneWidget);
+      expect(find.text('0/750 XP'), findsOneWidget);
 
       await tester.scrollUntilVisible(
         find.text('Daily Mission'),
@@ -44,23 +54,30 @@ void main() {
       await tester.pump();
 
       expect(find.text('Daily Mission'), findsOneWidget);
-      expect(find.text('Win 3 cities'), findsOneWidget);
+      expect(find.text('Win 4 cities'), findsOneWidget);
 
       await tester.scrollUntilVisible(
-        find.text('Earn 150 coins'),
+        find.text('Earn 240 coins'),
         250,
         scrollable: scrollable,
       );
       await tester.pump();
 
-      expect(find.text('Earn 150 coins'), findsOneWidget);
+      expect(find.text('Earn 240 coins'), findsOneWidget);
       expect(
         find.ancestor(
-          of: find.text('Earn 150 coins'),
+          of: find.text('Earn 240 coins'),
           matching: find.byType(GamePanel),
         ),
         findsOneWidget,
       );
+      await tester.scrollUntilVisible(
+        find.text('Claim 333 Coins'),
+        250,
+        scrollable: scrollable,
+      );
+      await tester.pump();
+      expect(find.text('Claim 333 Coins'), findsOneWidget);
     },
   );
 }

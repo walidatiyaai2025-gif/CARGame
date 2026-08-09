@@ -70,28 +70,36 @@ class ProgressHubScreen extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             _MissionTile(
-              label: ar ? 'اربح 3 مدن' : 'Win 3 cities',
+              label: ar
+                  ? 'اربح ${store.economy.dailyMissionRequiredWins} مدن'
+                  : 'Win ${store.economy.dailyMissionRequiredWins} cities',
               value: store.missionWins,
-              target: 3,
+              target: store.economy.dailyMissionRequiredWins,
               icon: Icons.flag_rounded,
             ),
             _MissionTile(
-              label: ar ? 'اجمع 6 نجوم' : 'Earn 6 stars',
+              label: ar
+                  ? 'اجمع ${store.economy.dailyMissionRequiredStars} نجوم'
+                  : 'Earn ${store.economy.dailyMissionRequiredStars} stars',
               value: store.missionStars,
-              target: 6,
+              target: store.economy.dailyMissionRequiredStars,
               icon: Icons.star_rounded,
             ),
             _MissionTile(
-              label: ar ? 'اجمع 150 عملة' : 'Earn 150 coins',
+              label: ar
+                  ? 'اجمع ${store.economy.dailyMissionRequiredCoins} عملة'
+                  : 'Earn ${store.economy.dailyMissionRequiredCoins} coins',
               value: store.missionCoins,
-              target: 150,
+              target: store.economy.dailyMissionRequiredCoins,
               icon: Icons.monetization_on_rounded,
             ),
             const SizedBox(height: 10),
             GameButton(
               semanticLabel: store.missionClaimed
                   ? (ar ? 'تم استلام مكافأة المهمة' : 'Mission reward claimed')
-                  : (ar ? 'استلم 200 عملة' : 'Claim 200 Coins'),
+                  : (ar
+                        ? 'استلم ${store.economy.dailyMissionRewardCoins} عملة'
+                        : 'Claim ${store.economy.dailyMissionRewardCoins} Coins'),
               onPressed: store.dailyMissionComplete && !store.missionClaimed
                   ? () => _claimMission(context)
                   : null,
@@ -114,7 +122,9 @@ class ProgressHubScreen extends StatelessWidget {
                     child: Text(
                       store.missionClaimed
                           ? (ar ? 'تم الاستلام' : 'Claimed')
-                          : (ar ? 'استلم 200 عملة' : 'Claim 200 Coins'),
+                          : (ar
+                                ? 'استلم ${store.economy.dailyMissionRewardCoins} عملة'
+                                : 'Claim ${store.economy.dailyMissionRewardCoins} Coins'),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
@@ -183,7 +193,8 @@ class _LevelHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) => GameHeroPanel(
     title: ar ? 'مستوى اللاعب' : 'Player Level',
-    subtitle: '${store.xpIntoCurrentLevel}/500 XP',
+    subtitle:
+        '${store.xpIntoCurrentLevel}/${store.economy.playerLevelXpStep} XP',
     semanticLabel: ar
         ? 'مستوى اللاعب ${store.playerLevel}'
         : 'Player level ${store.playerLevel}',
@@ -331,7 +342,7 @@ class _HeartPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) => GamePanel(
     semanticLabel:
-        '${store.hearts}/${ProgressStore.maxHearts} ${ar ? 'قلوب' : 'hearts'}',
+        '${store.hearts}/${store.economy.maxHearts} ${ar ? 'قلوب' : 'hearts'}',
     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
     child: Row(
       children: [
@@ -347,7 +358,7 @@ class _HeartPanel extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '${store.hearts}/${ProgressStore.maxHearts} ${ar ? 'قلوب' : 'hearts'}',
+                '${store.hearts}/${store.economy.maxHearts} ${ar ? 'قلوب' : 'hearts'}',
                 style: const TextStyle(
                   color: AppTheme.navy,
                   fontWeight: FontWeight.w900,
@@ -365,10 +376,10 @@ class _HeartPanel extends StatelessWidget {
           ),
         ),
         Icon(
-          store.hearts < ProgressStore.maxHearts
+          store.hearts < store.economy.maxHearts
               ? Icons.timer_outlined
               : Icons.check_circle_rounded,
-          color: store.hearts < ProgressStore.maxHearts
+          color: store.hearts < store.economy.maxHearts
               ? AppTheme.orange
               : AppTheme.green,
         ),

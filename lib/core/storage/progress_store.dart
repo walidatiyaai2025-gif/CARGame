@@ -113,7 +113,7 @@ class ProgressStore extends ChangeNotifier {
   double get completionProgress => completedLevels / totalLevels;
   int get totalStars => _levelStars.values.fold(0, (sum, stars) => sum + stars);
   int get maximumStars => totalLevels * maxStarsPerLevel;
-  int get worldsCompleted => completedLevels ~/ 25;
+  int get worldsCompleted => completedLevels ~/ economy.worldInterval;
   double get winRate => gamesPlayed == 0 ? 0 : wins / gamesPlayed;
   bool get dailyMissionComplete =>
       missionWins >= economy.dailyMissionRequiredWins &&

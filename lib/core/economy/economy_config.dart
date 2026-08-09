@@ -385,6 +385,9 @@ class EconomyConfig {
     int? maxHearts,
     Duration? heartRefillInterval,
     int? playerLevelXpStep,
+    int? dailyMissionRequiredWins,
+    int? dailyMissionRequiredStars,
+    int? dailyMissionRequiredCoins,
     int? dailyRewardCoins,
     int? dailyMissionRewardCoins,
     int? milestoneInterval,
@@ -401,9 +404,12 @@ class EconomyConfig {
     starterExtraMovesBoosters: starterExtraMovesBoosters,
     starterComboShields: starterComboShields,
     playerLevelXpStep: playerLevelXpStep ?? this.playerLevelXpStep,
-    dailyMissionRequiredWins: dailyMissionRequiredWins,
-    dailyMissionRequiredStars: dailyMissionRequiredStars,
-    dailyMissionRequiredCoins: dailyMissionRequiredCoins,
+    dailyMissionRequiredWins:
+        dailyMissionRequiredWins ?? this.dailyMissionRequiredWins,
+    dailyMissionRequiredStars:
+        dailyMissionRequiredStars ?? this.dailyMissionRequiredStars,
+    dailyMissionRequiredCoins:
+        dailyMissionRequiredCoins ?? this.dailyMissionRequiredCoins,
     dailyRewardCoins: dailyRewardCoins ?? this.dailyRewardCoins,
     dailyMissionRewardCoins:
         dailyMissionRewardCoins ?? this.dailyMissionRewardCoins,
