@@ -181,8 +181,8 @@ Codex must not mark a feature complete merely because UI code exists.
 
 | ID | Function | Priority | Status | Dependencies | Acceptance / evidence |
 |---|---|---:|---|---|---|
-| REW-001 | Victory result flow | P0 | IMPLEMENTED | GAME-011 | Stars, coins, XP, replay/map actions exist; final 3D animation remains. |
-| REW-002 | Failure result flow | P0 | IMPLEMENTED | GAME-011 | Retry/return flow exists and heart loss cannot duplicate; final design remains. |
+| REW-001 | Victory result flow | P0 | IMPLEMENTED | GAME-011 | Issue #151 / PR #152 complete the premium Mission Debrief presentation checkpoint: world/city/level identity, stars, coins, XP, best combo and bonus/world reward metrics now use the shared result hierarchy while existing reward transaction and Next/map guards remain authoritative. Flutter CI #722 passed formatting, Analyze, the full Flutter suite, Debug APK build and artifact upload; PR #152 squash-merged as `462ec0590866879f654a4e031209731bd4eb84fd`. Full 3D reward animation remains REW-006. |
+| REW-002 | Failure result flow | P0 | IMPLEMENTED | GAME-011 | Issue #151 / PR #152 complete the premium failure/recovery design with `MISSION INTERRUPTED`, compact scroll-safe recovery controls, exact Retry/rewarded semantics, and preserved heart-loss, rewarded +5 moves, no-fill and duplicate-action guards. Flutter CI #722 passed the full suite and Debug APK build before merge `462ec0590866879f654a4e031209731bd4eb84fd`. |
 | REW-003 | One-time world reward | P0 | IMPLEMENTED | WORLD-005 | Boss/world reward is granted once and persisted; regression tests remain. |
 | REW-004 | Milestone reward | P1 | IMPLEMENTED | LEVEL-005 | Every fifth first-clear reward is granted once; tests remain. |
 | REW-005 | Next City action | P0 | IMPLEMENTED | NAV-001 | Guarded action returns to updated map without navigation lock; device test remains. |
