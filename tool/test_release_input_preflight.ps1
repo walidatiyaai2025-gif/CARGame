@@ -65,14 +65,16 @@ try {
     }
 
     Assert-ThrowsLike -CaseName 'Google test ad unit' -Pattern 'Google test ad-unit ID' -Action {
-        & $preflightScript \
-            -ProjectRoot $tempRoot \
-            -AndroidAdMobAppId 'ca-app-pub-0000000000000000~0000000000' \
-            -EnableAds \
-            -AndroidBannerId 'ca-app-pub-3940256099942544/6300978111' \
-            -AndroidRewardedId 'ca-app-pub-0000000000000000/0000000001' \
-            -AndroidInterstitialId 'ca-app-pub-0000000000000000/0000000002' \
-            -Quiet
+        $adArguments = @{
+            ProjectRoot = $tempRoot
+            AndroidAdMobAppId = 'ca-app-pub-0000000000000000~0000000000'
+            EnableAds = $true
+            AndroidBannerId = 'ca-app-pub-3940256099942544/6300978111'
+            AndroidRewardedId = 'ca-app-pub-0000000000000000/0000000001'
+            AndroidInterstitialId = 'ca-app-pub-0000000000000000/0000000002'
+            Quiet = $true
+        }
+        & $preflightScript @adArguments
     }
 
     Clear-SigningEnvironment
