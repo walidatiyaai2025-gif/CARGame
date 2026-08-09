@@ -52,6 +52,8 @@ class _GameScreenState extends State<GameScreen> {
   GameActionFeedbackKind? _feedbackKind;
   int _feedbackCombo = 0;
   int _feedbackSequence = 0;
+  int _rewardAttemptSequence = 0;
+  late String _rewardTransactionId;
   Completer<void>? _feedbackCompleter;
   late int _moves;
   int _combo = 0;
@@ -90,6 +92,8 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   void _reset({bool applyLoadout = false}) {
+    _rewardTransactionId =
+        'level-${widget.level.number}-attempt-${DateTime.now().toUtc().microsecondsSinceEpoch}-${_rewardAttemptSequence++}';
     _remaining = [...widget.level.items]
       ..shuffle(Random(widget.level.number * 41));
     _moves =
@@ -236,6 +240,7 @@ class _GameScreenState extends State<GameScreen> {
       stars: stars,
       combo: _bestCombo,
       xpEarned: xp,
+      transactionId: _rewardTransactionId,
     );
 
     if (widget.level.number % 3 == 0) {
