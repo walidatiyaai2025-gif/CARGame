@@ -18,30 +18,28 @@ old_header = '''              Row(
                   ),
                 ],
               ),'''
-new_header = '''              Row(
-                children: [
-                  Flexible(
-                    child: Align(
-                      alignment: AlignmentDirectional.centerStart,
-                      child: _HeaderPill(
+new_header = '''              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: AlignmentDirectional.centerStart,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _HeaderPill(
                         icon: won
                             ? Icons.check_circle_rounded
                             : Icons.warning_amber_rounded,
                         text: isArabic ? 'تقرير المهمة' : 'MISSION DEBRIEF',
                       ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Flexible(
-                    child: Align(
-                      alignment: AlignmentDirectional.centerEnd,
-                      child: _HeaderPill(
+                      const SizedBox(width: 12),
+                      _HeaderPill(
                         icon: Icons.tag_rounded,
                         text: '${isArabic ? 'مرحلة' : 'LEVEL'} $levelNumber',
                       ),
-                    ),
+                    ],
                   ),
-                ],
+                ),
               ),'''
 if old_header not in debrief:
     raise SystemExit('debrief header row not found')
