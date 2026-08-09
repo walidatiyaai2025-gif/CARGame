@@ -34,6 +34,22 @@ void main() {
       );
     });
 
+    test('redacts high-confidence standalone credentials', () {
+      const input =
+          'github=ghp_ABCDEFGHIJKLMNOPQRSTUVWX ' // secret-scan: allow
+          'aws=AKIAABCDEFGHIJKLMNOP '
+          'google=AIzaABCDEFGHIJKLMNOPQRSTUVWXYZ123456 '
+          'slack=xoxb-12345678901234567890';
+
+      final output = SecretRedactor.redact(input);
+
+      expect(output, isNot(contains('ghp_')));
+      expect(output, isNot(contains('AKIA')));
+      expect(output, isNot(contains('AIza')));
+      expect(output, isNot(contains('xoxb-')));
+      expect(RegExp(r'\[REDACTED\]').allMatches(output), hasLength(4));
+    });
+
     test('redacts private key blocks', () {
       final input = [
         '-----BEGIN PRIVATE KEY-----', // secret-scan: allow
