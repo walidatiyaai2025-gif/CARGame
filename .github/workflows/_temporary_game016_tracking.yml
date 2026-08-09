@@ -1,0 +1,53 @@
+name: Temporary GAME-016 tracking
+
+on:
+  push:
+    branches:
+      - agent/game-016-input-determinism
+    paths:
+      - .github/workflows/_temporary_game016_tracking.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/game-016-input-determinism
+          fetch-depth: 0
+      - name: Mark GAME-016 in progress
+        shell: python
+        run: |
+          from pathlib import Path
+
+          catalog = Path('docs/FEATURE_CATALOG.md')
+          text = catalog.read_text()
+          old = '| GAME-016 | Input determinism and anti-spam state machine | P0 | PLANNED | GAME-003, GAME-011 | Rapid taps/gestures during resolution are ignored or queued deterministically and tested. |'
+          new = '| GAME-016 | Input determinism and anti-spam state machine | P0 | IN PROGRESS | GAME-003, GAME-011 | Issue #110: rapid taps/gestures during cargo travel, placement feedback, and result boundaries must be ignored or handled deterministically with exactly one move/feedback/result transition. Existing warehouse-spam coverage is being expanded to cargo reselection and boundary regressions. |'
+          if old not in text:
+              raise SystemExit('Expected GAME-016 row not found')
+          catalog.write_text(text.replace(old, new, 1))
+
+          status = Path('docs/STATUS.md')
+          text = status.read_text()
+          replacements = {
+              '| Primary feature | None after TEST-004 verification; next RC P0 selection follows this checkpoint. |': '| Primary feature | `GAME-016` input determinism and anti-spam state machine — issue #110. |',
+              '| Status | `TEST-004` VERIFIED on PR #109 / Flutter CI #571: repeated Next, Retry, and Home Start actions are deterministic; result-sheet dismissal is idempotent; Analyze, all 214 Flutter tests, Debug APK build, and artifact upload passed. `REL-004` remains VERIFIED by PR #107 / CI #551. |': '| Status | IN PROGRESS — `GAME-016` is extending gameplay resolution anti-spam coverage from repeated warehouse taps to rapid cargo reselection and result-boundary determinism. `TEST-004` is VERIFIED and merged via PR #109. |',
+              '| Next recommended feature | Audit `GAME-016` rapid-input determinism, then continue the remaining unblocked RC P0 gaps. |': '| Next recommended feature | Finish `GAME-016` deterministic rapid-input regressions, then continue the remaining unblocked RC P0 gaps. |',
+          }
+          for old_value, new_value in replacements.items():
+              if old_value not in text:
+                  raise SystemExit(f'Expected STATUS row not found: {old_value}')
+              text = text.replace(old_value, new_value, 1)
+          status.write_text(text)
+      - name: Remove temporary workflow and push
+        run: |
+          git rm .github/workflows/_temporary_game016_tracking.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/FEATURE_CATALOG.md docs/STATUS.md
+          git commit -m 'docs: start GAME-016 input determinism'
+          git push origin HEAD:agent/game-016-input-determinism
