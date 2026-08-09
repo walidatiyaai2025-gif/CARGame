@@ -50,50 +50,40 @@ addition = """    test('rejects economy values that runtime cannot transact', ()
         throwsArgumentError,
       );
 
-      final zeroPricedHint = v1.shopOffers
-          .map(
-            (offer) => offer.id == 'booster_hint'
-                ? EconomyShopOffer(
-                    id: offer.id,
-                    kind: offer.kind,
-                    targetId: offer.targetId,
-                    amount: offer.amount,
-                    price: 0,
-                  )
-                : offer,
-          )
-          .toList();
       expect(
         () => EconomyConfig.validated(
           schemaVersion: 1,
           player: v1.player,
           rewards: v1.rewards,
           gameplay: v1.gameplay,
-          shopOffers: zeroPricedHint,
+          shopOffers: const <EconomyShopOffer>[
+            EconomyShopOffer(
+              id: 'invalid_zero_booster',
+              kind: EconomyShopOfferKind.booster,
+              targetId: 'hint',
+              amount: 1,
+              price: 0,
+            ),
+          ],
         ),
         throwsArgumentError,
       );
 
-      final zeroPricedPaidTheme = v1.shopOffers
-          .map(
-            (offer) => offer.id == 'theme_sunset'
-                ? EconomyShopOffer(
-                    id: offer.id,
-                    kind: offer.kind,
-                    targetId: offer.targetId,
-                    amount: offer.amount,
-                    price: 0,
-                  )
-                : offer,
-          )
-          .toList();
       expect(
         () => EconomyConfig.validated(
           schemaVersion: 1,
           player: v1.player,
           rewards: v1.rewards,
           gameplay: v1.gameplay,
-          shopOffers: zeroPricedPaidTheme,
+          shopOffers: const <EconomyShopOffer>[
+            EconomyShopOffer(
+              id: 'invalid_zero_paid_theme',
+              kind: EconomyShopOfferKind.theme,
+              targetId: 'sunset',
+              amount: 1,
+              price: 0,
+            ),
+          ],
         ),
         throwsArgumentError,
       );
