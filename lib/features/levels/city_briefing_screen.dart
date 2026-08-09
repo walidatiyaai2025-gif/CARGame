@@ -492,52 +492,57 @@ class _DeploymentHero extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 9,
-                              vertical: 5,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: .12),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: Colors.white24),
-                            ),
-                            child: Text(
-                              boss
-                                  ? (isArabic ? 'مركز رئيسي' : 'HUB CITY')
-                                  : (isArabic
-                                        ? 'توجيه قبل الانطلاق'
-                                        : 'DEPLOYMENT BRIEF'),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 9,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: .6,
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: AlignmentDirectional.centerStart,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 9,
+                                vertical: 5,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: .12),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(color: Colors.white24),
+                              ),
+                              child: Text(
+                                boss
+                                    ? (isArabic ? 'مركز رئيسي' : 'HUB CITY')
+                                    : (isArabic
+                                          ? 'توجيه قبل الانطلاق'
+                                          : 'DEPLOYMENT BRIEF'),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: .6,
+                                ),
                               ),
                             ),
-                          ),
-                          const SizedBox(width: 7),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 5,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: .16),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              '#${level.number}',
-                              style: TextStyle(
-                                color: skin.accent,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w900,
+                            const SizedBox(width: 7),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 5,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: .16),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                '#${level.number}',
+                                style: TextStyle(
+                                  color: skin.accent,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w900,
+                                ),
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                       const SizedBox(height: 10),
                       Text(
