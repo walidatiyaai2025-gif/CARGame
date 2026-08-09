@@ -187,7 +187,7 @@ Codex must not mark a feature complete merely because UI code exists.
 | REW-004 | Milestone reward | P1 | IMPLEMENTED | LEVEL-005 | Every fifth first-clear reward is granted once; tests remain. |
 | REW-005 | Next City action | P0 | IMPLEMENTED | NAV-001 | Guarded action returns to updated map without navigation lock; device test remains. |
 | REW-006 | 3D reward animation | P1 | PLANNED | MOT-008, AST-009 | Chest, stars, coins, XP, and boosters animate coherently. |
-| REW-007 | Reward transaction ledger and reconciliation | P0 | PLANNED | ENG-008, REW-001 | Every grant has stable reason/idempotency key and can be audited/reconciled after interruption. |
+| REW-007 | Reward transaction ledger and reconciliation | P0 | IN PROGRESS | ENG-008, REW-001 | Issue #119 / PR #120 add stable reason/idempotency keys, a bounded completed ledger, an absolute-state pending journal, and deterministic interruption recovery for level, daily reward, and daily mission grants; full CI/build verification is in progress. |
 | REW-008 | Reward table configuration and probability disclosure | P1 | PLANNED | REW-007, RET-005 | Reward tables are versioned, testable, and odds are disclosed where legally/product required. |
 
 # K. Economy, progress, and shop
