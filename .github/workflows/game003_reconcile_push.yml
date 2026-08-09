@@ -1,0 +1,86 @@
+name: GAME-003 Reconcile Push
+
+on:
+  push:
+    branches: [agent/game-003-reconcile]
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/game-003-reconcile
+      - name: Reconcile GAME-003 evidence
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          catalog = Path('docs/FEATURE_CATALOG.md')
+          text = catalog.read_text()
+          old = '| GAME-003 | Core sorting interaction | P0 | IMPLEMENTED | GAME-001 | Player can sort cargo and win/lose; production interaction polish remains. |'
+          new = '| GAME-003 | Core sorting interaction | P0 | IMPLEMENTED | GAME-001 | Issue #148 / PR #149 complete the production interaction-polish checkpoint with a premium live operations deck, mission telemetry, Cargo Bay, Sorting Docks, shared GameButton/ThreeDGameIcon booster controls, and preserved deterministic sorting/motion/result contracts. Flutter CI #718 passed formatting, Analyze, the full Flutter suite, Debug APK build, and artifact upload; PR #149 squash-merged as `dfd92944791a35aa3c9b194c6401b3bf17bc5626`. Authored 3D board/product assets remain tracked by GAME-012/AST-007. |'
+          if old not in text:
+              raise SystemExit('GAME-003 catalog row not found')
+          catalog.write_text(text.replace(old, new, 1))
+
+          status = Path('docs/STATUS.md')
+          text = status.read_text()
+          old_block = '''| Primary feature | None — `TEST-002` is VERIFIED; `ENG-005` is the next dependency-ready catalog item. |
+| Completed checkpoint | `TEST-002` integrated level release contract — PR #144 merged after current-main reconciliation and green Flutter CI #697. |
+| Status | TEST-002 is VERIFIED. One deterministic release gate now proves exact 1..150 identity, regeneration parity, structural solvability, quantitative difficulty acceptance, and boundaries 1/25/26/150 without changing production level content. |
+| Previous checkpoint | `AST-011` asset licensing/provenance current-main reconciliation — PR #131 merged as `9631b43fb697f9819fe83a7991212b490865f525` after Flutter CI #659. |'''
+          new_block = '''| Primary feature | None — `GAME-003` interaction polish is merged; `ENG-005` remains the next dependency-ready catalog item. |
+| Completed checkpoint | `GAME-003` premium gameplay operations deck — PR #149 merged as `dfd92944791a35aa3c9b194c6401b3bf17bc5626` after current-main reconciliation and green Flutter CI #718. |
+| Status | GAME-003 remains IMPLEMENTED with production interaction polish complete: live mission command/telemetry, Cargo Bay, Sorting Docks, premium booster dock, stable motion coordinates, and all deterministic input/result contracts passed the full Flutter suite. Authored 3D board/product assets remain under GAME-012/AST-007. |
+| Previous checkpoint | `TEST-002` integrated production level release contract and verification tracking — PRs #144/#147; current-main reconciliation completed before GAME-003 final CI. |'''
+          if old_block not in text:
+              raise SystemExit('STATUS current-work block not found')
+          text = text.replace(old_block, new_block, 1)
+          marker = '## TEST-002 integrated level release contract verification — 2026-08-09\n'
+          section = '''## GAME-003 gameplay operations deck verification — 2026-08-09
+
+- Issue #148 / PR #149 replace the generic gameplay AppBar/flat board presentation with a premium live operations deck aligned with Home, World Map, and Mission Control.
+- The active run now exposes a mission command bar, live mission banner, moves/cargo/combo/heart-or-shield telemetry, `CARGO BAY`, `SORTING DOCKS`, and a shared `GameButton` / `ThreeDGameIcon` booster dock.
+- Deterministic cargo ordering, move consumption, combo/shield/hint/extra-move rules, reward transaction identity, ads, persistence, result guards, and win/loss behavior were not changed.
+- `game-moves`, `cargo-*`, and `warehouse-*` keys plus `GameTravelMotion` and `GameActionFeedback` authority remain stable for anti-spam and motion regressions.
+- The branch was reconciled with TEST-002 verification main `653f29aca08f1a88a7487695d199448ec0913b85` before the final gate.
+- Flutter CI #718 / run `31312628308` passed formatting, whitespace, Analyze, optional-service isolation, animated GameButton coverage, the full Flutter suite, Debug APK build, and artifact upload on head `3fd8e5627a098df80aef6ed7049621e82f370a73`.
+- Debug artifact #9037881344 is 80,593,016 bytes with SHA-256 `b408561b1d6234336d180836d47ede432cdac8f4604ac4127caf84cb0ec37381`.
+- PR #149 squash-merged to main as `dfd92944791a35aa3c9b194c6401b3bf17bc5626`; Issue #148 closed Completed.
+- GAME-003 remains IMPLEMENTED rather than VERIFIED because authored 3D board/product integration is still owned by GAME-012/AST-007; `ENG-005` remains the next dependency-ready catalog item.
+
+'''
+          if marker not in text:
+              raise SystemExit('TEST-002 status marker not found')
+          status.write_text(text.replace(marker, section + marker, 1))
+
+          work = Path('docs/work/GAME-003-VISUAL-REFRESH.md')
+          text = work.read_text()
+          old_state = 'IN PROGRESS. Final status will be reconciled with the primary catalog after the parallel TEST-002 tracking PR lands.'
+          new_state = 'IMPLEMENTED. PR #149 passed current-main Flutter CI #718 and squash-merged to `main` as `dfd92944791a35aa3c9b194c6401b3bf17bc5626`. GAME-003 remains IMPLEMENTED until the separate GAME-012/AST-007 authored 3D board/product asset work is complete.'
+          if old_state not in text:
+              raise SystemExit('GAME-003 work state not found')
+          text = text.replace(old_state, new_state, 1)
+          text += '''
+
+## Verification evidence
+
+- Focused branch gate: canonical formatting, gameplay responsive/motion/result/navigation regressions, the operations-deck visual contract, and Analyze passed.
+- Final current-main Flutter CI #718 / run `31312628308`: formatting, whitespace, Analyze, optional-service isolation, animated GameButton, full Flutter suite, Debug APK build, and artifact upload all passed.
+- Debug artifact #9037881344: 80,593,016 bytes; SHA-256 `b408561b1d6234336d180836d47ede432cdac8f4604ac4127caf84cb0ec37381`.
+- Issue #148 closed Completed when PR #149 merged.
+'''
+          work.write_text(text)
+          PY
+          git diff --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/FEATURE_CATALOG.md docs/STATUS.md docs/work/GAME-003-VISUAL-REFRESH.md
+          git rm .github/workflows/game003_reconcile_push.yml
+          git commit -m 'docs: reconcile GAME-003 verification'
+          git push origin HEAD:agent/game-003-reconcile
