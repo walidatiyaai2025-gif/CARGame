@@ -29,7 +29,7 @@ jobs:
         run: |
           set -euo pipefail
           flutter pub get --enforce-lockfile
-          dart format --output=none --set-exit-if-changed test/features/settings/settings_privacy_consent_test.dart
+          dart format test/features/settings/settings_privacy_consent_test.dart
           flutter test \
             test/features/settings/settings_privacy_consent_test.dart \
             test/core/ads/ad_consent_controller_test.dart \
@@ -41,6 +41,7 @@ jobs:
           git diff --check
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add test/features/settings/settings_privacy_consent_test.dart
           git rm .github/workflows/ads007_ui_probe.yml
-          git commit -m 'chore: remove ADS-007 privacy UI probe'
+          git commit -m 'test: verify re-openable privacy options'
           git push origin HEAD:agent/ads-007-consent-privacy
