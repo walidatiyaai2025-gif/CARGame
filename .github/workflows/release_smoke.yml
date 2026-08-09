@@ -1,0 +1,104 @@
+name: Android Release Packaging Smoke
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/release_smoke.yml'
+      - 'android/**'
+      - 'BUILD_RC.ps1'
+      - 'BUILD_COMMON.ps1'
+      - 'pubspec.yaml'
+      - 'pubspec.lock'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-smoke-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  release-packaging-smoke:
+    name: Release APK + AAB smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.44.8
+          cache: true
+
+      - name: Restore packages
+        run: flutter pub get
+
+      - name: Generate localization
+        run: flutter gen-l10n
+
+      - name: Prepare ephemeral release signing
+        shell: bash
+        run: |
+          set -euo pipefail
+          password="$(openssl rand -hex 24)"
+          keystore="$RUNNER_TEMP/cargame-release-smoke.jks"
+
+          keytool -genkeypair \
+            -noprompt \
+            -keystore "$keystore" \
+            -storepass "$password" \
+            -alias release-smoke \
+            -keypass "$password" \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 1 \
+            -dname 'CN=CARGame Release Smoke, OU=CI, O=WALKA, L=Kuwait, C=KW'
+
+          {
+            echo 'ADMOB_ANDROID_APP_ID=ca-app-pub-0000000000000000~0000000000'
+            echo "ANDROID_KEYSTORE_PATH=$keystore"
+            echo "ANDROID_KEYSTORE_PASSWORD=$password"
+            echo 'ANDROID_KEY_ALIAS=release-smoke'
+            echo "ANDROID_KEY_PASSWORD=$password"
+          } >> "$GITHUB_ENV"
+
+      - name: Build release APK smoke
+        run: >-
+          flutter build apk --release --no-pub
+          --dart-define=APP_ENV=release
+          --dart-define=ENABLE_ADS=false
+
+      - name: Build release AAB smoke
+        run: >-
+          flutter build appbundle --release --no-pub
+          --dart-define=APP_ENV=release
+          --dart-define=ENABLE_ADS=false
+
+      - name: Verify release outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          apk='build/app/outputs/flutter-apk/app-release.apk'
+          aab='build/app/outputs/bundle/release/app-release.aab'
+          test -s "$apk"
+          test -s "$aab"
+          mkdir -p build/release-smoke-evidence
+          {
+            echo 'NON-DISTRIBUTABLE RELEASE PACKAGING SMOKE'
+            echo 'Ephemeral CI signing; synthetic compile-only AdMob application ID; runtime ads disabled.'
+            sha256sum "$apk"
+            sha256sum "$aab"
+          } | tee build/release-smoke-evidence/checksums.txt
+
+      - name: Upload release smoke evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: cargame-release-smoke-evidence
+          path: build/release-smoke-evidence/checksums.txt
+          if-no-files-found: error
+          retention-days: 7
