@@ -1,0 +1,61 @@
+name: REW007 Gameplay Attempt Patch
+
+on:
+  push:
+    branches:
+      - agent/rew-007-reward-ledger
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/rew-007-reward-ledger
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.44.8
+          cache: true
+      - name: Add stable gameplay reward transaction id
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('lib/features/game/game_screen.dart')
+          text = path.read_text()
+          replacements = [
+              (
+                  "  int _feedbackSequence = 0;\n  Completer<void>? _feedbackCompleter;",
+                  "  int _feedbackSequence = 0;\n  int _rewardAttemptSequence = 0;\n  late String _rewardTransactionId;\n  Completer<void>? _feedbackCompleter;",
+              ),
+              (
+                  "  void _reset({bool applyLoadout = false}) {\n    _remaining = [...widget.level.items]",
+                  "  void _reset({bool applyLoadout = false}) {\n    _rewardTransactionId =\n        'level-${widget.level.number}-attempt-${DateTime.now().toUtc().microsecondsSinceEpoch}-${_rewardAttemptSequence++}';\n    _remaining = [...widget.level.items]",
+              ),
+              (
+                  "      xpEarned: xp,\n    );",
+                  "      xpEarned: xp,\n      transactionId: _rewardTransactionId,\n    );",
+              ),
+          ]
+          for old, new in replacements:
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'Expected exactly one match, found {count}: {old!r}')
+              text = text.replace(old, new, 1)
+          path.write_text(text)
+          PY
+          dart format lib/features/game/game_screen.dart
+          git diff --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add lib/features/game/game_screen.dart
+          git commit -m "feat: bind level rewards to gameplay attempt ids"
+          git push origin HEAD:agent/rew-007-reward-ledger
