@@ -7,12 +7,23 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | Field | Value |
 |---|---|
 | Current phase | Android RC hardening — issue #79 |
-| Primary feature | `LEVEL-002` Difficulty curve — IN PROGRESS under issue #134. |
-| Completed checkpoint | `LEVEL-003` level solvability validator current-main reconciliation — the existing validator plus deterministic 150-level regression suite satisfy the catalog acceptance without duplicate production code. |
-| Status | LEVEL-002 is converting the deterministic generator's implicit progression into typed tutorial/easy/medium/hard/expert quantitative bands with per-level metrics and macro-progression acceptance. Current content remains unchanged unless measured validation exposes a real balance defect. |
+| Primary feature | None — `LEVEL-002` is VERIFIED; `TEST-002` is the next dependency-ready P0. |
+| Completed checkpoint | `LEVEL-002` quantitative difficulty curve — PR #137 merged after final current-main reconciliation and green Flutter CI #681. |
+| Status | LEVEL-002 is VERIFIED. All 150 generated levels satisfy typed difficulty envelopes and macro-progression checks; Expert levels intentionally tighten spare-move slack to 1–3 without changing level IDs, worlds, products, persistence keys, unlock IDs, or reward identity. |
 | Previous checkpoint | `AST-011` asset licensing/provenance current-main reconciliation — PR #131 merged as `9631b43fb697f9819fe83a7991212b490865f525` after Flutter CI #659. |
-| Next recommended feature | Complete LEVEL-002 issue #134; select the next unblocked catalog task only after its final verification/reconciliation. |
+| Next recommended feature | `TEST-002` Level generator and solvability tests — highest-priority dependency-ready P0 after LEVEL-002; consolidate generator, solvability, and difficulty acceptance into one deterministic regression gate. |
 | Known blocker | `REL-007`/`REL-008` require real production AdMob/signing inputs and a production-signed candidate; final install/upgrade/device smoke requires an Android device or testing track. `TEST-009` also remains dependency-blocked while `PERF-001` is PLANNED. Visual Studio C++ components remain optional for Windows desktop only. |
+
+## LEVEL-002 quantitative difficulty curve verification — 2026-08-09
+
+- Issue #134 / PR #137 introduced typed Tutorial, Easy, Medium, Hard, and Expert bands covering levels 1..150 with no gaps or overlaps.
+- `LevelDifficultyCurve` validates declared difficulty, cargo count, distinct-product count, move slack, complete-set identity, boundary levels, and macro pressure progression while keeping structural solvability in LEVEL-003.
+- Expert levels 121..150 deliberately use a base safety budget of one move, producing 1..3 spare moves; other bands preserve the prior deterministic generator behavior.
+- Stable level numbers, six-world boundaries, product generation, persistence keys, unlock IDs, and reward transaction identity are preserved.
+- Final Flutter CI #681 / run `31309097571` passed release/privacy/security/asset gates, formatting, Analyze, optional-service regressions, the full Flutter suite, Debug APK build, and artifact upload on head `1c1c39ad5d1fb336da2e5b3f7845a83d04d454ff`.
+- Debug artifact #9036909677 is 80,547,511 bytes with SHA-256 `e3d2acc260fdc39462b299f19295660dccae130a89b63a8cc52aeddf38647ee6`.
+- PR #137 squash-merged to main as `938ed6ea100a987b2513e5f5221aab90a850c2d6`.
+- `LEVEL-002` is VERIFIED; `TEST-002` is the next dependency-ready P0.
 
 ## LEVEL-003 level solvability validator current-main verification — 2026-08-09
 
