@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
@@ -36,9 +37,32 @@ class ProgressStore extends ChangeNotifier {
   static const _extraMovesKey = 'booster_extra_moves';
   static const _comboShieldsKey = 'booster_combo_shields';
   static const _pendingShopPurchaseKey = 'pending_shop_purchase_v1';
+  static const _pendingRewardTransactionKey = 'pending_reward_transaction_v1';
+  static const _rewardTransactionLedgerKey = 'reward_transaction_ledger_v1';
+  static const int _rewardTransactionLedgerLimit = 128;
+
+  static const Set<String> _rewardNonNegativeIntKeys = <String>{
+    _coinsKey,
+    _gamesKey,
+    _winsKey,
+    _lossesKey,
+    _coinsEarnedKey,
+    _perfectWinsKey,
+    _bestComboKey,
+    _winStreakKey,
+    _bestWinStreakKey,
+    _xpKey,
+    _missionWinsKey,
+    _missionStarsKey,
+    _missionCoinsKey,
+    _freeHintsKey,
+    _extraMovesKey,
+    _comboShieldsKey,
+  };
 
   final RecoveringPreferences _prefs = RecoveringPreferences();
   final Map<int, int> _levelStars = <int, int>{};
+  final Set<String> _completedRewardTransactions = <String>{};
 
   int highestUnlockedLevel = 1;
   int coins = 100;
@@ -68,6 +92,9 @@ class ProgressStore extends ChangeNotifier {
   String? _missionDate;
   DateTime? _heartRefillTimestamp;
   bool _purchaseBusy = false;
+  bool _rewardLedgerLoaded = false;
+  int _rewardSequence = 0;
+  Future<void> _rewardQueue = Future<void>.value();
 
   int get completedLevels => (highestUnlockedLevel - 1).clamp(0, totalLevels);
   double get completionProgress => completedLevels / totalLevels;
@@ -81,6 +108,8 @@ class ProgressStore extends ChangeNotifier {
   int get xpIntoCurrentLevel => playerXp % 500;
   double get playerLevelProgress => xpIntoCurrentLevel / 500;
   List<StorageRecoveryEvent> get recoveryEvents => _prefs.recoveryEvents;
+  List<String> get completedRewardTransactions =>
+      List<String>.unmodifiable(_completedRewardTransactions);
 
   int starsForLevel(int level) => _levelStars[level] ?? 0;
   bool isThemeUnlocked(String themeId) => unlockedThemes.contains(themeId);
@@ -102,6 +131,8 @@ class ProgressStore extends ChangeNotifier {
   }
 
   Future<void> load() async {
+    await _ensureRewardLedgerLoaded();
+    await _recoverPendingRewardTransaction();
     await _recoverPendingShopPurchase();
 
     highestUnlockedLevel = (await _prefs.getInt(_levelKey) ?? 1).clamp(
@@ -218,62 +249,139 @@ class ProgressStore extends ChangeNotifier {
     int stars = 1,
     int combo = 0,
     int xpEarned = 0,
-  }) async {
-    final previousStars = _levelStars[level] ?? 0;
-    final firstClear = previousStars == 0;
+    String? transactionId,
+  }) => _serializeReward<void>(() async {
+    if (level < 1 || level > totalLevels) {
+      throw ArgumentError.value(level, 'level');
+    }
+    if (reward < 0) throw ArgumentError.value(reward, 'reward');
+    if (xpEarned < 0) throw ArgumentError.value(xpEarned, 'xpEarned');
+
+    await _ensureRewardLedgerLoaded();
+    await _recoverPendingRewardTransaction();
+
+    final transactionKey = _rewardTransactionKey(
+      reason: 'level:$level',
+      idempotencyKey: transactionId,
+    );
 
     lastCompletionBonus = 0;
     lastCompletionBonusXp = 0;
     lastCompletionWasWorldReward = false;
+    if (_completedRewardTransactions.contains(transactionKey)) return;
 
-    coins += reward;
-    gamesPlayed++;
-    wins++;
-    currentWinStreak++;
-    if (currentWinStreak > bestWinStreak) bestWinStreak = currentWinStreak;
-    if (combo > bestCombo) bestCombo = combo;
-    playerXp += xpEarned;
-    lifetimeCoinsEarned += reward;
-    missionWins++;
-    missionCoins += reward;
+    final previousStars = _levelStars[level] ?? 0;
+    final firstClear = previousStars == 0;
+    final safeStars = stars.clamp(1, maxStarsPerLevel);
+
+    var nextCoins = coins + reward;
+    final nextGamesPlayed = gamesPlayed + 1;
+    final nextWins = wins + 1;
+    final nextCurrentWinStreak = currentWinStreak + 1;
+    var nextBestWinStreak = bestWinStreak;
+    if (nextCurrentWinStreak > nextBestWinStreak) {
+      nextBestWinStreak = nextCurrentWinStreak;
+    }
+    var nextBestCombo = bestCombo;
+    if (combo > nextBestCombo) nextBestCombo = combo;
+    var nextPlayerXp = playerXp + xpEarned;
+    var nextLifetimeCoinsEarned = lifetimeCoinsEarned + reward;
+    final nextMissionWins = missionWins + 1;
+    var nextMissionCoins = missionCoins + reward;
+    var nextFreeHints = freeHints;
+    var nextExtraMovesBoosters = extraMovesBoosters;
+    var nextComboShields = comboShields;
+    var completionBonus = 0;
+    var completionBonusXp = 0;
+    var completionWasWorldReward = false;
 
     if (firstClear && level % 25 == 0) {
       final worldNumber = level ~/ 25;
-      lastCompletionBonus = 300 + worldNumber * 100;
-      lastCompletionBonusXp = 150 + worldNumber * 25;
-      lastCompletionWasWorldReward = true;
+      completionBonus = 300 + worldNumber * 100;
+      completionBonusXp = 150 + worldNumber * 25;
+      completionWasWorldReward = true;
 
-      coins += lastCompletionBonus;
-      playerXp += lastCompletionBonusXp;
-      lifetimeCoinsEarned += lastCompletionBonus;
-      missionCoins += lastCompletionBonus;
-      freeHints++;
-      extraMovesBoosters++;
-      comboShields++;
+      nextCoins += completionBonus;
+      nextPlayerXp += completionBonusXp;
+      nextLifetimeCoinsEarned += completionBonus;
+      nextMissionCoins += completionBonus;
+      nextFreeHints++;
+      nextExtraMovesBoosters++;
+      nextComboShields++;
     } else if (firstClear && level % 5 == 0) {
-      lastCompletionBonus = 50 + (level ~/ 5) * 5;
-      lastCompletionBonusXp = 25;
-      coins += lastCompletionBonus;
-      playerXp += lastCompletionBonusXp;
-      lifetimeCoinsEarned += lastCompletionBonus;
-      missionCoins += lastCompletionBonus;
+      completionBonus = 50 + (level ~/ 5) * 5;
+      completionBonusXp = 25;
+      nextCoins += completionBonus;
+      nextPlayerXp += completionBonusXp;
+      nextLifetimeCoinsEarned += completionBonus;
+      nextMissionCoins += completionBonus;
     }
 
+    var nextHighestUnlockedLevel = highestUnlockedLevel;
     if (level >= highestUnlockedLevel && highestUnlockedLevel < totalLevels) {
-      highestUnlockedLevel = (level + 1).clamp(1, totalLevels);
+      nextHighestUnlockedLevel = (level + 1).clamp(1, totalLevels);
     }
 
-    final safeStars = stars.clamp(1, maxStarsPerLevel);
-    missionStars += safeStars;
-    if (safeStars == 3) perfectWins++;
-    if (safeStars > previousStars) {
-      _levelStars[level] = safeStars;
-      await _prefs.setInt('$_starsPrefix$level', safeStars);
-    }
+    final nextMissionStars = missionStars + safeStars;
+    final nextPerfectWins = perfectWins + (safeStars == 3 ? 1 : 0);
+    final nextLevelStars = safeStars > previousStars ? safeStars : previousStars;
 
-    await _saveProgressAndStats();
+    final values = <String, Object?>{
+      _levelKey: nextHighestUnlockedLevel,
+      _coinsKey: nextCoins,
+      _gamesKey: nextGamesPlayed,
+      _winsKey: nextWins,
+      _lossesKey: losses,
+      _coinsEarnedKey: nextLifetimeCoinsEarned,
+      _perfectWinsKey: nextPerfectWins,
+      _bestComboKey: nextBestCombo,
+      _winStreakKey: nextCurrentWinStreak,
+      _bestWinStreakKey: nextBestWinStreak,
+      _xpKey: nextPlayerXp,
+      _missionWinsKey: nextMissionWins,
+      _missionStarsKey: nextMissionStars,
+      _missionCoinsKey: nextMissionCoins,
+      _freeHintsKey: nextFreeHints,
+      _extraMovesKey: nextExtraMovesBoosters,
+      _comboShieldsKey: nextComboShields,
+      '$_starsPrefix$level': nextLevelStars,
+    };
+
+    final committed = await _commitRewardTransaction(
+      reason: firstClear
+          ? (completionWasWorldReward
+                ? 'level_world_first_clear'
+                : completionBonus > 0
+                ? 'level_milestone_first_clear'
+                : 'level_first_clear')
+          : 'level_replay',
+      idempotencyKey: transactionKey,
+      values: values,
+    );
+    if (!committed) return;
+
+    highestUnlockedLevel = nextHighestUnlockedLevel;
+    coins = nextCoins;
+    gamesPlayed = nextGamesPlayed;
+    wins = nextWins;
+    lifetimeCoinsEarned = nextLifetimeCoinsEarned;
+    perfectWins = nextPerfectWins;
+    bestCombo = nextBestCombo;
+    currentWinStreak = nextCurrentWinStreak;
+    bestWinStreak = nextBestWinStreak;
+    playerXp = nextPlayerXp;
+    missionWins = nextMissionWins;
+    missionStars = nextMissionStars;
+    missionCoins = nextMissionCoins;
+    freeHints = nextFreeHints;
+    extraMovesBoosters = nextExtraMovesBoosters;
+    comboShields = nextComboShields;
+    if (nextLevelStars > 0) _levelStars[level] = nextLevelStars;
+    lastCompletionBonus = completionBonus;
+    lastCompletionBonusXp = completionBonusXp;
+    lastCompletionWasWorldReward = completionWasWorldReward;
     notifyListeners();
-  }
+  });
 
   Future<void> recordLoss() async {
     gamesPlayed++;
@@ -288,18 +396,40 @@ class ProgressStore extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<int?> claimDailyMission() async {
-    if (!dailyMissionComplete || missionClaimed) return null;
+  Future<int?> claimDailyMission() => _serializeReward<int?>(() async {
+    await _ensureRewardLedgerLoaded();
+    await _recoverPendingRewardTransaction();
+
+    final transactionKey = _rewardTransactionKey(
+      reason: 'daily_mission',
+      idempotencyKey: _today,
+    );
+    if (_completedRewardTransactions.contains(transactionKey) ||
+        !dailyMissionComplete ||
+        missionClaimed) {
+      return null;
+    }
+
     const reward = 200;
-    coins += reward;
-    lifetimeCoinsEarned += reward;
+    final nextCoins = coins + reward;
+    final nextLifetimeCoinsEarned = lifetimeCoinsEarned + reward;
+    final committed = await _commitRewardTransaction(
+      reason: 'daily_mission_claim',
+      idempotencyKey: transactionKey,
+      values: <String, Object?>{
+        _coinsKey: nextCoins,
+        _coinsEarnedKey: nextLifetimeCoinsEarned,
+        _missionClaimedKey: true,
+      },
+    );
+    if (!committed) return null;
+
+    coins = nextCoins;
+    lifetimeCoinsEarned = nextLifetimeCoinsEarned;
     missionClaimed = true;
-    await _prefs.setInt(_coinsKey, coins);
-    await _prefs.setInt(_coinsEarnedKey, lifetimeCoinsEarned);
-    await _prefs.setBool(_missionClaimedKey, true);
     notifyListeners();
     return reward;
-  }
+  });
 
   Future<void> _saveProgressAndStats() async {
     await _prefs.setInt(_levelKey, highestUnlockedLevel);
@@ -494,6 +624,287 @@ class ProgressStore extends ChangeNotifier {
     }
   }
 
+  Future<T> _serializeReward<T>(Future<T> Function() action) {
+    final completer = Completer<T>();
+    _rewardQueue = _rewardQueue.then((_) async {
+      try {
+        completer.complete(await action());
+      } catch (error, stackTrace) {
+        completer.completeError(error, stackTrace);
+      }
+    });
+    return completer.future;
+  }
+
+  Future<void> _ensureRewardLedgerLoaded() async {
+    if (_rewardLedgerLoaded) return;
+    _rewardLedgerLoaded = true;
+
+    final raw = await _prefs.getStringList(_rewardTransactionLedgerKey);
+    if (raw == null) return;
+
+    final sanitized = <String>[];
+    final seen = <String>{};
+    for (final candidate in raw) {
+      final normalized = candidate.trim();
+      if (!_isValidJournalToken(normalized) || !seen.add(normalized)) continue;
+      sanitized.add(normalized);
+    }
+    final bounded = sanitized.length <= _rewardTransactionLedgerLimit
+        ? sanitized
+        : sanitized.sublist(sanitized.length - _rewardTransactionLedgerLimit);
+    _completedRewardTransactions
+      ..clear()
+      ..addAll(bounded);
+
+    if (!listEquals(raw, bounded)) {
+      await _prefs.setStringList(_rewardTransactionLedgerKey, bounded);
+    }
+  }
+
+  String _rewardTransactionKey({
+    required String reason,
+    String? idempotencyKey,
+  }) {
+    final normalizedReason = reason.trim();
+    if (!_isValidJournalToken(normalizedReason)) {
+      throw ArgumentError.value(reason, 'reason');
+    }
+    final supplied = idempotencyKey?.trim();
+    if (supplied != null && supplied.isNotEmpty) {
+      if (!_isValidJournalToken(supplied)) {
+        throw ArgumentError.value(idempotencyKey, 'idempotencyKey');
+      }
+      return '$normalizedReason:$supplied';
+    }
+
+    final micros = DateTime.now().toUtc().microsecondsSinceEpoch;
+    return '$normalizedReason:auto-$micros-${_rewardSequence++}';
+  }
+
+  bool _isValidJournalToken(String value) =>
+      value.isNotEmpty &&
+      value.length <= 200 &&
+      !value.contains('\n') &&
+      !value.contains('\r');
+
+  Future<bool> _commitRewardTransaction({
+    required String reason,
+    required String idempotencyKey,
+    required Map<String, Object?> values,
+  }) async {
+    await _ensureRewardLedgerLoaded();
+    if (_completedRewardTransactions.contains(idempotencyKey)) return false;
+    if (!_isValidJournalToken(reason) ||
+        !_isValidJournalToken(idempotencyKey)) {
+      throw const FormatException('Invalid reward transaction metadata.');
+    }
+
+    final validated = _validateRewardTransactionValues(values);
+    final journal = <String, Object?>{
+      'version': 1,
+      'reason': reason,
+      'idempotencyKey': idempotencyKey,
+      'values': validated,
+    };
+    await _prefs.setString(_pendingRewardTransactionKey, jsonEncode(journal));
+    await _applyRewardTransactionValues(validated);
+    await _recordCompletedRewardTransaction(idempotencyKey);
+    await _prefs.remove(_pendingRewardTransactionKey);
+    return true;
+  }
+
+  Future<void> _recoverPendingRewardTransaction() async {
+    await _ensureRewardLedgerLoaded();
+    final payload = await _prefs.getString(_pendingRewardTransactionKey);
+    if (payload == null) return;
+
+    try {
+      final decoded = jsonDecode(payload);
+      if (decoded is! Map<String, dynamic> || decoded['version'] != 1) {
+        throw const FormatException('Unsupported reward transaction journal.');
+      }
+      final reason = decoded['reason'];
+      final idempotencyKey = decoded['idempotencyKey'];
+      final rawValues = decoded['values'];
+      if (reason is! String || !_isValidJournalToken(reason)) {
+        throw const FormatException('Reward journal has invalid reason.');
+      }
+      if (idempotencyKey is! String ||
+          !_isValidJournalToken(idempotencyKey)) {
+        throw const FormatException('Reward journal has invalid idempotency key.');
+      }
+      if (rawValues is! Map<String, dynamic>) {
+        throw const FormatException('Reward journal has no values.');
+      }
+
+      if (_completedRewardTransactions.contains(idempotencyKey)) {
+        await _prefs.remove(_pendingRewardTransactionKey);
+        return;
+      }
+
+      final values = _validateRewardTransactionValues(rawValues);
+      await _applyRewardTransactionValues(values);
+      _applyRewardTransactionValuesToMemory(values);
+      await _recordCompletedRewardTransaction(idempotencyKey);
+      await _prefs.remove(_pendingRewardTransactionKey);
+    } on FormatException {
+      await _prefs.remove(_pendingRewardTransactionKey);
+    }
+  }
+
+  Map<String, Object?> _validateRewardTransactionValues(Map values) {
+    final validated = <String, Object?>{};
+    for (final entry in values.entries) {
+      final key = entry.key;
+      final value = entry.value;
+      if (key is! String) {
+        throw const FormatException('Reward transaction key must be a string.');
+      }
+
+      if (key == _levelKey) {
+        if (value is! int || value < 1 || value > totalLevels) {
+          throw const FormatException('Invalid unlocked level value.');
+        }
+        validated[key] = value;
+        continue;
+      }
+
+      if (key.startsWith(_starsPrefix)) {
+        final level = int.tryParse(key.substring(_starsPrefix.length));
+        if (level == null ||
+            level < 1 ||
+            level > totalLevels ||
+            value is! int ||
+            value < 0 ||
+            value > maxStarsPerLevel) {
+          throw FormatException('Invalid level stars value for $key.');
+        }
+        validated[key] = value;
+        continue;
+      }
+
+      if (_rewardNonNegativeIntKeys.contains(key)) {
+        if (value is! int || value < 0) {
+          throw FormatException('Invalid non-negative integer for $key.');
+        }
+        validated[key] = value;
+        continue;
+      }
+
+      if (key == _missionClaimedKey) {
+        if (value is! bool) {
+          throw const FormatException('Invalid mission claim value.');
+        }
+        validated[key] = value;
+        continue;
+      }
+
+      if (key == _dailyRewardKey) {
+        if (value is! String || value.isEmpty || value.length > 32) {
+          throw const FormatException('Invalid daily reward date.');
+        }
+        validated[key] = value;
+        continue;
+      }
+
+      throw FormatException('Unsupported reward transaction key: $key');
+    }
+
+    if (!validated.containsKey(_coinsKey)) {
+      throw const FormatException('Reward transaction has no wallet value.');
+    }
+    return validated;
+  }
+
+  Future<void> _applyRewardTransactionValues(
+    Map<String, Object?> values,
+  ) async {
+    for (final entry in values.entries) {
+      final value = entry.value;
+      if (value is int) {
+        await _prefs.setInt(entry.key, value);
+      } else if (value is bool) {
+        await _prefs.setBool(entry.key, value);
+      } else if (value is String) {
+        await _prefs.setString(entry.key, value);
+      } else {
+        throw FormatException('Unsupported reward value: ${entry.key}');
+      }
+    }
+  }
+
+  void _applyRewardTransactionValuesToMemory(Map<String, Object?> values) {
+    for (final entry in values.entries) {
+      final key = entry.key;
+      final value = entry.value;
+      if (key.startsWith(_starsPrefix) && value is int) {
+        final level = int.tryParse(key.substring(_starsPrefix.length));
+        if (level != null) {
+          if (value > 0) {
+            _levelStars[level] = value;
+          } else {
+            _levelStars.remove(level);
+          }
+        }
+        continue;
+      }
+
+      switch (key) {
+        case _levelKey:
+          highestUnlockedLevel = value as int;
+        case _coinsKey:
+          coins = value as int;
+        case _gamesKey:
+          gamesPlayed = value as int;
+        case _winsKey:
+          wins = value as int;
+        case _lossesKey:
+          losses = value as int;
+        case _coinsEarnedKey:
+          lifetimeCoinsEarned = value as int;
+        case _perfectWinsKey:
+          perfectWins = value as int;
+        case _bestComboKey:
+          bestCombo = value as int;
+        case _winStreakKey:
+          currentWinStreak = value as int;
+        case _bestWinStreakKey:
+          bestWinStreak = value as int;
+        case _xpKey:
+          playerXp = value as int;
+        case _missionWinsKey:
+          missionWins = value as int;
+        case _missionStarsKey:
+          missionStars = value as int;
+        case _missionCoinsKey:
+          missionCoins = value as int;
+        case _missionClaimedKey:
+          missionClaimed = value as bool;
+        case _freeHintsKey:
+          freeHints = value as int;
+        case _extraMovesKey:
+          extraMovesBoosters = value as int;
+        case _comboShieldsKey:
+          comboShields = value as int;
+        case _dailyRewardKey:
+          _lastDailyRewardDate = value as String;
+      }
+    }
+  }
+
+  Future<void> _recordCompletedRewardTransaction(String idempotencyKey) async {
+    await _ensureRewardLedgerLoaded();
+    if (!_completedRewardTransactions.add(idempotencyKey)) return;
+    while (_completedRewardTransactions.length > _rewardTransactionLedgerLimit) {
+      _completedRewardTransactions.remove(_completedRewardTransactions.first);
+    }
+    await _prefs.setStringList(
+      _rewardTransactionLedgerKey,
+      _completedRewardTransactions.toList(),
+    );
+  }
+
   Future<bool> useFreeHint() async {
     if (freeHints <= 0) return false;
     freeHints--;
@@ -544,16 +955,37 @@ class ProgressStore extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<int?> claimDailyReward() async {
-    if (!canClaimDailyReward) return null;
+  Future<int?> claimDailyReward() => _serializeReward<int?>(() async {
+    await _ensureRewardLedgerLoaded();
+    await _recoverPendingRewardTransaction();
+
+    final transactionKey = _rewardTransactionKey(
+      reason: 'daily_reward',
+      idempotencyKey: _today,
+    );
+    if (_completedRewardTransactions.contains(transactionKey) ||
+        !canClaimDailyReward) {
+      return null;
+    }
+
     const reward = 50;
+    final nextCoins = coins + reward;
+    final nextLifetimeCoinsEarned = lifetimeCoinsEarned + reward;
+    final committed = await _commitRewardTransaction(
+      reason: 'daily_reward_claim',
+      idempotencyKey: transactionKey,
+      values: <String, Object?>{
+        _dailyRewardKey: _today,
+        _coinsKey: nextCoins,
+        _coinsEarnedKey: nextLifetimeCoinsEarned,
+      },
+    );
+    if (!committed) return null;
+
     _lastDailyRewardDate = _today;
-    coins += reward;
-    lifetimeCoinsEarned += reward;
-    await _prefs.setString(_dailyRewardKey, _lastDailyRewardDate!);
-    await _prefs.setInt(_coinsKey, coins);
-    await _prefs.setInt(_coinsEarnedKey, lifetimeCoinsEarned);
+    coins = nextCoins;
+    lifetimeCoinsEarned = nextLifetimeCoinsEarned;
     notifyListeners();
     return reward;
-  }
+  });
 }
