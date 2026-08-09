@@ -25,15 +25,18 @@ void main() {
     expect(optionalServices.disposed, isTrue);
   });
 
-  test('production composition creates usable offline core dependencies', () async {
-    final composition = AppComposition.production();
+  test(
+    'production composition creates usable offline core dependencies',
+    () async {
+      final composition = AppComposition.production();
 
-    expect(composition.progressStore, isA<ProgressStore>());
-    expect(composition.settingsStore, isA<AppSettingsStore>());
-    expect(composition.optionalServices, isA<OptionalServicePort>());
+      expect(composition.progressStore, isA<ProgressStore>());
+      expect(composition.settingsStore, isA<AppSettingsStore>());
+      expect(composition.optionalServices, isA<OptionalServicePort>());
 
-    await composition.dispose();
-  });
+      await composition.dispose();
+    },
+  );
 }
 
 class _FakeOptionalServices implements OptionalServicePort {

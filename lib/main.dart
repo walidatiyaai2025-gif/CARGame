@@ -2,21 +2,15 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
+import 'bootstrap/app_composition.dart';
+import 'bootstrap/cargo_sort_app.dart';
 import 'core/logging/app_logger.dart';
-import 'core/logging/log_viewer_screen.dart';
 import 'core/motion/motion_lifecycle_scope.dart';
-import 'core/navigation/game_navigator.dart';
-import 'core/navigation/game_route_names.dart';
-import 'core/services/optional_service_coordinator.dart';
-import 'core/settings/app_settings_store.dart';
-import 'core/storage/progress_store.dart';
 import 'core/theme/app_theme.dart';
-import 'features/home/home_screen.dart';
-import 'features/settings/settings_screen.dart';
-import 'l10n/app_localizations.dart';
+
+export 'bootstrap/cargo_sort_app.dart' show CargoSortApp;
 
 const String appVersion = '1.0.2';
 const String appBuildNumber = '3';
@@ -59,13 +53,7 @@ class BootstrapApp extends StatefulWidget {
 
 class _BootstrapAppState extends State<BootstrapApp>
     with WidgetsBindingObserver {
-  final ProgressStore _store = ProgressStore();
-  final AppSettingsStore _settings = AppSettingsStore();
-  final OptionalServiceCoordinator _optionalServices =
-      OptionalServiceCoordinator(
-        defaultTimeout: const Duration(seconds: 20),
-        maxAttempts: 3,
-      );
+  final AppComposition _composition = AppComposition.production();
   String _status = 'Preparing your cargo journey...';
   bool _ready = false;
   bool _bootstrapStarted = false;
@@ -80,7 +68,7 @@ class _BootstrapAppState extends State<BootstrapApp>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    unawaited(_optionalServices.dispose());
+    unawaited(_composition.dispose());
     super.dispose();
   }
 
@@ -89,7 +77,7 @@ class _BootstrapAppState extends State<BootstrapApp>
     if (state != AppLifecycleState.resumed) return;
 
     unawaited(_applyImmersiveFullscreen());
-    if (_optionalServices.snapshot(_adsServiceName).canRetry) {
+    if (_composition.optionalServices.snapshot(_adsServiceName).canRetry) {
       unawaited(_initializeAdsInBackground(forceRetry: true));
     }
   }
@@ -131,12 +119,12 @@ class _BootstrapAppState extends State<BootstrapApp>
     await Future.wait<void>([
       _runOptionalStartupTask(
         'player profile',
-        () => _store.load(),
+        () => _composition.progressStore.load(),
         timeout: const Duration(seconds: 6),
       ),
       _runOptionalStartupTask(
         'application settings',
-        () => _settings.load(),
+        () => _composition.settingsStore.load(),
         timeout: const Duration(seconds: 6),
       ),
     ]);
@@ -184,13 +172,16 @@ class _BootstrapAppState extends State<BootstrapApp>
 
   Future<void> _initializeAdsInBackground({bool forceRetry = false}) async {
     final initialized = forceRetry
-        ? await _optionalServices.retry(_adsServiceName, _initializeMobileAds)
-        : await _optionalServices.initialize(
+        ? await _composition.optionalServices.retry(
+            _adsServiceName,
+            _initializeMobileAds,
+          )
+        : await _composition.optionalServices.initialize(
             _adsServiceName,
             _initializeMobileAds,
           );
 
-    final snapshot = _optionalServices.snapshot(_adsServiceName);
+    final snapshot = _composition.optionalServices.snapshot(_adsServiceName);
     if (initialized) {
       try {
         await AppLogger.instance.checkpoint('ADMOB_READY');
@@ -221,7 +212,10 @@ class _BootstrapAppState extends State<BootstrapApp>
   @override
   Widget build(BuildContext context) {
     if (_ready) {
-      return CargoSortApp(store: _store, settings: _settings);
+      return CargoSortApp(
+        store: _composition.progressStore,
+        settings: _composition.settingsStore,
+      );
     }
 
     return MaterialApp(
@@ -422,167 +416,4 @@ class _GlowOrb extends StatelessWidget {
       color: Colors.white.withValues(alpha: .055),
     ),
   );
-}
-
-class CargoSortApp extends StatefulWidget {
-  const CargoSortApp({super.key, required this.store, required this.settings});
-
-  final ProgressStore store;
-  final AppSettingsStore settings;
-
-  @override
-  State<CargoSortApp> createState() => _CargoSortAppState();
-}
-
-class _CargoSortAppState extends State<CargoSortApp>
-    with WidgetsBindingObserver {
-  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
-  final AppLogger _logger = AppLogger.instance;
-  Locale _locale = const Locale('en');
-  StreamSubscription<LoggedAppError>? _errorSubscription;
-  bool _dialogVisible = false;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addObserver(this);
-    _errorSubscription = _logger.runtimeErrors.listen(_showRuntimeError);
-    unawaited(_logger.checkpoint('APP_WIDGET_INITIALIZED'));
-  }
-
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    _errorSubscription?.cancel();
-    super.dispose();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    unawaited(_logger.info('Lifecycle changed', details: state.name));
-  }
-
-  void _toggleLanguage() {
-    setState(() {
-      _locale = _locale.languageCode == 'en'
-          ? const Locale('ar')
-          : const Locale('en');
-    });
-  }
-
-  void _openSettings() {
-    final context = _navigatorKey.currentContext;
-    if (context == null) return;
-    unawaited(
-      GameNavigator.pushNamed<void>(
-        context,
-        name: GameRouteNames.settings,
-        builder: (_) => SettingsScreen(
-          settings: widget.settings,
-          onToggleLanguage: _toggleLanguage,
-        ),
-      ),
-    );
-  }
-
-  Future<void> _showRuntimeError(LoggedAppError appError) async {
-    if (_dialogVisible || !mounted) return;
-    final context = _navigatorKey.currentContext;
-    if (context == null) return;
-    _dialogVisible = true;
-    try {
-      await showDialog<void>(
-        context: context,
-        barrierDismissible: false,
-        builder: (dialogContext) => AlertDialog(
-          icon: const Icon(Icons.error_outline, color: Colors.red, size: 42),
-          title: Text('${appError.level}: Application issue'),
-          content: ConstrainedBox(
-            constraints: const BoxConstraints(maxHeight: 320),
-            child: SingleChildScrollView(
-              child: SelectableText(appError.fullText),
-            ),
-          ),
-          actions: [
-            TextButton.icon(
-              onPressed: () =>
-                  Clipboard.setData(ClipboardData(text: appError.fullText)),
-              icon: const Icon(Icons.copy),
-              label: const Text('Copy'),
-            ),
-            TextButton.icon(
-              onPressed: () {
-                Navigator.of(dialogContext).pop();
-                final navigatorContext = _navigatorKey.currentContext;
-                if (navigatorContext == null) return;
-                unawaited(
-                  GameNavigator.pushNamed<void>(
-                    navigatorContext,
-                    name: GameRouteNames.logs,
-                    builder: (_) => const LogViewerScreen(),
-                  ),
-                );
-              },
-              icon: const Icon(Icons.article_outlined),
-              label: const Text('Full log'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Continue'),
-            ),
-          ],
-        ),
-      );
-    } finally {
-      _dialogVisible = false;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      navigatorKey: _navigatorKey,
-      debugShowCheckedModeBanner: false,
-      title: 'Cargo Sort',
-      locale: _locale,
-      supportedLocales: const [Locale('en'), Locale('ar')],
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      theme: AppTheme.light,
-      home: MotionLifecycleScope(
-        child: Stack(
-          children: [
-            HomeScreen(
-              store: widget.store,
-              settings: widget.settings,
-              onToggleLanguage: _toggleLanguage,
-            ),
-            PositionedDirectional(
-              top: 66,
-              end: 16,
-              child: SafeArea(
-                child: Material(
-                  color: Colors.white,
-                  elevation: 5,
-                  shape: const CircleBorder(),
-                  child: IconButton(
-                    tooltip: 'Settings',
-                    onPressed: _openSettings,
-                    icon: const Icon(
-                      Icons.settings_rounded,
-                      color: AppTheme.navy,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }

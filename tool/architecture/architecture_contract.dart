@@ -82,11 +82,7 @@ class ArchitectureContract {
     return violations;
   }
 
-  bool _isAllowed(
-    ArchitectureZone zone,
-    String directive,
-    String? resolved,
-  ) {
+  bool _isAllowed(ArchitectureZone zone, String directive, String? resolved) {
     if (directive.startsWith('dart:')) return true;
     if (resolved == null) return false;
 
