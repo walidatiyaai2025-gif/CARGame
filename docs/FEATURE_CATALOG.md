@@ -187,7 +187,7 @@ Codex must not mark a feature complete merely because UI code exists.
 | REW-004 | Milestone reward | P1 | IMPLEMENTED | LEVEL-005 | Every fifth first-clear reward is granted once; tests remain. |
 | REW-005 | Next City action | P0 | IMPLEMENTED | NAV-001 | Guarded action returns to updated map without navigation lock; device test remains. |
 | REW-006 | 3D reward animation | P1 | PLANNED | MOT-008, AST-009 | Chest, stars, coins, XP, and boosters animate coherently. |
-| REW-007 | Reward transaction ledger and reconciliation | P0 | IN PROGRESS | ENG-008, REW-001 | Issue #119 / PR #120 add stable reason/idempotency keys, a bounded completed ledger, an absolute-state pending journal, and deterministic interruption recovery for level, daily reward, and daily mission grants; full CI/build verification is in progress. |
+| REW-007 | Reward transaction ledger and reconciliation | P0 | VERIFIED | ENG-008, REW-001 | Issue #119 / PR #120 add stable reason/idempotency keys, a bounded completed ledger, an absolute-state pending journal, deterministic interruption recovery, and explicit heart-grant journaling while preserving reward amounts and legacy saves. Durability hardening persists completed IDs before in-memory acknowledgement and makes post-commit pending cleanup best-effort. PR CI #623 passed 226 Flutter tests plus Debug APK/upload; PR #120 merged as `b915d95b938d459133a9a8b120f38815178b1852`, and main CI #624 repeated all gates successfully. Main debug artifact #9032856259 (80,530,585 bytes; SHA-256 `2a57cb7a377eabddde79b79f4ea2159387d6ab6c0799ae0a22bef4e32a767d1b`). |
 | REW-008 | Reward table configuration and probability disclosure | P1 | PLANNED | REW-007, RET-005 | Reward tables are versioned, testable, and odds are disclosed where legally/product required. |
 
 # K. Economy, progress, and shop
@@ -331,13 +331,13 @@ Codex must not mark a feature complete merely because UI code exists.
 
 ## IN PROGRESS
 
-- None after `GAME-016` verification.
+- None after `REW-007` verification.
 
 ## NEXT READY
 
-1. `ENG-010` Secret and credential handling — `ENG-009` is VERIFIED; audit injection, redaction, rotation, and CI protection gaps.
-2. `PRIV-001` Privacy inventory, consent, and data minimization — `ENG-001` is VERIFIED and the current privacy inventory gate provides a baseline for reconciliation.
-3. `ADS-002` Debug test IDs and release configuration — `ADS-001` and `ENG-009` are implemented/verified; reconcile remaining release-ad configuration evidence.
+1. `PRIV-001` Privacy inventory, consent, and data minimization — `ENG-001` is VERIFIED and the current privacy inventory gate provides a baseline for reconciling actual SDK/data behavior.
+2. `SEC-001` Mobile security baseline and threat model — `ENG-010` is VERIFIED; reconcile trust boundaries, secure-storage/network/tamper risks, and mitigations against the current app.
+3. `ECON-005` Versioned economy configuration and balance rules — `ECON-001` is implemented and `REW-007` is VERIFIED; centralize reward/price/source/sink/cap rules without changing live balances.
 
 ## BLOCKED
 
@@ -347,6 +347,9 @@ Codex must not mark a feature complete merely because UI code exists.
 
 ## Recently verified
 
+- `REW-007` Reward transaction ledger and reconciliation — PR #120 merged as `b915d95b938d459133a9a8b120f38815178b1852` after PR CI #623 and main CI #624 passed formatting, Analyze, 226 Flutter tests, Debug APK build and artifact upload; main artifact #9032856259 (80,530,585 bytes; SHA-256 `2a57cb7a377eabddde79b79f4ea2159387d6ab6c0799ae0a22bef4e32a767d1b`).
+- `ADS-002` Debug test IDs and release configuration — PR #117 and reconciliation PR #118 are merged; release config is platform-safe and verified by CI #595/#597.
+- `ENG-010` Secret and credential handling — issue #113 / PR #114 are verified with secret scanning, diagnostic redaction, injection/rotation guidance, and CI evidence.
 - `GAME-016` Input determinism and anti-spam state machine — PR #111 merged after Flutter CI #580 passed all 215 tests plus Debug APK build/upload; cargo/warehouse spam, selection locking, resolution input disablement, and result-boundary guards are deterministic.
 - `REL-006` Android signing and key-management procedure — PR #102 merged as `8f2e4ddb69d339938ba05911fb297960859e1a77`; Flutter CI #544 and Release Packaging Smoke #4 passed the redacted preflight, contract, APK/AAB packaging and evidence gates.
 - `TEST-001` Progress/economy unit tests — PR #104 merged as `2ab3578ecc214f995f194eff95f1a27b7cc3f442`; Flutter CI #546 passed full tests and Debug APK after adding explicit legacy-save/default migration coverage.

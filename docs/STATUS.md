@@ -7,12 +7,22 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | Field | Value |
 |---|---|
 | Current phase | Android RC hardening — issue #79 |
-| Primary feature | `REW-007` IN PROGRESS — issue #119 / draft PR #120 on `agent/rew-007-reward-ledger`. |
-| Completed checkpoint | `GAME-016` input determinism — PR #111 merged as `093d9a9384aec2d18503284a8edc95ba1ce1ecfb` after Flutter CI #580 passed formatting, Analyze, all 215 Flutter tests, Debug APK build, and artifact upload. |
-| Status | `REW-007` implementation adds an interruption-safe absolute-state reward journal, bounded completed-idempotency ledger, deterministic recovery before load, and stable gameplay-attempt IDs; CI/build verification remains before VERIFIED. |
-| Previous checkpoint | `TEST-004` navigation-race verification — PR #109 merged as `24aa922453f88af507e01e950f7d26048e1c6c3f`; its final current-head verification completed on Flutter CI #574. |
-| Next recommended feature | Complete `REW-007` CI/build verification and tracking reconciliation; then select the next unblocked RC P0 from the catalog. |
+| Primary feature | `REW-007` VERIFIED — issue #119 / PR #120 merged as `b915d95b938d459133a9a8b120f38815178b1852`; main Flutter CI #624 passed the full gate set. |
+| Completed checkpoint | `REW-007` reward transaction ledger/reconciliation — PR #120 merged as `b915d95b938d459133a9a8b120f38815178b1852` after PR CI #623 and main CI #624 passed formatting, Analyze, 226 Flutter tests, Debug APK build, and artifact upload. |
+| Status | `REW-007` is VERIFIED: release-critical level, milestone/world, daily reward, daily mission, and explicit heart grants use stable idempotency/recovery boundaries; completed IDs are persisted before in-memory acknowledgement and pending cleanup is best-effort after durable commit. |
+| Previous checkpoint | `ADS-002` release ad configuration — PR #117 merged as `0e2f13329835bfe69c79b985153c65e68ac32bb2`, then reconciliation PR #118 merged as `9adb1cd33ee421ab3afa5469afe6be2ff4029b27`. |
+| Next recommended feature | `PRIV-001` privacy inventory, consent, and data minimization — next unblocked RC P0 in the catalog queue; reconcile actual SDK/data flows, purposes, retention, processors, consent, and deletion behavior. |
 | Known blocker | `REL-007`/`REL-008` require real production AdMob/signing inputs and a production-signed candidate; final install/upgrade/device smoke requires an Android device or testing track. `TEST-009` also remains dependency-blocked while `PERF-001` is PLANNED. Visual Studio C++ components remain optional for Windows desktop only. |
+
+## REW-007 reward transaction verification — 2026-08-09
+
+- Issue #119 / PR #120 close the RC reward-integrity gap where multi-key reward persistence could be interrupted into a partial wallet/stat/progression state.
+- `ProgressStore` now uses a versioned absolute-state pending reward journal plus a bounded completed-idempotency ledger; recovery runs before normal hydration, legacy saves default safely, and malformed journals are discarded without replaying grants.
+- Stable transaction IDs cover gameplay attempts, milestone/world first-clear rewards, daily rewards, daily missions, and explicit heart grants without changing existing reward amounts.
+- Durability hardening persists the completed transaction ID before mutating the in-memory ledger and treats pending-journal cleanup as best-effort only after durable completion.
+- PR Flutter CI #623 passed formatting, Analyze, all 226 Flutter tests, Debug APK build and upload on head `2df14361ec829ae00739aac2e72e6b43cdc0a7e4`; debug artifact #9032765167 (80,530,583 bytes; SHA-256 `534037a3cdd4fe75d54a53df6452f8188d4c81cdcc859040a51725315f20070b`).
+- PR #120 merged to `main` as `b915d95b938d459133a9a8b120f38815178b1852`. Main Flutter CI #624 repeated the full gate set successfully on the merge commit; debug artifact #9032856259 (80,530,585 bytes; SHA-256 `2a57cb7a377eabddde79b79f4ea2159387d6ab6c0799ae0a22bef4e32a767d1b`).
+- `REW-007` is VERIFIED. Next unblocked RC P0 selected from the catalog queue: `PRIV-001` privacy inventory, consent, and data minimization.
 
 ## ADS-002 release ad configuration verification — 2026-08-09
 
