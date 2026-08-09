@@ -74,16 +74,16 @@ final class AdMobUnitIds {
   }
 
   Iterable<String> valuesFor(AdMobPlatform platform) sync* {
-    switch (platform) {
-      case AdMobPlatform.android:
-        yield androidBanner;
-        yield androidRewarded;
-        yield androidInterstitial;
-      case AdMobPlatform.ios:
-        yield iosBanner;
-        yield iosRewarded;
-        yield iosInterstitial;
+    if (platform == AdMobPlatform.android) {
+      yield androidBanner;
+      yield androidRewarded;
+      yield androidInterstitial;
+      return;
     }
+
+    yield iosBanner;
+    yield iosRewarded;
+    yield iosInterstitial;
   }
 
   bool isCompleteFor(AdMobPlatform? platform) =>
