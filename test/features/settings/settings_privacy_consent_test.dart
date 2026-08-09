@@ -39,9 +39,7 @@ void main() {
       await _pumpTransition(tester);
       await _openPrivacySheet(tester);
 
-      final buttonFinder = find.byKey(
-        const ValueKey('privacy-options-button'),
-      );
+      final buttonFinder = find.byKey(const ValueKey('privacy-options-button'));
       expect(buttonFinder, findsOneWidget);
       expect(find.text('Manage privacy choices'), findsOneWidget);
       expect(state.canRequestAds, isTrue);
@@ -85,7 +83,10 @@ void main() {
       await _pumpTransition(tester);
       await _openPrivacySheet(tester);
 
-      expect(find.byKey(const ValueKey('privacy-options-button')), findsNothing);
+      expect(
+        find.byKey(const ValueKey('privacy-options-button')),
+        findsNothing,
+      );
       expect(find.text('Privacy & Ads'), findsOneWidget);
     },
   );
