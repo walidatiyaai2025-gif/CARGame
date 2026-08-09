@@ -15,6 +15,9 @@ kotlin {
 }
 
 val googleTestAdMobApplicationId = "ca-app-pub-3940256099942544~3347511713"
+val allowTestAdsInRelease =
+    providers.environmentVariable("ALLOW_TEST_ADS_IN_RELEASE").orNull?.trim()
+        ?.equals("true", ignoreCase = true) == true
 val releaseAdMobApplicationId =
     providers.environmentVariable("ADMOB_ANDROID_APP_ID").orNull?.trim().orEmpty()
 
@@ -85,10 +88,13 @@ val validateReleaseConfiguration = tasks.register("validateReleaseConfiguration"
                 "ADMOB_ANDROID_APP_ID is required for Android release builds.",
             )
         }
-        if (releaseAdMobApplicationId == googleTestAdMobApplicationId ||
-            releaseAdMobApplicationId.startsWith("ca-app-pub-3940256099942544~")) {
+        val usesGoogleTestAdMobApplicationId =
+            releaseAdMobApplicationId == googleTestAdMobApplicationId ||
+                releaseAdMobApplicationId.startsWith("ca-app-pub-3940256099942544~")
+        if (usesGoogleTestAdMobApplicationId && !allowTestAdsInRelease) {
             throw GradleException(
-                "Google test AdMob application IDs are forbidden in Android release builds.",
+                "Google test AdMob application IDs are forbidden in Android release builds. " +
+                    "Set ALLOW_TEST_ADS_IN_RELEASE=true only for explicit test release builds.",
             )
         }
         if (!hasCompleteReleaseSigning) {
