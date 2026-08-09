@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:cargo_sort_game/core/navigation/game_route_names.dart';
 import 'package:cargo_sort_game/core/settings/app_settings_store.dart';
 import 'package:cargo_sort_game/core/storage/progress_store.dart';
