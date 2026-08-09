@@ -35,12 +35,12 @@ import '../storage/progress_store.dart';
     final allowed = contract.inspectSource(
       zone: ArchitectureZone.application,
       sourcePath: 'lib/core/application/example.dart',
-      source: "import '../domain/optional_service_state.dart';",
+      source: 'import \'../domain/optional_service_state.dart\';',
     );
     final rejected = contract.inspectSource(
       zone: ArchitectureZone.application,
       sourcePath: 'lib/core/application/example.dart',
-      source: "import '../services/optional_service_coordinator.dart';",
+      source: 'import \'../services/optional_service_coordinator.dart\';',
     );
 
     expect(allowed, isEmpty);
@@ -50,12 +50,12 @@ import '../storage/progress_store.dart';
   test('main entry point does not construct storage or service adapters', () {
     final source = File('lib/main.dart').readAsStringSync();
 
-    expect(source, contains("import 'bootstrap/app_composition.dart';"));
-    expect(source, isNot(contains("core/storage/progress_store.dart")));
-    expect(source, isNot(contains("core/settings/app_settings_store.dart")));
+    expect(source, contains('import \'bootstrap/app_composition.dart\';'));
+    expect(source, isNot(contains('core/storage/progress_store.dart')));
+    expect(source, isNot(contains('core/settings/app_settings_store.dart')));
     expect(
       source,
-      isNot(contains("core/services/optional_service_coordinator.dart")),
+      isNot(contains('core/services/optional_service_coordinator.dart')),
     );
   });
 }
