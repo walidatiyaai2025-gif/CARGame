@@ -48,15 +48,23 @@ class AppLogger extends ChangeNotifier {
 
   File? _logFile;
   bool _initialized = false;
+  bool _enabled = true;
 
   List<String> get entries => List.unmodifiable(_entries);
   String get fullText => _entries.join('\n\n');
   String? get logFilePath => _logFile?.path;
   Stream<LoggedAppError> get runtimeErrors => _runtimeErrors.stream;
+  bool get isEnabled => _enabled;
 
-  Future<void> initialize() async {
+  Future<void> initialize({bool enabled = true}) async {
     if (_initialized) return;
     _initialized = true;
+    _enabled = enabled;
+
+    if (!_enabled) {
+      notifyListeners();
+      return;
+    }
 
     try {
       final directory = await getApplicationSupportDirectory();
@@ -179,6 +187,8 @@ class AppLogger extends ChangeNotifier {
     String details, {
     bool notifyUser = false,
   }) async {
+    if (!_enabled) return;
+
     final timestamp = DateTime.now();
     final safeMessage = SecretRedactor.redact(message);
     final safeDetails = SecretRedactor.redact(details);
@@ -260,7 +270,7 @@ class AppErrorBoundary {
     CrashReportContext? crashContext,
   }) async {
     final logger = AppLogger.instance;
-    await logger.initialize();
+    await logger.initialize(enabled: AppBuildConfig.current.enableDiagnostics);
 
     _crashReporting = crashReporting ??
         PrivacyGatedCrashReporting(
