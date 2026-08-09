@@ -1,0 +1,42 @@
+name: ENG-012 Verification Reconciliation
+
+on:
+  push:
+    paths:
+      - 'tool/eng012_reconcile_trigger.txt'
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+
+      - name: Reconcile verified tracking
+        run: python3 tool/reconcile_eng012.py
+
+      - name: Validate reconciliation
+        run: |
+          git diff --check
+          python3 tool/verify_ci_integrity.py
+          python3 tool/verify_privacy_inventory.py
+          python3 tool/verify_analytics_privacy.py
+          python3 tool/verify_privacy_disclosures.py
+          grep -F '| ENG-012 | Analytics event schema and privacy gating | P1 | VERIFIED |' docs/FEATURE_CATALOG.md
+          grep -F '`ENG-013` Crash reporting and non-fatal diagnostics' docs/FEATURE_CATALOG.md
+          grep -F 'ENG-012 is VERIFIED' docs/STATUS.md
+
+      - name: Commit reconciliation and remove one-shot tooling
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/eng012_reconcile.yml tool/eng012_reconcile_trigger.txt tool/reconcile_eng012.py
+          git add docs/FEATURE_CATALOG.md docs/STATUS.md docs/work/ENG-012.md
+          git commit -m 'ENG-012: reconcile verified analytics checkpoint'
+          git push origin "HEAD:${GITHUB_REF_NAME}"
