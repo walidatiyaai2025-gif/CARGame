@@ -52,13 +52,13 @@ void main() {
       emitter: (payload) async => emitted = payload,
     );
 
-    final secret = 'ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ123456';
+    final secret = 'fake-test-secret-value';
     final longMessage =
         'failure token=$secret ${List<String>.filled(700, 'x').join()}';
     await reporter.capture(
       report(
         message: longMessage,
-        stackTrace: 'C:\\Users\\walid\\project\\main.dart:10\n$secret',
+        stackTrace: 'C:\\Users\\example\\project\\main.dart:10\ntoken=$secret',
       ),
     );
 
