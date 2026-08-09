@@ -1,0 +1,142 @@
+name: UI3D-008 Narrow Layout Fix
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'lib/features/levels/city_briefing_screen.dart'
+      - '.github/workflows/ui3d008_overflow_fix.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply-fix:
+    if: github.event.pull_request.number == 146
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.44.8'
+          cache: true
+      - name: Bound deployment badge strip
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('lib/features/levels/city_briefing_screen.dart')
+          text = path.read_text()
+          old = '''                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 9,
+                              vertical: 5,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: .12),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: Colors.white24),
+                            ),
+                            child: Text(
+                              boss
+                                  ? (isArabic ? 'مركز رئيسي' : 'HUB CITY')
+                                  : (isArabic
+                                        ? 'توجيه قبل الانطلاق'
+                                        : 'DEPLOYMENT BRIEF'),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 9,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: .6,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 7),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 5,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: .16),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              '#${level.number}',
+                              style: TextStyle(
+                                color: skin.accent,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),'''
+          new = '''                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: AlignmentDirectional.centerStart,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 9,
+                                vertical: 5,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: .12),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(color: Colors.white24),
+                              ),
+                              child: Text(
+                                boss
+                                    ? (isArabic ? 'مركز رئيسي' : 'HUB CITY')
+                                    : (isArabic
+                                          ? 'توجيه قبل الانطلاق'
+                                          : 'DEPLOYMENT BRIEF'),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: .6,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 7),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 5,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: .16),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                '#${level.number}',
+                                style: TextStyle(
+                                  color: skin.accent,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),'''
+          if old not in text:
+              raise SystemExit('Expected deployment badge block was not found')
+          path.write_text(text.replace(old, new, 1))
+          PY
+          dart format lib/features/levels/city_briefing_screen.dart
+          git diff --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add lib/features/levels/city_briefing_screen.dart
+          git commit -m 'Fix UI3D-008 narrow deployment badges'
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
