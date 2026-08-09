@@ -7,11 +7,11 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | Field | Value |
 |---|---|
 | Current phase | Android RC hardening — issue #79 |
-| Primary feature | None — `ENG-006` dependency/package governance is verified; `ENG-007` CI verification workflow is the next dependency-ready engineering item. |
-| Completed checkpoint | `ENG-006` dependency and package governance — PR #158 merged as `e8e474e54ada81b5936bd5adf0d9aa9e31ff117e` after green Flutter CI #730. |
-| Status | ENG-006 is VERIFIED: normal Flutter CI now enforces approved dependency sources, direct manifest/lock alignment, reviewed direct-package licenses and policy regressions while reporting upstream version drift without auto-upgrading. |
-| Previous checkpoint | `ENG-005` enforceable clean-architecture boundary checkpoint — PRs #155/#156. |
-| Next recommended feature | `ENG-007` CI verification workflow — close the remaining CI acceptance gaps around dashboard/parser validation and protected release checks while preserving the existing green Flutter pipeline. |
+| Primary feature | `ENG-007` CI verification workflow — Issue #160 / branch `agent/eng-007-ci-verification`. |
+| Completed checkpoint | `ENG-006` dependency and package governance — PRs #158/#159, latest reconciliation `8caabd9629b46714041d4fdcb8aabca1690f1135`. |
+| Status | ENG-007 is IN PROGRESS: dashboard/catalog parser integrity and protected release-workflow contracts are being made executable in normal Flutter CI without changing runtime behavior. |
+| Previous checkpoint | `ENG-006` dependency/package governance — VERIFIED after PRs #158/#159. |
+| Next recommended feature | Complete `ENG-007` focused CI-contract validation, full Flutter CI, Debug APK artifact, and current-main reconciliation before selecting the next catalog item. |
 | Known blocker | `REL-007`/`REL-008` require real production AdMob/signing inputs and a production-signed candidate; final install/upgrade/device smoke requires an Android device or testing track. `TEST-009` also remains dependency-blocked while `PERF-001` is PLANNED. Visual Studio C++ components remain optional for Windows desktop only. |
 
 ## ENG-006 dependency governance verification — 2026-08-09
