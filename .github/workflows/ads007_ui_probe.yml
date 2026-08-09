@@ -1,0 +1,46 @@
+name: ADS-007 Privacy UI Probe
+
+on:
+  push:
+    branches:
+      - agent/ads-007-consent-privacy
+    paths:
+      - .github/workflows/ads007_ui_probe.yml
+      - test/features/settings/settings_privacy_consent_test.dart
+
+permissions:
+  contents: write
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/ads-007-consent-privacy
+          fetch-depth: 0
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.44.8
+          cache: true
+      - name: Verify privacy UI and consent contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          flutter pub get --enforce-lockfile
+          dart format --output=none --set-exit-if-changed test/features/settings/settings_privacy_consent_test.dart
+          flutter test \
+            test/features/settings/settings_privacy_consent_test.dart \
+            test/core/ads/ad_consent_controller_test.dart \
+            test/core/ads/ad_request_gate_test.dart \
+            test/bootstrap/app_composition_test.dart
+          python3 tool/verify_privacy_inventory.py
+          python3 tool/verify_security_baseline.py
+          flutter analyze --no-fatal-infos --no-fatal-warnings
+          git diff --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/ads007_ui_probe.yml
+          git commit -m 'chore: remove ADS-007 privacy UI probe'
+          git push origin HEAD:agent/ads-007-consent-privacy
