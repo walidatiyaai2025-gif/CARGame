@@ -117,7 +117,11 @@ void main() {
         for (final level in levels) {
           final counts = <int, int>{};
           for (final item in level.items) {
-            expect(validIds, contains(item.id), reason: 'level ${level.number}');
+            expect(
+              validIds,
+              contains(item.id),
+              reason: 'level ${level.number}',
+            );
             counts.update(item.id, (value) => value + 1, ifAbsent: () => 1);
           }
 
