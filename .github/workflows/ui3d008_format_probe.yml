@@ -8,22 +8,31 @@ on:
       - '.github/workflows/ui3d008_format_probe.yml'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   format-probe:
+    if: github.event.pull_request.number == 146
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
           flutter-version: '3.44.8'
           cache: true
-      - name: Show Dart format patch
+      - name: Format City Briefing
         shell: bash
         run: |
           dart format lib/features/levels/city_briefing_screen.dart
-          echo '--- FORMAT PATCH START ---'
-          git diff -- lib/features/levels/city_briefing_screen.dart
-          echo '--- FORMAT PATCH END ---'
+          if git diff --quiet; then
+            echo 'Already formatted.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add lib/features/levels/city_briefing_screen.dart
+          git commit -m 'Format UI3D-008 City Briefing'
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
