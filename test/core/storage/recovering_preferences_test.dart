@@ -46,7 +46,9 @@ void main() {
     final prefs = RecoveringPreferences(delegate: delegate);
     expect(await prefs.getInt('coins'), 0);
 
-    final backupText = await delegate.getString(RecoveringPreferences.backupKey);
+    final backupText = await delegate.getString(
+      RecoveringPreferences.backupKey,
+    );
     expect(backupText, isNotNull);
     final backup = jsonDecode(backupText!) as Map<String, dynamic>;
     expect(backup['schemaVersion'], 1);
@@ -66,7 +68,9 @@ void main() {
 
     final prefs = RecoveringPreferences(delegate: delegate);
     expect(await prefs.getInt('coins'), 0);
-    final firstBackup = await delegate.getString(RecoveringPreferences.backupKey);
+    final firstBackup = await delegate.getString(
+      RecoveringPreferences.backupKey,
+    );
 
     expect(await prefs.getInt('hearts'), 5);
     final secondBackup = await delegate.getString(
@@ -95,7 +99,10 @@ void main() {
     expect(await prefs.getInt('coins'), 0);
     expect(await delegate.getInt('coins'), 0);
     expect(await delegate.getInt('stats_wins'), 7);
-    expect(await delegate.containsKey(RecoveringPreferences.backupKey), isFalse);
+    expect(
+      await delegate.containsKey(RecoveringPreferences.backupKey),
+      isFalse,
+    );
     expect(prefs.recoveryEvents, hasLength(1));
     expect(prefs.recoveryEvents.single.key, 'coins');
     expect(prefs.recoveryEvents.single.reason, 'out-of-range int -25 -> 0');
