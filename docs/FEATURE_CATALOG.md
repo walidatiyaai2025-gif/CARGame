@@ -292,7 +292,7 @@ Codex must not mark a feature complete merely because UI code exists.
 | ID | Function | Priority | Status | Dependencies | Acceptance / evidence |
 |---|---|---:|---|---|---|
 | TEST-001 | Progress/economy unit tests | P0 | VERIFIED | ENG-008 | `progress_store_test.dart` covers wallet bounds, hearts, boosters, best-star persistence, milestone/world first-clear rewards, final-level bounds, duplicate daily-mission claims, corrupt-value backup/repair, and legacy-save compatibility with safe defaults for newer fields. PR #97 adds interruption-safe shop purchase/recovery coverage; PR #104 added explicit legacy-save migration compatibility. Flutter CI #546 passed Analyze, the full Flutter suite, Debug APK build, and artifact upload. |
-| TEST-002 | Level generator and solvability tests | P0 | IN PROGRESS | LEVEL-003 | Issue #143 consolidates the production 1..150 catalog into one deterministic release contract: exact identity, regeneration parity, `LevelSolvabilityValidator.validateAll`, `LevelDifficultyCurve.validateAll`, and explicit boundaries 1/25/26/150. Detailed negative cases stay in their owning suites; production level content changes only if integrated validation exposes a real defect. |
+| TEST-002 | Level generator and solvability tests | P0 | VERIFIED | LEVEL-003 | Issue #143 / PR #144 consolidate the exact production 1..150 catalog into one deterministic release contract: sequential identity, regeneration parity, `LevelSolvabilityValidator.validateAll`, `LevelDifficultyCurve.validateAll`, and explicit boundaries 1/25/26/150. No production level content changed. After UI3D-007 / PR #141 advanced main, PR #144 was reconciled and Flutter CI #697 / run `31310666540` passed all gates on head `a0f1de0e14b78f090bb770643c93492cc5164ebe`; artifact #9037363042 is 80,562,923 bytes with SHA-256 `ef6c18142dc7b1925f131848217ba8db8386f534aaee24becaede3d3ed598a9b`. PR #144 squash-merged as `d9afbb06564a08ee571ed7c9e4784adf99a7c3fe`. |
 | TEST-003 | Core screen widget tests | P1 | PLANNED | UI3D-006 | Home, map, briefing, game, result, and shop pass key sizes/languages. |
 | TEST-004 | Navigation race regression tests | P0 | VERIFIED | NAV-001 | PR #109 hardens result-route dismissal against repeated actions and adds deterministic integration coverage for repeated Next, Retry, and Home Start actions; existing `GameNavigator` tests cover concurrent/named duplicate-push guards. Flutter CI #571 passed formatting, Analyze, the full 214-test Flutter suite, Debug APK build, and artifact upload. Debug artifact #9031075109 is 80,515,902 bytes with SHA-256 `299e710a467672c57c91fd956669d67506cf5534b8741499066032ff9e60b539`. |
 | TEST-005 | Missing asset tests | P1 | PLANNED | AST-003 | Missing/corrupt asset fallback remains visible and functional. |
@@ -331,11 +331,11 @@ Codex must not mark a feature complete merely because UI code exists.
 
 ## IN PROGRESS
 
-- `TEST-002` Level generator and solvability tests — issue #143; integrating deterministic generation, structural solvability, and quantitative difficulty acceptance into one release contract over the exact 150-level production catalog.
+- None.
 
 ## NEXT READY
 
-- To be selected after TEST-002 verification.
+- `ENG-005` Clean architecture boundaries — P1 and dependency-ready through VERIFIED `ENG-001`; no remaining PLANNED P0 is currently dependency-ready, so this is the next highest-priority unblocked catalog item.
 
 ## BLOCKED
 
@@ -348,6 +348,7 @@ Codex must not mark a feature complete merely because UI code exists.
 
 ## Recently verified
 
+- `TEST-002` Level generator and solvability tests — issue #143 / PR #144 add one integrated deterministic release contract over the exact 150-level production catalog, combining regeneration parity, structural solvability, quantitative difficulty acceptance, and required boundaries 1/25/26/150. Final current-main Flutter CI #697 / run `31310666540` passed all gates and uploaded artifact #9037363042 (`ef6c18142dc7b1925f131848217ba8db8386f534aaee24becaede3d3ed598a9b`); PR #144 squash-merged as `d9afbb06564a08ee571ed7c9e4784adf99a7c3fe`.
 - `LEVEL-002` Difficulty curve — issue #134 / PR #137 add typed quantitative bands and deterministic validation for all 150 generated levels, with an intentional Expert 1–3 spare-move envelope. Flutter CI #681 / run `31309097571` passed all gates and uploaded artifact #9036909677 (`e3d2acc260fdc39462b299f19295660dccae130a89b63a8cc52aeddf38647ee6`); PR #137 squash-merged as `938ed6ea100a987b2513e5f5221aab90a850c2d6`.
 - `LEVEL-003` Level solvability validator — issue #132 reconciles the existing validator and deterministic 150-level regression suite to VERIFIED. Current CI #659 passes all 240 tests, including world-boundary and invalid/degenerate-level rejection coverage; no duplicate production validator code was added.
 - `AST-011` Asset licensing and provenance — issue #130 reconciles the historical provenance/admission pipeline with current main: 9 typed descriptors, 0 approved provenance records, and 0 runtime WebP binaries. CI #657 reports the 9/0/0 state and proves future binaries remain fail-closed without complete commercial-use provenance; historical CI #121 also passed the original implementation checkpoint.
