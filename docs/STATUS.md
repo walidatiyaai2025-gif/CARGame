@@ -7,12 +7,24 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | Field | Value |
 |---|---|
 | Current phase | Android RC hardening — issue #79 |
-| Primary feature | None — ADS-007 client integration is IMPLEMENTED; PRIV-002 is the next highest-priority dependency-ready feature. |
-| Completed checkpoint | `ADS-007` consent/privacy client integration — PR #167 merged as `865a31a8790c1b93b550f4da49f4e7d9f4720b28` after green Flutter CI #742. |
-| Status | ADS-007 is IMPLEMENTED: UMP gates Mobile Ads initialization and app-owned ad requests and Settings can re-open required privacy options. Production AdMob Privacy & messaging configuration plus regulated-region/device verification remain external before VERIFIED. |
-| Previous checkpoint | `SEC-002` dependency, secret, and artifact security scans — VERIFIED after PRs #164/#165. |
-| Next recommended feature | `PRIV-002` Privacy policy and Play Data safety mapping — P0, now dependency-ready after ADS-007 client integration. `TEST-011` remains an acceptance target but still waits on production consent verification and PRIV-003 deletion/export readiness. |
+| Primary feature | None — `PRIV-002` source implementation is complete on PR #170; `PRIV-003` is the next dependency-ready release/privacy feature. |
+| Completed checkpoint | `PRIV-002` privacy policy and Play Data Safety mapping — IMPLEMENTED on PR #170 after green Flutter CI #746 / run `31335858470`. |
+| Status | PRIV-002 is IMPLEMENTED: draft policy, machine Play Data Safety mapping, drift validator, 12 policy regressions, and CI enforcement are complete. Publication/contact/target-audience/production AdMob/Play Console evidence remains external before VERIFIED. |
+| Previous checkpoint | `ADS-007` consent/privacy client integration — IMPLEMENTED after PR #167 / Flutter CI #742. |
+| Next recommended feature | `PRIV-003` User data export/deletion readiness — P1; PRIV-001 is VERIFIED and ENG-008 is IMPLEMENTED. `TEST-011` still also needs production consent verification. |
 | Known blocker | `REL-007`/`REL-008` require real production AdMob/signing inputs and a production-signed candidate; final install/upgrade/device smoke requires an Android device or testing track. `TEST-009` also remains dependency-blocked while `PERF-001` is PLANNED. Visual Studio C++ components remain optional for Windows desktop only. |
+
+## PRIV-002 privacy policy and Play Data Safety mapping — 2026-08-09
+
+- Issue #169 / PR #170 implement the source-controlled PRIV-002 contract without changing runtime gameplay, persistence, economy, navigation, or ad-request behavior.
+- `docs/PRIVACY_POLICY.md` is a release-ready DRAFT and intentionally retains publication/contact/audience blockers rather than fabricating external evidence.
+- `docs/privacy/play_data_safety.json` maps all six PRIV-001 flows exactly once: five local-only flows remain on-device-only; `ad-sdk-processing` is the sole off-device network flow through Google Mobile Ads.
+- The conservative Google Mobile Ads mapping covers approximate location from IP, app interactions, diagnostics, and device/other IDs for advertising, analytics, and fraud-prevention/security; the production owner must re-check the exact SDK/configuration at release.
+- `tool/verify_privacy_disclosures.py` plus 12 regressions fail on inventory/disclosure/policy drift, local-flow off-device claims, processor mismatch, GMA data/purpose loss, stale absent capabilities, and fabricated publication states.
+- Flutter CI #746 / run `31335858470` passed privacy inventory, the new disclosure gates, security/dependency/dashboard/assets/format/Analyze, the full Flutter suite, Debug APK, artifact security and upload on implementation head `1da1ce6e57d9fc29b30a514360a847078820a7dc`.
+- Debug artifact #9044388801 is 80,608,681 bytes with SHA-256 `03e81188e97a1b9ab867d18c48894603f7586bd5d0963014516de35e8b8e868a`.
+- PRIV-002 is IMPLEMENTED rather than VERIFIED until publisher contact, a stable HTTPS policy URL, target audience/Families applicability, production Google Mobile Ads/UMP configuration, and submitted/reviewed Play Console answers exist.
+- Next recommended source task: PRIV-003 data export/deletion readiness; TEST-011 remains blocked on PRIV-003 plus external production consent evidence.
 
 ## ADS-007 consent/privacy client integration — 2026-08-09
 
@@ -37,7 +49,7 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 - Flutter CI #738 / run `31327747831` passed all security/privacy/dependency/dashboard/assets/format/analyze tests, the full Flutter suite, Debug APK build, Debug APK artifact scan, and upload on head `0201c611a967fb795ad28f67835700108f9440fd`.
 - Debug artifact #9042097866 is 80,594,411 bytes with SHA-256 `64359046108d96929c58967d1877caf0bba49f3fd93670d075f179f7092d99c2`.
 - Android Release Packaging Smoke #7 / run `31327747834` passed enforced-lock advisory verification, release preflight, ephemeral CI signing, ads-disabled release APK+AAB builds, and both packaged-artifact scans. Release APK SHA-256: `aa84e87d4815064e8bf2f89d05694c897b6bfed23f82261e17cf9006d21a738a`; AAB SHA-256: `3c8fb5b1cfb8b0cf8d3ba7e6156172e67477da54bba67b24c46b2ed8659e8892`.
-- Release evidence artifact #9042103273 is 464 bytes with SHA-256 `6c261bc007aefb0142b8b09a96080aaff6e1bcf17bbaacdcdb7a4c1c46f8c0ea`.
+- Release evidence artifact #9042103273 is 464 bytes with SHA-256 `6c261bc007aefb0142b8b09a96080aaff6e1bc007aefb0142b8b09a96080aaff6e1bcf17bbaacdcdb7a4c1c46f8c0ea`.
 - PR #164 squash-merged to main as `5b96ee94f1d82a36bb6bbffd53b7719b64c175d3`; Issue #163 closed Completed. SEC-002 has no remaining acceptance blocker and is VERIFIED.
 - `TEST-011` remains blocked by `ADS-007` consent/privacy integration and `PRIV-003` user-data export/deletion readiness. Both are P1 and dependency-ready; catalog order selects ADS-007 next.
 
@@ -275,7 +287,7 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 - Release Packaging Smoke #2 built a non-distributable release APK (55.8 MB, SHA-256 `2f6b2b5d3eb7de9a9029b0f51ae2e8a7e69a3c3278feb230abb116e4b56778dd`) and release AAB (57.0 MB, SHA-256 `957c1d4b696ee2547e97faa796544b3ab514fa2660681d4f01876af83a48c548`).
 - Smoke signing is generated ephemerally inside the runner; generated passwords are masked before build steps. Only checksum/evidence text is uploaded, never the smoke binaries. Evidence artifact #9029778593 has SHA-256 `45e8057fb3a835b946dfe5ae001c48485c463ea4755aa9938b42e5beeb665059`.
 - Flutter CI #539 on the same PR head passed secret/security checks, formatting, Analyze, focused checks, the full Flutter test suite, Debug APK build, and debug artifact upload.
-- PR #100 reconciled `ENG-009` and `SHOP-002` to VERIFIED and kept `REL-007`/`REL-008` PLANNED; Flutter CI #541 passed and uploaded debug artifact #9029962050 with SHA-256 `3289c9a41ef4cfad4c45e81fb4a40b621e87d902094b4d4b343d134ecab80906`.
+- PR #100 reconciled `ENG-009` and `SHOP-002` to VERIFIED and kept `REL-007`/`REL-008` PLANNED; Flutter CI #541 passed and uploaded debug artifact #9029962050 with SHA-256 `3289c9a41ef4cfad4c45e81fb4a40b621e87d902094b4d343d134ecab80906`.
 - `REL-007` and `REL-008` remain PLANNED: packaging is proven, but acceptance requires a real production-signed candidate and install/store/device validation. Smoke outputs are explicitly non-distributable.
 
 ## RC / UI3D reconciliation — 2026-08-09
@@ -366,7 +378,7 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | 2026-08-09 | Android release AAB packaging smoke | PASSED — PR #99 / Release Packaging Smoke #2 / 57.0 MB / SHA-256 `957c1d4b696ee2547e97faa796544b3ab514fa2660681d4f01876af83a48c548` |
 | 2026-08-09 | Release smoke credential redaction | PASSED — ephemeral signing passwords masked as `***`; only checksum evidence artifact #9029778593 uploaded |
 | 2026-08-09 | Flutter CI after release-smoke workflow | PASSED — CI #539 full suite + Debug APK + artifact on PR #99 head |
-| 2026-08-09 | RC tracking reconciliation | PASSED — PR #100 / CI #541 / Debug APK artifact #9029962050 / SHA-256 `3289c9a41ef4cfad4c45e81fb4a40b621e87d902094b4d4b343d134ecab80906` |
+| 2026-08-09 | RC tracking reconciliation | PASSED — PR #100 / CI #541 / Debug APK artifact #9029962050 / SHA-256 `3289c9a41ef4cfad4c45e81fb4a40b621e87d902094b4d343d134ecab80906` |
 | 2026-08-09 | REL-006 signing/key-management verification | PASSED — PR #102 / Flutter CI #544 + Release Packaging Smoke #4 / debug artifact #9030167112 / release evidence #9030181913 |
 | 2026-08-09 | TEST-001 progress/economy + legacy-save compatibility | PASSED — PR #104 / Flutter CI #546 / full suite + Debug APK artifact #9030311765 / SHA-256 `cdef9c5c5fbc9576d1760009956aab53ab6e63491248a2ba43ea5288797855b7` |
 | 2026-08-09 | REL-001 dynamic Android targets | PASSED — Flutter CI #546 validated 38 PowerShell/batch scripts with no fixed emulator/AVD/adb target |
@@ -375,6 +387,7 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | 2026-08-09 | SEC-001 mobile security baseline current-main reconciliation | PASSED — PR #128 / Flutter CI #655 / run `31300172519` / debug artifact #9034317021 / SHA-256 `67938778535d63de844f455b324796a4488b1a33efe20ea004fe9894d9db135d` |
 | 2026-08-09 | PRIV-001 privacy inventory current-main reconciliation | PASSED — PR #126 / Flutter CI #651 / run `31299285194` / debug artifact #9034063433 / SHA-256 `6fc839b195551ffcdbb0bd30b69bb9f29124aa5b9f5277ab8aa981d3508f4f9c` |
 | 2026-08-09 | ECON-005 versioned economy configuration | PASSED — PR #124 / Flutter CI #647 / run `31296918681` / debug artifact #9033326885 / SHA-256 `bbca79f780b9effc07a93ecc8a5a0b0dd73b523e6706531fe292127165d2872a` |
+| 2026-08-09 | PRIV-002 privacy policy / Play Data Safety contract | PASSED — PR #170 / Flutter CI #746 / run `31335858470` / 12 disclosure regressions + full Flutter suite + Debug APK artifact #9044388801 / SHA-256 `03e81188e97a1b9ab867d18c48894603f7586bd5d0963014516de35e8b8e868a`; source state IMPLEMENTED, external publication/store evidence pending |
 
 ## Test locally
 
