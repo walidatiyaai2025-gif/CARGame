@@ -122,19 +122,24 @@ progress_path.write_text(progress.replace(old, new, 1))
 
 integration_path = Path('test/core/economy/economy_integration_test.dart')
 integration = integration_path.read_text()
-marker = """  test('future economy versions fail closed without rewriting wallet', () async {
+marker = """  test(
+    'future economy versions fail closed without rewriting wallet',
+    () async {
 """
-addition = """  test('invalid economy version markers fail closed without rewrites', () async {
-    final prefs = SharedPreferencesAsync();
-    await prefs.setInt('coins', 444);
-    await prefs.setInt('economy_config_version', 0);
+addition = """  test(
+    'invalid economy version markers fail closed without rewrites',
+    () async {
+      final prefs = SharedPreferencesAsync();
+      await prefs.setInt('coins', 444);
+      await prefs.setInt('economy_config_version', 0);
 
-    final store = ProgressStore();
-    await expectLater(store.load(), throwsStateError);
+      final store = ProgressStore();
+      await expectLater(store.load(), throwsStateError);
 
-    expect(await prefs.getInt('coins'), 444);
-    expect(await prefs.getInt('economy_config_version'), 0);
-  });
+      expect(await prefs.getInt('coins'), 444);
+      expect(await prefs.getInt('economy_config_version'), 0);
+    },
+  );
 
 """
 if addition not in integration:
