@@ -1,32 +1,36 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-08-07",
+  "updatedAt": "2026-08-09",
   "securityPrinciples": {
     "clientIsUntrusted": true,
     "privilegedSecretsInClient": false,
     "offlineCoreAvailable": true,
     "diagnosticsRedacted": true,
-    "cleartextNetworkPermitted": false
+    "diagnosticsBuildGateEffective": false,
+    "remoteDiagnosticsEnabled": false,
+    "cleartextNetworkPermitted": false,
+    "adRequestsRespectEnableAds": true,
+    "adSdkInitializationConsentGated": false
   },
   "trustBoundaries": [
     {
       "id": "mobile-client",
-      "description": "Flutter/Dart application code, bundled resources, and runtime memory on a user-controlled device",
+      "description": "Flutter/Dart application code, bundled resources, public configuration, and runtime memory on a user-controlled device",
       "trusted": false
     },
     {
       "id": "local-storage",
-      "description": "SharedPreferences and application-support files on the local device",
+      "description": "SharedPreferences and application-support files, including progress, transaction/recovery metadata, recovery snapshots, settings, and local diagnostics",
       "trusted": false
     },
     {
       "id": "google-mobile-ads",
-      "description": "Third-party Google Mobile Ads SDK and its network endpoints",
+      "description": "Third-party Google Mobile Ads SDK and its network endpoints; current bootstrap initializes the SDK while AdService request/load/show operations are separately gated",
       "trusted": false
     },
     {
       "id": "ci-secret-store",
-      "description": "Approved CI/external secret store for future signing and release credentials",
+      "description": "Approved CI/external secret store for release signing and production release credentials",
       "trusted": true
     },
     {
@@ -50,6 +54,18 @@
       "repositoryAllowed": false
     },
     {
+      "id": "transaction-recovery-state",
+      "classification": "local-integrity",
+      "location": "local-storage",
+      "repositoryAllowed": false
+    },
+    {
+      "id": "storage-recovery-snapshot",
+      "classification": "sensitive-local-recovery",
+      "location": "local-storage",
+      "repositoryAllowed": false
+    },
+    {
       "id": "diagnostic-logs",
       "classification": "sensitive-local-diagnostics",
       "location": "local-storage",
@@ -63,7 +79,9 @@
     }
   ],
   "networkPolicy": {
-    "declaredNetworkProcessors": ["google-mobile-ads"],
+    "declaredNetworkProcessors": [
+      "google-mobile-ads"
+    ],
     "requireTls": true,
     "allowCleartext": false,
     "certificatePinningRequired": false,
@@ -76,6 +94,18 @@
       "privacy inventory update before enabling new data flows"
     ]
   },
+  "knownGaps": [
+    {
+      "id": "ad-sdk-bootstrap-consent",
+      "owner": "ADS-007",
+      "securityImpact": "Google Mobile Ads SDK initialization is not yet gated by production consent/regulated-region state even though AdService request/load/show operations honor ENABLE_ADS."
+    },
+    {
+      "id": "diagnostics-build-gate",
+      "owner": "ENG-013",
+      "securityImpact": "ENABLE_DIAGNOSTICS is not yet an effective bootstrap gate for the local logger; diagnostics remain redacted and local-only and there is no remote crash-reporting SDK."
+    }
+  ],
   "threats": [
     {
       "id": "SEC-T01",
@@ -85,7 +115,8 @@
       "mitigations": [
         "Treat all shipped client configuration as public",
         "Never embed reusable privileged secrets",
-        "Inject signing/service credentials only from approved secret stores"
+        "Inject signing/service credentials only from approved secret stores",
+        "Use the VERIFIED ENG-010 secret policy and REL-006 signing procedure as release controls"
       ],
       "residualRisk": "Game logic and public identifiers remain inspectable by design.",
       "owner": "ENG-010",
@@ -94,16 +125,18 @@
     {
       "id": "SEC-T02",
       "category": "local-tampering",
-      "scenario": "User or malware alters SharedPreferences/local files to change coins, progress, boosters, settings, or diagnostics.",
+      "scenario": "User or malware alters SharedPreferences/application-support files to change progress/economy state, transaction journals, reward ledger state, recovery snapshots, settings, or diagnostics.",
       "severity": "medium",
       "mitigations": [
-        "Validate and clamp persisted values on load",
-        "Keep economy/progression mutations bounded and tested",
+        "Validate and normalize persisted values on load",
+        "REL-004 preserves a local pre-repair snapshot before supported corruption repairs",
+        "SHOP-002 and REW-007 use validated absolute-state journals and idempotent recovery to avoid duplicate debit/grant after interruption",
+        "ECON-005 fails closed on corrupt or future economy schema markers",
         "Do not treat client-side values as authoritative for future server rewards"
       ],
-      "residualRisk": "Offline single-player progress can be modified on rooted/jailbroken devices.",
+      "residualRisk": "Offline single-player progress and local recovery metadata can still be modified on rooted/jailbroken devices; current controls target safe behavior and idempotency, not tamper-proof storage.",
       "owner": "ENG-008",
-      "followUp": "REL-004"
+      "followUp": "SEC-003"
     },
     {
       "id": "SEC-T03",
@@ -111,7 +144,7 @@
       "scenario": "Attacker modifies and redistributes a repackaged build or hooks runtime behavior.",
       "severity": "high",
       "mitigations": [
-        "Release signing keys remain outside source control",
+        "REL-006 keeps release signing keys and passwords outside source control",
         "Official distribution relies on platform signature verification",
         "No client-side integrity check is treated as an authorization boundary"
       ],
@@ -126,10 +159,11 @@
       "severity": "high",
       "mitigations": [
         "Require TLS for declared network communication",
-        "Disallow application cleartext traffic",
-        "Use scoped/expiring tokens for any future authenticated backend"
+        "Disallow application-owned cleartext traffic",
+        "Use scoped/expiring tokens and server-side authorization for any future authenticated backend",
+        "Require privacy/threat-model review before adding a new network processor"
       ],
-      "residualRisk": "Third-party SDK endpoint security remains partly controlled by the processor/platform.",
+      "residualRisk": "Third-party SDK endpoint security remains partly controlled by the processor/platform; there is no first-party authenticated backend today.",
       "owner": "SEC-001",
       "followUp": "SEC-003"
     },
@@ -139,26 +173,27 @@
       "scenario": "Credentials leak through source, build config, logs, screenshots, diagnostics, CI output, or artifacts.",
       "severity": "critical",
       "mitigations": [
-        "Repository secret-hygiene CI guard",
+        "ENG-010 repository secret-hygiene CI guard and policy",
         "SecretRedactor before diagnostic persistence/copy",
-        "No signing/private credentials in Dart defines or source",
-        "Rotation required after suspected exposure"
+        "REL-006 release-input preflight keeps signing/private credentials out of Dart defines and source",
+        "Rotation is required after suspected exposure"
       ],
-      "residualRisk": "Unknown credential formats may evade pattern-based redaction; callers must avoid logging secrets.",
+      "residualRisk": "Unknown credential formats may evade pattern-based redaction; callers must avoid logging secrets and SEC-002 dependency/artifact scanning remains pending.",
       "owner": "ENG-010",
       "followUp": "SEC-002"
     },
     {
       "id": "SEC-T06",
       "category": "diagnostic-privacy",
-      "scenario": "Runtime errors expose tokens, user-specific paths, private keys, or sensitive context.",
+      "scenario": "Runtime errors expose tokens, user-specific paths, private keys, or sensitive context, or diagnostics are enabled more broadly than intended.",
       "severity": "high",
       "mitigations": [
-        "Central redaction before memory/file/debug/clipboard/runtime broadcasts",
-        "Diagnostics remain local-only in the current product",
-        "Privacy inventory and future crash reporting require explicit gates"
+        "Central SecretRedactor runs before memory/file/debug/clipboard/runtime broadcasts",
+        "Diagnostics remain local-only in the current product and no remote crash-reporting SDK is integrated",
+        "PRIV-001 inventories the local diagnostic flow and deletion path",
+        "ENG-013 owns the ineffective ENABLE_DIAGNOSTICS bootstrap gate and any future remote reporting boundary"
       ],
-      "residualRisk": "Unexpected sensitive formats may appear in third-party exception text.",
+      "residualRisk": "Unexpected sensitive formats may appear in third-party exception text, and the local logger currently installs regardless of ENABLE_DIAGNOSTICS.",
       "owner": "ENG-010",
       "followUp": "ENG-013"
     },
@@ -169,39 +204,42 @@
       "severity": "high",
       "mitigations": [
         "Dependencies remain explicit in pubspec and lockfile",
-        "Privacy inventory blocks selected unreviewed analytics/cloud SDK additions",
-        "Secret and asset CI guards run before build"
+        "PRIV-001 blocks selected unreviewed analytics/cloud/crash SDK additions until inventory review",
+        "Secret, privacy, security, and asset CI guards run before build"
       ],
-      "residualRisk": "Automated vulnerability/license scanning is not yet complete.",
+      "residualRisk": "Automated vulnerability/license scanning and dependency governance remain incomplete until SEC-002 and ENG-006 are verified.",
       "owner": "ENG-006",
       "followUp": "SEC-002"
     },
     {
       "id": "SEC-T08",
       "category": "malicious-input-state",
-      "scenario": "Malformed persisted values, asset metadata, route actions, or repeated UI events produce crashes or duplicate state mutation.",
+      "scenario": "Malformed persisted values, transaction/reward journal payloads, recovery metadata, asset/config metadata, route actions, or repeated UI events produce crashes, stale decisions, or duplicate state mutation.",
       "severity": "high",
       "mitigations": [
-        "Typed asset/config registries validate inputs",
-        "ProgressStore clamps and validates economy/progression values",
+        "Typed asset/economy configuration validates structured inputs",
+        "RecoveringPreferences validates and repairs supported corrupt local values while preserving a pre-repair snapshot when possible",
+        "SHOP-002 and REW-007 validate journal keys/values and replay absolute final state instead of deltas",
+        "ECON-005 rejects corrupt/future economy schema markers before reward/shop recovery",
         "Navigation and gameplay actions use duplicate/race guards",
         "Missing/corrupt assets have bounded fallbacks"
       ],
-      "residualRisk": "Future external/deep-link inputs require dedicated validation as they are introduced.",
+      "residualRisk": "Future external/deep-link/network inputs require dedicated validation as they are introduced.",
       "owner": "ENG-003",
-      "followUp": "TEST-004"
+      "followUp": "TEST-011"
     },
     {
       "id": "SEC-T09",
       "category": "advertising-boundary",
-      "scenario": "Advertising SDK processing occurs without required consent or is mistaken for first-party offline behavior.",
+      "scenario": "Google Mobile Ads SDK initializes or processes data before required consent, or advertising behavior is mistaken for first-party offline processing.",
       "severity": "high",
       "mitigations": [
-        "Ads can be disabled globally by build configuration",
-        "Google Mobile Ads is explicitly declared in privacy inventory",
-        "Production consent remains a blocking ADS-007 responsibility"
+        "Google Mobile Ads is explicitly declared as the only current network processor in PRIV-001",
+        "AdService request/preload/load/show operations honor AppBuildConfig.enableAds",
+        "Release configuration rejects Google test ad-unit IDs",
+        "ADS-007 remains the blocking owner for production consent and regulated-region gating before SDK initialization and requests"
       ],
-      "residualRisk": "Production consent and regional behavior are not complete until ADS-007 is verified.",
+      "residualRisk": "Current bootstrap still initializes MobileAds independently of the AdService request gate, so SDK initialization is not yet consent-gated until ADS-007 is verified.",
       "owner": "ADS-007",
       "followUp": "PRIV-002"
     }
