@@ -1,0 +1,58 @@
+name: ECON005 Runtime Integration
+
+on:
+  push:
+    branches:
+      - agent/econ-005-versioned-economy-config
+
+permissions:
+  contents: write
+
+jobs:
+  integrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/econ-005-versioned-economy-config
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.44.8
+          cache: true
+      - name: Integrate typed economy configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/econ005_integrate.py
+          dart format \
+            lib/core/economy/economy_config.dart \
+            lib/core/storage/progress_store.dart \
+            lib/features/game/game_screen.dart \
+            lib/features/shop/shop_screen.dart \
+            test/core/economy/economy_config_test.dart \
+            test/core/economy/economy_integration_test.dart
+          git diff --check
+          flutter pub get
+          flutter gen-l10n
+          flutter analyze --no-fatal-infos --no-fatal-warnings
+          flutter test \
+            test/core/economy/economy_config_test.dart \
+            test/core/economy/economy_integration_test.dart \
+            test/core/storage/progress_store_test.dart \
+            test/core/storage/shop_purchase_recovery_test.dart \
+            test/core/storage/reward_transaction_recovery_test.dart
+          git rm .github/workflows/econ005_integrate.yml tools/econ005_integrate.py
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            lib/core/economy/economy_config.dart \
+            lib/core/storage/progress_store.dart \
+            lib/features/game/game_screen.dart \
+            lib/features/shop/shop_screen.dart \
+            test/core/economy/economy_config_test.dart \
+            test/core/economy/economy_integration_test.dart \
+            docs/work/ECON-005.md
+          git commit -m 'feat: centralize versioned economy configuration'
+          git push origin HEAD:agent/econ-005-versioned-economy-config
