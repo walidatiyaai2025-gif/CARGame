@@ -5,7 +5,10 @@
     "offlineFirst": true,
     "analyticsEnabled": false,
     "cloudSyncEnabled": false,
-    "adsFailClosedByConfig": true,
+    "adsFailClosedByConfig": false,
+    "adRequestsFailClosedByConfig": true,
+    "adSdkInitializationConsentGated": false,
+    "diagnosticsBuildGateEffective": false,
     "diagnosticsRedactedBeforePersistence": true
   },
   "processors": [
@@ -150,7 +153,7 @@
       "processor": "local-device",
       "storage": "application support directory/logs/app_error.log and bounded in-memory entries",
       "network": false,
-      "consent": "build_config_gate_ENABLE_DIAGNOSTICS; no remote upload exists",
+      "consent": "local operational diagnostics are not remotely uploaded; the existing ENABLE_DIAGNOSTICS build value is not yet wired to bootstrap logging and ENG-013 owns that future gate",
       "retention": "bounded to 300 in-memory entries; file persists locally until cleared/app data removed",
       "deletion": "AppLogger.clear(), clear application data, or uninstall",
       "safeguards": [
@@ -162,16 +165,33 @@
       "id": "ad-sdk-processing",
       "category": "advertising",
       "examples": [
-        "SDK/device/network signals processed by Google Mobile Ads when ad requests are enabled"
+        "SDK/device/network signals potentially processed by Google Mobile Ads after SDK bootstrap and when ad requests are enabled"
       ],
-      "purpose": "Load banner, rewarded, and interstitial advertisements",
+      "purpose": "Initialize Google Mobile Ads and load banner, rewarded, and interstitial advertisements",
       "processor": "google-mobile-ads",
       "storage": "controlled by Google Mobile Ads SDK/platform",
       "network": true,
-      "consent": "requires ADS-007 consent implementation before production personalized/regulated-region use; ENABLE_ADS can disable requests entirely",
+      "consent": "AdService blocks ad load/show when ENABLE_ADS=false, but current app bootstrap still initializes MobileAds; ADS-007 must add production consent/regulated-region gating before SDK initialization and requests",
       "retention": "third-party processor policy; must be reflected in PRIV-002/store disclosures",
       "deletion": "no first-party server copy exists; SDK/processor controls third-party retention",
       "source": "lib/core/ads/ad_service.dart"
+    }
+  ],
+  "knownGaps": [
+    {
+      "id": "ad-sdk-bootstrap-consent",
+      "owner": "ADS-007",
+      "description": "MobileAds initializes during optional-service bootstrap even when AdService request/load calls are disabled; production consent and regulated-region gating must run before SDK initialization and requests."
+    },
+    {
+      "id": "diagnostics-build-gate",
+      "owner": "ENG-013",
+      "description": "ENABLE_DIAGNOSTICS exists in AppBuildConfig but current bootstrap installs the local logger unconditionally; remote reporting remains absent and future diagnostics gating must be explicit."
+    },
+    {
+      "id": "in-app-data-controls",
+      "owner": "PRIV-003",
+      "description": "Complete local deletion currently relies on OS application-data clearing/uninstall; a consolidated in-app reset/export/delete path is not yet implemented."
     }
   ],
   "explicitlyAbsent": [
