@@ -25,69 +25,73 @@ jobs:
 
           path = Path('lib/features/game/game_screen.dart')
           text = path.read_text()
-          old = '''  Future<void> _closeResultAndReturnToMap(BuildContext sheetContext) async {
-            if (_resultActionBusy) return;
-            _resultActionBusy = true;
-
-            Navigator.of(sheetContext).pop();
-            await Future<void>.delayed(const Duration(milliseconds: 260));
-            if (!mounted) return;
-
-            await Navigator.of(context).maybePop();
-          }
-
-          Future<void> _retryFromResult(BuildContext sheetContext) async {
-            if (_resultActionBusy) return;
-            _resultActionBusy = true;
-
-            Navigator.of(sheetContext).pop();
-            await Future<void>.delayed(const Duration(milliseconds: 220));
-            if (!mounted) return;
-            setState(() => _reset());
-          }
-'''
-          new = '''  void _dismissResultSheet(BuildContext sheetContext) {
-            final route = ModalRoute.of(sheetContext);
-            if (route == null) return;
-            Navigator.of(sheetContext).removeRoute(route);
-          }
-
-          Future<void> _closeResultAndReturnToMap(BuildContext sheetContext) async {
-            if (_resultActionBusy) return;
-            _resultActionBusy = true;
-
-            final route = ModalRoute.of(context);
-            if (route == null) return;
-            final navigator = Navigator.of(context);
-            _dismissResultSheet(sheetContext);
-            await WidgetsBinding.instance.endOfFrame;
-            if (!mounted) return;
-            navigator.removeRoute(route);
-          }
-
-          Future<void> _retryFromResult(BuildContext sheetContext) async {
-            if (_resultActionBusy) return;
-            _resultActionBusy = true;
-
-            _dismissResultSheet(sheetContext);
-            if (!mounted) return;
-            setState(() => _reset());
-          }
-'''
+          old = "\n".join([
+              "  Future<void> _closeResultAndReturnToMap(BuildContext sheetContext) async {",
+              "    if (_resultActionBusy) return;",
+              "    _resultActionBusy = true;",
+              "",
+              "    Navigator.of(sheetContext).pop();",
+              "    await Future<void>.delayed(const Duration(milliseconds: 260));",
+              "    if (!mounted) return;",
+              "",
+              "    await Navigator.of(context).maybePop();",
+              "  }",
+              "",
+              "  Future<void> _retryFromResult(BuildContext sheetContext) async {",
+              "    if (_resultActionBusy) return;",
+              "    _resultActionBusy = true;",
+              "",
+              "    Navigator.of(sheetContext).pop();",
+              "    await Future<void>.delayed(const Duration(milliseconds: 220));",
+              "    if (!mounted) return;",
+              "    setState(() => _reset());",
+              "  }",
+          ])
+          new = "\n".join([
+              "  void _dismissResultSheet(BuildContext sheetContext) {",
+              "    final route = ModalRoute.of(sheetContext);",
+              "    if (route == null) return;",
+              "    Navigator.of(sheetContext).removeRoute(route);",
+              "  }",
+              "",
+              "  Future<void> _closeResultAndReturnToMap(BuildContext sheetContext) async {",
+              "    if (_resultActionBusy) return;",
+              "    _resultActionBusy = true;",
+              "",
+              "    final route = ModalRoute.of(context);",
+              "    if (route == null) return;",
+              "    final navigator = Navigator.of(context);",
+              "    _dismissResultSheet(sheetContext);",
+              "    await WidgetsBinding.instance.endOfFrame;",
+              "    if (!mounted) return;",
+              "    navigator.removeRoute(route);",
+              "  }",
+              "",
+              "  Future<void> _retryFromResult(BuildContext sheetContext) async {",
+              "    if (_resultActionBusy) return;",
+              "    _resultActionBusy = true;",
+              "",
+              "    _dismissResultSheet(sheetContext);",
+              "    if (!mounted) return;",
+              "    setState(() => _reset());",
+              "  }",
+          ])
           if old not in text:
               raise SystemExit('Expected result navigation block was not found')
           text = text.replace(old, new, 1)
 
-          old_reward = '''                                  onReward: () {
-                                    if (!mounted) return;
-                                    Navigator.of(sheetContext).pop();
-                                    setState(() {
-'''
-          new_reward = '''                                  onReward: () {
-                                    if (!mounted) return;
-                                    _dismissResultSheet(sheetContext);
-                                    setState(() {
-'''
+          old_reward = "\n".join([
+              "                                  onReward: () {",
+              "                                    if (!mounted) return;",
+              "                                    Navigator.of(sheetContext).pop();",
+              "                                    setState(() {",
+          ])
+          new_reward = "\n".join([
+              "                                  onReward: () {",
+              "                                    if (!mounted) return;",
+              "                                    _dismissResultSheet(sheetContext);",
+              "                                    setState(() {",
+          ])
           if old_reward not in text:
               raise SystemExit('Expected rewarded callback block was not found')
           path.write_text(text.replace(old_reward, new_reward, 1))
