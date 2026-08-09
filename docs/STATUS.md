@@ -7,12 +7,25 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | Field | Value |
 |---|---|
 | Current phase | Android RC hardening — issue #79 |
-| Primary feature | `ECON-005` IN PROGRESS — issue #122 on `agent/econ-005-versioned-economy-config`. |
-| Completed checkpoint | `GAME-016` input determinism — PR #111 merged as `093d9a9384aec2d18503284a8edc95ba1ce1ecfb` after Flutter CI #580 passed formatting, Analyze, all 215 Flutter tests, Debug APK build, and artifact upload. |
-| Status | `ECON-005` audit confirms release-critical economy values are scattered across gameplay, progress/rewards, and shop presentation. v1 will centralize/version/validate the existing numbers without rebalancing player outcomes. |
-| Previous checkpoint | `TEST-004` navigation-race verification — PR #109 merged as `24aa922453f88af507e01e950f7d26048e1c6c3f`; its final current-head verification completed on Flutter CI #574. |
-| Next recommended feature | Complete `ECON-005` typed v1 configuration, parity/migration regressions, and full Android CI verification before selecting another RC P0. |
+| Primary feature | None; `ECON-005` is VERIFIED after issue #122 / PR #124. |
+| Completed checkpoint | `ECON-005` versioned economy configuration — PR #124 merged as `2091cf35ff9b4a261fa76f9d90975735711c58e3` after Flutter CI #647 passed the full gate set and uploaded debug artifact #9033326885. |
+| Status | Shipped v1 economy values are centralized in immutable validated `EconomyConfig.v1`; migration is non-destructive/fail-closed, shop prices and quantities are authoritative by stable offer IDs, and configured heart purchases retain SHOP-002 transaction atomicity. |
+| Previous checkpoint | `REW-007` reward transaction reconciliation — PR #120 merged as `b915d95b938d459133a9a8b120f38815178b1852` after Flutter CI #623. |
+| Next recommended feature | `PRIV-001` privacy inventory, consent, and data minimization: unblocked by `ENG-001`, release-critical, and it unlocks consent/store mapping plus `TEST-011`. |
 | Known blocker | `REL-007`/`REL-008` require real production AdMob/signing inputs and a production-signed candidate; final install/upgrade/device smoke requires an Android device or testing track. `TEST-009` also remains dependency-blocked while `PERF-001` is PLANNED. Visual Studio C++ components remain optional for Windows desktop only. |
+
+## ECON-005 economy configuration verification — 2026-08-09
+
+- Issue #122 / PR #124 replace scattered release-critical economy constants with immutable validated `EconomyConfig.v1` while preserving the exact shipped v1 numbers.
+- Centralized rules cover starter coins/hearts/boosters, heart cap/refill cadence, XP level step, daily mission thresholds, gameplay reward formulas, hint/extra-move sinks, milestone/world rewards, and all shop offer prices/quantities.
+- `ProgressStore`, `GameScreen`, and `ShopScreen` consume config-derived values; production shop flows use stable authoritative offer IDs instead of trusting presentation-supplied prices or quantities.
+- `economy_config_version` adoption writes only the v1 marker for legacy saves, leaves balances/entitlements untouched, treats same-version loads as no-ops, and fails closed for non-positive/corrupt or future markers before reward/shop recovery.
+- Configured heart purchases debit coins, grant hearts, and clear the refill timestamp atomically through the existing SHOP-002 absolute-state journal; REW-007 and SHOP-002 recovery/idempotency behavior remains preserved.
+- Focused review-hardening run `31296816764` passed Analyze plus ECON-005, ProgressStore, SHOP-002, and REW-007 regressions.
+- Final implementation head `05217d3a1134b21ff014a58864615683db3ccb22` passed Flutter CI #647 / run `31296918681`: secret/privacy/security gates, formatting, whitespace, Analyze, optional-service checks, full Flutter tests, Debug APK build, and artifact upload.
+- Debug artifact #9033326885 is 80,544,514 bytes with SHA-256 `bbca79f780b9effc07a93ecc8a5a0b0dd73b523e6706531fe292127165d2872a`.
+- PR #124 squash-merged to `main` as `2091cf35ff9b4a261fa76f9d90975735711c58e3`; `ECON-005` is VERIFIED.
+- Next release-critical unblocked P0 selected for execution: `PRIV-001`.
 
 ## REW-007 reward transaction reconciliation — 2026-08-09
 
@@ -191,6 +204,7 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | 2026-08-09 | REL-006 signing/key-management verification | PASSED — PR #102 / Flutter CI #544 + Release Packaging Smoke #4 / debug artifact #9030167112 / release evidence #9030181913 |
 | 2026-08-09 | TEST-001 progress/economy + legacy-save compatibility | PASSED — PR #104 / Flutter CI #546 / full suite + Debug APK artifact #9030311765 / SHA-256 `cdef9c5c5fbc9576d1760009956aab53ab6e63491248a2ba43ea5288797855b7` |
 | 2026-08-09 | REL-001 dynamic Android targets | PASSED — Flutter CI #546 validated 38 PowerShell/batch scripts with no fixed emulator/AVD/adb target |
+| 2026-08-09 | ECON-005 versioned economy configuration | PASSED — PR #124 / Flutter CI #647 / run `31296918681` / debug artifact #9033326885 / SHA-256 `bbca79f780b9effc07a93ecc8a5a0b0dd73b523e6706531fe292127165d2872a` |
 
 ## Test locally
 
