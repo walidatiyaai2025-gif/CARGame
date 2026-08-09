@@ -140,6 +140,24 @@ class _HomeScreenState extends State<HomeScreen> {
                   endColor: world.endColor,
                 ),
               ),
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.white.withValues(alpha: .30),
+                          Colors.white.withValues(alpha: .06),
+                          const Color(0xFFF8FBFF).withValues(alpha: .64),
+                        ],
+                        stops: const [0, .48, 1],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
               SafeArea(
                 child: LayoutBuilder(
                   builder: (context, constraints) {
@@ -148,7 +166,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     return GameFitView(
                       padding: EdgeInsets.fromLTRB(
                         horizontal,
-                        6,
+                        8,
                         horizontal,
                         8,
                       ),
@@ -157,9 +175,10 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            _TopBar(
+                            _CommandHeader(
                               ar: ar,
                               compact: compact,
+                              worldNumber: worldNumber,
                               onShop: _openShop,
                               onProgress: _openProgress,
                               onLogs: _openLogs,
@@ -177,19 +196,20 @@ class _HomeScreenState extends State<HomeScreen> {
                               starLabel: ar ? 'النجوم' : 'Stars',
                             ),
                             const SizedBox(height: 10),
-                            _JourneyHero(
+                            _DestinationHero(
                               ar: ar,
                               compact: compact,
                               title: l10n.appTitle,
                               worldName: world.name,
                               worldNumber: worldNumber,
+                              levelNumber: unlocked,
                               currentCity: currentCity,
                               progress: store.completionProgress,
                               completed: store.completedLevels,
                               startColor: world.startColor,
                               endColor: world.endColor,
                             ),
-                            const SizedBox(height: 9),
+                            const SizedBox(height: 10),
                             _QuickActions(
                               compact: compact,
                               ar: ar,
@@ -202,7 +222,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               onShop: _openShop,
                             ),
                             const SizedBox(height: 8),
-                            _StreakPanel(
+                            _PerformanceStrip(
                               ar: ar,
                               current: store.currentWinStreak,
                               best: store.bestWinStreak,
@@ -216,9 +236,10 @@ class _HomeScreenState extends State<HomeScreen> {
                               busy: _openingJourney,
                               enabled: store.hearts > 0,
                               cityName: currentCity,
+                              levelNumber: unlocked,
                               onPressed: _openJourney,
                             ),
-                            const SizedBox(height: 9),
+                            const SizedBox(height: 8),
                             const Text(
                               'Walid Atiya Ata - PMP',
                               textAlign: TextAlign.center,
@@ -244,10 +265,11 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-class _TopBar extends StatelessWidget {
-  const _TopBar({
+class _CommandHeader extends StatelessWidget {
+  const _CommandHeader({
     required this.ar,
     required this.compact,
+    required this.worldNumber,
     required this.onShop,
     required this.onProgress,
     required this.onLogs,
@@ -256,72 +278,105 @@ class _TopBar extends StatelessWidget {
 
   final bool ar;
   final bool compact;
+  final int worldNumber;
   final VoidCallback onShop;
   final VoidCallback onProgress;
   final VoidCallback onLogs;
   final VoidCallback onLanguage;
 
   @override
-  Widget build(BuildContext context) => Row(
-    children: [
-      Expanded(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              ar ? 'مرحبًا أيها المستخدم' : 'Welcome, player',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: AppTheme.navy,
-                fontSize: compact ? 22 : 27,
-                fontWeight: FontWeight.w900,
-              ),
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: compact ? 42 : 48,
+          height: compact ? 42 : 48,
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFF16213E), Color(0xFF0B1120)],
             ),
-            Text(
-              ar
-                  ? 'جهّز شحنتك وابدأ المغامرة'
-                  : 'Prepare your cargo and start the adventure',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: AppTheme.muted,
-                fontWeight: FontWeight.w700,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.white70),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x330B1120),
+                blurRadius: 14,
+                offset: Offset(0, 7),
               ),
+            ],
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            '$worldNumber',
+            style: TextStyle(
+              color: AppTheme.yellow,
+              fontSize: compact ? 18 : 21,
+              fontWeight: FontWeight.w900,
             ),
-          ],
+          ),
         ),
-      ),
-      const SizedBox(width: 8),
-      _TopAction(icon: Icons.storefront_rounded, onTap: onShop),
-      _TopAction(icon: Icons.insights_rounded, onTap: onProgress),
-      _TopAction(icon: Icons.article_outlined, onTap: onLogs),
-      _TopAction(icon: Icons.language_rounded, onTap: onLanguage),
-    ],
-  );
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                ar ? 'مركز قيادة الشحنات' : 'CARGO COMMAND',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: AppTheme.navy,
+                  fontSize: compact ? 18 : 21,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: .3,
+                ),
+              ),
+              Text(
+                ar ? 'المسار جاهز للمرحلة التالية' : 'Route ready for the next drop',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: AppTheme.muted,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 6),
+        _HeaderAction(icon: Icons.storefront_rounded, onTap: onShop),
+        _HeaderAction(icon: Icons.insights_rounded, onTap: onProgress),
+        _HeaderAction(icon: Icons.article_outlined, onTap: onLogs),
+        _HeaderAction(icon: Icons.language_rounded, onTap: onLanguage),
+      ],
+    );
+  }
 }
 
-class _TopAction extends StatelessWidget {
-  const _TopAction({required this.icon, required this.onTap});
+class _HeaderAction extends StatelessWidget {
+  const _HeaderAction({required this.icon, required this.onTap});
 
   final IconData icon;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsetsDirectional.only(start: 5),
+    padding: const EdgeInsetsDirectional.only(start: 4),
     child: Material(
-      color: Colors.white.withValues(alpha: .90),
-      borderRadius: BorderRadius.circular(16),
+      color: const Color(0xEEFFFFFF),
+      borderRadius: BorderRadius.circular(14),
       elevation: 2,
       shadowColor: Colors.black12,
       child: InkWell(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(14),
         onTap: onTap,
         child: SizedBox(
-          width: 40,
-          height: 40,
-          child: Icon(icon, color: AppTheme.navy, size: 21),
+          width: 38,
+          height: 38,
+          child: Icon(icon, color: AppTheme.navy, size: 20),
         ),
       ),
     ),
@@ -351,16 +406,17 @@ class _ResourceStrip extends StatelessWidget {
   Widget build(BuildContext context) => Row(
     children: [
       Expanded(
-        child: _ResourceCard(
+        child: GameResourcePanel(
           icon: ThreeDIconType.heart,
           value: hearts,
           label: heartLabel,
           compact: compact,
+          animateIcon: true,
         ),
       ),
       const SizedBox(width: 8),
       Expanded(
-        child: _ResourceCard(
+        child: GameResourcePanel(
           icon: ThreeDIconType.coin,
           value: coins,
           label: coinLabel,
@@ -369,7 +425,7 @@ class _ResourceStrip extends StatelessWidget {
       ),
       const SizedBox(width: 8),
       Expanded(
-        child: _ResourceCard(
+        child: GameResourcePanel(
           icon: ThreeDIconType.star,
           value: stars,
           label: starLabel,
@@ -380,36 +436,14 @@ class _ResourceStrip extends StatelessWidget {
   );
 }
 
-class _ResourceCard extends StatelessWidget {
-  const _ResourceCard({
-    required this.icon,
-    required this.value,
-    required this.label,
-    required this.compact,
-  });
-
-  final ThreeDIconType icon;
-  final String value;
-  final String label;
-  final bool compact;
-
-  @override
-  Widget build(BuildContext context) => GameResourcePanel(
-    icon: icon,
-    value: value,
-    label: label,
-    compact: compact,
-    animateIcon: icon == ThreeDIconType.heart,
-  );
-}
-
-class _JourneyHero extends StatelessWidget {
-  const _JourneyHero({
+class _DestinationHero extends StatelessWidget {
+  const _DestinationHero({
     required this.ar,
     required this.compact,
     required this.title,
     required this.worldName,
     required this.worldNumber,
+    required this.levelNumber,
     required this.currentCity,
     required this.progress,
     required this.completed,
@@ -422,6 +456,7 @@ class _JourneyHero extends StatelessWidget {
   final String title;
   final String worldName;
   final int worldNumber;
+  final int levelNumber;
   final String currentCity;
   final double progress;
   final int completed;
@@ -430,139 +465,213 @@ class _JourneyHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-    padding: EdgeInsets.all(compact ? 12 : 16),
+    clipBehavior: Clip.antiAlias,
     decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(compact ? 28 : 34),
       gradient: LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
-        colors: [startColor, endColor],
+        colors: [
+          startColor,
+          Color.lerp(startColor, endColor, .55)!,
+          endColor,
+        ],
       ),
-      borderRadius: BorderRadius.circular(34),
+      border: Border.all(color: Colors.white.withValues(alpha: .55)),
       boxShadow: [
         BoxShadow(
-          color: startColor.withValues(alpha: .38),
+          color: endColor.withValues(alpha: .32),
           blurRadius: 28,
-          offset: const Offset(0, 15),
+          offset: const Offset(0, 14),
         ),
       ],
     ),
     child: Stack(
       children: [
         PositionedDirectional(
-          end: -12,
-          top: -6,
+          end: compact ? -34 : -26,
+          top: compact ? -26 : -34,
           child: Opacity(
-            opacity: .16,
+            opacity: .14,
             child: ThreeDGameIcon(
               type: ThreeDIconType.city,
-              size: compact ? 150 : 185,
+              size: compact ? 180 : 230,
             ),
           ),
         ),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: compact ? 22 : 27,
-                          fontWeight: FontWeight.w900,
+        PositionedDirectional(
+          start: -70,
+          bottom: -90,
+          child: Container(
+            width: 180,
+            height: 180,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white.withValues(alpha: .09),
+            ),
+          ),
+        ),
+        Padding(
+          padding: EdgeInsets.all(compact ? 13 : 17),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF0B1120).withValues(alpha: .32),
+                            borderRadius: BorderRadius.circular(30),
+                            border: Border.all(color: Colors.white24),
+                          ),
+                          child: Text(
+                            ar
+                                ? 'الوجهة التالية • المرحلة $levelNumber'
+                                : 'NEXT DROP • LEVEL $levelNumber',
+                            style: TextStyle(
+                              color: AppTheme.yellow,
+                              fontSize: compact ? 10 : 11,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: .5,
+                            ),
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        ar
-                            ? 'العالم $worldNumber — $worldName'
-                            : 'World $worldNumber — $worldName',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontWeight: FontWeight.w800,
+                        const SizedBox(height: 7),
+                        Text(
+                          title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: compact ? 23 : 28,
+                            fontWeight: FontWeight.w900,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 11,
-                          vertical: 7,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: .16),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: Colors.white24),
-                        ),
-                        child: Text(
+                        const SizedBox(height: 2),
+                        Text(
                           currentCity,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: compact ? 19 : 22,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          ar
+                              ? 'العالم $worldNumber — $worldName'
+                              : 'World $worldNumber — $worldName',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Container(
+                    width: compact ? 74 : 88,
+                    height: compact ? 74 : 88,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: .14),
+                      borderRadius: BorderRadius.circular(28),
+                      border: Border.all(color: Colors.white24),
+                    ),
+                    alignment: Alignment.center,
+                    child: ThreeDGameIcon(
+                      type: ThreeDIconType.city,
+                      size: compact ? 60 : 72,
+                      animate: true,
+                      semanticLabel: currentCity,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.fromLTRB(11, 9, 11, 10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF07111F).withValues(alpha: .28),
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: Colors.white24),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            ar ? 'تقدم شبكة المدن' : 'CITY NETWORK PROGRESS',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: .35,
+                            ),
+                          ),
+                        ),
+                        Text(
+                          '${(progress * 100).round()}%',
                           style: const TextStyle(
                             color: AppTheme.yellow,
                             fontWeight: FontWeight.w900,
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 12),
-                ThreeDGameIcon(
-                  type: ThreeDIconType.city,
-                  size: compact ? 62 : 78,
-                  animate: true,
-                  semanticLabel: currentCity,
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    ar ? 'التقدم العالمي' : 'Global progress',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w800,
+                      ],
                     ),
-                  ),
+                    const SizedBox(height: 7),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(20),
+                      child: LinearProgressIndicator(
+                        value: progress,
+                        minHeight: 9,
+                        backgroundColor: Colors.white24,
+                        valueColor: const AlwaysStoppedAnimation(AppTheme.yellow),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            ar
+                                ? '$completed مدينة مكتملة'
+                                : '$completed cities cleared',
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                        Text(
+                          '$completed/${ProgressStore.totalLevels}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-                Text(
-                  '${(progress * 100).round()}%',
-                  style: const TextStyle(
-                    color: AppTheme.yellow,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: LinearProgressIndicator(
-                value: progress,
-                minHeight: 11,
-                backgroundColor: Colors.white24,
-                valueColor: const AlwaysStoppedAnimation(AppTheme.yellow),
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '$completed/${ProgressStore.totalLevels} ${ar ? 'مدينة مكتملة' : 'cities completed'}',
-              style: const TextStyle(
-                color: Colors.white70,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ],
     ),
@@ -593,22 +702,23 @@ class _QuickActions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cards = [
-      _ActionCard(
+      GameActionPanel(
         icon: ThreeDIconType.gift,
         title: ar ? 'المكافأة اليومية' : 'Daily reward',
         subtitle: dailyClaimed ? (ar ? 'تم الاستلام' : 'Claimed') : '+50',
         onTap: onDaily,
+        animateIcon: true,
       ),
-      _ActionCard(
+      GameActionPanel(
         icon: ThreeDIconType.chest,
         title: ar ? 'مهمة اليوم' : 'Daily mission',
         subtitle: missionClaimed ? (ar ? 'مكتملة' : 'Completed') : missionText,
         onTap: onMission,
       ),
-      _ActionCard(
+      GameActionPanel(
         icon: ThreeDIconType.coin,
         title: ar ? 'متجر الشحنات' : 'Cargo shop',
-        subtitle: ar ? 'طور قدراتك' : 'Upgrade your loadout',
+        subtitle: ar ? 'طوّر تجهيزاتك' : 'Upgrade loadout',
         onTap: onShop,
       ),
     ];
@@ -618,7 +728,7 @@ class _QuickActions extends StatelessWidget {
         children: [
           for (var i = 0; i < cards.length; i++) ...[
             cards[i],
-            if (i != cards.length - 1) const SizedBox(height: 10),
+            if (i != cards.length - 1) const SizedBox(height: 8),
           ],
         ],
       );
@@ -628,38 +738,15 @@ class _QuickActions extends StatelessWidget {
       children: [
         for (var i = 0; i < cards.length; i++) ...[
           Expanded(child: cards[i]),
-          if (i != cards.length - 1) const SizedBox(width: 10),
+          if (i != cards.length - 1) const SizedBox(width: 8),
         ],
       ],
     );
   }
 }
 
-class _ActionCard extends StatelessWidget {
-  const _ActionCard({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
-
-  final ThreeDIconType icon;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) => GameActionPanel(
-    icon: icon,
-    title: title,
-    subtitle: subtitle,
-    onTap: onTap,
-    animateIcon: icon == ThreeDIconType.gift,
-  );
-}
-
-class _StreakPanel extends StatelessWidget {
-  const _StreakPanel({
+class _PerformanceStrip extends StatelessWidget {
+  const _PerformanceStrip({
     required this.ar,
     required this.current,
     required this.best,
@@ -676,43 +763,53 @@ class _StreakPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) => GamePanel(
     onTap: onTap,
-    semanticLabel: ar ? 'سلسلة الانتصارات' : 'Win streak',
-    backgroundColor: const Color(0xFFF2ECFF),
-    borderColor: const Color(0xFFDCCAF7),
-    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+    semanticLabel: ar ? 'أداء السائق' : 'Driver performance',
+    backgroundColor: Colors.white.withValues(alpha: .90),
+    borderColor: const Color(0xFFDDE4EE),
+    padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
     child: Row(
       children: [
         Container(
-          width: 48,
-          height: 48,
+          width: 42,
+          height: 42,
           decoration: BoxDecoration(
             gradient: const LinearGradient(
-              colors: [Color(0xFF9C5CFF), Color(0xFF5D2BA8)],
+              colors: [Color(0xFFFFB62E), Color(0xFFF06419)],
             ),
-            borderRadius: BorderRadius.circular(17),
+            borderRadius: BorderRadius.circular(15),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x33F06419),
+                blurRadius: 12,
+                offset: Offset(0, 6),
+              ),
+            ],
           ),
           child: const Icon(
             Icons.local_fire_department_rounded,
             color: Colors.white,
-            size: 29,
+            size: 26,
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 11),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                ar ? 'سلسلة الانتصارات' : 'Win streak',
+                ar ? 'أداء الرحلة' : 'RUN PERFORMANCE',
                 style: const TextStyle(
                   color: AppTheme.navy,
+                  fontSize: 12,
                   fontWeight: FontWeight.w900,
+                  letterSpacing: .35,
                 ),
               ),
+              const SizedBox(height: 2),
               Text(
                 ar
-                    ? '$current حاليًا • الأفضل $best • Combo $combo'
-                    : '$current current • best $best • combo $combo',
+                    ? 'سلسلة $current • الأفضل $best • كومبو $combo'
+                    : 'Streak $current • best $best • combo $combo',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
@@ -723,7 +820,7 @@ class _StreakPanel extends StatelessWidget {
             ],
           ),
         ),
-        const Icon(Icons.chevron_right_rounded, color: Color(0xFF7B43C6)),
+        const Icon(Icons.chevron_right_rounded, color: AppTheme.navy),
       ],
     ),
   );
@@ -736,6 +833,7 @@ class _StartJourneyButton extends StatelessWidget {
     required this.busy,
     required this.enabled,
     required this.cityName,
+    required this.levelNumber,
     required this.onPressed,
   });
 
@@ -744,6 +842,7 @@ class _StartJourneyButton extends StatelessWidget {
   final bool busy;
   final bool enabled;
   final String cityName;
+  final int levelNumber;
   final VoidCallback onPressed;
 
   @override
@@ -753,38 +852,43 @@ class _StartJourneyButton extends StatelessWidget {
       child: GameButton(
         semanticLabel: enabled
             ? (ar
-                  ? 'ابدأ المرحلة التالية: $cityName'
-                  : 'Start next city: $cityName')
+                  ? 'ابدأ المرحلة $levelNumber: $cityName'
+                  : 'Start level $levelNumber: $cityName')
             : (ar ? 'لا توجد قلوب' : 'No hearts'),
         onPressed: enabled ? onPressed : null,
         enabled: enabled,
         loading: busy,
         expand: true,
-        height: compact ? 70 : 78,
-        borderRadius: BorderRadius.circular(28),
-        padding: const EdgeInsets.symmetric(horizontal: 18),
+        height: compact ? 68 : 76,
+        borderRadius: BorderRadius.circular(26),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         gradient: LinearGradient(
           colors: enabled
-              ? const [Color(0xFFFFB62E), Color(0xFFF06419)]
+              ? const [Color(0xFF17233D), Color(0xFF0A1020)]
               : const [Color(0xFFB8BEC7), Color(0xFF8C939D)],
         ),
-        shadowColor: const Color(0x66E76B17),
+        shadowColor: const Color(0x66111A2E),
         child: Row(
           children: [
             Container(
-              width: 52,
-              height: 52,
+              width: 48,
+              height: 48,
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: .18),
-                shape: BoxShape.circle,
+                gradient: enabled
+                    ? const LinearGradient(
+                        colors: [Color(0xFFFFD65A), Color(0xFFF28A1A)],
+                      )
+                    : null,
+                color: enabled ? null : Colors.white24,
+                borderRadius: BorderRadius.circular(16),
               ),
               child: const Icon(
                 Icons.play_arrow_rounded,
                 color: Colors.white,
-                size: 36,
+                size: 34,
               ),
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: 13),
             Expanded(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -792,30 +896,33 @@ class _StartJourneyButton extends StatelessWidget {
                 children: [
                   Text(
                     enabled
-                        ? (ar ? 'ابدأ المرحلة التالية' : 'START NEXT CITY')
+                        ? (ar ? 'ابدأ الرحلة التالية' : 'START NEXT DROP')
                         : (ar ? 'لا توجد قلوب' : 'NO HEARTS'),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: compact ? 17 : 20,
+                      fontSize: compact ? 16 : 19,
                       fontWeight: FontWeight.w900,
-                      letterSpacing: .3,
+                      letterSpacing: .4,
                     ),
                   ),
                   Text(
-                    cityName,
+                    ar
+                        ? 'المرحلة $levelNumber • $cityName'
+                        : 'Level $levelNumber • $cityName',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       color: Colors.white70,
+                      fontSize: 12,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                 ],
               ),
             ),
-            const ThreeDGameIcon(type: ThreeDIconType.chest, size: 52),
+            const ThreeDGameIcon(type: ThreeDIconType.chest, size: 48),
           ],
         ),
       ),
