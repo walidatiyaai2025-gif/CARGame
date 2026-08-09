@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cargo_sort_game/core/navigation/game_route_names.dart';
 import 'package:cargo_sort_game/core/settings/app_settings_store.dart';
 import 'package:cargo_sort_game/core/storage/progress_store.dart';
@@ -87,6 +89,68 @@ void main() {
     );
     await expectRoute(find.byIcon(Icons.article_outlined), GameRouteNames.logs);
 
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('repeated Start action opens the journey route only once', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(412, 915);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final observedNames = <String?>[];
+    final store = ProgressStore();
+    final settings = AppSettingsStore();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        navigatorObservers: [_RouteObserver(observedNames.add)],
+        locale: const Locale('en'),
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: HomeScreen(
+          store: store,
+          settings: settings,
+          onToggleLanguage: () {},
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final startFinder = find.byType(GameButton);
+    expect(startFinder, findsOneWidget);
+    final startButton = tester.widget<GameButton>(startFinder);
+    expect(startButton.onPressed, isNotNull);
+
+    final firstAction = Future<void>.sync(() async {
+      await startButton.onPressed!.call();
+    });
+    final secondAction = Future<void>.sync(() async {
+      await startButton.onPressed!.call();
+    });
+
+    await tester.pump(const Duration(milliseconds: 50));
+    expect(
+      observedNames.where((name) => name == GameRouteNames.worldMap).length,
+      1,
+    );
+
+    Navigator.of(tester.element(find.byType(HomeScreen))).pop();
+    await tester.pump(const Duration(milliseconds: 400));
+    await Future.wait([firstAction, secondAction]);
+
+    expect(find.byType(HomeScreen), findsOneWidget);
+    expect(
+      observedNames.where((name) => name == GameRouteNames.worldMap).length,
+      1,
+    );
     expect(tester.takeException(), isNull);
   });
 }
