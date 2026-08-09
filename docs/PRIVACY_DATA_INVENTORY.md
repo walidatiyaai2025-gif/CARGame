@@ -6,7 +6,9 @@ This document is the human-readable PRIV-001 evidence. The machine-readable sour
 
 CARGame is offline-first. Core progression, economy, settings, transaction-recovery metadata, storage-recovery snapshots, and diagnostics are stored locally on the device. The current production dependency set contains no first-party analytics, account, cloud-save, or remote crash-reporting SDK.
 
-The only intentional third-party network data processor in the current runtime dependency set is Google Mobile Ads. Ad requests can be disabled globally with `ENABLE_ADS=false`. Production consent behavior remains owned by ADS-007 and store disclosure/policy mapping remains owned by PRIV-002.
+Google Mobile Ads is the only intentional third-party network data processor in the current runtime dependency set. The app's `AdService` blocks ad load/show calls when `ENABLE_ADS=false`, but current bootstrap still calls `MobileAds.instance.initialize()` after the offline UI becomes available. Production consent and regulated-region gating before SDK initialization/requests therefore remains an explicit ADS-007 blocker rather than a capability claimed by PRIV-001.
+
+`ENABLE_DIAGNOSTICS` also exists in `AppBuildConfig`, but current bootstrap installs the local `AppLogger` unconditionally. Diagnostics remain local-only and redacted; ENG-013 owns any future privacy-gated remote crash/non-fatal reporting and the effective build/runtime diagnostics gate.
 
 ## Data flow inventory
 
@@ -76,7 +78,7 @@ Retention/deletion: until reset, application data is cleared, or the app is unin
 
 ### Diagnostics
 
-Source: `lib/core/logging/app_logger.dart`.
+Source: `lib/core/logging/app_logger.dart`; bootstrap ownership is in `lib/main.dart`.
 
 Possible contents: runtime error messages, stack traces, timestamps, checkpoints, and local file paths. Entries are sanitized by `SecretRedactor` before they enter memory, local file persistence, debug output, runtime error broadcasts, or clipboard-copy diagnostics.
 
@@ -84,24 +86,27 @@ Storage: application-support `logs/app_error.log` plus a bounded in-memory list 
 
 Network transfer: none. There is currently no remote crash-reporting or diagnostic-upload SDK.
 
+Current gate truth: local logging is installed during bootstrap. `ENABLE_DIAGNOSTICS` is represented in build configuration but is not currently an effective bootstrap gate; this gap is recorded for ENG-013 rather than hidden by the inventory.
+
 Deletion: `AppLogger.clear()`, clearing application data, or uninstalling.
 
 ### Advertising
 
-Sources: `lib/core/ads/ad_service.dart` and `lib/core/config/app_build_config.dart`.
+Sources: `lib/main.dart`, `lib/core/ads/ad_service.dart`, and `lib/core/config/app_build_config.dart`.
 
 Processor: Google Mobile Ads SDK (`google_mobile_ads`).
 
-Purpose: banner, rewarded, and interstitial advertising.
+Purpose: initialize the advertising SDK and load banner, rewarded, and interstitial advertising.
 
-The app issues standard `AdRequest` objects only when ads are enabled. The exact device/network signals processed by the SDK are controlled by the Google Mobile Ads SDK/platform and must be reflected accurately in PRIV-002 / Play Data Safety based on the production SDK configuration.
+The app issues standard `AdRequest` objects only when ad loading is enabled. The exact device/network signals processed by the SDK are controlled by the Google Mobile Ads SDK/platform and must be reflected accurately in PRIV-002 / Play Data Safety based on the production SDK configuration.
 
-Current controls:
+Current controls and gaps:
 
-- `ENABLE_ADS=false` disables ad loading/showing.
+- `AdService` refuses ad preload/load/show operations when `ENABLE_ADS=false`.
 - Release builds reject Google test ad-unit IDs.
 - No first-party server receives ad identifiers or ad telemetry in the current codebase.
-- Production consent and regulated-region handling are not claimed complete here; ADS-007 owns that gate.
+- `MobileAds.instance.initialize()` is still invoked by optional-service bootstrap independently of the `AdService` request gate.
+- Production consent and regulated-region handling before SDK initialization/requests are not complete; ADS-007 owns that blocker.
 
 ## Explicitly absent in the current codebase
 
@@ -109,13 +114,21 @@ No application feature currently collects or stores account registration data, e
 
 ## Data minimization rules
 
-1. Offline core play must remain functional without analytics, cloud services, or ads.
+1. Offline core play must remain functional without analytics, cloud services, or successful ad service startup.
 2. Any new SDK that transmits user/device data requires an inventory update before merge.
 3. Any new persisted key family requires purpose, retention, deletion/reset path, processor, consent basis, and source ownership in the inventory.
 4. CI extracts `*Key`/`*Prefix` SharedPreferences declarations from the current persistence sources and fails if the inventory omits a key or documents a stale key.
 5. Diagnostics must be redacted before persistence or copying and must not be remotely uploaded without a separate privacy-gated feature.
-6. Production ad consent must fail closed where consent is required; PRIV-001 does not substitute for ADS-007.
+6. Production ad consent must be implemented before SDK initialization/requests where required; PRIV-001 documents the present gap and ADS-007 owns remediation.
 7. Build-time IDs/configuration are not treated as user data, but secrets and credentials remain governed by ENG-010.
+
+## Known privacy gaps and owners
+
+- **ADS-007 — ad SDK bootstrap consent:** request/load calls are config-gated, but current bootstrap still initializes Google Mobile Ads. Production consent/regulated-region gating must execute before SDK initialization and requests.
+- **ENG-013 — diagnostics gate:** `ENABLE_DIAGNOSTICS` exists but is not currently wired to suppress bootstrap installation of the local logger. Remote crash reporting remains absent.
+- **PRIV-003 — in-app data controls:** complete local deletion still relies on OS application-data clearing/uninstall; a consolidated reset/export/delete path is not yet implemented.
+
+These are explicit downstream gates. Their existence does not create an undocumented data flow and is not treated as completed work by PRIV-001.
 
 ## Retention and deletion gaps
 
@@ -125,7 +138,7 @@ The app currently relies on OS-level application-data clearing/uninstall for com
 
 - Local device / SharedPreferences — first-party local-only gameplay, settings, transaction/migration integrity metadata, and storage-recovery snapshot state.
 - Local application-support directory — first-party local-only diagnostic log file.
-- Google Mobile Ads — third-party advertising processor when `ENABLE_ADS=true`.
+- Google Mobile Ads — third-party advertising processor initialized by the current optional-service bootstrap and used for ad requests when enabled.
 
 No other network data processor is declared by the current production dependency set.
 
@@ -147,9 +160,9 @@ This keeps PRIV-001 aligned with current source instead of relying on a one-time
 
 ## Follow-up gates
 
-- ADS-007: production consent and privacy controls for ads.
+- ADS-007: production consent and privacy controls before ad SDK initialization/requests.
 - PRIV-002: privacy policy and Play Data Safety/store disclosure mapping.
 - PRIV-003: user reset/export/deletion readiness.
 - ENG-012: analytics remains disabled until a privacy-gated schema and consent path exist.
-- ENG-013: remote crash reporting remains absent until privacy-gated diagnostics are implemented.
+- ENG-013: effective diagnostics gating and any future privacy-gated remote crash reporting.
 - TEST-011: release privacy/consent/security verification.
