@@ -7,12 +7,27 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | Field | Value |
 |---|---|
 | Current phase | Android RC hardening — issue #79 |
-| Primary feature | None — `PRIV-002` source implementation is complete on PR #170; `PRIV-003` is the next dependency-ready release/privacy feature. |
-| Completed checkpoint | `PRIV-002` privacy policy and Play Data Safety mapping — IMPLEMENTED on PR #170 after green Flutter CI #746 / run `31335858470`. |
-| Status | PRIV-002 is IMPLEMENTED: draft policy, machine Play Data Safety mapping, drift validator, 12 policy regressions, and CI enforcement are complete. Publication/contact/target-audience/production AdMob/Play Console evidence remains external before VERIFIED. |
-| Previous checkpoint | `ADS-007` consent/privacy client integration — IMPLEMENTED after PR #167 / Flutter CI #742. |
-| Next recommended feature | `PRIV-003` User data export/deletion readiness — P1; PRIV-001 is VERIFIED and ENG-008 is IMPLEMENTED. `TEST-011` still also needs production consent verification. |
-| Known blocker | `REL-007`/`REL-008` require real production AdMob/signing inputs and a production-signed candidate; final install/upgrade/device smoke requires an Android device or testing track. `TEST-009` also remains dependency-blocked while `PERF-001` is PLANNED. Visual Studio C++ components remain optional for Windows desktop only. |
+| Primary feature | None — `PRIV-003` first-party local data controls are VERIFIED on PR #172. |
+| Completed checkpoint | `PRIV-003` user data export/deletion readiness — VERIFIED after Flutter CI #768 / run `31338337454`. |
+| Status | PRIV-003 is VERIFIED: Settings now provides zero-network JSON export plus confirmation-guarded deletion/reset of CARGame first-party local progress/economy/settings/transaction/reward/recovery data and diagnostics, followed by fresh-store rehydration. |
+| Previous checkpoint | `PRIV-002` privacy policy and Play Data Safety mapping — IMPLEMENTED after PR #170 / Flutter CI #750; publication/store evidence remains external. |
+| Next recommended feature | `ENG-011` Developer tooling and documentation — P1; ENG-001 is VERIFIED and no higher-priority source-controlled P0 is currently dependency-ready. `TEST-011` now waits only on external production UMP/privacy-message evidence. |
+| Known blocker | `TEST-011` requires real production UMP/privacy-message/regulatory-device verification. `REL-007`/`REL-008` require real production AdMob/signing inputs and a production-signed candidate; final install/upgrade/device smoke requires an Android device or testing track. `TEST-009` also remains dependency-blocked while `PERF-001` is PLANNED. Visual Studio C++ components remain optional for Windows desktop only. |
+
+## PRIV-003 user data export/deletion readiness — 2026-08-10
+
+- Issue #171 / PR #172 add `LocalDataController` as the first-party local data export/delete boundary without introducing a backend, network export path, dependency, or new storage permission.
+- **Copy data export** produces schema-versioned JSON containing the CARGame-managed SharedPreferences snapshot and already-redacted local diagnostic entries, explicitly records `networkTransfer: false`, and copies the export only through an explicit user action.
+- **Delete & reset local data** requires confirmation, serializes concurrent requests, clears the app-owned SharedPreferences namespace including progression/economy/settings data, shop/reward journals, completed reward transaction IDs, economy metadata and `storage_recovery_backup_v1`, and clears local diagnostic logs.
+- After deletion the app builds fresh `ProgressStore` and `AppSettingsStore` instances and returns the navigator to its first route so stale pre-delete reward/recovery/settings state cannot survive only in memory or be re-saved from an old route.
+- Settings copy explicitly distinguishes CARGame first-party local deletion from Google Mobile Ads processor-side retention; existing UMP privacy choices remain the Google advertising privacy control.
+- PRIV-001 human/machine inventory and the PRIV-002 draft policy/Play mapping now describe the local export/reset path; `deletionRequestMechanismAvailable` is true and the completed `in-app-data-controls` gap was removed.
+- `tool/verify_privacy_disclosures.py` now source-anchors `LocalDataController` plus the Settings export/delete/confirmation controls and rejects regression of the deletion mechanism or reintroduction of the old PRIV-003 gap. The focused policy suite now contains 15 regressions.
+- CI debugging found the first Settings test harness depended on platform clipboard/pending UI work; the tests were hardened with an isolated clipboard method-channel mock, bounded deterministic pumps, and explicit UI disposal without changing production behavior.
+- Flutter CI #768 / run `31338337454` passed privacy inventory, Play Data Safety validation, all 15 disclosure regressions, security/dependency/dashboard/assets gates, formatting, whitespace, Analyze, dedicated `LocalDataController` tests, dedicated Settings local-data tests, optional-service/GameButton checks, the full Flutter suite, Debug APK build, packaged-artifact security scan and upload on implementation head `64da8aeaefaefe60fb57d765bc0c7d26521e0c83`.
+- Debug artifact #9045113026 is 80,619,639 bytes with SHA-256 `6c101a90e89053b48836dd48be72b76ceb9290401ae3643310ad46730b653ddf`.
+- PRIV-003 is VERIFIED because all repository-owned acceptance criteria pass and CARGame has no first-party account/backend/cloud-save/remote-diagnostic data path requiring an external remote deletion implementation.
+- TEST-011 is no longer blocked by repository-owned deletion/export controls; its remaining acceptance blocker is external production UMP/privacy-message behavior in the actual regulated-region/device configuration.
 
 ## PRIV-002 privacy policy and Play Data Safety mapping — 2026-08-09
 
@@ -24,7 +39,7 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 - Flutter CI #746 / run `31335858470` passed privacy inventory, the new disclosure gates, security/dependency/dashboard/assets/format/Analyze, the full Flutter suite, Debug APK, artifact security and upload on implementation head `1da1ce6e57d9fc29b30a514360a847078820a7dc`.
 - Debug artifact #9044388801 is 80,608,681 bytes with SHA-256 `03e81188e97a1b9ab867d18c48894603f7586bd5d0963014516de35e8b8e868a`.
 - PRIV-002 is IMPLEMENTED rather than VERIFIED until publisher contact, a stable HTTPS policy URL, target audience/Families applicability, production Google Mobile Ads/UMP configuration, and submitted/reviewed Play Console answers exist.
-- Next recommended source task: PRIV-003 data export/deletion readiness; TEST-011 remains blocked on PRIV-003 plus external production consent evidence.
+- PRIV-003 now supplies the first-party local export/delete/reset controls referenced by the policy and Play mapping; external production consent/publication/store evidence remains separate.
 
 ## ADS-007 consent/privacy client integration — 2026-08-09
 
@@ -51,7 +66,7 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 - Android Release Packaging Smoke #7 / run `31327747834` passed enforced-lock advisory verification, release preflight, ephemeral CI signing, ads-disabled release APK+AAB builds, and both packaged-artifact scans. Release APK SHA-256: `aa84e87d4815064e8bf2f89d05694c897b6bfed23f82261e17cf9006d21a738a`; AAB SHA-256: `3c8fb5b1cfb8b0cf8d3ba7e6156172e67477da54bba67b24c46b2ed8659e8892`.
 - Release evidence artifact #9042103273 is 464 bytes with SHA-256 `6c261bc007aefb0142b8b09a96080aaff6e1bcf17bbaacdcdb7a4c1c46f8c0ea`.
 - PR #164 squash-merged to main as `5b96ee94f1d82a36bb6bbffd53b7719b64c175d3`; Issue #163 closed Completed. SEC-002 has no remaining acceptance blocker and is VERIFIED.
-- `TEST-011` remains blocked by `ADS-007` consent/privacy integration and `PRIV-003` user-data export/deletion readiness. Both are P1 and dependency-ready; catalog order selects ADS-007 next.
+- Historical note: TEST-011 previously also waited on PRIV-003; PRIV-003 is now VERIFIED, leaving external production UMP/privacy-message evidence as the remaining privacy acceptance blocker.
 
 ## ENG-007 CI verification workflow — 2026-08-09
 
@@ -186,7 +201,7 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 - PR #126 reconciles the inventory with all 33 current SharedPreferences key/prefix families across gameplay/progress, settings, transaction/migration integrity metadata, and the storage-recovery snapshot.
 - `tool/verify_privacy_inventory.py` now extracts persisted key declarations from `ProgressStore`, `AppSettingsStore`, and `RecoveringPreferences` and fails on missing, stale, or duplicate inventory ownership.
 - Google Mobile Ads remains the only declared production network data processor; no first-party analytics, account, cloud-save, or remote diagnostics SDK is enabled.
-- Current runtime gaps are recorded rather than overstated: `AdService` request/load/show calls honor `ENABLE_ADS=false` but bootstrap still initializes `MobileAds`; `ENABLE_DIAGNOSTICS` exists but does not suppress local logger installation; complete in-app reset/export/delete remains pending. Owners remain ADS-007, ENG-013, and PRIV-003 respectively, while PRIV-002 owns policy/store mapping.
+- Historical gap note: at that checkpoint complete in-app reset/export/delete was pending under PRIV-003. Current mainline work now supplies those controls; ENG-013 remains the owner of effective diagnostics gating.
 - Final implementation head `659a78ce00b6fc3f95e7213bf1c04ceaa680cd55` passed Flutter CI #651 / run `31299285194`, including the strengthened privacy drift gate, security baseline, formatting, Analyze, full Flutter tests, Debug APK build, and upload.
 - Debug artifact #9034063433 is 80,544,514 bytes with SHA-256 `6fc839b195551ffcdbb0bd30b69bb9f29124aa5b9f5277ab8aa981d3508f4f9c`.
 - PR #126 squash-merged to `main` as `dd076dd383d6c3cd0dd33986f980e8b4f012b38b`; `PRIV-001` is VERIFIED.
@@ -388,6 +403,7 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | 2026-08-09 | PRIV-001 privacy inventory current-main reconciliation | PASSED — PR #126 / Flutter CI #651 / run `31299285194` / debug artifact #9034063433 / SHA-256 `6fc839b195551ffcdbb0bd30b69bb9f29124aa5b9f5277ab8aa981d3508f4f9c` |
 | 2026-08-09 | ECON-005 versioned economy configuration | PASSED — PR #124 / Flutter CI #647 / run `31296918681` / debug artifact #9033326885 / SHA-256 `bbca79f780b9effc07a93ecc8a5a0b0dd73b523e6706531fe292127165d2872a` |
 | 2026-08-09 | PRIV-002 privacy policy / Play Data Safety contract | PASSED — PR #170 / Flutter CI #746 / run `31335858470` / 12 disclosure regressions + full Flutter suite + Debug APK artifact #9044388801 / SHA-256 `03e81188e97a1b9ab867d18c48894603f7586bd5d0963014516de35e8b8e868a`; source state IMPLEMENTED, external publication/store evidence pending |
+| 2026-08-10 | PRIV-003 local data export/deletion readiness | PASSED — PR #172 / Flutter CI #768 / run `31338337454` / 15 disclosure regressions + focused controller/Settings tests + full Flutter suite + Debug APK artifact #9045113026 / SHA-256 `6c101a90e89053b48836dd48be72b76ceb9290401ae3643310ad46730b653ddf`; repository-owned state VERIFIED |
 
 ## Test locally
 
