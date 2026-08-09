@@ -46,6 +46,12 @@ jobs:
       - name: Verify privacy data inventory
         run: python3 tool/verify_privacy_inventory.py
 
+      - name: Verify Play Data Safety disclosures
+        run: python3 tool/verify_privacy_disclosures.py
+
+      - name: Test privacy disclosure policy
+        run: python3 tool/test_privacy_disclosures.py
+
       - name: Verify security baseline
         run: python3 tool/verify_security_baseline.py
 
