@@ -7,12 +7,21 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | Field | Value |
 |---|---|
 | Current phase | Android RC hardening — issue #79 |
-| Primary feature | `GAME-016` input determinism and anti-spam state machine — issue #110. |
-| Completed checkpoint | `TEST-001` legacy-save compatibility — PR #104 merged as `2ab3578ecc214f995f194eff95f1a27b7cc3f442` after Flutter CI #546 passed Analyze, the full Flutter suite, Debug APK build, and artifact upload. |
-| Status | IN PROGRESS — `GAME-016` is extending gameplay resolution anti-spam coverage from repeated warehouse taps to rapid cargo reselection and result-boundary determinism. `TEST-004` is VERIFIED and merged via PR #109. |
-| Previous checkpoint | `REL-006` Android signing/key-management — PR #102 merged as `8f2e4ddb69d339938ba05911fb297960859e1a77`; Flutter CI #544 and Android Release Packaging Smoke #4 both passed. |
-| Next recommended feature | Finish `GAME-016` deterministic rapid-input regressions, then continue the remaining unblocked RC P0 gaps. |
+| Primary feature | None after `GAME-016` verification; next RC P0 is `ENG-010` secret and credential handling. |
+| Completed checkpoint | `GAME-016` input determinism — PR #111 merged as `093d9a9384aec2d18503284a8edc95ba1ce1ecfb` after Flutter CI #580 passed formatting, Analyze, all 215 Flutter tests, Debug APK build, and artifact upload. |
+| Status | `GAME-016` VERIFIED: repeated warehouse input and cargo reselection during resolution remain deterministic with exactly one move/feedback event; boosters, restart, and back are disabled while resolving, and result-boundary races remain covered by `TEST-004`. |
+| Previous checkpoint | `TEST-004` navigation-race verification — PR #109 merged as `24aa922453f88af507e01e950f7d26048e1c6c3f`; its final current-head verification completed on Flutter CI #574. |
+| Next recommended feature | Start `ENG-010` secret and credential handling audit, then continue the remaining unblocked RC P0 gaps. |
 | Known blocker | `REL-007`/`REL-008` require real production AdMob/signing inputs and a production-signed candidate; final install/upgrade/device smoke requires an Android device or testing track. `TEST-009` also remains dependency-blocked while `PERF-001` is PLANNED. Visual Studio C++ components remain optional for Windows desktop only. |
+
+## GAME-016 input determinism verification — 2026-08-09
+
+- Issue #110 / PR #111 extended the existing warehouse-spam regression with deterministic cargo-reselection coverage during placement resolution; attempts made while locked cannot become a latent selection after feedback completes.
+- Existing production guards keep cargo/warehouse selection, boosters, Restart, and Back locked while `_resolving`; no production-code change was required after the regression proved the state machine behavior.
+- `TEST-004` remains the result-boundary companion evidence for repeated Next/Retry/Home Start and idempotent result-sheet dismissal.
+- Flutter CI #580 passed formatting, Analyze, all 215 Flutter tests, Debug APK build, and artifact upload on head `3fdba02dfa101bf9ab2f2e479d6cfabc7859b73b`.
+- Debug artifact #9031438726 is 80,515,901 bytes with SHA-256 `afa0597b32a4d08f5fdaf76f109c92821eb84f3ad6b4e0a388b9b29d7fee1ae6`.
+- PR #111 squash-merged to `main` as `093d9a9384aec2d18503284a8edc95ba1ce1ecfb`; `GAME-016` is VERIFIED.
 
 ## TEST-004 navigation race verification — 2026-08-09
 
