@@ -1,0 +1,32 @@
+name: Temporary ENG-010 formatter
+
+on:
+  push:
+    branches:
+      - agent/eng-010-secret-handling-current
+    paths:
+      - .github/workflows/_temporary_eng010_format.yml
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/eng-010-secret-handling-current
+          fetch-depth: 0
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.8'
+          channel: stable
+      - run: dart format test/core/security/secret_redactor_test.dart tool/test_secret_hygiene.dart tool/verify_secret_hygiene.dart
+      - run: |
+          git rm .github/workflows/_temporary_eng010_format.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add test/core/security/secret_redactor_test.dart tool/test_secret_hygiene.dart tool/verify_secret_hygiene.dart
+          git commit -m 'style: format ENG-010 security changes'
+          git push origin HEAD:agent/eng-010-secret-handling-current
