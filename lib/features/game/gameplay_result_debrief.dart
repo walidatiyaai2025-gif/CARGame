@@ -162,7 +162,9 @@ class GameplayResultDebrief extends StatelessWidget {
                                   border: Border.all(
                                     color: skin.primary.withValues(alpha: .25),
                                   ),
-                                  shadowColor: skin.primary.withValues(alpha: .08),
+                                  shadowColor: skin.primary.withValues(
+                                    alpha: .08,
+                                  ),
                                   child: Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
@@ -281,11 +283,7 @@ class _DebriefHero extends StatelessWidget {
         ? LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              const Color(0xFF091321),
-              skin.primary,
-              skin.secondary,
-            ],
+            colors: [const Color(0xFF091321), skin.primary, skin.secondary],
           )
         : const LinearGradient(
             begin: Alignment.topLeft,
@@ -315,20 +313,28 @@ class _DebriefHero extends StatelessWidget {
           ),
           Column(
             children: [
-              Row(
-                children: [
-                  _HeaderPill(
-                    icon: won
-                        ? Icons.check_circle_rounded
-                        : Icons.warning_amber_rounded,
-                    text: isArabic ? 'تقرير المهمة' : 'MISSION DEBRIEF',
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: AlignmentDirectional.centerStart,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _HeaderPill(
+                        icon: won
+                            ? Icons.check_circle_rounded
+                            : Icons.warning_amber_rounded,
+                        text: isArabic ? 'تقرير المهمة' : 'MISSION DEBRIEF',
+                      ),
+                      const SizedBox(width: 12),
+                      _HeaderPill(
+                        icon: Icons.tag_rounded,
+                        text: '${isArabic ? 'مرحلة' : 'LEVEL'} $levelNumber',
+                      ),
+                    ],
                   ),
-                  const Spacer(),
-                  _HeaderPill(
-                    icon: Icons.tag_rounded,
-                    text: '${isArabic ? 'مرحلة' : 'LEVEL'} $levelNumber',
-                  ),
-                ],
+                ),
               ),
               const SizedBox(height: 12),
               Row(
@@ -378,23 +384,29 @@ class _DebriefHero extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          won
-                              ? worldReward
-                                    ? (isArabic
-                                          ? 'اكتمل العالم'
-                                          : 'WORLD COMPLETE')
-                                    : (isArabic
-                                          ? 'تم تأمين المسار'
-                                          : 'ROUTE SECURED')
-                              : (isArabic
-                                    ? 'المهمة متوقفة'
-                                    : 'MISSION INTERRUPTED'),
-                          style: TextStyle(
-                            color: won ? skin.accent : const Color(0xFFFFD5DA),
-                            fontSize: 12,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: .8,
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: AlignmentDirectional.centerStart,
+                          child: Text(
+                            won
+                                ? worldReward
+                                      ? (isArabic
+                                            ? 'اكتمل العالم'
+                                            : 'WORLD COMPLETE')
+                                      : (isArabic
+                                            ? 'تم تأمين المسار'
+                                            : 'ROUTE SECURED')
+                                : (isArabic
+                                      ? 'المهمة متوقفة'
+                                      : 'MISSION INTERRUPTED'),
+                            style: TextStyle(
+                              color: won
+                                  ? skin.accent
+                                  : const Color(0xFFFFD5DA),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: .8,
+                            ),
                           ),
                         ),
                         const SizedBox(height: 3),
@@ -497,7 +509,9 @@ class _StarsRow extends StatelessWidget {
               alignment: Alignment.center,
               child: Icon(
                 index < stars ? Icons.star_rounded : Icons.star_outline_rounded,
-                color: index < stars ? AppTheme.yellow : const Color(0xFF9BA7B8),
+                color: index < stars
+                    ? AppTheme.yellow
+                    : const Color(0xFF9BA7B8),
                 size: 34,
               ),
             ),

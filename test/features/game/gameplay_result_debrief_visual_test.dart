@@ -7,7 +7,9 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('winning debrief exposes premium reward hierarchy', (tester) async {
+  testWidgets('winning debrief exposes premium reward hierarchy', (
+    tester,
+  ) async {
     await tester.binding.setSurfaceSize(const Size(412, 915));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 

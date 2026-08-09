@@ -9,13 +9,11 @@ import '../../core/motion/ambient_motion_background.dart';
 import '../../core/motion/game_action_feedback.dart';
 import '../../core/motion/game_travel_motion.dart';
 import '../../core/storage/progress_store.dart';
-import '../../core/theme/app_theme.dart';
 import '../../core/theme/game_skin.dart';
 import '../../core/theme/three_d_game_icon.dart';
-import '../../core/widgets/game_button.dart';
-import 'cargo_motion_tile.dart';
 import 'city_catalog.dart';
 import 'gameplay_operations_deck.dart';
+import 'gameplay_result_debrief.dart';
 import 'level_data.dart';
 import 'mission_loadout.dart';
 
@@ -388,6 +386,8 @@ class _GameScreenState extends State<GameScreen> {
     final bonusCoins = won ? widget.store.lastCompletionBonus : 0;
     final bonusXp = won ? widget.store.lastCompletionBonusXp : 0;
 
+    final world = gameWorlds[widget.level.world - 1];
+
     await showModalBottomSheet<void>(
       context: context,
       isDismissible: false,
@@ -395,234 +395,50 @@ class _GameScreenState extends State<GameScreen> {
       useSafeArea: true,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (sheetContext) => PopScope(
-        canPop: false,
-        child: Padding(
-          padding: EdgeInsets.only(
-            left: 14,
-            right: 14,
-            bottom: MediaQuery.viewInsetsOf(sheetContext).bottom + 14,
-          ),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxWidth: 560,
-              maxHeight: MediaQuery.sizeOf(sheetContext).height * .86,
-            ),
-            child: Material(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(30),
-              clipBehavior: Clip.antiAlias,
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(22, 20, 22, 24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 84,
-                      height: 84,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: won
-                            ? skin.heroGradient
-                            : const LinearGradient(
-                                colors: [Color(0xFFFF7B7B), Color(0xFFD93654)],
-                              ),
-                      ),
-                      child: Icon(
-                        won
-                            ? worldReward
-                                  ? Icons.card_giftcard_rounded
-                                  : Icons.location_city_rounded
-                            : Icons.heart_broken_rounded,
-                        size: 46,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      widget.level.cityName,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: AppTheme.navy,
-                        fontSize: 25,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    Text(
-                      won
-                          ? worldReward
-                                ? (ar ? 'تم فتح عالم جديد' : 'WORLD COMPLETE')
-                                : (ar ? 'تم إكمال المدينة' : 'CITY CLEARED')
-                          : (ar ? 'انتهت الحركات' : 'MISSION FAILED'),
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: won ? skin.primary : Colors.redAccent,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    if (won) ...[
-                      const SizedBox(height: 10),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: List.generate(
-                          3,
-                          (index) => Icon(
-                            index < stars
-                                ? Icons.star_rounded
-                                : Icons.star_outline_rounded,
-                            color: index < stars
-                                ? AppTheme.yellow
-                                : Colors.black12,
-                            size: 38,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      Wrap(
-                        alignment: WrapAlignment.center,
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          _ResultChip(
-                            icon: Icons.monetization_on_rounded,
-                            text: '+$reward',
-                          ),
-                          _ResultChip(
-                            icon: Icons.bolt_rounded,
-                            text: '+$xp XP',
-                          ),
-                          _ResultChip(
-                            icon: Icons.local_fire_department_rounded,
-                            text: 'x$_bestCombo',
-                          ),
-                          if (bonusCoins > 0)
-                            _ResultChip(
-                              icon: Icons.card_giftcard_rounded,
-                              text: '+$bonusCoins Bonus',
-                            ),
-                          if (bonusXp > 0)
-                            _ResultChip(
-                              icon: Icons.auto_awesome_rounded,
-                              text: '+$bonusXp XP',
-                            ),
-                        ],
-                      ),
-                    ],
-                    const SizedBox(height: 20),
-                    if (!won) ...[
-                      GameButton(
-                        semanticLabel: ar
-                            ? 'شاهد إعلانًا وخذ خمس حركات'
-                            : 'Watch ad for five moves',
-                        onPressed: _resultActionBusy
-                            ? null
-                            : () {
-                                final started = _ads.showRewarded(
-                                  onReward: () {
-                                    if (!mounted) return;
-                                    _dismissResultSheet(sheetContext);
-                                    setState(() {
-                                      _finished = false;
-                                      _resultVisible = false;
-                                      _moves += 5;
-                                    });
-                                  },
-                                );
-                                if (!started) {
-                                  _message(
-                                    ar
-                                        ? 'الإعلان غير متاح الآن. جرّب مرة أخرى أو أعد المحاولة.'
-                                        : 'Rewarded ad is not available yet. Try again or retry.',
-                                  );
-                                }
-                              },
-                        enabled: !_resultActionBusy,
-                        expand: true,
-                        height: 52,
-                        borderRadius: BorderRadius.circular(18),
-                        backgroundColor: Colors.white,
-                        foregroundColor: skin.primary,
-                        border: Border.all(
-                          color: skin.primary.withValues(alpha: .35),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.ondemand_video_rounded),
-                            const SizedBox(width: 8),
-                            Flexible(
-                              child: Text(
-                                ar
-                                    ? 'شاهد إعلانًا وخذ 5 حركات'
-                                    : 'Watch ad for 5 moves',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w900,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                    ],
-                    GameButton(
-                      semanticLabel: won
-                          ? (ar
-                                ? 'التالي والعودة للخريطة'
-                                : 'Next and back to map')
-                          : (ar ? 'إعادة المحاولة' : 'Retry'),
-                      onPressed: _resultActionBusy
-                          ? null
-                          : () async {
-                              if (won) {
-                                await _closeResultAndReturnToMap(sheetContext);
-                              } else {
-                                await _retryFromResult(sheetContext);
-                              }
-                            },
-                      enabled: !_resultActionBusy,
-                      loading: _resultActionBusy,
-                      expand: true,
-                      height: 56,
-                      borderRadius: BorderRadius.circular(20),
-                      backgroundColor: skin.primary,
-                      shadowColor: skin.primary.withValues(alpha: .38),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            won
-                                ? Icons.navigate_next_rounded
-                                : Icons.restart_alt_rounded,
-                            color: Colors.white,
-                          ),
-                          const SizedBox(width: 8),
-                          Flexible(
-                            child: Text(
-                              won
-                                  ? (ar
-                                        ? 'التالي — العودة للخريطة'
-                                        : 'NEXT — BACK TO MAP')
-                                  : (ar ? 'إعادة المحاولة' : 'RETRY'),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w900,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
+      builder: (sheetContext) => GameplayResultDebrief(
+        won: won,
+        worldReward: worldReward,
+        isArabic: ar,
+        busy: _resultActionBusy,
+        cityName: widget.level.cityName,
+        worldName: world.name,
+        levelNumber: widget.level.number,
+        stars: stars,
+        reward: reward,
+        xp: xp,
+        bestCombo: _bestCombo,
+        bonusCoins: bonusCoins,
+        bonusXp: bonusXp,
+        skin: skin,
+        onWatchRewarded: won
+            ? null
+            : () {
+                final started = _ads.showRewarded(
+                  onReward: () {
+                    if (!mounted) return;
+                    _dismissResultSheet(sheetContext);
+                    setState(() {
+                      _finished = false;
+                      _resultVisible = false;
+                      _moves += 5;
+                    });
+                  },
+                );
+                if (!started) {
+                  _message(
+                    ar
+                        ? 'الإعلان غير متاح الآن. جرّب مرة أخرى أو أعد المحاولة.'
+                        : 'Rewarded ad is not available yet. Try again or retry.',
+                  );
+                }
+              },
+        onPrimary: () async {
+          if (won) {
+            await _closeResultAndReturnToMap(sheetContext);
+          } else {
+            await _retryFromResult(sheetContext);
+          }
+        },
       ),
     );
 
@@ -833,347 +649,6 @@ class _GameScreenState extends State<GameScreen> {
   }
 }
 
-class _ResultChip extends StatelessWidget {
-  const _ResultChip({required this.icon, required this.text});
-  final IconData icon;
-  final String text;
-
-  @override
-  Widget build(BuildContext context) => Chip(
-    avatar: Icon(icon, size: 18, color: AppTheme.orange),
-    label: Text(text, style: const TextStyle(fontWeight: FontWeight.w900)),
-  );
-}
-
-class _BoosterButton extends StatelessWidget {
-  const _BoosterButton({
-    required this.icon,
-    required this.count,
-    required this.onPressed,
-    this.active = false,
-  });
-
-  final IconData icon;
-  final int count;
-  final VoidCallback? onPressed;
-  final bool active;
-
-  @override
-  Widget build(BuildContext context) => FilledButton.tonal(
-    onPressed: onPressed,
-    style: FilledButton.styleFrom(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 10),
-    ),
-    child: FittedBox(
-      fit: BoxFit.scaleDown,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(active ? Icons.check_circle_rounded : icon, size: 20),
-          const SizedBox(width: 5),
-          Text('$count', style: const TextStyle(fontWeight: FontWeight.w900)),
-        ],
-      ),
-    ),
-  );
-}
-
-class _CargoBoard extends StatelessWidget {
-  const _CargoBoard({
-    required this.items,
-    required this.selectedIndex,
-    required this.travellingIndex,
-    required this.onTap,
-    required this.compact,
-  });
-
-  final List<CargoItem> items;
-  final int? selectedIndex;
-  final int? travellingIndex;
-  final void Function(CargoItem item, int index, Offset globalOrigin) onTap;
-  final bool compact;
-
-  @override
-  Widget build(BuildContext context) => Container(
-    padding: EdgeInsets.all(compact ? 7 : 10),
-    decoration: BoxDecoration(
-      color: Colors.white.withValues(alpha: .95),
-      borderRadius: BorderRadius.circular(26),
-      boxShadow: const [
-        BoxShadow(
-          color: Color(0x22000000),
-          blurRadius: 20,
-          offset: Offset(0, 10),
-        ),
-      ],
-    ),
-    child: GridView.builder(
-      itemCount: items.length,
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        crossAxisSpacing: compact ? 6 : 9,
-        mainAxisSpacing: compact ? 6 : 9,
-        childAspectRatio: compact ? 1.0 : .92,
-      ),
-      itemBuilder: (_, index) {
-        final item = items[index];
-        final selectedItem = index == selectedIndex;
-        final travellingItem = index == travellingIndex;
-        return Builder(
-          builder: (tileContext) {
-            Offset? tapOrigin;
-            return InkWell(
-              key: ValueKey('cargo-${item.id}-$index'),
-              onTapDown: (details) => tapOrigin = details.globalPosition,
-              onTap: () =>
-                  onTap(item, index, tapOrigin ?? _globalCenter(tileContext)),
-              borderRadius: BorderRadius.circular(18),
-              child: CargoMotionTile(
-                selected: selectedItem,
-                busy: travellingItem,
-                child: Container(
-                  padding: EdgeInsets.all(compact ? 5 : 8),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [item.accentColor, item.color],
-                    ),
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(
-                      color: selectedItem ? Colors.white : Colors.transparent,
-                      width: 3,
-                    ),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        item.icon,
-                        color: Colors.white,
-                        size: compact ? 26 : 34,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        item.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: compact ? 8 : 10,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          },
-        );
-      },
-    ),
-  );
-}
-
-class _WarehouseBoard extends StatelessWidget {
-  const _WarehouseBoard({
-    required this.warehouses,
-    required this.activeFlight,
-    required this.onTap,
-    required this.compact,
-  });
-
-  final List<CargoItem> warehouses;
-  final _CargoFlight? activeFlight;
-  final void Function(CargoItem item, Offset globalDestination) onTap;
-  final bool compact;
-
-  @override
-  Widget build(BuildContext context) => GridView.builder(
-    itemCount: warehouses.length,
-    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-      crossAxisCount: min(3, warehouses.length),
-      crossAxisSpacing: compact ? 6 : 9,
-      mainAxisSpacing: compact ? 6 : 9,
-      childAspectRatio: compact ? 1.2 : 1.05,
-    ),
-    itemBuilder: (_, index) {
-      final item = warehouses[index];
-      final active = activeFlight?.warehouse.id == item.id;
-      final correct = active && activeFlight?.item.id == item.id;
-      return Builder(
-        builder: (tileContext) {
-          Offset? tapDestination;
-          return WarehouseMotionTarget(
-            active: active,
-            correct: correct,
-            child: InkWell(
-              key: ValueKey('warehouse-${item.id}'),
-              onTapDown: (details) => tapDestination = details.globalPosition,
-              onTap: () =>
-                  onTap(item, tapDestination ?? _globalCenter(tileContext)),
-              borderRadius: BorderRadius.circular(18),
-              child: Ink(
-                padding: EdgeInsets.all(compact ? 5 : 7),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: item.color, width: 3),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.warehouse_rounded,
-                      color: item.color,
-                      size: compact ? 28 : 38,
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      item.category,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: item.color,
-                        fontSize: compact ? 8 : 9,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        },
-      );
-    },
-  );
-}
-
-class _StatusPanel extends StatelessWidget {
-  const _StatusPanel({
-    required this.moves,
-    required this.matched,
-    required this.total,
-    required this.progress,
-    required this.combo,
-    required this.hearts,
-    required this.skin,
-    required this.shieldActive,
-    required this.compact,
-  });
-
-  final int moves;
-  final int matched;
-  final int total;
-  final double progress;
-  final int combo;
-  final int hearts;
-  final GameSkin skin;
-  final bool shieldActive;
-  final bool compact;
-
-  @override
-  Widget build(BuildContext context) => Container(
-    padding: EdgeInsets.all(compact ? 10 : 14),
-    decoration: BoxDecoration(
-      gradient: skin.heroGradient,
-      borderRadius: BorderRadius.circular(24),
-    ),
-    child: Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _Metric(
-              key: const ValueKey('game-moves'),
-              icon: Icons.touch_app_rounded,
-              value: '$moves',
-              compact: compact,
-            ),
-            _Metric(
-              icon: Icons.inventory_2_rounded,
-              value: '$matched/$total',
-              compact: compact,
-            ),
-            _Metric(
-              icon: Icons.local_fire_department_rounded,
-              value: 'x$combo',
-              compact: compact,
-            ),
-            _Metric(
-              icon: shieldActive
-                  ? Icons.shield_rounded
-                  : Icons.favorite_rounded,
-              value: shieldActive ? 'ON' : '$hearts',
-              compact: compact,
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(20),
-          child: LinearProgressIndicator(
-            value: progress,
-            minHeight: compact ? 6 : 8,
-            backgroundColor: Colors.white24,
-            valueColor: AlwaysStoppedAnimation<Color>(skin.accent),
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
-class _Metric extends StatelessWidget {
-  const _Metric({
-    super.key,
-    required this.icon,
-    required this.value,
-    required this.compact,
-  });
-  final IconData icon;
-  final String value;
-  final bool compact;
-
-  @override
-  Widget build(BuildContext context) => Column(
-    children: [
-      Icon(icon, color: Colors.white, size: compact ? 18 : 21),
-      Text(
-        value,
-        style: TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.w900,
-          fontSize: compact ? 13 : 15,
-        ),
-      ),
-    ],
-  );
-}
-
-class _FlightCargo extends StatelessWidget {
-  const _FlightCargo({required this.item});
-
-  final CargoItem item;
-
-  @override
-  Widget build(BuildContext context) => DecoratedBox(
-    decoration: BoxDecoration(
-      gradient: LinearGradient(colors: [item.accentColor, item.color]),
-      borderRadius: BorderRadius.circular(18),
-      border: Border.all(color: Colors.white, width: 3),
-      boxShadow: [
-        BoxShadow(
-          color: item.color.withValues(alpha: .42),
-          blurRadius: 18,
-          offset: const Offset(0, 10),
-        ),
-      ],
-    ),
-    child: Icon(item.icon, color: Colors.white, size: 32),
-  );
-}
-
 class _CargoFlight {
   const _CargoFlight({
     required this.id,
@@ -1190,10 +665,4 @@ class _CargoFlight {
   final CargoItem warehouse;
   final Offset start;
   final Offset end;
-}
-
-Offset _globalCenter(BuildContext context) {
-  final renderObject = context.findRenderObject();
-  if (renderObject is! RenderBox || !renderObject.hasSize) return Offset.zero;
-  return renderObject.localToGlobal(renderObject.size.center(Offset.zero));
 }
