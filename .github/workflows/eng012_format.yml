@@ -1,0 +1,34 @@
+name: ENG-012 Apply Dart Format
+
+on:
+  push:
+    paths:
+      - 'tool/eng012_format_trigger.txt'
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.44.8
+          cache: true
+      - name: Apply canonical Dart formatting
+        run: dart format lib/core/domain/analytics_event.dart test/bootstrap/analytics_composition_test.dart test/core/domain/analytics_event_test.dart
+      - name: Commit formatted sources and remove one-shot workflow
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/eng012_format.yml tool/eng012_format_trigger.txt
+          git add lib/core/domain/analytics_event.dart test/bootstrap/analytics_composition_test.dart test/core/domain/analytics_event_test.dart
+          git diff --cached --check
+          git commit -m 'ENG-012: apply canonical Dart formatting'
+          git push origin "HEAD:${GITHUB_REF_NAME}"
