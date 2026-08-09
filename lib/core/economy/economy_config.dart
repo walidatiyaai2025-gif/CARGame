@@ -254,8 +254,7 @@ class EconomyConfig {
       final milestoneNumber = level ~/ milestoneInterval;
       return EconomyCompletionBonus(
         kind: EconomyCompletionBonusKind.milestone,
-        coins: milestoneBaseCoins +
-            milestoneNumber * milestoneCoinsPerIndex,
+        coins: milestoneBaseCoins + milestoneNumber * milestoneCoinsPerIndex,
         xp: milestoneXp,
       );
     }
@@ -335,10 +334,7 @@ class EconomyConfig {
     }
 
     _validateStableUniqueIds(heartOffers.map((offer) => offer.id), 'heart');
-    _validateStableUniqueIds(
-      boosterOffers.map((offer) => offer.id),
-      'booster',
-    );
+    _validateStableUniqueIds(boosterOffers.map((offer) => offer.id), 'booster');
     _validateStableUniqueIds(themeOffers.map((offer) => offer.id), 'theme');
 
     for (final offer in heartOffers) {
@@ -361,9 +357,11 @@ class EconomyConfig {
       movesBoosterId,
       shieldBoosterId,
     };
-    if (boosterOffers.map((offer) => offer.id).toSet().difference(
-      supportedBoosters,
-    ).isNotEmpty) {
+    if (boosterOffers
+        .map((offer) => offer.id)
+        .toSet()
+        .difference(supportedBoosters)
+        .isNotEmpty) {
       throw StateError('Economy config contains an unsupported booster ID.');
     }
     if (!supportedBoosters.every(

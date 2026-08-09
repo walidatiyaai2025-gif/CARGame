@@ -80,8 +80,11 @@ class _GameScreenState extends State<GameScreen> {
     return 1;
   }
 
-  int get _xpEarned =>
-      50 + widget.level.difficulty * 10 + _earnedStars * 15 + _bestCombo * 3;
+  int get _xpEarned => widget.store.economy.levelXp(
+    difficulty: widget.level.difficulty,
+    stars: _earnedStars,
+    bestCombo: _bestCombo,
+  );
 
   @override
   void initState() {
@@ -98,7 +101,9 @@ class _GameScreenState extends State<GameScreen> {
       ..shuffle(Random(widget.level.number * 41));
     _moves =
         widget.level.moves +
-        (applyLoadout && widget.loadout.extraMoves ? 5 : 0);
+        (applyLoadout && widget.loadout.extraMoves
+            ? widget.store.economy.extraMovesPerBoosterUse
+            : 0);
     _preparedHints = applyLoadout && widget.loadout.smartHint ? 1 : 0;
     _selected = null;
     _selectedIndex = null;
@@ -231,7 +236,11 @@ class _GameScreenState extends State<GameScreen> {
     _finished = true;
 
     final stars = _earnedStars;
-    final reward = 25 + widget.level.number * 5 + stars * 10 + _bestCombo * 2;
+    final reward = widget.store.economy.levelRewardCoins(
+      level: widget.level.number,
+      stars: stars,
+      bestCombo: _bestCombo,
+    );
     final xp = _xpEarned;
 
     await widget.store.completeLevel(
@@ -274,7 +283,9 @@ class _GameScreenState extends State<GameScreen> {
       used = await widget.store.useFreeHint();
     }
     if (!used) {
-      used = await widget.store.spendCoins(10);
+      used = await widget.store.spendCoins(
+        widget.store.economy.hintFallbackCoinCost,
+      );
     }
     if (!used) {
       _message('Not enough coins or hints.');
@@ -291,8 +302,9 @@ class _GameScreenState extends State<GameScreen> {
       return;
     }
     if (!mounted) return;
-    setState(() => _moves += 5);
-    _message('+5 moves added.');
+    final addedMoves = widget.store.economy.extraMovesPerBoosterUse;
+    setState(() => _moves += addedMoves);
+    _message('+$addedMoves moves added.');
   }
 
   Future<void> _useComboShield() async {
@@ -493,8 +505,8 @@ class _GameScreenState extends State<GameScreen> {
                     if (!won) ...[
                       GameButton(
                         semanticLabel: ar
-                            ? 'شاهد إعلانًا وخذ خمس حركات'
-                            : 'Watch ad for five moves',
+                            ? 'شاهد إعلانًا وخذ ${widget.store.economy.rewardedContinueMoves} حركات'
+                            : 'Watch ad for ${widget.store.economy.rewardedContinueMoves} moves',
                         onPressed: _resultActionBusy
                             ? null
                             : () {
@@ -505,7 +517,10 @@ class _GameScreenState extends State<GameScreen> {
                                     setState(() {
                                       _finished = false;
                                       _resultVisible = false;
-                                      _moves += 5;
+                                      _moves += widget
+                                          .store
+                                          .economy
+                                          .rewardedContinueMoves;
                                     });
                                   },
                                 );
@@ -534,8 +549,8 @@ class _GameScreenState extends State<GameScreen> {
                             Flexible(
                               child: Text(
                                 ar
-                                    ? 'شاهد إعلانًا وخذ 5 حركات'
-                                    : 'Watch ad for 5 moves',
+                                    ? 'شاهد إعلانًا وخذ ${widget.store.economy.rewardedContinueMoves} حركات'
+                                    : 'Watch ad for ${widget.store.economy.rewardedContinueMoves} moves',
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(

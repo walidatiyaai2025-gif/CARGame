@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:cargo_sort_game/core/economy/economy_config.dart';
 import 'package:cargo_sort_game/core/storage/progress_store.dart';
 import 'package:cargo_sort_game/core/storage/recovering_preferences.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -44,6 +45,15 @@ void main() {
       expect(store.selectedTheme, 'classic');
       expect(store.unlockedThemes, {'classic'});
       expect(store.recoveryEvents, isEmpty);
+      expect(
+        await prefs.getInt('economy_config_version'),
+        EconomyConfig.current.schemaVersion,
+      );
+
+      final reloaded = ProgressStore();
+      await reloaded.load();
+      expect(reloaded.coins, 725);
+      expect(reloaded.hearts, 3);
     },
   );
 
@@ -136,23 +146,17 @@ void main() {
     },
   );
 
-  test('booster purchase validates input before charging wallet', () async {
+  test('booster purchase ignores spoofed caller price and quantity', () async {
+    final prefs = SharedPreferencesAsync();
+    await prefs.setInt('coins', 500);
     final store = ProgressStore();
     await store.load();
-    final initialCoins = store.coins;
     final initialHints = store.freeHints;
 
     expect(() => store.purchaseBooster('unknown', 1, 10), throwsArgumentError);
-    expect(store.coins, initialCoins);
-
-    expect(await store.purchaseBooster('hint', 0, 10), isFalse);
-    expect(await store.purchaseBooster('hint', -2, 10), isFalse);
-    expect(store.coins, initialCoins);
-    expect(store.freeHints, initialHints);
-
-    expect(await store.purchaseBooster('hint', 2, 10), isTrue);
-    expect(store.coins, initialCoins - 10);
-    expect(store.freeHints, initialHints + 2);
+    expect(await store.purchaseBooster('hint', 999, 1), isTrue);
+    expect(store.coins, 320);
+    expect(store.freeHints, initialHints + 3);
   });
 
   test('booster use never drives inventory below zero', () async {
@@ -265,4 +269,18 @@ void main() {
     expect(await store.claimDailyMission(), isNull);
     expect(store.coins, beforeClaim + 200);
   });
+
+  test(
+    'newer saved economy version fails closed without rewriting wallet',
+    () async {
+      final prefs = SharedPreferencesAsync();
+      await prefs.setInt('coins', 725);
+      await prefs.setInt('economy_config_version', 99);
+
+      final store = ProgressStore();
+      await expectLater(store.load(), throwsStateError);
+      expect(await prefs.getInt('coins'), 725);
+      expect(await prefs.getInt('economy_config_version'), 99);
+    },
+  );
 }

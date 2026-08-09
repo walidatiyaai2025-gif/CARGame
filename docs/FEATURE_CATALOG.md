@@ -198,7 +198,7 @@ Codex must not mark a feature complete merely because UI code exists.
 | ECON-002 | Heart system and refill | P0 | IMPLEMENTED | ENG-008 | Maximum, spend, refill timer, and persistence exist; lifecycle tests remain. |
 | ECON-003 | XP and player level | P1 | IMPLEMENTED | ENG-008 | XP/level calculation exists; animated presentation/tests remain. |
 | ECON-004 | Booster inventory | P0 | IMPLEMENTED | ENG-008 | Hint, moves, and shield persist and cannot become negative; tests remain. |
-| ECON-005 | Versioned economy configuration and balance rules | P0 | PLANNED | ECON-001, REW-007 | Prices, rewards, sinks, sources, caps, and migrations are versioned and validated. |
+| ECON-005 | Versioned economy configuration and balance rules | P0 | IN PROGRESS | ECON-001, REW-007 | Issue #122 / `agent/econ-005-versioned-economy` centralize current shipped balance values in validated schema v1, make shop IDs authoritative for price/quantity, add non-destructive economy-version metadata, and preserve REW-007/SHOP-002 guarantees without rebalance. |
 | SHOP-001 | 3D shop screen | P1 | IMPLEMENTED | UI3D-002 | Hearts, boosters, and themes use 3D-style components; final asset/motion pass remains. |
 | SHOP-002 | Safe purchase transaction | P0 | VERIFIED | ECON-001 | PR #97 adds an idempotent persisted shop-purchase journal using absolute final wallet/entitlement values, validates allowed keys/non-negative values, serializes overlapping purchases, recovers interrupted theme/booster writes without double debit/grant, and discards malformed journals safely. Flutter CI #536 passed the full test suite, Analyze, Debug APK build, and artifact upload before merge. |
 | SHOP-003 | Theme purchase and selection | P1 | IMPLEMENTED | SHOP-002 | Owned themes persist and selected theme applies; consistency pass remains. |
@@ -331,7 +331,7 @@ Codex must not mark a feature complete merely because UI code exists.
 
 ## IN PROGRESS
 
-- None after `GAME-016` verification.
+- `ECON-005` Versioned economy configuration and balance rules — issue #122 / `agent/econ-005-versioned-economy`.
 
 ## NEXT READY
 

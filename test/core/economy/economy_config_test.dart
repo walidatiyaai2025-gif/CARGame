@@ -25,18 +25,9 @@ void main() {
     });
 
     test('preserves gameplay reward and XP formulas', () {
-      expect(
-        economy.levelRewardCoins(level: 1, stars: 3, bestCombo: 2),
-        64,
-      );
-      expect(
-        economy.levelRewardCoins(level: 25, stars: 3, bestCombo: 4),
-        188,
-      );
-      expect(
-        economy.levelXp(difficulty: 2, stars: 3, bestCombo: 4),
-        127,
-      );
+      expect(economy.levelRewardCoins(level: 1, stars: 3, bestCombo: 2), 64);
+      expect(economy.levelRewardCoins(level: 25, stars: 3, bestCombo: 4), 188);
+      expect(economy.levelXp(difficulty: 2, stars: 3, bestCombo: 4), 127);
     });
 
     test('preserves milestone and world first-clear bonuses', () {
@@ -93,9 +84,8 @@ void main() {
         throwsStateError,
       );
       expect(
-        () => EconomyConfig.current.copyWith(
-          heartRefillInterval: Duration.zero,
-        ),
+        () =>
+            EconomyConfig.current.copyWith(heartRefillInterval: Duration.zero),
         throwsStateError,
       );
     });

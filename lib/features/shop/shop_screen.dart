@@ -12,35 +12,19 @@ class ShopScreen extends StatelessWidget {
 
   final ProgressStore store;
 
-  Future<void> _buyHearts(BuildContext context, int amount, int price) async {
-    final messenger = ScaffoldMessenger.of(context);
-    if (store.hearts >= ProgressStore.maxHearts) {
-      messenger.showSnackBar(
-        const SnackBar(content: Text('Your hearts are already full.')),
-      );
-      return;
-    }
-    final paid = await store.spendCoins(price);
-    if (!paid) {
-      messenger.showSnackBar(
-        const SnackBar(content: Text('Not enough coins.')),
-      );
-      return;
-    }
-    await store.addHearts(amount);
-    messenger.showSnackBar(
-      const SnackBar(content: Text('Hearts added successfully.')),
+  Future<void> _buyHearts(BuildContext context, String offerId) async {
+    final paid = await store.purchaseHearts(offerId);
+    if (!context.mounted) return;
+    _message(
+      context,
+      paid
+          ? 'Hearts added successfully.'
+          : 'Not enough coins or hearts are full.',
     );
   }
 
-  Future<void> _buyBooster(
-    BuildContext context,
-    String id,
-    int amount,
-    int price,
-    String name,
-  ) async {
-    final paid = await store.purchaseBooster(id, amount, price);
+  Future<void> _buyBooster(BuildContext context, String id, String name) async {
+    final paid = await store.purchaseBooster(id);
     if (!context.mounted) return;
     _message(context, paid ? '$name added.' : 'Not enough coins.');
   }
@@ -49,7 +33,7 @@ class ShopScreen extends StatelessWidget {
     BuildContext context,
     _ThemeOffer offer,
   ) async {
-    final success = await store.purchaseTheme(offer.id, offer.price);
+    final success = await store.purchaseTheme(offer.id);
     if (!context.mounted) return;
     _message(
       context,
@@ -64,6 +48,12 @@ class ShopScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final skin = gameSkinById(store.selectedTheme);
+    final economy = store.economy;
+    final singleHeart = economy.heartOffer('heart_single');
+    final fullHearts = economy.heartOffer('heart_full');
+    final hintOffer = economy.boosterOffer('hint');
+    final movesOffer = economy.boosterOffer('moves');
+    final shieldOffer = economy.boosterOffer('shield');
     return Scaffold(
       appBar: AppBar(title: const Text('Cargo Shop'), centerTitle: true),
       body: AnimatedBuilder(
@@ -86,9 +76,9 @@ class ShopScreen extends StatelessWidget {
                   Expanded(
                     child: _OfferCard(
                       iconType: ThreeDIconType.heart,
-                      title: '+1 Heart',
-                      subtitle: '120 coins',
-                      onTap: () => _buyHearts(context, 1, 120),
+                      title: '+${singleHeart.heartAmount} Heart',
+                      subtitle: '${singleHeart.priceCoins} coins',
+                      onTap: () => _buyHearts(context, singleHeart.id),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -96,9 +86,8 @@ class ShopScreen extends StatelessWidget {
                     child: _OfferCard(
                       iconType: ThreeDIconType.heart,
                       title: 'Full Hearts',
-                      subtitle: '450 coins',
-                      onTap: () =>
-                          _buyHearts(context, ProgressStore.maxHearts, 450),
+                      subtitle: '${fullHearts.priceCoins} coins',
+                      onTap: () => _buyHearts(context, fullHearts.id),
                     ),
                   ),
                 ],
@@ -115,32 +104,26 @@ class ShopScreen extends StatelessWidget {
                 title: 'Smart Hint Pack',
                 description: '3 free hints without spending coins',
                 inventory: store.freeHints,
-                price: 180,
-                onTap: () =>
-                    _buyBooster(context, 'hint', 3, 180, 'Smart hints'),
+                price: hintOffer.priceCoins,
+                onTap: () => _buyBooster(context, hintOffer.id, 'Smart hints'),
               ),
               _BoosterTile(
                 iconType: ThreeDIconType.extraMoves,
                 title: 'Extra Moves Pack',
                 description: 'Adds 5 moves during a city mission',
                 inventory: store.extraMovesBoosters,
-                price: 260,
-                onTap: () => _buyBooster(
-                  context,
-                  'moves',
-                  1,
-                  260,
-                  'Extra moves booster',
-                ),
+                price: movesOffer.priceCoins,
+                onTap: () =>
+                    _buyBooster(context, movesOffer.id, 'Extra moves booster'),
               ),
               _BoosterTile(
                 iconType: ThreeDIconType.shield,
                 title: 'Combo Shield',
                 description: 'Protects one combo from a wrong match',
                 inventory: store.comboShields,
-                price: 220,
+                price: shieldOffer.priceCoins,
                 onTap: () =>
-                    _buyBooster(context, 'shield', 1, 220, 'Combo shield'),
+                    _buyBooster(context, shieldOffer.id, 'Combo shield'),
               ),
               const SizedBox(height: 24),
               const _SectionTitle(
@@ -154,6 +137,7 @@ class ShopScreen extends StatelessWidget {
                   padding: const EdgeInsets.only(bottom: 12),
                   child: _ThemeTile(
                     offer: offer,
+                    price: economy.themeOffer(offer.id).priceCoins,
                     unlocked: store.isThemeUnlocked(offer.id),
                     selected: store.selectedTheme == offer.id,
                     onTap: () => _buyOrSelectTheme(context, offer),
@@ -233,7 +217,7 @@ class _BalanceHeader extends StatelessWidget {
                 semanticLabel: 'Hearts',
               ),
               Text(
-                '${store.hearts}/${ProgressStore.maxHearts}',
+                '${store.hearts}/${store.economy.maxHearts}',
                 style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w900,
@@ -448,12 +432,14 @@ class _BoosterTile extends StatelessWidget {
 class _ThemeTile extends StatelessWidget {
   const _ThemeTile({
     required this.offer,
+    required this.price,
     required this.unlocked,
     required this.selected,
     required this.onTap,
   });
 
   final _ThemeOffer offer;
+  final int price;
   final bool unlocked;
   final bool selected;
   final VoidCallback onTap;
@@ -464,7 +450,7 @@ class _ThemeTile extends StatelessWidget {
         ? '${offer.name}, selected'
         : unlocked
         ? 'Use ${offer.name}'
-        : 'Buy ${offer.name} for ${offer.price} coins',
+        : 'Buy ${offer.name} for $price coins',
     onPressed: selected ? null : onTap,
     enabled: !selected,
     expand: true,
@@ -534,7 +520,7 @@ class _ThemeTile extends StatelessWidget {
                     const ThreeDGameIcon(type: ThreeDIconType.coin, size: 20),
                     const SizedBox(width: 3),
                     Text(
-                      '${offer.price}',
+                      '$price',
                       style: const TextStyle(
                         color: AppTheme.orange,
                         fontWeight: FontWeight.w900,
@@ -556,7 +542,6 @@ class _ThemeOffer {
     required this.icon,
     required this.start,
     required this.end,
-    required this.price,
   });
 
   final String id;
@@ -565,7 +550,6 @@ class _ThemeOffer {
   final IconData icon;
   final Color start;
   final Color end;
-  final int price;
 }
 
 const _themeOffers = <_ThemeOffer>[
@@ -576,7 +560,6 @@ const _themeOffers = <_ThemeOffer>[
     icon: Icons.warehouse_rounded,
     start: Color(0xFF1E3A5F),
     end: Color(0xFF4F86B8),
-    price: 0,
   ),
   _ThemeOffer(
     id: 'sunset',
@@ -585,7 +568,6 @@ const _themeOffers = <_ThemeOffer>[
     icon: Icons.wb_sunny_rounded,
     start: Color(0xFFD85B24),
     end: Color(0xFFFFB347),
-    price: 700,
   ),
   _ThemeOffer(
     id: 'neon',
@@ -594,6 +576,5 @@ const _themeOffers = <_ThemeOffer>[
     icon: Icons.auto_awesome_rounded,
     start: Color(0xFF4B2A86),
     end: Color(0xFF00A6A6),
-    price: 1200,
   ),
 ];

@@ -3,13 +3,15 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 
+import '../economy/economy_config.dart';
 import 'recovering_preferences.dart';
 
 class ProgressStore extends ChangeNotifier {
   static const int totalLevels = 150;
   static const int maxStarsPerLevel = 3;
-  static const int maxHearts = 5;
-  static const Duration heartRefillInterval = Duration(minutes: 30);
+  static int get maxHearts => EconomyConfig.current.maxHearts;
+  static Duration get heartRefillInterval =>
+      EconomyConfig.current.heartRefillInterval;
 
   static const _levelKey = 'highest_unlocked_level';
   static const _coinsKey = 'coins';
@@ -39,6 +41,7 @@ class ProgressStore extends ChangeNotifier {
   static const _pendingShopPurchaseKey = 'pending_shop_purchase_v1';
   static const _pendingRewardTransactionKey = 'pending_reward_transaction_v1';
   static const _rewardTransactionLedgerKey = 'reward_transaction_ledger_v1';
+  static const _economyVersionKey = 'economy_config_version';
   static const int _rewardTransactionLedgerLimit = 128;
 
   static const Set<String> _rewardNonNegativeIntKeys = <String>{
@@ -60,13 +63,23 @@ class ProgressStore extends ChangeNotifier {
     _comboShieldsKey,
   };
 
+  ProgressStore({EconomyConfig? economy})
+    : economy = economy ?? EconomyConfig.current {
+    coins = this.economy.startingCoins;
+    hearts = this.economy.maxHearts;
+    freeHints = this.economy.starterFreeHints;
+    extraMovesBoosters = this.economy.starterExtraMovesBoosters;
+    comboShields = this.economy.starterComboShields;
+  }
+
+  final EconomyConfig economy;
   final RecoveringPreferences _prefs = RecoveringPreferences();
   final Map<int, int> _levelStars = <int, int>{};
   final Set<String> _completedRewardTransactions = <String>{};
 
   int highestUnlockedLevel = 1;
-  int coins = 100;
-  int hearts = maxHearts;
+  late int coins;
+  late int hearts;
   int gamesPlayed = 0;
   int wins = 0;
   int losses = 0;
@@ -79,9 +92,9 @@ class ProgressStore extends ChangeNotifier {
   int missionWins = 0;
   int missionStars = 0;
   int missionCoins = 0;
-  int freeHints = 2;
-  int extraMovesBoosters = 1;
-  int comboShields = 1;
+  late int freeHints;
+  late int extraMovesBoosters;
+  late int comboShields;
   int lastCompletionBonus = 0;
   int lastCompletionBonusXp = 0;
   bool lastCompletionWasWorldReward = false;
@@ -103,10 +116,13 @@ class ProgressStore extends ChangeNotifier {
   int get worldsCompleted => completedLevels ~/ 25;
   double get winRate => gamesPlayed == 0 ? 0 : wins / gamesPlayed;
   bool get dailyMissionComplete =>
-      missionWins >= 3 && missionStars >= 6 && missionCoins >= 150;
-  int get playerLevel => 1 + (playerXp ~/ 500);
-  int get xpIntoCurrentLevel => playerXp % 500;
-  double get playerLevelProgress => xpIntoCurrentLevel / 500;
+      missionWins >= economy.dailyMissionRequiredWins &&
+      missionStars >= economy.dailyMissionRequiredStars &&
+      missionCoins >= economy.dailyMissionRequiredCoins;
+  int get playerLevel => 1 + (playerXp ~/ economy.playerLevelXpStep);
+  int get xpIntoCurrentLevel => playerXp % economy.playerLevelXpStep;
+  double get playerLevelProgress =>
+      xpIntoCurrentLevel / economy.playerLevelXpStep;
   List<StorageRecoveryEvent> get recoveryEvents => _prefs.recoveryEvents;
   List<String> get completedRewardTransactions =>
       List<String>.unmodifiable(_completedRewardTransactions);
@@ -122,11 +138,11 @@ class ProgressStore extends ChangeNotifier {
   bool get canClaimDailyReward => _lastDailyRewardDate != _today;
 
   Duration get timeUntilNextHeart {
-    if (hearts >= maxHearts || _heartRefillTimestamp == null) {
+    if (hearts >= economy.maxHearts || _heartRefillTimestamp == null) {
       return Duration.zero;
     }
     final elapsed = DateTime.now().difference(_heartRefillTimestamp!);
-    final remaining = heartRefillInterval - elapsed;
+    final remaining = economy.heartRefillInterval - elapsed;
     return remaining.isNegative ? Duration.zero : remaining;
   }
 
@@ -134,14 +150,20 @@ class ProgressStore extends ChangeNotifier {
     await _ensureRewardLedgerLoaded();
     await _recoverPendingRewardTransaction();
     await _recoverPendingShopPurchase();
+    await _reconcileEconomyVersion();
 
     highestUnlockedLevel = (await _prefs.getInt(_levelKey) ?? 1).clamp(
       1,
       totalLevels,
     );
     final savedCoins = await _prefs.getInt(_coinsKey);
-    coins = savedCoins == null ? 100 : (savedCoins < 0 ? 0 : savedCoins);
-    hearts = (await _prefs.getInt(_heartsKey) ?? maxHearts).clamp(0, maxHearts);
+    coins = savedCoins == null
+        ? economy.startingCoins
+        : (savedCoins < 0 ? 0 : savedCoins);
+    hearts = (await _prefs.getInt(_heartsKey) ?? maxHearts).clamp(
+      0,
+      economy.maxHearts,
+    );
     final heartTimestampText = await _prefs.getString(_heartTimestampKey);
     _heartRefillTimestamp = heartTimestampText == null
         ? null
@@ -158,21 +180,27 @@ class ProgressStore extends ChangeNotifier {
     currentWinStreak = await _prefs.getInt(_winStreakKey) ?? 0;
     bestWinStreak = await _prefs.getInt(_bestWinStreakKey) ?? 0;
     playerXp = await _prefs.getInt(_xpKey) ?? 0;
-    selectedTheme = await _prefs.getString(_selectedThemeKey) ?? 'classic';
+    selectedTheme =
+        await _prefs.getString(_selectedThemeKey) ??
+        EconomyConfig.classicThemeId;
     unlockedThemes = {
       ...?await _prefs.getStringList(_unlockedThemesKey),
-      'classic',
+      EconomyConfig.classicThemeId,
     };
-    if (!unlockedThemes.contains(selectedTheme)) selectedTheme = 'classic';
+    if (!unlockedThemes.contains(selectedTheme)) {
+      selectedTheme = EconomyConfig.classicThemeId;
+    }
     final savedHints = await _prefs.getInt(_freeHintsKey);
     final savedMoves = await _prefs.getInt(_extraMovesKey);
     final savedShields = await _prefs.getInt(_comboShieldsKey);
-    freeHints = savedHints == null ? 2 : (savedHints < 0 ? 0 : savedHints);
+    freeHints = savedHints == null
+        ? economy.starterFreeHints
+        : (savedHints < 0 ? 0 : savedHints);
     extraMovesBoosters = savedMoves == null
-        ? 1
+        ? economy.starterExtraMovesBoosters
         : (savedMoves < 0 ? 0 : savedMoves);
     comboShields = savedShields == null
-        ? 1
+        ? economy.starterComboShields
         : (savedShields < 0 ? 0 : savedShields);
 
     lastCompletionBonus = 0;
@@ -201,7 +229,7 @@ class ProgressStore extends ChangeNotifier {
   }
 
   Future<void> refreshHearts() async {
-    if (hearts >= maxHearts) {
+    if (hearts >= economy.maxHearts) {
       _heartRefillTimestamp = null;
       await _prefs.remove(_heartTimestampKey);
       return;
@@ -210,16 +238,17 @@ class ProgressStore extends ChangeNotifier {
     final now = DateTime.now();
     _heartRefillTimestamp ??= now;
     final elapsed = now.difference(_heartRefillTimestamp!);
-    final recovered = elapsed.inMinutes ~/ heartRefillInterval.inMinutes;
+    final recovered =
+        elapsed.inMinutes ~/ economy.heartRefillInterval.inMinutes;
     if (recovered <= 0) return;
 
-    hearts = (hearts + recovered).clamp(0, maxHearts);
-    if (hearts >= maxHearts) {
+    hearts = (hearts + recovered).clamp(0, economy.maxHearts);
+    if (hearts >= economy.maxHearts) {
       _heartRefillTimestamp = null;
       await _prefs.remove(_heartTimestampKey);
     } else {
       _heartRefillTimestamp = _heartRefillTimestamp!.add(
-        Duration(minutes: recovered * heartRefillInterval.inMinutes),
+        Duration(minutes: recovered * economy.heartRefillInterval.inMinutes),
       );
       await _prefs.setString(
         _heartTimestampKey,
@@ -228,6 +257,20 @@ class ProgressStore extends ChangeNotifier {
     }
     await _prefs.setInt(_heartsKey, hearts);
     notifyListeners();
+  }
+
+  Future<void> _reconcileEconomyVersion() async {
+    final savedVersion = await _prefs.getInt(_economyVersionKey);
+    if (savedVersion != null && savedVersion > economy.schemaVersion) {
+      throw StateError(
+        'Save economy version $savedVersion is newer than supported '
+        '${economy.schemaVersion}.',
+      );
+    }
+    if (savedVersion != economy.schemaVersion) {
+      // V1 is metadata-only: never rewrite existing wallet or entitlements.
+      await _prefs.setInt(_economyVersionKey, economy.schemaVersion);
+    }
   }
 
   Future<void> _resetDailyMission() async {
@@ -291,31 +334,20 @@ class ProgressStore extends ChangeNotifier {
     var nextFreeHints = freeHints;
     var nextExtraMovesBoosters = extraMovesBoosters;
     var nextComboShields = comboShields;
-    var completionBonus = 0;
-    var completionBonusXp = 0;
-    var completionWasWorldReward = false;
+    final configuredBonus = firstClear
+        ? economy.firstClearBonusForLevel(level)
+        : EconomyCompletionBonus.none;
+    final completionBonus = configuredBonus.coins;
+    final completionBonusXp = configuredBonus.xp;
+    final completionWasWorldReward = configuredBonus.isWorld;
 
-    if (firstClear && level % 25 == 0) {
-      final worldNumber = level ~/ 25;
-      completionBonus = 300 + worldNumber * 100;
-      completionBonusXp = 150 + worldNumber * 25;
-      completionWasWorldReward = true;
-
-      nextCoins += completionBonus;
-      nextPlayerXp += completionBonusXp;
-      nextLifetimeCoinsEarned += completionBonus;
-      nextMissionCoins += completionBonus;
-      nextFreeHints++;
-      nextExtraMovesBoosters++;
-      nextComboShields++;
-    } else if (firstClear && level % 5 == 0) {
-      completionBonus = 50 + (level ~/ 5) * 5;
-      completionBonusXp = 25;
-      nextCoins += completionBonus;
-      nextPlayerXp += completionBonusXp;
-      nextLifetimeCoinsEarned += completionBonus;
-      nextMissionCoins += completionBonus;
-    }
+    nextCoins += completionBonus;
+    nextPlayerXp += completionBonusXp;
+    nextLifetimeCoinsEarned += completionBonus;
+    nextMissionCoins += completionBonus;
+    nextFreeHints += configuredBonus.freeHints;
+    nextExtraMovesBoosters += configuredBonus.extraMovesBoosters;
+    nextComboShields += configuredBonus.comboShields;
 
     var nextHighestUnlockedLevel = highestUnlockedLevel;
     if (level >= highestUnlockedLevel && highestUnlockedLevel < totalLevels) {
@@ -351,9 +383,9 @@ class ProgressStore extends ChangeNotifier {
 
     final committed = await _commitRewardTransaction(
       reason: firstClear
-          ? (completionWasWorldReward
+          ? (configuredBonus.kind == EconomyCompletionBonusKind.world
                 ? 'level_world_first_clear'
-                : completionBonus > 0
+                : configuredBonus.kind == EconomyCompletionBonusKind.milestone
                 ? 'level_milestone_first_clear'
                 : 'level_first_clear')
           : 'level_replay',
@@ -412,7 +444,7 @@ class ProgressStore extends ChangeNotifier {
       return null;
     }
 
-    const reward = 200;
+    final reward = economy.dailyMissionRewardCoins;
     final nextCoins = coins + reward;
     final nextLifetimeCoinsEarned = lifetimeCoinsEarned + reward;
     final committed = await _commitRewardTransaction(
@@ -461,7 +493,36 @@ class ProgressStore extends ChangeNotifier {
     return true;
   }
 
-  Future<bool> purchaseTheme(String themeId, int price) async {
+  Future<bool> purchaseHearts(String offerId) async {
+    final offer = economy.heartOffer(offerId);
+    if (_purchaseBusy) return false;
+    _purchaseBusy = true;
+    try {
+      if (hearts >= economy.maxHearts || coins < offer.priceCoins) return false;
+
+      final finalCoins = coins - offer.priceCoins;
+      final finalHearts = (hearts + offer.heartAmount).clamp(
+        0,
+        economy.maxHearts,
+      );
+      await _commitShopPurchase('heart:${offer.id}', <String, Object?>{
+        _coinsKey: finalCoins,
+        _heartsKey: finalHearts,
+        if (finalHearts >= economy.maxHearts) _heartTimestampKey: null,
+      });
+
+      coins = finalCoins;
+      hearts = finalHearts;
+      if (hearts >= economy.maxHearts) _heartRefillTimestamp = null;
+      notifyListeners();
+      return true;
+    } finally {
+      _purchaseBusy = false;
+    }
+  }
+
+  Future<bool> purchaseTheme(String themeId, [int? _legacyPrice]) async {
+    final offer = economy.themeOffer(themeId);
     if (_purchaseBusy) return false;
     _purchaseBusy = true;
     try {
@@ -471,9 +532,9 @@ class ProgressStore extends ChangeNotifier {
         notifyListeners();
         return true;
       }
-      if (price <= 0 || coins < price) return false;
+      if (offer.priceCoins <= 0 || coins < offer.priceCoins) return false;
 
-      final finalCoins = coins - price;
+      final finalCoins = coins - offer.priceCoins;
       final finalThemes = <String>{...unlockedThemes, themeId};
       await _commitShopPurchase('theme:$themeId', <String, Object?>{
         _unlockedThemesKey: finalThemes.toList(),
@@ -491,30 +552,30 @@ class ProgressStore extends ChangeNotifier {
     }
   }
 
-  Future<bool> purchaseBooster(String boosterId, int amount, int price) async {
-    if (!const {'hint', 'moves', 'shield'}.contains(boosterId)) {
-      throw ArgumentError.value(boosterId, 'boosterId');
-    }
-    if (amount <= 0 || price <= 0 || coins < price || _purchaseBusy) {
-      return false;
-    }
+  Future<bool> purchaseBooster(
+    String boosterId, [
+    int? _legacyAmount,
+    int? _legacyPrice,
+  ]) async {
+    final offer = economy.boosterOffer(boosterId);
+    if (coins < offer.priceCoins || _purchaseBusy) return false;
 
     _purchaseBusy = true;
     try {
-      final finalCoins = coins - price;
+      final finalCoins = coins - offer.priceCoins;
       final inventoryKey = switch (boosterId) {
-        'hint' => _freeHintsKey,
-        'moves' => _extraMovesKey,
-        'shield' => _comboShieldsKey,
+        EconomyConfig.hintBoosterId => _freeHintsKey,
+        EconomyConfig.movesBoosterId => _extraMovesKey,
+        EconomyConfig.shieldBoosterId => _comboShieldsKey,
         _ => throw StateError('Unsupported booster: $boosterId'),
       };
       final currentInventory = switch (boosterId) {
-        'hint' => freeHints,
-        'moves' => extraMovesBoosters,
-        'shield' => comboShields,
+        EconomyConfig.hintBoosterId => freeHints,
+        EconomyConfig.movesBoosterId => extraMovesBoosters,
+        EconomyConfig.shieldBoosterId => comboShields,
         _ => throw StateError('Unsupported booster: $boosterId'),
       };
-      final finalInventory = currentInventory + amount;
+      final finalInventory = currentInventory + offer.quantity;
 
       await _commitShopPurchase('booster:$boosterId', <String, Object?>{
         inventoryKey: finalInventory,
@@ -523,11 +584,11 @@ class ProgressStore extends ChangeNotifier {
 
       coins = finalCoins;
       switch (boosterId) {
-        case 'hint':
+        case EconomyConfig.hintBoosterId:
           freeHints = finalInventory;
-        case 'moves':
+        case EconomyConfig.movesBoosterId:
           extraMovesBoosters = finalInventory;
-        case 'shield':
+        case EconomyConfig.shieldBoosterId:
           comboShields = finalInventory;
       }
       notifyListeners();
@@ -582,6 +643,18 @@ class ProgressStore extends ChangeNotifier {
         throw const FormatException('Shop purchase key must be a string.');
       }
       switch (key) {
+        case _heartsKey:
+          if (value is! int || value < 0 || value > economy.maxHearts) {
+            throw const FormatException('Invalid heart purchase value.');
+          }
+          validated[key] = value;
+        case _heartTimestampKey:
+          if (value != null) {
+            throw const FormatException(
+              'Shop purchase may only clear the heart refill timestamp.',
+            );
+          }
+          validated[key] = null;
         case _coinsKey:
         case _freeHintsKey:
         case _extraMovesKey:
@@ -620,6 +693,8 @@ class ProgressStore extends ChangeNotifier {
         await _prefs.setString(entry.key, value);
       } else if (value is List<String>) {
         await _prefs.setStringList(entry.key, value);
+      } else if (value == null && entry.key == _heartTimestampKey) {
+        await _prefs.remove(entry.key);
       } else {
         throw FormatException('Unsupported shop purchase value: ${entry.key}');
       }
@@ -796,7 +871,7 @@ class ProgressStore extends ChangeNotifier {
       }
 
       if (key == _heartsKey) {
-        if (value is! int || value < 0 || value > maxHearts) {
+        if (value is! int || value < 0 || value > economy.maxHearts) {
           throw const FormatException('Invalid heart grant value.');
         }
         validated[key] = value;
@@ -996,7 +1071,7 @@ class ProgressStore extends ChangeNotifier {
         );
         if (_completedRewardTransactions.contains(transactionKey)) return;
 
-        final nextHearts = (hearts + amount).clamp(0, maxHearts);
+        final nextHearts = (hearts + amount).clamp(0, economy.maxHearts);
         final values = <String, Object?>{
           _heartsKey: nextHearts,
           if (nextHearts >= maxHearts) _heartTimestampKey: null,
@@ -1009,7 +1084,7 @@ class ProgressStore extends ChangeNotifier {
         if (!committed) return;
 
         hearts = nextHearts;
-        if (hearts >= maxHearts) _heartRefillTimestamp = null;
+        if (hearts >= economy.maxHearts) _heartRefillTimestamp = null;
         notifyListeners();
       });
 
@@ -1026,7 +1101,7 @@ class ProgressStore extends ChangeNotifier {
       return null;
     }
 
-    const reward = 50;
+    final reward = economy.dailyRewardCoins;
     final nextCoins = coins + reward;
     final nextLifetimeCoinsEarned = lifetimeCoinsEarned + reward;
     final committed = await _commitRewardTransaction(
