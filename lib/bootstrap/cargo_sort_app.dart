@@ -109,6 +109,7 @@ class _CargoSortAppState extends State<CargoSortApp>
       _activeStore = nextStore;
       _activeSettings = nextSettings;
     });
+    _navigatorKey.currentState?.popUntil((route) => route.isFirst);
   }
 
   Future<void> _showRuntimeError(LoggedAppError appError) async {
