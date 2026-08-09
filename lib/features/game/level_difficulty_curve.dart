@@ -79,9 +79,7 @@ class LevelDifficultyCurve {
       errors.add('move_slack_out_of_band');
     }
 
-    return LevelDifficultyValidationResult(
-      List<String>.unmodifiable(errors),
-    );
+    return LevelDifficultyValidationResult(List<String>.unmodifiable(errors));
   }
 
   static LevelDifficultyValidationResult validateAll(
@@ -111,18 +109,18 @@ class LevelDifficultyCurve {
     if (levelsByNumber.length != LevelDifficultyPolicy.totalLevels ||
         !levelsByNumber.keys.toSet().containsAll(expectedNumbers)) {
       errors.add('level_set_incomplete');
-      return LevelDifficultyValidationResult(
-        List<String>.unmodifiable(errors),
-      );
+      return LevelDifficultyValidationResult(List<String>.unmodifiable(errors));
     }
 
     double? previousAveragePressure;
     double? previousAverageCargo;
     for (final rule in LevelDifficultyPolicy.rules) {
       final metrics = <LevelBalanceMetrics>[
-        for (var levelNumber = rule.minLevel;
-            levelNumber <= rule.maxLevel;
-            levelNumber++)
+        for (
+          var levelNumber = rule.minLevel;
+          levelNumber <= rule.maxLevel;
+          levelNumber++
+        )
           LevelBalanceMetrics.fromLevel(levelsByNumber[levelNumber]!),
       ];
       final averagePressure =
@@ -144,9 +142,7 @@ class LevelDifficultyCurve {
       previousAverageCargo = averageCargo;
     }
 
-    return LevelDifficultyValidationResult(
-      List<String>.unmodifiable(errors),
-    );
+    return LevelDifficultyValidationResult(List<String>.unmodifiable(errors));
   }
 
   static List<String> _validateBandDefinitions() {

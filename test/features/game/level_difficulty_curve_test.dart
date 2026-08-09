@@ -29,14 +29,8 @@ void main() {
     });
 
     test('rejects level numbers outside the 150-level catalog', () {
-      expect(
-        () => LevelDifficultyPolicy.bandForLevel(0),
-        throwsRangeError,
-      );
-      expect(
-        () => LevelDifficultyPolicy.bandForLevel(151),
-        throwsRangeError,
-      );
+      expect(() => LevelDifficultyPolicy.bandForLevel(0), throwsRangeError);
+      expect(() => LevelDifficultyPolicy.bandForLevel(151), throwsRangeError);
     });
 
     test('expert missions have a tighter base error budget', () {
@@ -73,7 +67,18 @@ void main() {
     });
 
     test('boundary metrics remain inside their documented envelopes', () {
-      for (final levelNumber in <int>[1, 15, 16, 45, 46, 75, 76, 120, 121, 150]) {
+      for (final levelNumber in <int>[
+        1,
+        15,
+        16,
+        45,
+        46,
+        75,
+        76,
+        120,
+        121,
+        150,
+      ]) {
         final level = levels[levelNumber - 1];
         final rule = LevelDifficultyPolicy.ruleForLevel(levelNumber);
         final metrics = LevelBalanceMetrics.fromLevel(level);
@@ -91,10 +96,7 @@ void main() {
         );
         expect(
           metrics.distinctProducts,
-          inInclusiveRange(
-            rule.minDistinctProducts,
-            rule.maxDistinctProducts,
-          ),
+          inInclusiveRange(rule.minDistinctProducts, rule.maxDistinctProducts),
           reason: 'level $levelNumber products',
         );
         expect(
@@ -183,11 +185,7 @@ double _averagePressure(Iterable<LevelBalanceMetrics> source) {
       values.length;
 }
 
-LevelData _copyLevel(
-  LevelData source, {
-  int? moves,
-  int? difficulty,
-}) {
+LevelData _copyLevel(LevelData source, {int? moves, int? difficulty}) {
   return LevelData(
     number: source.number,
     world: source.world,
