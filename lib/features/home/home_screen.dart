@@ -334,7 +334,9 @@ class _CommandHeader extends StatelessWidget {
                 ),
               ),
               Text(
-                ar ? 'المسار جاهز للمرحلة التالية' : 'Route ready for the next drop',
+                ar
+                    ? 'المسار جاهز للمرحلة التالية'
+                    : 'Route ready for the next drop',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
@@ -471,11 +473,7 @@ class _DestinationHero extends StatelessWidget {
       gradient: LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
-        colors: [
-          startColor,
-          Color.lerp(startColor, endColor, .55)!,
-          endColor,
-        ],
+        colors: [startColor, Color.lerp(startColor, endColor, .55)!, endColor],
       ),
       border: Border.all(color: Colors.white.withValues(alpha: .55)),
       boxShadow: [
@@ -528,7 +526,9 @@ class _DestinationHero extends StatelessWidget {
                             vertical: 5,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF0B1120).withValues(alpha: .32),
+                            color: const Color(
+                              0xFF0B1120,
+                            ).withValues(alpha: .32),
                             borderRadius: BorderRadius.circular(30),
                             border: Border.all(color: Colors.white24),
                           ),
@@ -639,7 +639,9 @@ class _DestinationHero extends StatelessWidget {
                         value: progress,
                         minHeight: 9,
                         backgroundColor: Colors.white24,
-                        valueColor: const AlwaysStoppedAnimation(AppTheme.yellow),
+                        valueColor: const AlwaysStoppedAnimation(
+                          AppTheme.yellow,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 6),
