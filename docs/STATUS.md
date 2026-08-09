@@ -7,11 +7,11 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | Field | Value |
 |---|---|
 | Current phase | Android RC hardening — issue #79 |
-| Primary feature | None; `LEVEL-003` is VERIFIED after current-main reconciliation under issue #132. |
+| Primary feature | `LEVEL-002` Difficulty curve — IN PROGRESS under issue #134. |
 | Completed checkpoint | `LEVEL-003` level solvability validator current-main reconciliation — the existing validator plus deterministic 150-level regression suite satisfy the catalog acceptance without duplicate production code. |
-| Status | Structural solvability is mechanically guarded for all 150 generated levels: bounds/world mapping, canonical products, multi-target/non-orphan cargo, sufficient move budgets, uniqueness, and complete level-set coverage are regression-tested. Difficulty balancing remains separate LEVEL-002 work. |
+| Status | LEVEL-002 is converting the deterministic generator's implicit progression into typed tutorial/easy/medium/hard/expert quantitative bands with per-level metrics and macro-progression acceptance. Current content remains unchanged unless measured validation exposes a real balance defect. |
 | Previous checkpoint | `AST-011` asset licensing/provenance current-main reconciliation — PR #131 merged as `9631b43fb697f9819fe83a7991212b490865f525` after Flutter CI #659. |
-| Next recommended feature | `LEVEL-002` difficulty curve: define quantitative difficulty-band targets and add deterministic validation across the 150 generated levels now that LEVEL-003 structural solvability is verified. |
+| Next recommended feature | Complete LEVEL-002 issue #134; select the next unblocked catalog task only after its final verification/reconciliation. |
 | Known blocker | `REL-007`/`REL-008` require real production AdMob/signing inputs and a production-signed candidate; final install/upgrade/device smoke requires an Android device or testing track. `TEST-009` also remains dependency-blocked while `PERF-001` is PLANNED. Visual Studio C++ components remain optional for Windows desktop only. |
 
 ## LEVEL-003 level solvability validator current-main verification — 2026-08-09
