@@ -8,6 +8,8 @@ on:
       - 'android/**'
       - 'BUILD_RC.ps1'
       - 'BUILD_COMMON.ps1'
+      - 'VERIFY_RELEASE_INPUTS.ps1'
+      - 'tool/test_release_input_preflight.ps1'
       - 'pubspec.yaml'
       - 'pubspec.lock'
 
@@ -41,6 +43,10 @@ jobs:
       - name: Generate localization
         run: flutter gen-l10n
 
+      - name: Test release input preflight contract
+        shell: pwsh
+        run: ./tool/test_release_input_preflight.ps1
+
       - name: Prepare ephemeral release signing
         shell: bash
         run: |
@@ -67,6 +73,17 @@ jobs:
             echo 'ANDROID_KEY_ALIAS=release-smoke'
             echo "ANDROID_KEY_PASSWORD=$password"
           } >> "$GITHUB_ENV"
+
+      - name: Verify release smoke inputs
+        shell: pwsh
+        run: |
+          $result = ./VERIFY_RELEASE_INPUTS.ps1 `
+            -AndroidAdMobAppId $env:ADMOB_ANDROID_APP_ID `
+            -Quiet
+          if (-not $result.Ready) {
+            throw 'Release smoke input preflight did not report ready.'
+          }
+          Write-Host 'Release smoke inputs: PASSED (values redacted)'
 
       - name: Build release APK smoke
         run: >-
