@@ -211,4 +211,53 @@ void main() {
     expect(reloaded.missionClaimed, isTrue);
     expect(await reloaded.claimDailyMission(), isNull);
   });
+
+  test('heart grants replay and recover without double-award', () async {
+    final prefs = SharedPreferencesAsync();
+    await prefs.setInt('hearts', 2);
+    await prefs.setString(
+      'heart_refill_timestamp',
+      DateTime.now().subtract(const Duration(minutes: 5)).toIso8601String(),
+    );
+
+    final store = ProgressStore();
+    await store.load();
+    expect(store.hearts, 2);
+
+    await store.addHearts(2, transactionId: 'revive-001');
+    expect(store.hearts, 4);
+    await store.addHearts(2, transactionId: 'revive-001');
+    expect(store.hearts, 4);
+    expect(
+      store.completedRewardTransactions,
+      contains('heart_grant:revive-001'),
+    );
+
+    await prefs.setString(
+      pendingRewardKey,
+      jsonEncode(<String, Object?>{
+        'version': 1,
+        'reason': 'heart_grant',
+        'idempotencyKey': 'heart_grant:revive-recovery',
+        'values': <String, Object?>{
+          'hearts': 5,
+          'heart_refill_timestamp': null,
+        },
+      }),
+    );
+
+    final recovered = ProgressStore();
+    await recovered.load();
+    expect(recovered.hearts, 5);
+    expect(
+      recovered.completedRewardTransactions,
+      contains('heart_grant:revive-recovery'),
+    );
+    expect(await prefs.containsKey(pendingRewardKey), isFalse);
+    expect(await prefs.containsKey('heart_refill_timestamp'), isFalse);
+
+    final secondLoad = ProgressStore();
+    await secondLoad.load();
+    expect(secondLoad.hearts, 5);
+  });
 }

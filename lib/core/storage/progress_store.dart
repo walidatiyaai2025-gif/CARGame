@@ -795,6 +795,24 @@ class ProgressStore extends ChangeNotifier {
         continue;
       }
 
+      if (key == _heartsKey) {
+        if (value is! int || value < 0 || value > maxHearts) {
+          throw const FormatException('Invalid heart grant value.');
+        }
+        validated[key] = value;
+        continue;
+      }
+
+      if (key == _heartTimestampKey) {
+        if (value != null) {
+          throw const FormatException(
+            'Reward transactions may only clear the heart refill timestamp.',
+          );
+        }
+        validated[key] = null;
+        continue;
+      }
+
       if (key == _missionClaimedKey) {
         if (value is! bool) {
           throw const FormatException('Invalid mission claim value.');
@@ -814,8 +832,11 @@ class ProgressStore extends ChangeNotifier {
       throw FormatException('Unsupported reward transaction key: $key');
     }
 
-    if (!validated.containsKey(_coinsKey)) {
-      throw const FormatException('Reward transaction has no wallet value.');
+    if (!validated.containsKey(_coinsKey) &&
+        !validated.containsKey(_heartsKey)) {
+      throw const FormatException(
+        'Reward transaction has no supported grant value.',
+      );
     }
     return validated;
   }
@@ -831,6 +852,8 @@ class ProgressStore extends ChangeNotifier {
         await _prefs.setBool(entry.key, value);
       } else if (value is String) {
         await _prefs.setString(entry.key, value);
+      } else if (value == null && entry.key == _heartTimestampKey) {
+        await _prefs.remove(entry.key);
       } else {
         throw FormatException('Unsupported reward value: ${entry.key}');
       }
@@ -858,6 +881,10 @@ class ProgressStore extends ChangeNotifier {
           highestUnlockedLevel = value as int;
         case _coinsKey:
           coins = value as int;
+        case _heartsKey:
+          hearts = value as int;
+        case _heartTimestampKey:
+          _heartRefillTimestamp = null;
         case _gamesKey:
           gamesPlayed = value as int;
         case _winsKey:
@@ -949,15 +976,33 @@ class ProgressStore extends ChangeNotifier {
 
   Future<bool> loseHeart() => spendHeart();
 
-  Future<void> addHearts(int amount) async {
-    hearts = (hearts + amount).clamp(0, maxHearts);
-    if (hearts >= maxHearts) {
-      _heartRefillTimestamp = null;
-      await _prefs.remove(_heartTimestampKey);
-    }
-    await _prefs.setInt(_heartsKey, hearts);
-    notifyListeners();
-  }
+  Future<void> addHearts(int amount, {String? transactionId}) =>
+      _serializeReward<void>(() async {
+        await _ensureRewardLedgerLoaded();
+        await _recoverPendingRewardTransaction();
+
+        final transactionKey = _rewardTransactionKey(
+          reason: 'heart_grant',
+          idempotencyKey: transactionId,
+        );
+        if (_completedRewardTransactions.contains(transactionKey)) return;
+
+        final nextHearts = (hearts + amount).clamp(0, maxHearts);
+        final values = <String, Object?>{
+          _heartsKey: nextHearts,
+          if (nextHearts >= maxHearts) _heartTimestampKey: null,
+        };
+        final committed = await _commitRewardTransaction(
+          reason: 'heart_grant',
+          idempotencyKey: transactionKey,
+          values: values,
+        );
+        if (!committed) return;
+
+        hearts = nextHearts;
+        if (hearts >= maxHearts) _heartRefillTimestamp = null;
+        notifyListeners();
+      });
 
   Future<int?> claimDailyReward() => _serializeReward<int?>(() async {
     await _ensureRewardLedgerLoaded();
