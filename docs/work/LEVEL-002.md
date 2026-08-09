@@ -1,6 +1,6 @@
 # LEVEL-002 — Difficulty curve
 
-Status: IN PROGRESS  
+Status: VERIFIED  
 Tracking: issue #134 / RC-001 #79
 
 ## Problem
@@ -49,3 +49,19 @@ These boundaries align exactly with the generator's existing 15-level difficulty
 - Boundary levels 1, 15, 16, 45, 46, 75, 76, 120, 121, and 150 are explicitly asserted.
 - Any generator change, if required, is deliberate/minimal and regression-tested; no opportunistic content rebalance.
 - Format, Analyze, focused tests, full Flutter suite, Debug APK build and artifact upload pass before merge.
+
+## Final implementation
+
+- Added typed Tutorial, Easy, Medium, Hard, and Expert policy bands covering levels 1..150 exactly once.
+- Added deterministic balance metrics and curve validation for difficulty rating, cargo volume, product variety, move slack, complete-set coverage, and macro pressure.
+- Tightened only Expert move slack to 1..3 spare moves; all level/world/product/save/reward identities remain stable.
+- Updated legacy move-budget regression to derive its expectation from `LevelDifficultyPolicy` instead of a global magic-number range.
+
+## Final verification — 2026-08-09
+
+- Implementation PR: #137.
+- Squash merge: `938ed6ea100a987b2513e5f5221aab90a850c2d6`.
+- Final reconciled head: `1c1c39ad5d1fb336da2e5b3f7845a83d04d454ff`.
+- Flutter CI: #681 / run `31309097571` — all gates green, including full Flutter tests and Debug APK build/upload.
+- Artifact: #9036909677, 80,547,511 bytes, SHA-256 `e3d2acc260fdc39462b299f19295660dccae130a89b63a8cc52aeddf38647ee6`.
+- Result: `LEVEL-002` VERIFIED. Structural solvability remains independently owned by `LEVEL-003`.

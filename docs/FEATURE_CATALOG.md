@@ -169,7 +169,7 @@ Codex must not mark a feature complete merely because UI code exists.
 | ID | Function | Priority | Status | Dependencies | Acceptance / evidence |
 |---|---|---:|---|---|---|
 | LEVEL-001 | 150 playable levels | P0 | IMPLEMENTED | GAME-001 | 150 generated level entries exist; validation and balancing remain. |
-| LEVEL-002 | Difficulty curve | P0 | IN PROGRESS | LEVEL-001 | Issue #134 defines typed tutorial/easy/medium/hard/expert bands, deterministic per-level balance metrics, quantitative envelopes, macro-progression validation, and explicit boundary regressions across the 150-level generator. Preserve current generated content unless measured acceptance exposes a real imbalance. |
+| LEVEL-002 | Difficulty curve | P0 | VERIFIED | LEVEL-001 | Issue #134 / PR #137 define typed tutorial/easy/medium/hard/expert bands, deterministic per-level balance metrics, quantitative envelopes, macro-progression validation, and explicit boundary regressions across all 150 generated levels. Expert levels 121–150 deliberately use 1–3 spare moves while preserving stable level/world/save identities. PR #137 squash-merged as `938ed6ea100a987b2513e5f5221aab90a850c2d6`; Flutter CI #681 / run `31309097571` passed formatting, Analyze, the full Flutter suite, Debug APK build and artifact upload. Artifact #9036909677 is 80,547,511 bytes with SHA-256 `e3d2acc260fdc39462b299f19295660dccae130a89b63a8cc52aeddf38647ee6`. |
 | LEVEL-003 | Level solvability validator | P0 | VERIFIED | LEVEL-001 | Current main contains `LevelSolvabilityValidator` (historical commit `c06e23ec272a8800a039d99cbdcb02a4b0391670`) plus deterministic regression coverage across all 150 generated levels. The validator enforces level/world/difficulty bounds, canonical product metadata, non-empty multi-target cargo, no orphan products, positive/sufficient moves, unique level numbers, and the complete 1..150 set; tests explicitly cover levels 1, 25, 26, 50, 51, 125, 126 and 150 and reject insufficient moves, empty/single-target layouts, orphan/unknown products, metadata/world/difficulty mismatches, and duplicate/incomplete sets. Flutter CI #659 / run `31301158763` passed all 240 Flutter tests, Analyze, Debug APK build and artifact upload; artifact #9034604961 is 80,544,511 bytes with SHA-256 `79d61a1977614296dd06a38a850e7960a730c6d632890801e77d99d5983ac6b6`. |
 | LEVEL-004 | Boss mechanics | P1 | PLANNED | LEVEL-002 | Each world boss has a distinct mechanic, tutorial cue, and validated difficulty. |
 | LEVEL-005 | Milestone levels | P1 | IMPLEMENTED | LEVEL-001 | Every fifth city grants a one-time milestone reward; tests remain. |
@@ -331,11 +331,11 @@ Codex must not mark a feature complete merely because UI code exists.
 
 ## IN PROGRESS
 
-- `LEVEL-002` Difficulty curve — issue #134; defining typed quantitative bands and deterministic balance validation across all 150 generated levels.
+- None.
 
 ## NEXT READY
 
-- To be selected after LEVEL-002 verification.
+- `TEST-002` Level generator and solvability tests — P0 and dependency-ready because `LEVEL-003` is VERIFIED; consolidate generator, structural solvability, and LEVEL-002 difficulty acceptance into one deterministic regression gate.
 
 ## BLOCKED
 
@@ -348,6 +348,7 @@ Codex must not mark a feature complete merely because UI code exists.
 
 ## Recently verified
 
+- `LEVEL-002` Difficulty curve — issue #134 / PR #137 add typed quantitative bands and deterministic validation for all 150 generated levels, with an intentional Expert 1–3 spare-move envelope. Flutter CI #681 / run `31309097571` passed all gates and uploaded artifact #9036909677 (`e3d2acc260fdc39462b299f19295660dccae130a89b63a8cc52aeddf38647ee6`); PR #137 squash-merged as `938ed6ea100a987b2513e5f5221aab90a850c2d6`.
 - `LEVEL-003` Level solvability validator — issue #132 reconciles the existing validator and deterministic 150-level regression suite to VERIFIED. Current CI #659 passes all 240 tests, including world-boundary and invalid/degenerate-level rejection coverage; no duplicate production validator code was added.
 - `AST-011` Asset licensing and provenance — issue #130 reconciles the historical provenance/admission pipeline with current main: 9 typed descriptors, 0 approved provenance records, and 0 runtime WebP binaries. CI #657 reports the 9/0/0 state and proves future binaries remain fail-closed without complete commercial-use provenance; historical CI #121 also passed the original implementation checkpoint.
 - `SEC-001` Mobile security baseline and threat model — issue #34 / PR #128 refreshed historical PR #35 to current main, mirrored PRIV-001 Ads/diagnostics runtime truth, classified transaction/recovery assets, and strengthened runtime-parity/protected-asset/threat validation. Flutter CI #655 passed all gates and uploaded artifact #9034317021 (`67938778535d63de844f455b324796a4488b1a33efe20ea004fe9894d9db135d`); PR #128 merged as `c0e7c561e0bafa810ef9248322102b10b684a490`.
