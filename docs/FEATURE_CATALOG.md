@@ -311,7 +311,7 @@ Codex must not mark a feature complete merely because UI code exists.
 | PRIV-001 | Privacy inventory, consent, and data minimization | P0 | VERIFIED | ENG-001 | Historical PR #33 established the privacy inventory/CI gate; issue #32 / PR #126 refreshed it against current main. The machine inventory now covers all 33 persisted SharedPreferences key/prefix families across progress, settings, transaction/migration integrity, and recovery snapshots; CI fails on missing/stale/duplicate persistence coverage and cross-checks the sole declared network processor, Google Mobile Ads. Flutter CI #651 / run `31299285194` passed the strengthened privacy gate, security baseline, Analyze, full Flutter tests, Debug APK build and artifact upload on head `659a78ce00b6fc3f95e7213bf1c04ceaa680cd55`. Debug artifact #9034063433 is 80,544,514 bytes with SHA-256 `6fc839b195551ffcdbb0bd30b69bb9f29124aa5b9f5277ab8aa981d3508f4f9c`; PR #126 squash-merged as `dd076dd383d6c3cd0dd33986f980e8b4f012b38b`. ADS-007, ENG-013, PRIV-003, and PRIV-002 remain explicit downstream gates. |
 | PRIV-002 | Privacy policy and Play Data safety mapping | P0 | PLANNED | PRIV-001, ADS-007 | Published policy and store disclosures match actual SDK/data behavior. |
 | PRIV-003 | User data export/deletion readiness | P1 | PLANNED | PRIV-001, ENG-008 | Local/remote data handling includes deletion/reset/export procedures where applicable. |
-| SEC-001 | Mobile security baseline and threat model | P0 | PLANNED | ENG-010 | Threats, trust boundaries, secure storage, network rules, tamper risks, and mitigations are documented. |
+| SEC-001 | Mobile security baseline and threat model | P0 | VERIFIED | ENG-010 | Historical PR #35 established the threat-model/CI gate; issue #34 / PR #128 refreshed it against current main. The security model now mirrors PRIV-001 Ads/diagnostics runtime-control truth, classifies six protected asset groups including transaction/reward recovery state and the storage-recovery snapshot, and validates network processor/trust-boundary parity, protected-asset ownership, privacy security-gap ownership, threat structure, and secret-policy controls. Flutter CI #655 / run `31300172519` passed privacy/security validation, Analyze, full Flutter tests, Debug APK build and artifact upload on head `e25c4f8239635981d43e7c0865c2f9f04c3e8b8e`. Debug artifact #9034317021 is 80,544,512 bytes with SHA-256 `67938778535d63de844f455b324796a4488b1a33efe20ea004fe9894d9db135d`; PR #128 squash-merged as `c0e7c561e0bafa810ef9248322102b10b684a490`. SEC-002, SEC-003, ADS-007, ENG-013, PRIV-002, and TEST-011 remain explicit downstream gates. |
 | SEC-002 | Dependency, secret, and artifact security scans | P0 | PLANNED | ENG-006, ENG-010, ENG-007 | CI blocks committed secrets, critical vulnerable dependencies, and sensitive build artifacts. |
 | SEC-003 | App integrity, obfuscation, and release hardening | P1 | PLANNED | SEC-001, REL-008 | R8/obfuscation/integrity choices are tested without breaking ads, logging, or stack traces. |
 | LEGAL-001 | Open-source notices and content rights | P0 | PLANNED | ENG-006, AST-011, AV-007 | Third-party licenses, asset/audio rights, notices, trademarks, and age-rating inputs are complete. |
@@ -331,21 +331,24 @@ Codex must not mark a feature complete merely because UI code exists.
 
 ## IN PROGRESS
 
-- None after `PRIV-001` verification.
+- None after `SEC-001` verification.
 
 ## NEXT READY
 
-1. `SEC-001` Mobile security baseline and threat model — historical PR #35 implemented the baseline, but current-main reconciliation must account for the refreshed PRIV-001 processor/gating truth and later persistence/release hardening.
-2. `AST-011` Asset licensing and provenance — `AST-001` is VERIFIED; commercial-use provenance remains a release-critical content-rights prerequisite.
+1. `AST-011` Asset licensing and provenance — `AST-001` is VERIFIED; commercial-use provenance remains a release-critical content-rights prerequisite.
 
 ## BLOCKED
 
+- `PRIV-002` remains blocked on `ADS-007`; policy/store disclosures must match the final consent-aware ad SDK behavior.
+- `SEC-002` remains dependency-blocked while `ENG-006` and `ENG-007` are PLANNED.
+- `TEST-011` now has its declared PRIV-001/SEC-001 prerequisites satisfied, but its acceptance cannot pass until ADS-007 consent, PRIV-003 deletion controls, and SEC-002 dependency/artifact scanning are completed.
 - `REL-007`/`REL-008` distribution-ready artifact verification requires the actual production AdMob application configuration and real release signing material, both intentionally external to source control.
 - `TEST-009` is not yet ready because its declared `PERF-001` dependency remains PLANNED; physical-device/API matrix work should follow performance-budget definition.
 - Final `TEST-012` install/update/soak evidence also requires an Android device or testing track with the production-signed candidate.
 
 ## Recently verified
 
+- `SEC-001` Mobile security baseline and threat model — issue #34 / PR #128 refreshed historical PR #35 to current main, mirrored PRIV-001 Ads/diagnostics runtime truth, classified transaction/recovery assets, and strengthened runtime-parity/protected-asset/threat validation. Flutter CI #655 passed all gates and uploaded artifact #9034317021 (`67938778535d63de844f455b324796a4488b1a33efe20ea004fe9894d9db135d`); PR #128 merged as `c0e7c561e0bafa810ef9248322102b10b684a490`.
 - `PRIV-001` Privacy inventory, consent, and data minimization — issue #32 / PR #126 refreshed the historical PR #33 inventory to current main, mechanically covers all 33 persisted key/prefix families, records Google Mobile Ads as the only network data processor, and explicitly preserves ADS-007/ENG-013/PRIV-003/PRIV-002 as downstream gaps. Flutter CI #651 passed all gates and uploaded artifact #9034063433 (`6fc839b195551ffcdbb0bd30b69bb9f29124aa5b9f5277ab8aa981d3508f4f9c`); PR #126 merged as `dd076dd383d6c3cd0dd33986f980e8b4f012b38b`.
 - `ECON-005` Versioned economy configuration and balance rules — PR #124 merged as `2091cf35ff9b4a261fa76f9d90975735711c58e3` after Flutter CI #647 passed all merge gates and uploaded debug artifact #9033326885 (`bbca79f780b9effc07a93ecc8a5a0b0dd73b523e6706531fe292127165d2872a`). Shipped v1 balance parity is centralized, versioned, migration-safe, and authoritative across gameplay, progress/rewards, and shop flows.
 - `GAME-016` Input determinism and anti-spam state machine — PR #111 merged after Flutter CI #580 passed all 215 tests plus Debug APK build/upload; cargo/warehouse spam, selection locking, resolution input disablement, and result-boundary guards are deterministic.
