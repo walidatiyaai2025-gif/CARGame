@@ -7,12 +7,24 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | Field | Value |
 |---|---|
 | Current phase | Android RC hardening — issue #79 |
-| Primary feature | None; `SEC-001` is VERIFIED after issue #34 / PR #128 current-main refresh. |
-| Completed checkpoint | `SEC-001` mobile security baseline current-main reconciliation — PR #128 merged as `c0e7c561e0bafa810ef9248322102b10b684a490` after Flutter CI #655 passed privacy/security runtime parity, full Flutter tests, Debug APK build and artifact upload. |
-| Status | Security baseline now mirrors PRIV-001 runtime truth, classifies current transaction/reward/recovery assets, and mechanically validates network/trust-boundary, protected-asset, privacy-gap, threat, and secret-policy parity. ADS-007, ENG-013, SEC-002, SEC-003, PRIV-002, and TEST-011 remain explicit downstream gates. |
-| Previous checkpoint | `PRIV-001` privacy inventory current-main reconciliation — PR #126 merged as `dd076dd383d6c3cd0dd33986f980e8b4f012b38b` after Flutter CI #651. |
-| Next recommended feature | `AST-011` asset licensing and provenance: `AST-001` is VERIFIED and commercial-use provenance is the next unblocked release-critical P0 prerequisite. |
+| Primary feature | None; `AST-011` is VERIFIED after current-main reconciliation under issue #130. |
+| Completed checkpoint | `AST-011` asset licensing/provenance current-main reconciliation — current CI #657 proves the admission gate is green with 9 manifest descriptors, 0 approved provenance records, and 0 runtime WebP binaries; no fake provenance was created for descriptor-only placeholders. |
+| Status | Asset admission remains fail-closed: a future runtime WebP must match the manifest and a complete commercial-use provenance record, while orphan provenance is also rejected. Current main intentionally ships zero runtime 3D WebP binaries, so the empty approved provenance catalog is the correct auditable state. |
+| Previous checkpoint | `SEC-001` mobile security baseline current-main reconciliation — PR #128 merged as `c0e7c561e0bafa810ef9248322102b10b684a490` after Flutter CI #655. |
+| Next recommended feature | `LEVEL-003` level solvability validator current-main reconciliation: the validator and 150-level regression suite already exist on main, so verify current acceptance/tracking before adding duplicate code. |
 | Known blocker | `REL-007`/`REL-008` require real production AdMob/signing inputs and a production-signed candidate; final install/upgrade/device smoke requires an Android device or testing track. `TEST-009` also remains dependency-blocked while `PERF-001` is PLANNED. Visual Studio C++ components remain optional for Windows desktop only. |
+
+## AST-011 asset licensing and provenance current-main verification — 2026-08-09
+
+- Historical implementation on main added the typed/versioned provenance model, complete commercial-use/source/generated-prompt/hash validation, `GameAssetAdmission`, focused tests, and the `Validate 3D asset registry and provenance` CI gate.
+- Historical implementation head `1d6597de0c298b40dd1f1c305f7fdeca26a2d37a` passed Flutter CI #121 / run `31185774162`; debug artifact #8996933307 is 80,450,231 bytes with SHA-256 `9048ad078046154a0db92dd4d6ed918154e91b15c35c3b60feac2b9b1257d213`.
+- Current-main audit under issue #130 confirms `assets/3d/manifest.json` has 9 stable descriptors, `assets/3d/provenance/catalog.json` has 0 approved records, and `assets/3d/runtime/` is absent, so 0 runtime WebP binaries are currently admitted.
+- The 9/0/0 state is intentional: descriptors support typed binding/fallback before binary art exists. The project does not invent source/license/prompt records for nonexistent binaries.
+- `GameAssetAdmission` rejects runtime WebPs missing manifest/provenance, rejects orphan provenance records without binaries, and enforces matching path/profile/dimensions/revision plus required commercial-use/hash/prompt metadata.
+- Current Flutter CI #657 / run `31300595956` reports `ASSET PIPELINE VALIDATION PASSED`, `Manifest entries : 9`, `Provenance records: 0`, `Runtime WebP files: 0`; it also passed Analyze, all 240 Flutter tests, Debug APK build, and artifact upload.
+- Current debug artifact #9034434441 is 80,544,514 bytes with SHA-256 `5932514475e58a4336d953590dcf9690c0354a19eaf933b870af0c51c7b01c14`.
+- `AST-011` is VERIFIED on current main; issue #130 is a tracking reconciliation and receives a fresh docs-only CI before closure.
+- Next unblocked P0 audit selected: `LEVEL-003`, because current main already contains `LevelSolvabilityValidator` and a regression validating all 150 generated levels.
 
 ## SEC-001 mobile security baseline current-main verification — 2026-08-09
 
@@ -228,6 +240,7 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | 2026-08-09 | REL-006 signing/key-management verification | PASSED — PR #102 / Flutter CI #544 + Release Packaging Smoke #4 / debug artifact #9030167112 / release evidence #9030181913 |
 | 2026-08-09 | TEST-001 progress/economy + legacy-save compatibility | PASSED — PR #104 / Flutter CI #546 / full suite + Debug APK artifact #9030311765 / SHA-256 `cdef9c5c5fbc9576d1760009956aab53ab6e63491248a2ba43ea5288797855b7` |
 | 2026-08-09 | REL-001 dynamic Android targets | PASSED — Flutter CI #546 validated 38 PowerShell/batch scripts with no fixed emulator/AVD/adb target |
+| 2026-08-09 | AST-011 asset licensing/provenance current-main reconciliation | PASSED — current CI #657 / run `31300595956` asset gate reports 9 manifest descriptors / 0 provenance records / 0 runtime WebPs; historical implementation CI #121 / run `31185774162` passed with artifact #8996933307 / SHA-256 `9048ad078046154a0db92dd4d6ed918154e91b15c35c3b60feac2b9b1257d213` |
 | 2026-08-09 | SEC-001 mobile security baseline current-main reconciliation | PASSED — PR #128 / Flutter CI #655 / run `31300172519` / debug artifact #9034317021 / SHA-256 `67938778535d63de844f455b324796a4488b1a33efe20ea004fe9894d9db135d` |
 | 2026-08-09 | PRIV-001 privacy inventory current-main reconciliation | PASSED — PR #126 / Flutter CI #651 / run `31299285194` / debug artifact #9034063433 / SHA-256 `6fc839b195551ffcdbb0bd30b69bb9f29124aa5b9f5277ab8aa981d3508f4f9c` |
 | 2026-08-09 | ECON-005 versioned economy configuration | PASSED — PR #124 / Flutter CI #647 / run `31296918681` / debug artifact #9033326885 / SHA-256 `bbca79f780b9effc07a93ecc8a5a0b0dd73b523e6706531fe292127165d2872a` |

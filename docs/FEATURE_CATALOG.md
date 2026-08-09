@@ -101,7 +101,7 @@ Codex must not mark a feature complete merely because UI code exists.
 | AST-008 | World and city asset pack | P1 | PLANNED | AST-002, WORLD-001 | Six world heroes and 150 city representations/reusable kits are available. |
 | AST-009 | Boss and reward asset pack | P2 | PLANNED | AST-002 | Boss gate/chest/trophy and milestone/world reward assets exist. |
 | AST-010 | Asset performance validation | P1 | PLANNED | AST-004 | Compression, dimensions, memory, decode, and load-time budgets pass. |
-| AST-011 | Asset licensing and provenance | P0 | PLANNED | AST-001 | Every external/generated asset has source, license, authoring prompt/file, and commercial-use record. |
+| AST-011 | Asset licensing and provenance | P0 | VERIFIED | AST-001 | Historical implementation added the versioned provenance catalog, typed commercial-use validation, `GameAssetAdmission`, focused regressions, and the CI asset-pipeline gate. Current-main issue #130 audit confirms 9 manifest descriptors, 0 approved provenance records, and 0 runtime WebP binaries; current Flutter CI #657 / run `31300595956` reports `ASSET PIPELINE VALIDATION PASSED` with exactly 9/0/0, and the 240-test suite verifies that unregistered/unprovenanced binaries, orphan provenance, missing commercial-use references/hashes, generated records without prompts, and registry mismatches are rejected. No provenance is fabricated for descriptor-only placeholders; any future runtime binary remains fail-closed until a complete matching commercial-use record exists. Historical implementation head `1d6597de0c298b40dd1f1c305f7fdeca26a2d37a` passed Flutter CI #121 / run `31185774162`; artifact #8996933307 is 80,450,231 bytes with SHA-256 `9048ad078046154a0db92dd4d6ed918154e91b15c35c3b60feac2b9b1257d213`. |
 | AST-012 | Asset build validation | P1 | PLANNED | AST-002, AST-011 | CI detects missing manifest entries, duplicate IDs, oversized files, and unsupported formats. |
 
 # E. Home and navigation
@@ -331,11 +331,11 @@ Codex must not mark a feature complete merely because UI code exists.
 
 ## IN PROGRESS
 
-- None after `SEC-001` verification.
+- None after `AST-011` verification.
 
 ## NEXT READY
 
-1. `AST-011` Asset licensing and provenance — `AST-001` is VERIFIED; commercial-use provenance remains a release-critical content-rights prerequisite.
+1. `LEVEL-003` Level solvability validator — current main already contains `LevelSolvabilityValidator` plus regressions validating all 150 generated levels and rejecting impossible/invalid configurations; reconcile this stale P0 catalog item before writing duplicate validator code.
 
 ## BLOCKED
 
@@ -348,6 +348,7 @@ Codex must not mark a feature complete merely because UI code exists.
 
 ## Recently verified
 
+- `AST-011` Asset licensing and provenance — issue #130 reconciles the historical provenance/admission pipeline with current main: 9 typed descriptors, 0 approved provenance records, and 0 runtime WebP binaries. CI #657 reports the 9/0/0 state and proves future binaries remain fail-closed without complete commercial-use provenance; historical CI #121 also passed the original implementation checkpoint.
 - `SEC-001` Mobile security baseline and threat model — issue #34 / PR #128 refreshed historical PR #35 to current main, mirrored PRIV-001 Ads/diagnostics runtime truth, classified transaction/recovery assets, and strengthened runtime-parity/protected-asset/threat validation. Flutter CI #655 passed all gates and uploaded artifact #9034317021 (`67938778535d63de844f455b324796a4488b1a33efe20ea004fe9894d9db135d`); PR #128 merged as `c0e7c561e0bafa810ef9248322102b10b684a490`.
 - `PRIV-001` Privacy inventory, consent, and data minimization — issue #32 / PR #126 refreshed the historical PR #33 inventory to current main, mechanically covers all 33 persisted key/prefix families, records Google Mobile Ads as the only network data processor, and explicitly preserves ADS-007/ENG-013/PRIV-003/PRIV-002 as downstream gaps. Flutter CI #651 passed all gates and uploaded artifact #9034063433 (`6fc839b195551ffcdbb0bd30b69bb9f29124aa5b9f5277ab8aa981d3508f4f9c`); PR #126 merged as `dd076dd383d6c3cd0dd33986f980e8b4f012b38b`.
 - `ECON-005` Versioned economy configuration and balance rules — PR #124 merged as `2091cf35ff9b4a261fa76f9d90975735711c58e3` after Flutter CI #647 passed all merge gates and uploaded debug artifact #9033326885 (`bbca79f780b9effc07a93ecc8a5a0b0dd73b523e6706531fe292127165d2872a`). Shipped v1 balance parity is centralized, versioned, migration-safe, and authoritative across gameplay, progress/rewards, and shop flows.
