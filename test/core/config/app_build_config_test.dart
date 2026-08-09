@@ -2,6 +2,15 @@ import 'package:cargo_sort_game/core/config/app_build_config.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  const productionIds = AdMobUnitIds(
+    androidBanner: 'ca-app-pub-1111111111111111/1111111111',
+    iosBanner: 'ca-app-pub-2222222222222222/2222222222',
+    androidRewarded: 'ca-app-pub-1111111111111111/3333333333',
+    iosRewarded: 'ca-app-pub-2222222222222222/4444444444',
+    androidInterstitial: 'ca-app-pub-1111111111111111/5555555555',
+    iosInterstitial: 'ca-app-pub-2222222222222222/6666666666',
+  );
+
   group('AppEnvironment', () {
     test('parses supported names case-insensitively', () {
       expect(AppEnvironment.parse('debug'), AppEnvironment.debug);
@@ -57,11 +66,11 @@ void main() {
     test('ads-enabled config rejects incomplete unit IDs', () {
       const incomplete = AdMobUnitIds(
         androidBanner: '',
-        iosBanner: 'ios-banner',
-        androidRewarded: 'android-rewarded',
-        iosRewarded: 'ios-rewarded',
-        androidInterstitial: 'android-interstitial',
-        iosInterstitial: 'ios-interstitial',
+        iosBanner: 'ca-app-pub-2222222222222222/2222222222',
+        androidRewarded: 'ca-app-pub-1111111111111111/3333333333',
+        iosRewarded: 'ca-app-pub-2222222222222222/4444444444',
+        androidInterstitial: 'ca-app-pub-1111111111111111/5555555555',
+        iosInterstitial: 'ca-app-pub-2222222222222222/6666666666',
       );
 
       expect(
@@ -76,24 +85,86 @@ void main() {
     });
 
     test('release accepts explicitly injected non-test ad IDs', () {
-      const releaseIds = AdMobUnitIds(
-        androidBanner: 'android-banner-release',
-        iosBanner: 'ios-banner-release',
-        androidRewarded: 'android-rewarded-release',
-        iosRewarded: 'ios-rewarded-release',
-        androidInterstitial: 'android-interstitial-release',
-        iosInterstitial: 'ios-interstitial-release',
+      final config = AppBuildConfig.fromValues(
+        environmentName: 'release',
+        enableDiagnostics: false,
+        enableAds: true,
+        adMob: productionIds,
+      );
+
+      expect(config.isRelease, isTrue);
+      expect(config.adMob.usesGoogleTestIds, isFalse);
+    });
+
+    test('Android release validates only Android runtime ad units', () {
+      const androidReleaseIds = AdMobUnitIds(
+        androidBanner: 'ca-app-pub-1111111111111111/1111111111',
+        iosBanner: AdMobUnitIds.googleTestIosBanner,
+        androidRewarded: 'ca-app-pub-1111111111111111/3333333333',
+        iosRewarded: AdMobUnitIds.googleTestIosRewarded,
+        androidInterstitial: 'ca-app-pub-1111111111111111/5555555555',
+        iosInterstitial: AdMobUnitIds.googleTestIosInterstitial,
       );
 
       final config = AppBuildConfig.fromValues(
         environmentName: 'release',
         enableDiagnostics: false,
         enableAds: true,
-        adMob: releaseIds,
+        adMobPlatform: AdMobPlatform.android,
+        adMob: androidReleaseIds,
       );
 
       expect(config.isRelease, isTrue);
-      expect(config.adMob.usesGoogleTestIds, isFalse);
+      expect(config.adMobPlatform, AdMobPlatform.android);
+      expect(
+        config.adMob.usesGoogleTestIdsFor(AdMobPlatform.android),
+        isFalse,
+      );
+      expect(config.adMob.usesGoogleTestIdsFor(AdMobPlatform.ios), isTrue);
+    });
+
+    test('release rejects malformed active-platform ad-unit IDs', () {
+      const malformed = AdMobUnitIds(
+        androidBanner: 'android-banner-release',
+        iosBanner: AdMobUnitIds.googleTestIosBanner,
+        androidRewarded: 'ca-app-pub-1111111111111111/3333333333',
+        iosRewarded: AdMobUnitIds.googleTestIosRewarded,
+        androidInterstitial: 'ca-app-pub-1111111111111111/5555555555',
+        iosInterstitial: AdMobUnitIds.googleTestIosInterstitial,
+      );
+
+      expect(
+        () => AppBuildConfig.fromValues(
+          environmentName: 'release',
+          enableDiagnostics: false,
+          enableAds: true,
+          adMobPlatform: AdMobPlatform.android,
+          adMob: malformed,
+        ),
+        throwsA(isA<StateError>()),
+      );
+    });
+
+    test('release still rejects active-platform Google test IDs', () {
+      const mixed = AdMobUnitIds(
+        androidBanner: AdMobUnitIds.googleTestAndroidBanner,
+        iosBanner: 'ca-app-pub-2222222222222222/2222222222',
+        androidRewarded: 'ca-app-pub-1111111111111111/3333333333',
+        iosRewarded: 'ca-app-pub-2222222222222222/4444444444',
+        androidInterstitial: 'ca-app-pub-1111111111111111/5555555555',
+        iosInterstitial: 'ca-app-pub-2222222222222222/6666666666',
+      );
+
+      expect(
+        () => AppBuildConfig.fromValues(
+          environmentName: 'release',
+          enableDiagnostics: false,
+          enableAds: true,
+          adMobPlatform: AdMobPlatform.android,
+          adMob: mixed,
+        ),
+        throwsA(isA<StateError>()),
+      );
     });
 
     test('ads-disabled release does not require ad IDs', () {
