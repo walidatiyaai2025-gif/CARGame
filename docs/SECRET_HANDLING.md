@@ -24,6 +24,7 @@ Use developer-local files or environment variables that are excluded by `.gitign
 
 - `.env.local`
 - `dart-defines.local.json`
+- `*.credentials.local.json`
 - `android/key.properties`
 - files inside a local `secrets/` directory
 
@@ -49,7 +50,7 @@ Any credential that authorizes privileged server actions belongs on the server. 
 - runtime error broadcasts,
 - the copyable diagnostics surface.
 
-The redactor covers bearer credentials, common credential assignments, sensitive query parameters, private-key blocks, and user-profile paths. This is defense in depth; callers should still avoid logging credentials in the first place.
+The redactor covers bearer credentials, common credential assignments, sensitive query parameters, private-key blocks, high-confidence standalone provider credential signatures, and user-profile paths. This is defense in depth; callers should still avoid logging credentials in the first place.
 
 ## Repository guard
 
@@ -59,7 +60,15 @@ Run before committing:
 dart run tool/verify_secret_hygiene.dart
 ```
 
-The guard checks tracked files for high-confidence private-key/token patterns, credential-like assignments, forbidden signing files, local secret bundles, and user-profile absolute paths.
+The guard checks tracked files for high-confidence private-key/token patterns, credential-like assignments, forbidden signing files, local secret bundles, local credential JSON overrides, and user-profile absolute paths.
+
+Focused policy regression:
+
+```powershell
+dart run tool/test_secret_hygiene.dart
+```
+
+Flutter CI runs both commands before dependency restore and the broader test/build gates. The regression harness verifies safe placeholders/public test IDs and confirms forced-tracked local credential files, environment overrides, signing material, and high-confidence token signatures fail closed.
 
 Intentional redaction test fixtures may use the inline marker `secret-scan: allow`. The marker is for synthetic tests only and must not be used to permit a real credential.
 
