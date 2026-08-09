@@ -28,7 +28,7 @@ Use developer-local files or environment variables that are excluded by `.gitign
 - `android/key.properties`
 - files inside a local `secrets/` directory
 
-Do not send these files through chat, issue attachments, screenshots, or repository commits.
+Do not send these files through chat, issue attachments, screenshots, or repository commits. If a normally ignored credential file is force-added to Git, the repository guard is expected to reject it.
 
 ### GitHub Actions
 
