@@ -7,11 +7,11 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | Field | Value |
 |---|---|
 | Current phase | Android RC hardening — issue #79 |
-| Primary feature | None after `ENG-010` verification; next RC P0 audit is `ADS-002` debug/release ad configuration. |
+| Primary feature | `ADS-002` debug test IDs and release ad configuration — issue #116. |
 | Completed checkpoint | `GAME-016` input determinism — PR #111 merged as `093d9a9384aec2d18503284a8edc95ba1ce1ecfb` after Flutter CI #580 passed formatting, Analyze, all 215 Flutter tests, Debug APK build, and artifact upload. |
 | Status | `ENG-010` VERIFIED: tracked secret/config artifacts fail closed, scanner policy has focused regression coverage, standalone provider credentials are redacted from diagnostics, and local/CI injection plus rotation/recovery guidance is documented. |
 | Previous checkpoint | `TEST-004` navigation-race verification — PR #109 merged as `24aa922453f88af507e01e950f7d26048e1c6c3f`; its final current-head verification completed on Flutter CI #574. |
-| Next recommended feature | Audit `ADS-002` against the existing ENG-009 release configuration so debug uses only public test IDs and release requires injected production IDs without fallback. |
+| Next recommended feature | Finish `ADS-002` typed release ad-unit format validation and configuration regression coverage, then reconcile the existing Android manifest/Gradle/preflight evidence. |
 | Known blocker | `REL-007`/`REL-008` require real production AdMob/signing inputs and a production-signed candidate; final install/upgrade/device smoke requires an Android device or testing track. `TEST-009` also remains dependency-blocked while `PERF-001` is PLANNED. Visual Studio C++ components remain optional for Windows desktop only. |
 
 ## ENG-010 secret and credential handling verification — 2026-08-09

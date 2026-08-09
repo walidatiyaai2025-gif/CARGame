@@ -228,7 +228,7 @@ Codex must not mark a feature complete merely because UI code exists.
 | ID | Function | Priority | Status | Dependencies | Acceptance / evidence |
 |---|---|---:|---|---|---|
 | ADS-001 | Non-blocking Mobile Ads startup | P0 | IMPLEMENTED | ENG-003 | SDK failure/timeout never blocks startup; device verification remains. |
-| ADS-002 | Debug test IDs and release configuration | P0 | PLANNED | ADS-001, ENG-009 | Test ads run in debug and production IDs are injected safely in release. |
+| ADS-002 | Debug test IDs and release configuration | P0 | IN PROGRESS | ADS-001, ENG-009 | Issue #116 audits debug Google test IDs, runtime AdService wiring, Android manifest/Gradle injection, and release fail-closed validation. Current gap: typed Dart release configuration rejects empty/Google-test IDs but does not reject malformed non-test ad-unit IDs when builds bypass the RC preflight. |
 | ADS-003 | Rewarded extra moves | P1 | PLANNED | ADS-002, REW-002 | Reward grants only once after verified completion callback. |
 | ADS-004 | Rewarded double reward | P2 | PLANNED | ADS-002, REW-001 | One-time doubling uses an idempotency key and survives interruption. |
 | ADS-005 | Rewarded booster | P2 | PLANNED | ADS-002, ECON-004 | Inventory updates only after verified completion. |

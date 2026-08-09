@@ -1,3 +1,5 @@
+import 'dart:io';
+
 enum AppEnvironment {
   debug,
   staging,
@@ -17,6 +19,8 @@ enum AppEnvironment {
   }
 }
 
+enum AdMobPlatform { android, ios }
+
 final class AdMobUnitIds {
   const AdMobUnitIds({
     required this.androidBanner,
@@ -29,12 +33,10 @@ final class AdMobUnitIds {
 
   static const googleTestAndroidBanner =
       'ca-app-pub-3940256099942544/6300978111';
-  static const googleTestIosBanner =
-      'ca-app-pub-3940256099942544/2934735716';
+  static const googleTestIosBanner = 'ca-app-pub-3940256099942544/2934735716';
   static const googleTestAndroidRewarded =
       'ca-app-pub-3940256099942544/5224354917';
-  static const googleTestIosRewarded =
-      'ca-app-pub-3940256099942544/1712485313';
+  static const googleTestIosRewarded = 'ca-app-pub-3940256099942544/1712485313';
   static const googleTestAndroidInterstitial =
       'ca-app-pub-3940256099942544/1033173712';
   static const googleTestIosInterstitial =
@@ -47,6 +49,10 @@ final class AdMobUnitIds {
     iosRewarded: googleTestIosRewarded,
     androidInterstitial: googleTestAndroidInterstitial,
     iosInterstitial: googleTestIosInterstitial,
+  );
+
+  static final RegExp _adUnitIdPattern = RegExp(
+    r'^ca-app-pub-[0-9]{16}/[0-9]{10}$',
   );
 
   final String androidBanner;
@@ -65,10 +71,37 @@ final class AdMobUnitIds {
     yield iosInterstitial;
   }
 
-  bool get isComplete => values.every((value) => value.trim().isNotEmpty);
+  Iterable<String> valuesFor(AdMobPlatform platform) sync* {
+    if (platform == AdMobPlatform.android) {
+      yield androidBanner;
+      yield androidRewarded;
+      yield androidInterstitial;
+      return;
+    }
 
-  bool get usesGoogleTestIds =>
-      values.any((value) => value.startsWith('ca-app-pub-3940256099942544/'));
+    yield iosBanner;
+    yield iosRewarded;
+    yield iosInterstitial;
+  }
+
+  bool isCompleteFor(AdMobPlatform? platform) =>
+      (platform == null ? values : valuesFor(platform)).every(
+        (value) => value.trim().isNotEmpty,
+      );
+
+  bool usesGoogleTestIdsFor(AdMobPlatform? platform) =>
+      (platform == null ? values : valuesFor(platform)).any(
+        (value) => value.startsWith('ca-app-pub-3940256099942544/'),
+      );
+
+  bool hasValidFormatFor(AdMobPlatform? platform) =>
+      (platform == null ? values : valuesFor(platform)).every(
+        (value) => _adUnitIdPattern.hasMatch(value.trim()),
+      );
+
+  bool get isComplete => isCompleteFor(null);
+
+  bool get usesGoogleTestIds => usesGoogleTestIdsFor(null);
 }
 
 final class AppBuildConfig {
@@ -77,6 +110,7 @@ final class AppBuildConfig {
     required this.enableDiagnostics,
     required this.enableAds,
     required this.adMob,
+    required this.adMobPlatform,
   });
 
   static final AppBuildConfig current = AppBuildConfig.fromValues(
@@ -89,6 +123,11 @@ final class AppBuildConfig {
       defaultValue: true,
     ),
     enableAds: const bool.fromEnvironment('ENABLE_ADS', defaultValue: true),
+    adMobPlatform: Platform.isAndroid
+        ? AdMobPlatform.android
+        : Platform.isIOS
+        ? AdMobPlatform.ios
+        : null,
     adMob: const AdMobUnitIds(
       androidBanner: String.fromEnvironment(
         'ADMOB_ANDROID_BANNER_ID',
@@ -122,6 +161,7 @@ final class AppBuildConfig {
     required bool enableDiagnostics,
     required bool enableAds,
     required AdMobUnitIds adMob,
+    AdMobPlatform? adMobPlatform,
   }) {
     final environment = AppEnvironment.parse(environmentName);
     final config = AppBuildConfig._(
@@ -129,6 +169,7 @@ final class AppBuildConfig {
       enableDiagnostics: enableDiagnostics,
       enableAds: enableAds,
       adMob: adMob,
+      adMobPlatform: adMobPlatform,
     );
     config.validate();
     return config;
@@ -138,6 +179,7 @@ final class AppBuildConfig {
   final bool enableDiagnostics;
   final bool enableAds;
   final AdMobUnitIds adMob;
+  final AdMobPlatform? adMobPlatform;
 
   bool get isDebug => environment == AppEnvironment.debug;
   bool get isStaging => environment == AppEnvironment.staging;
@@ -146,11 +188,19 @@ final class AppBuildConfig {
   void validate() {
     if (!enableAds) return;
 
-    if (!adMob.isComplete) {
-      throw StateError('AdMob unit IDs must be complete when ads are enabled.');
+    if (!adMob.isCompleteFor(adMobPlatform)) {
+      throw StateError(
+        'AdMob unit IDs for the active platform must be complete when ads are enabled.',
+      );
     }
 
-    if (isRelease && adMob.usesGoogleTestIds) {
+    if (!adMob.hasValidFormatFor(adMobPlatform)) {
+      throw StateError(
+        'AdMob unit IDs for the active platform must use a valid AdMob ad-unit ID format.',
+      );
+    }
+
+    if (isRelease && adMob.usesGoogleTestIdsFor(adMobPlatform)) {
       throw StateError(
         'Release builds cannot use Google test AdMob unit IDs. '
         'Inject release IDs with --dart-define.',
