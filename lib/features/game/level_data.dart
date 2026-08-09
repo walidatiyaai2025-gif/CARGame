@@ -2,6 +2,8 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
+import 'level_difficulty_policy.dart';
+
 class CargoItem {
   const CargoItem({
     required this.id,
@@ -286,8 +288,11 @@ LevelData generateLevel(int number) {
   }
   items.shuffle(random);
 
-  final difficulty = min(10, 1 + ((number - 1) ~/ 15));
-  final safetyMoves = max(2, 6 - world);
+  final difficulty = LevelDifficultyPolicy.declaredDifficultyForLevel(number);
+  final safetyMoves = LevelDifficultyPolicy.safetyMoveBaseForLevel(
+    levelNumber: number,
+    world: world,
+  );
   final moves = items.length + safetyMoves + random.nextInt(3);
 
   return LevelData(

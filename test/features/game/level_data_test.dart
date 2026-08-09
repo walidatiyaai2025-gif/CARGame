@@ -1,4 +1,5 @@
 import 'package:cargo_sort_game/features/game/level_data.dart';
+import 'package:cargo_sort_game/features/game/level_difficulty_policy.dart';
 import 'package:cargo_sort_game/features/game/level_validator.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -89,7 +90,10 @@ void main() {
 
     test('every generated configuration stays inside move budget rules', () {
       for (final level in levels) {
-        final safetyMoves = (6 - level.world).clamp(2, 5);
+        final safetyMoves = LevelDifficultyPolicy.safetyMoveBaseForLevel(
+          levelNumber: level.number,
+          world: level.world,
+        );
         final extraMoves = level.moves - level.items.length;
 
         expect(
@@ -105,31 +109,35 @@ void main() {
       }
     });
 
-    test('every product occurrence belongs to the catalog and has a partner', () {
-      final validIds = productCatalog.map((item) => item.id).toSet();
+    test(
+      'every product occurrence belongs to the catalog and has a partner',
+      () {
+        final validIds = productCatalog.map((item) => item.id).toSet();
 
-      for (final level in levels) {
-        final counts = <int, int>{};
-        for (final item in level.items) {
-          expect(validIds, contains(item.id), reason: 'level ${level.number}');
-          counts.update(item.id, (value) => value + 1, ifAbsent: () => 1);
-        }
+        for (final level in levels) {
+          final counts = <int, int>{};
+          for (final item in level.items) {
+            expect(
+              validIds,
+              contains(item.id),
+              reason: 'level ${level.number}',
+            );
+            counts.update(item.id, (value) => value + 1, ifAbsent: () => 1);
+          }
 
-        for (final entry in counts.entries) {
-          expect(
-            entry.value,
-            greaterThanOrEqualTo(2),
-            reason: 'level ${level.number}, product ${entry.key}',
-          );
+          for (final entry in counts.entries) {
+            expect(
+              entry.value,
+              greaterThanOrEqualTo(2),
+              reason: 'level ${level.number}, product ${entry.key}',
+            );
+          }
         }
-      }
-    });
+      },
+    );
 
     test('generated collections are immutable', () {
-      expect(
-        () => levels.add(generateLevel(1)),
-        throwsUnsupportedError,
-      );
+      expect(() => levels.add(generateLevel(1)), throwsUnsupportedError);
       expect(
         () => generateLevel(1).items.add(productCatalog.first),
         throwsUnsupportedError,

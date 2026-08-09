@@ -169,7 +169,7 @@ Codex must not mark a feature complete merely because UI code exists.
 | ID | Function | Priority | Status | Dependencies | Acceptance / evidence |
 |---|---|---:|---|---|---|
 | LEVEL-001 | 150 playable levels | P0 | IMPLEMENTED | GAME-001 | 150 generated level entries exist; validation and balancing remain. |
-| LEVEL-002 | Difficulty curve | P0 | PLANNED | LEVEL-001 | Tutorial/easy/medium/hard/expert bands meet documented quantitative targets. |
+| LEVEL-002 | Difficulty curve | P0 | IN PROGRESS | LEVEL-001 | Issue #134 defines typed tutorial/easy/medium/hard/expert bands, deterministic per-level balance metrics, quantitative envelopes, macro-progression validation, and explicit boundary regressions across the 150-level generator. Preserve current generated content unless measured acceptance exposes a real imbalance. |
 | LEVEL-003 | Level solvability validator | P0 | VERIFIED | LEVEL-001 | Current main contains `LevelSolvabilityValidator` (historical commit `c06e23ec272a8800a039d99cbdcb02a4b0391670`) plus deterministic regression coverage across all 150 generated levels. The validator enforces level/world/difficulty bounds, canonical product metadata, non-empty multi-target cargo, no orphan products, positive/sufficient moves, unique level numbers, and the complete 1..150 set; tests explicitly cover levels 1, 25, 26, 50, 51, 125, 126 and 150 and reject insufficient moves, empty/single-target layouts, orphan/unknown products, metadata/world/difficulty mismatches, and duplicate/incomplete sets. Flutter CI #659 / run `31301158763` passed all 240 Flutter tests, Analyze, Debug APK build and artifact upload; artifact #9034604961 is 80,544,511 bytes with SHA-256 `79d61a1977614296dd06a38a850e7960a730c6d632890801e77d99d5983ac6b6`. |
 | LEVEL-004 | Boss mechanics | P1 | PLANNED | LEVEL-002 | Each world boss has a distinct mechanic, tutorial cue, and validated difficulty. |
 | LEVEL-005 | Milestone levels | P1 | IMPLEMENTED | LEVEL-001 | Every fifth city grants a one-time milestone reward; tests remain. |
@@ -331,11 +331,11 @@ Codex must not mark a feature complete merely because UI code exists.
 
 ## IN PROGRESS
 
-- None after `LEVEL-003` verification.
+- `LEVEL-002` Difficulty curve — issue #134; defining typed quantitative bands and deterministic balance validation across all 150 generated levels.
 
 ## NEXT READY
 
-1. `LEVEL-002` Difficulty curve — `LEVEL-001` is implemented and LEVEL-003 is now VERIFIED; define quantitative tutorial/easy/medium/hard/expert targets and validate the generated 150-level curve instead of relying on generator intuition.
+- To be selected after LEVEL-002 verification.
 
 ## BLOCKED
 
