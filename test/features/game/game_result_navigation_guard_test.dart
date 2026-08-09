@@ -111,15 +111,17 @@ void main() {
     await pumpUntil(next);
     expect(next, findsOneWidget);
 
-    await tester.scrollUntilVisible(
-      next,
-      300,
-      scrollable: find.byType(Scrollable).last,
-    );
+    final resultScroll = find.byType(SingleChildScrollView);
+    expect(resultScroll, findsOneWidget);
+    await tester.drag(resultScroll, const Offset(0, -1200));
     await tester.pump();
 
-    await tester.tap(next);
-    await tester.tap(next);
+    final viewport = Offset.zero & tester.binding.renderViews.single.size;
+    final visibleNext = tester.getRect(next).intersect(viewport);
+    expect(visibleNext.isEmpty, isFalse);
+
+    await tester.tapAt(visibleNext.center);
+    await tester.tapAt(visibleNext.center);
     await pumpUntilAbsent(find.byType(GameScreen));
 
     expect(observer.gameRouteExits, 1);
