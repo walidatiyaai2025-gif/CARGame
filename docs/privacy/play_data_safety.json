@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-08-09",
+  "updatedAt": "2026-08-10",
   "sourceInventory": "docs/privacy/data_inventory.json",
   "policyDocument": "docs/PRIVACY_POLICY.md",
   "publication": {
@@ -15,7 +15,8 @@
     "collectsUserData": true,
     "sharesUserData": true,
     "accountCreationAvailable": false,
-    "deletionRequestMechanismAvailable": false,
+    "deletionRequestMechanismAvailable": true,
+    "deletionMechanism": "Settings > Privacy > Delete & reset local data immediately clears CARGame first-party local SharedPreferences/recovery state and local diagnostics; no first-party account/backend exists.",
     "independentSecurityReview": false,
     "encryptedInTransit": {
       "recommendedAnswer": true,
@@ -30,7 +31,7 @@
       "collectedOffDevice": false,
       "sharedWithThirdParties": false,
       "dataTypes": [],
-      "notes": "Current PRIV-001 inventory marks this flow local-only; on-device-only processing is not declared as off-device collection."
+      "notes": "Current PRIV-001 inventory marks this flow local-only; on-device-only processing is not declared as off-device collection. Settings > Privacy provides first-party local export and deletion/reset."
     },
     {
       "flowId": "persistence-integrity",
@@ -38,7 +39,7 @@
       "collectedOffDevice": false,
       "sharedWithThirdParties": false,
       "dataTypes": [],
-      "notes": "Current PRIV-001 inventory marks this flow local-only; on-device-only processing is not declared as off-device collection."
+      "notes": "Current PRIV-001 inventory marks this flow local-only; on-device-only processing is not declared as off-device collection. Settings > Privacy deletion/reset clears transaction and recovery metadata."
     },
     {
       "flowId": "storage-recovery-backup",
@@ -46,7 +47,7 @@
       "collectedOffDevice": false,
       "sharedWithThirdParties": false,
       "dataTypes": [],
-      "notes": "Current PRIV-001 inventory marks this flow local-only; on-device-only processing is not declared as off-device collection."
+      "notes": "Current PRIV-001 inventory marks this flow local-only; on-device-only processing is not declared as off-device collection. The local delete/reset path clears the recovery snapshot."
     },
     {
       "flowId": "app-settings",
@@ -54,7 +55,7 @@
       "collectedOffDevice": false,
       "sharedWithThirdParties": false,
       "dataTypes": [],
-      "notes": "Current PRIV-001 inventory marks this flow local-only; on-device-only processing is not declared as off-device collection."
+      "notes": "Current PRIV-001 inventory marks this flow local-only; on-device-only processing is not declared as off-device collection. Settings > Privacy deletion/reset restores safe defaults."
     },
     {
       "flowId": "diagnostic-logs",
@@ -62,7 +63,7 @@
       "collectedOffDevice": false,
       "sharedWithThirdParties": false,
       "dataTypes": [],
-      "notes": "Current PRIV-001 inventory marks this flow local-only; on-device-only processing is not declared as off-device collection."
+      "notes": "Current PRIV-001 inventory marks this flow local-only; on-device-only processing is not declared as off-device collection. The local delete/reset path clears local diagnostic entries/files."
     },
     {
       "flowId": "ad-sdk-processing",
@@ -107,7 +108,7 @@
           ]
         }
       ],
-      "notes": "Conservative mapping from current Google Mobile Ads Android disclosure. CARGame has no first-party ad telemetry server; production release must re-check the exact SDK/configuration and Play Console classification."
+      "notes": "Conservative mapping from current Google Mobile Ads Android disclosure. CARGame has no first-party ad telemetry server; the first-party local delete/reset path does not claim to delete Google processor-side data. Production release must re-check the exact SDK/configuration and Play Console classification."
     }
   ],
   "explicitlyAbsent": [

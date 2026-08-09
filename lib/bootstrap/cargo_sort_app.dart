@@ -10,6 +10,7 @@ import '../core/logging/log_viewer_screen.dart';
 import '../core/motion/motion_lifecycle_scope.dart';
 import '../core/navigation/game_navigator.dart';
 import '../core/navigation/game_route_names.dart';
+import '../core/privacy/local_data_controller.dart';
 import '../core/settings/app_settings_store.dart';
 import '../core/storage/progress_store.dart';
 import '../core/theme/app_theme.dart';
@@ -37,13 +38,18 @@ class _CargoSortAppState extends State<CargoSortApp>
     with WidgetsBindingObserver {
   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
   final AppLogger _logger = AppLogger.instance;
+  final LocalDataController _localDataController = LocalDataController();
   Locale _locale = const Locale('en');
   StreamSubscription<LoggedAppError>? _errorSubscription;
+  late ProgressStore _activeStore;
+  late AppSettingsStore _activeSettings;
   bool _dialogVisible = false;
 
   @override
   void initState() {
     super.initState();
+    _activeStore = widget.store;
+    _activeSettings = widget.settings;
     WidgetsBinding.instance.addObserver(this);
     _errorSubscription = _logger.runtimeErrors.listen(_showRuntimeError);
     unawaited(_logger.checkpoint('APP_WIDGET_INITIALIZED'));
@@ -77,12 +83,33 @@ class _CargoSortAppState extends State<CargoSortApp>
         context,
         name: GameRouteNames.settings,
         builder: (_) => SettingsScreen(
-          settings: widget.settings,
+          settings: _activeSettings,
           onToggleLanguage: _toggleLanguage,
           adConsentController: widget.adConsentController,
+          localDataController: _localDataController,
+          onLocalDataDeleted: _rehydrateAfterLocalDataDeletion,
         ),
       ),
     );
+  }
+
+  Future<void> _rehydrateAfterLocalDataDeletion() async {
+    final nextStore = ProgressStore();
+    final nextSettings = AppSettingsStore();
+
+    try {
+      await Future.wait<void>([nextStore.load(), nextSettings.load()]);
+    } catch (_) {
+      // Constructors already hold safe defaults. A reset must not restore
+      // deleted values merely because a local plugin reload failed.
+    }
+
+    if (!mounted) return;
+    setState(() {
+      _activeStore = nextStore;
+      _activeSettings = nextSettings;
+    });
+    _navigatorKey.currentState?.popUntil((route) => route.isFirst);
   }
 
   Future<void> _showRuntimeError(LoggedAppError appError) async {
@@ -157,8 +184,8 @@ class _CargoSortAppState extends State<CargoSortApp>
         child: Stack(
           children: [
             HomeScreen(
-              store: widget.store,
-              settings: widget.settings,
+              store: _activeStore,
+              settings: _activeSettings,
               onToggleLanguage: _toggleLanguage,
               adConsentState: widget.adConsentController?.state,
             ),
