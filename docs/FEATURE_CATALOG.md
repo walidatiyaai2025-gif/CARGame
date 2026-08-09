@@ -308,7 +308,7 @@ Codex must not mark a feature complete merely because UI code exists.
 
 | ID | Function | Priority | Status | Dependencies | Acceptance / evidence |
 |---|---|---:|---|---|---|
-| PRIV-001 | Privacy inventory, consent, and data minimization | P0 | PLANNED | ENG-001 | Every collected datum, purpose, retention, consent, processor, and deletion path is documented. |
+| PRIV-001 | Privacy inventory, consent, and data minimization | P0 | VERIFIED | ENG-001 | Historical PR #33 established the privacy inventory/CI gate; issue #32 / PR #126 refreshed it against current main. The machine inventory now covers all 33 persisted SharedPreferences key/prefix families across progress, settings, transaction/migration integrity, and recovery snapshots; CI fails on missing/stale/duplicate persistence coverage and cross-checks the sole declared network processor, Google Mobile Ads. Flutter CI #651 / run `31299285194` passed the strengthened privacy gate, security baseline, Analyze, full Flutter tests, Debug APK build and artifact upload on head `659a78ce00b6fc3f95e7213bf1c04ceaa680cd55`. Debug artifact #9034063433 is 80,544,514 bytes with SHA-256 `6fc839b195551ffcdbb0bd30b69bb9f29124aa5b9f5277ab8aa981d3508f4f9c`; PR #126 squash-merged as `dd076dd383d6c3cd0dd33986f980e8b4f012b38b`. ADS-007, ENG-013, PRIV-003, and PRIV-002 remain explicit downstream gates. |
 | PRIV-002 | Privacy policy and Play Data safety mapping | P0 | PLANNED | PRIV-001, ADS-007 | Published policy and store disclosures match actual SDK/data behavior. |
 | PRIV-003 | User data export/deletion readiness | P1 | PLANNED | PRIV-001, ENG-008 | Local/remote data handling includes deletion/reset/export procedures where applicable. |
 | SEC-001 | Mobile security baseline and threat model | P0 | PLANNED | ENG-010 | Threats, trust boundaries, secure storage, network rules, tamper risks, and mitigations are documented. |
@@ -331,13 +331,12 @@ Codex must not mark a feature complete merely because UI code exists.
 
 ## IN PROGRESS
 
-- None after `ECON-005` verification.
+- None after `PRIV-001` verification.
 
 ## NEXT READY
 
-1. `PRIV-001` Privacy inventory, consent, and data minimization — `ENG-001` is VERIFIED; completing the release data inventory unlocks consent/store mapping and `TEST-011` privacy/security verification.
-2. `SEC-001` Mobile security baseline and threat model — `ENG-010` is VERIFIED; release trust boundaries and mitigations can now be reconciled against the existing security CI baseline.
-3. `AST-011` Asset licensing and provenance — `AST-001` is VERIFIED; commercial-use provenance remains a release-critical content-rights prerequisite.
+1. `SEC-001` Mobile security baseline and threat model — historical PR #35 implemented the baseline, but current-main reconciliation must account for the refreshed PRIV-001 processor/gating truth and later persistence/release hardening.
+2. `AST-011` Asset licensing and provenance — `AST-001` is VERIFIED; commercial-use provenance remains a release-critical content-rights prerequisite.
 
 ## BLOCKED
 
@@ -347,6 +346,7 @@ Codex must not mark a feature complete merely because UI code exists.
 
 ## Recently verified
 
+- `PRIV-001` Privacy inventory, consent, and data minimization — issue #32 / PR #126 refreshed the historical PR #33 inventory to current main, mechanically covers all 33 persisted key/prefix families, records Google Mobile Ads as the only network data processor, and explicitly preserves ADS-007/ENG-013/PRIV-003/PRIV-002 as downstream gaps. Flutter CI #651 passed all gates and uploaded artifact #9034063433 (`6fc839b195551ffcdbb0bd30b69bb9f29124aa5b9f5277ab8aa981d3508f4f9c`); PR #126 merged as `dd076dd383d6c3cd0dd33986f980e8b4f012b38b`.
 - `ECON-005` Versioned economy configuration and balance rules — PR #124 merged as `2091cf35ff9b4a261fa76f9d90975735711c58e3` after Flutter CI #647 passed all merge gates and uploaded debug artifact #9033326885 (`bbca79f780b9effc07a93ecc8a5a0b0dd73b523e6706531fe292127165d2872a`). Shipped v1 balance parity is centralized, versioned, migration-safe, and authoritative across gameplay, progress/rewards, and shop flows.
 - `GAME-016` Input determinism and anti-spam state machine — PR #111 merged after Flutter CI #580 passed all 215 tests plus Debug APK build/upload; cargo/warehouse spam, selection locking, resolution input disablement, and result-boundary guards are deterministic.
 - `REL-006` Android signing and key-management procedure — PR #102 merged as `8f2e4ddb69d339938ba05911fb297960859e1a77`; Flutter CI #544 and Release Packaging Smoke #4 passed the redacted preflight, contract, APK/AAB packaging and evidence gates.

@@ -7,12 +7,24 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | Field | Value |
 |---|---|
 | Current phase | Android RC hardening — issue #79 |
-| Primary feature | None; `ECON-005` is VERIFIED after issue #122 / PR #124. |
-| Completed checkpoint | `ECON-005` versioned economy configuration — PR #124 merged as `2091cf35ff9b4a261fa76f9d90975735711c58e3` after Flutter CI #647 passed the full gate set and uploaded debug artifact #9033326885. |
-| Status | Shipped v1 economy values are centralized in immutable validated `EconomyConfig.v1`; migration is non-destructive/fail-closed, shop prices and quantities are authoritative by stable offer IDs, and configured heart purchases retain SHOP-002 transaction atomicity. |
-| Previous checkpoint | `REW-007` reward transaction reconciliation — PR #120 merged as `b915d95b938d459133a9a8b120f38815178b1852` after Flutter CI #623. |
-| Next recommended feature | `PRIV-001` privacy inventory, consent, and data minimization: unblocked by `ENG-001`, release-critical, and it unlocks consent/store mapping plus `TEST-011`. |
+| Primary feature | None; `PRIV-001` is VERIFIED after issue #32 / PR #126 current-main refresh. |
+| Completed checkpoint | `PRIV-001` privacy inventory current-main reconciliation — PR #126 merged as `dd076dd383d6c3cd0dd33986f980e8b4f012b38b` after Flutter CI #651 passed the strengthened privacy drift gate, security cross-check, full Flutter suite, Debug APK and artifact upload. |
+| Status | Privacy inventory is synchronized with the current 33 persisted key/prefix families and mechanically drift-protected; Google Mobile Ads is the sole declared network processor. ADS-007 ad-consent/bootstrap gating, ENG-013 diagnostics gating, PRIV-003 in-app data controls, and PRIV-002 store/policy mapping remain explicit follow-ups. |
+| Previous checkpoint | `ECON-005` versioned economy configuration — PR #124 merged as `2091cf35ff9b4a261fa76f9d90975735711c58e3` after Flutter CI #647. |
+| Next recommended feature | `SEC-001` mobile security baseline and threat model current-main reconciliation: historical PR #35 exists, but it must be checked against the refreshed privacy processor/gating truth and later release-hardening changes. |
 | Known blocker | `REL-007`/`REL-008` require real production AdMob/signing inputs and a production-signed candidate; final install/upgrade/device smoke requires an Android device or testing track. `TEST-009` also remains dependency-blocked while `PERF-001` is PLANNED. Visual Studio C++ components remain optional for Windows desktop only. |
+
+## PRIV-001 privacy inventory current-main verification — 2026-08-09
+
+- Historical PR #33 established the original human/machine privacy inventory and CI validation gate; issue #32 was reopened because later SHOP-002, REL-004, REW-007, and ECON-005 work expanded local persistence.
+- PR #126 reconciles the inventory with all 33 current SharedPreferences key/prefix families across gameplay/progress, settings, transaction/migration integrity metadata, and the storage-recovery snapshot.
+- `tool/verify_privacy_inventory.py` now extracts persisted key declarations from `ProgressStore`, `AppSettingsStore`, and `RecoveringPreferences` and fails on missing, stale, or duplicate inventory ownership.
+- Google Mobile Ads remains the only declared production network data processor; no first-party analytics, account, cloud-save, or remote diagnostics SDK is enabled.
+- Current runtime gaps are recorded rather than overstated: `AdService` request/load/show calls honor `ENABLE_ADS=false` but bootstrap still initializes `MobileAds`; `ENABLE_DIAGNOSTICS` exists but does not suppress local logger installation; complete in-app reset/export/delete remains pending. Owners remain ADS-007, ENG-013, and PRIV-003 respectively, while PRIV-002 owns policy/store mapping.
+- Final implementation head `659a78ce00b6fc3f95e7213bf1c04ceaa680cd55` passed Flutter CI #651 / run `31299285194`, including the strengthened privacy drift gate, security baseline, formatting, Analyze, full Flutter tests, Debug APK build, and upload.
+- Debug artifact #9034063433 is 80,544,514 bytes with SHA-256 `6fc839b195551ffcdbb0bd30b69bb9f29124aa5b9f5277ab8aa981d3508f4f9c`.
+- PR #126 squash-merged to `main` as `dd076dd383d6c3cd0dd33986f980e8b4f012b38b`; `PRIV-001` is VERIFIED.
+- Next release-critical reconciliation target: `SEC-001`.
 
 ## ECON-005 economy configuration verification — 2026-08-09
 
@@ -204,6 +216,7 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | 2026-08-09 | REL-006 signing/key-management verification | PASSED — PR #102 / Flutter CI #544 + Release Packaging Smoke #4 / debug artifact #9030167112 / release evidence #9030181913 |
 | 2026-08-09 | TEST-001 progress/economy + legacy-save compatibility | PASSED — PR #104 / Flutter CI #546 / full suite + Debug APK artifact #9030311765 / SHA-256 `cdef9c5c5fbc9576d1760009956aab53ab6e63491248a2ba43ea5288797855b7` |
 | 2026-08-09 | REL-001 dynamic Android targets | PASSED — Flutter CI #546 validated 38 PowerShell/batch scripts with no fixed emulator/AVD/adb target |
+| 2026-08-09 | PRIV-001 privacy inventory current-main reconciliation | PASSED — PR #126 / Flutter CI #651 / run `31299285194` / debug artifact #9034063433 / SHA-256 `6fc839b195551ffcdbb0bd30b69bb9f29124aa5b9f5277ab8aa981d3508f4f9c` |
 | 2026-08-09 | ECON-005 versioned economy configuration | PASSED — PR #124 / Flutter CI #647 / run `31296918681` / debug artifact #9033326885 / SHA-256 `bbca79f780b9effc07a93ecc8a5a0b0dd73b523e6706531fe292127165d2872a` |
 
 ## Test locally
