@@ -1,0 +1,63 @@
+name: Temporary TEST-004 verification tracking
+
+on:
+  push:
+    branches:
+      - agent/test-004-navigation-race-current
+    paths:
+      - .github/workflows/_temporary_test004_verify_tracking.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/test-004-navigation-race-current
+          fetch-depth: 0
+      - name: Reconcile TEST-004 verification evidence
+        shell: python
+        run: |
+          from pathlib import Path
+
+          catalog = Path('docs/FEATURE_CATALOG.md')
+          text = catalog.read_text()
+          old = '| TEST-004 | Navigation race regression tests | P0 | IN PROGRESS | NAV-001 | Issue #108 / PR #109 reproduced a deterministic current-main result navigation defect: after a visible settled Next action the Game route remains mounted. Work is closing result-route dismissal first, then reconciling Retry/Start duplicate-action coverage before verification. |'
+          new = '| TEST-004 | Navigation race regression tests | P0 | VERIFIED | NAV-001 | PR #109 hardens result-route dismissal against repeated actions and adds deterministic integration coverage for repeated Next, Retry, and Home Start actions; existing `GameNavigator` tests cover concurrent/named duplicate-push guards. Flutter CI #571 passed formatting, Analyze, the full 214-test Flutter suite, Debug APK build, and artifact upload. Debug artifact #9031075109 is 80,515,902 bytes with SHA-256 `299e710a467672c57c91fd956669d67506cf5534b8741499066032ff9e60b539`. |'
+          if old not in text:
+              raise SystemExit('Expected TEST-004 catalog row not found')
+          catalog.write_text(text.replace(old, new, 1))
+
+          status = Path('docs/STATUS.md')
+          text = status.read_text()
+          replacements = {
+              '| Primary feature | `TEST-004` navigation race regression tests — issue #108 / PR #109. |': '| Primary feature | None after TEST-004 verification; next RC P0 selection follows this checkpoint. |',
+              '| Status | IN PROGRESS — current-main CI reproduced a deterministic result navigation defect after a real visible Next activation; result-route dismissal is being hardened before Retry/Start coverage reconciliation. `REL-004` is VERIFIED by PR #107 / CI #551. |': '| Status | `TEST-004` VERIFIED on PR #109 / Flutter CI #571: repeated Next, Retry, and Home Start actions are deterministic; result-sheet dismissal is idempotent; Analyze, all 214 Flutter tests, Debug APK build, and artifact upload passed. `REL-004` remains VERIFIED by PR #107 / CI #551. |',
+              '| Next recommended feature | Finish `TEST-004` on current main, then audit `GAME-016` rapid-input determinism and the remaining unblocked RC P0 gaps. |': '| Next recommended feature | Audit `GAME-016` rapid-input determinism, then continue the remaining unblocked RC P0 gaps. |',
+          }
+          for old_value, new_value in replacements.items():
+              if old_value not in text:
+                  raise SystemExit(f'Expected STATUS row not found: {old_value}')
+              text = text.replace(old_value, new_value, 1)
+
+          marker = '## RC persistence/signing verification reconciliation — 2026-08-09\n'
+          evidence = ('## TEST-004 navigation race verification — 2026-08-09\n\n'
+              '- Issue #108 / PR #109 hardened result-sheet dismissal so repeated result actions cannot remove an already-removed modal route or duplicate the gameplay route exit.\n'
+              '- Deterministic integration regressions cover repeated Next, repeated Retry without duplicate heart loss, and repeated Home Start with exactly one journey push; existing `GameNavigator` tests cover concurrent and named duplicate-push guards.\n'
+              '- Flutter CI #571 passed formatting, Analyze, the full 214-test Flutter suite, Debug APK build, and artifact upload.\n'
+              '- Debug artifact #9031075109 is 80,515,902 bytes with SHA-256 `299e710a467672c57c91fd956669d67506cf5534b8741499066032ff9e60b539`.\n'
+              '- `TEST-004` is VERIFIED; the next RC P0 audit target is `GAME-016` rapid-input determinism.\n\n')
+          if marker not in text:
+              raise SystemExit('STATUS insertion marker not found')
+          status.write_text(text.replace(marker, evidence + marker, 1))
+      - name: Remove temporary workflow and push
+        run: |
+          git rm .github/workflows/_temporary_test004_verify_tracking.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/FEATURE_CATALOG.md docs/STATUS.md
+          git commit -m 'docs: verify TEST-004 navigation race coverage'
+          git push origin HEAD:agent/test-004-navigation-race-current
