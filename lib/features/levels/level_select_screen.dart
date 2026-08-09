@@ -173,41 +173,47 @@ class _GlobalHeader extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: .12),
-                        borderRadius: BorderRadius.circular(30),
-                        border: Border.all(color: Colors.white24),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 7,
-                            height: 7,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFF59F0A8),
-                              shape: BoxShape.circle,
-                            ),
+                    Expanded(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: AlignmentDirectional.centerStart,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
                           ),
-                          const SizedBox(width: 7),
-                          Text(
-                            isArabic ? 'شبكة المسارات' : 'ROUTE NETWORK',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: .8,
-                            ),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: .12),
+                            borderRadius: BorderRadius.circular(30),
+                            border: Border.all(color: Colors.white24),
                           ),
-                        ],
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                width: 7,
+                                height: 7,
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFF59F0A8),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 7),
+                              Text(
+                                isArabic ? 'شبكة المسارات' : 'ROUTE NETWORK',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: .8,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
-                    const Spacer(),
+                    const SizedBox(width: 8),
                     _HeaderBadge(
                       icon: Icons.public_rounded,
                       label: '${isArabic ? 'العالم' : 'WORLD'} $currentWorld',
@@ -524,36 +530,41 @@ class _WorldSection extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.black.withValues(alpha: .14),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: Text(
-                                  '${isArabic ? 'العالم' : 'WORLD'} ${world.number}',
-                                  style: const TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 9,
-                                    fontWeight: FontWeight.w900,
-                                    letterSpacing: .6,
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: AlignmentDirectional.centerStart,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withValues(alpha: .14),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Text(
+                                    '${isArabic ? 'العالم' : 'WORLD'} ${world.number}',
+                                    style: const TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.w900,
+                                      letterSpacing: .6,
+                                    ),
                                   ),
                                 ),
-                              ),
-                              const SizedBox(width: 7),
-                              if (unlocked)
-                                _WorldStatusBadge(
-                                  label: worldComplete
-                                      ? (isArabic ? 'مكتمل' : 'CLEARED')
-                                      : (isArabic ? 'نشط' : 'ACTIVE'),
-                                  complete: worldComplete,
-                                ),
-                            ],
+                                const SizedBox(width: 7),
+                                if (unlocked)
+                                  _WorldStatusBadge(
+                                    label: worldComplete
+                                        ? (isArabic ? 'مكتمل' : 'CLEARED')
+                                        : (isArabic ? 'نشط' : 'ACTIVE'),
+                                    complete: worldComplete,
+                                  ),
+                              ],
+                            ),
                           ),
                           const SizedBox(height: 5),
                           Text(
