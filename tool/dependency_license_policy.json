@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "allowed_licenses": [
+    "MIT",
+    "BSD-3-Clause",
+    "Apache-2.0"
+  ],
+  "packages": {
+    "cupertino_icons": {
+      "kind": "main",
+      "reviewed_version": "1.0.9",
+      "license": "MIT"
+    },
+    "flame": {
+      "kind": "main",
+      "reviewed_version": "1.38.0",
+      "license": "MIT"
+    },
+    "flutter_lints": {
+      "kind": "dev",
+      "reviewed_version": "6.0.0",
+      "license": "BSD-3-Clause"
+    },
+    "google_mobile_ads": {
+      "kind": "main",
+      "reviewed_version": "9.0.0",
+      "license": "Apache-2.0"
+    },
+    "path_provider": {
+      "kind": "main",
+      "reviewed_version": "2.1.6",
+      "license": "BSD-3-Clause"
+    },
+    "shared_preferences": {
+      "kind": "main",
+      "reviewed_version": "2.5.5",
+      "license": "BSD-3-Clause"
+    },
+    "shared_preferences_platform_interface": {
+      "kind": "dev",
+      "reviewed_version": "2.4.2",
+      "license": "BSD-3-Clause"
+    }
+  }
+}
