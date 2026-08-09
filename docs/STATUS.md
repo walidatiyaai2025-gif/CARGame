@@ -7,11 +7,11 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | Field | Value |
 |---|---|
 | Current phase | Android RC hardening — issue #79 |
-| Primary feature | None during evidence-only reconciliation; next implementation selection follows this docs checkpoint. |
+| Primary feature | `TEST-004` navigation race regression tests — issue #108 / PR #109. |
 | Completed checkpoint | `TEST-001` legacy-save compatibility — PR #104 merged as `2ab3578ecc214f995f194eff95f1a27b7cc3f442` after Flutter CI #546 passed Analyze, the full Flutter suite, Debug APK build, and artifact upload. |
-| Status | `REL-006`, `TEST-001`, and `REL-001` are VERIFIED from current repository/CI evidence. No Android source/build blocker is known; production-signed distribution verification remains externally blocked. |
+| Status | IN PROGRESS — current-main CI reproduced a deterministic result navigation defect after a real visible Next activation; result-route dismissal is being hardened before Retry/Start coverage reconciliation. `REL-004` is VERIFIED by PR #107 / CI #551. |
 | Previous checkpoint | `REL-006` Android signing/key-management — PR #102 merged as `8f2e4ddb69d339938ba05911fb297960859e1a77`; Flutter CI #544 and Android Release Packaging Smoke #4 both passed. |
-| Next recommended feature | `REL-004` reconcile storage corruption backup/recovery evidence and fill only any remaining P0 persistence gap; then reconcile `TEST-004` navigation-race coverage and audit `GAME-016` rapid-input determinism. |
+| Next recommended feature | Finish `TEST-004` on current main, then audit `GAME-016` rapid-input determinism and the remaining unblocked RC P0 gaps. |
 | Known blocker | `REL-007`/`REL-008` require real production AdMob/signing inputs and a production-signed candidate; final install/upgrade/device smoke requires an Android device or testing track. `TEST-009` also remains dependency-blocked while `PERF-001` is PLANNED. Visual Studio C++ components remain optional for Windows desktop only. |
 
 ## RC persistence/signing verification reconciliation — 2026-08-09
