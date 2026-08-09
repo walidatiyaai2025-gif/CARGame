@@ -6,6 +6,7 @@ on:
       - agent/ads-007-consent-privacy
     paths:
       - .github/workflows/ads007_ui_probe.yml
+      - lib/features/settings/settings_screen.dart
       - test/features/settings/settings_privacy_consent_test.dart
 
 permissions:
@@ -29,7 +30,7 @@ jobs:
         run: |
           set -euo pipefail
           flutter pub get --enforce-lockfile
-          dart format test/features/settings/settings_privacy_consent_test.dart
+          dart format lib/features/settings/settings_screen.dart test/features/settings/settings_privacy_consent_test.dart
           flutter test \
             test/features/settings/settings_privacy_consent_test.dart \
             test/core/ads/ad_consent_controller_test.dart \
@@ -41,7 +42,7 @@ jobs:
           git diff --check
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add test/features/settings/settings_privacy_consent_test.dart
+          git add lib/features/settings/settings_screen.dart test/features/settings/settings_privacy_consent_test.dart
           git rm .github/workflows/ads007_ui_probe.yml
-          git commit -m 'test: verify re-openable privacy options'
+          git commit -m 'test: verify responsive privacy options'
           git push origin HEAD:agent/ads-007-consent-privacy
