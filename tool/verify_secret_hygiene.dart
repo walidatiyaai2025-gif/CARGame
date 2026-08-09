@@ -88,7 +88,9 @@ Future<void> main() async {
     final extension = _extensionOf(lowerPath);
 
     if (_forbiddenFileExtensions.contains(extension)) {
-      violations.add('$path: tracked signing/private-key material is forbidden');
+      violations.add(
+        '$path: tracked signing/private-key material is forbidden',
+      );
       continue;
     }
 
@@ -97,7 +99,8 @@ Future<void> main() async {
       continue;
     }
 
-    if (!_textExtensions.contains(extension) && !_isExtensionlessPolicyFile(path)) {
+    if (!_textExtensions.contains(extension) &&
+        !_isExtensionlessPolicyFile(path)) {
       continue;
     }
 
@@ -132,7 +135,9 @@ Future<void> main() async {
     return;
   }
 
-  stdout.writeln('Secret hygiene verification passed for ${paths.length} tracked files.');
+  stdout.writeln(
+    'Secret hygiene verification passed for ${paths.length} tracked files.',
+  );
 }
 
 String? _violationReason(String line) {
@@ -173,6 +178,7 @@ bool _isForbiddenLocalSecretFile(String lowerPath) {
   if (name == 'dart-defines.local.json' || name == 'dart_defines.local.json') {
     return true;
   }
+  if (name.endsWith('.credentials.local.json')) return true;
   return lowerPath.startsWith('secrets/') || lowerPath.contains('/secrets/');
 }
 

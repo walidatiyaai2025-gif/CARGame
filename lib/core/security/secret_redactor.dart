@@ -14,6 +14,13 @@ final class SecretRedactor {
     caseSensitive: false,
   );
 
+  static final List<RegExp> _highConfidenceCredentials = <RegExp>[
+    RegExp(r'\bAKIA[0-9A-Z]{16}\b'),
+    RegExp(r'\bgh[pousr]_[A-Za-z0-9_]{20,}\b'),
+    RegExp(r'\bAIza[0-9A-Za-z_-]{30,}\b'),
+    RegExp(r'\bxox[baprs]-[0-9A-Za-z-]{20,}\b'),
+  ];
+
   static final RegExp _credentialAssignment = RegExp(
     r'''\b(password|passwd|pwd|token|access[_-]?token|refresh[_-]?token|api[_-]?key|apikey|client[_-]?secret|secret)\b(\s*[:=]\s*)(["']?)([^\s,"';}{&?]{4,})(["']?)''',
     caseSensitive: false,
@@ -43,6 +50,10 @@ final class SecretRedactor {
       _bearerToken,
       (match) => '${match.group(1)}$redacted',
     );
+
+    for (final pattern in _highConfidenceCredentials) {
+      output = output.replaceAll(pattern, redacted);
+    }
 
     output = output.replaceAllMapped(_credentialAssignment, (match) {
       final key = match.group(1)!;
