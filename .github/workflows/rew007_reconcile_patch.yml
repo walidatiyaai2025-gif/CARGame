@@ -31,16 +31,11 @@ jobs:
           status_path = Path('docs/STATUS.md')
           status = status_path.read_text()
           replacements = {
-            '| Primary feature | `REW-007` IN PROGRESS — issue #119 / draft PR #120 on `agent/rew-007-reward-ledger`. |':
-              f'| Primary feature | `REW-007` VERIFIED — issue #119 / PR #120 merged as `{merge_sha}`; main Flutter CI #624 passed the full gate set. |',
-            '| Completed checkpoint | `GAME-016` input determinism — PR #111 merged as `093d9a9384aec2d18503284a8edc95ba1ce1ecfb` after Flutter CI #580 passed formatting, Analyze, all 215 Flutter tests, Debug APK build, and artifact upload. |':
-              f'| Completed checkpoint | `REW-007` reward transaction ledger/reconciliation — PR #120 merged as `{merge_sha}` after PR CI #623 and main CI #624 passed formatting, Analyze, 226 Flutter tests, Debug APK build, and artifact upload. |',
-            '| Status | `REW-007` implementation adds an interruption-safe absolute-state reward journal, bounded completed-idempotency ledger, deterministic recovery before load, and stable gameplay-attempt IDs; CI/build verification remains before VERIFIED. |':
-              '| Status | `REW-007` is VERIFIED: release-critical level, milestone/world, daily reward, daily mission, and explicit heart grants use stable idempotency/recovery boundaries; completed IDs are persisted before in-memory acknowledgement and pending cleanup is best-effort after durable commit. |',
-            '| Previous checkpoint | `TEST-004` navigation-race verification — PR #109 merged as `24aa922453f88af507e01e950f7d26048e1c6c3f`; its final current-head verification completed on Flutter CI #574. |':
-              '| Previous checkpoint | `ADS-002` release ad configuration — PR #117 merged as `0e2f13329835bfe69c79b985153c65e68ac32bb2`, then reconciliation PR #118 merged as `9adb1cd33ee421ab3afa5469afe6be2ff4029b27`. |',
-            '| Next recommended feature | Complete `REW-007` CI/build verification and tracking reconciliation; then select the next unblocked RC P0 from the catalog. |':
-              '| Next recommended feature | `PRIV-001` privacy inventory, consent, and data minimization — next unblocked RC P0 in the catalog queue; reconcile actual SDK/data flows, purposes, retention, processors, consent, and deletion behavior. |',
+              '| Primary feature | `REW-007` IN PROGRESS — issue #119 / draft PR #120 on `agent/rew-007-reward-ledger`. |': f'| Primary feature | `REW-007` VERIFIED — issue #119 / PR #120 merged as `{merge_sha}`; main Flutter CI #624 passed the full gate set. |',
+              '| Completed checkpoint | `GAME-016` input determinism — PR #111 merged as `093d9a9384aec2d18503284a8edc95ba1ce1ecfb` after Flutter CI #580 passed formatting, Analyze, all 215 Flutter tests, Debug APK build, and artifact upload. |': f'| Completed checkpoint | `REW-007` reward transaction ledger/reconciliation — PR #120 merged as `{merge_sha}` after PR CI #623 and main CI #624 passed formatting, Analyze, 226 Flutter tests, Debug APK build, and artifact upload. |',
+              '| Status | `REW-007` implementation adds an interruption-safe absolute-state reward journal, bounded completed-idempotency ledger, deterministic recovery before load, and stable gameplay-attempt IDs; CI/build verification remains before VERIFIED. |': '| Status | `REW-007` is VERIFIED: release-critical level, milestone/world, daily reward, daily mission, and explicit heart grants use stable idempotency/recovery boundaries; completed IDs are persisted before in-memory acknowledgement and pending cleanup is best-effort after durable commit. |',
+              '| Previous checkpoint | `TEST-004` navigation-race verification — PR #109 merged as `24aa922453f88af507e01e950f7d26048e1c6c3f`; its final current-head verification completed on Flutter CI #574. |': '| Previous checkpoint | `ADS-002` release ad configuration — PR #117 merged as `0e2f13329835bfe69c79b985153c65e68ac32bb2`, then reconciliation PR #118 merged as `9adb1cd33ee421ab3afa5469afe6be2ff4029b27`. |',
+              '| Next recommended feature | Complete `REW-007` CI/build verification and tracking reconciliation; then select the next unblocked RC P0 from the catalog. |': '| Next recommended feature | `PRIV-001` privacy inventory, consent, and data minimization — next unblocked RC P0 in the catalog queue; reconcile actual SDK/data flows, purposes, retention, processors, consent, and deletion behavior. |',
           }
           for old, new in replacements.items():
               if old not in status:
@@ -51,18 +46,20 @@ jobs:
           if '## REW-007 reward transaction verification — 2026-08-09' not in status:
               if section_anchor not in status:
                   raise SystemExit('STATUS section anchor missing')
-              rew_section = f'''## REW-007 reward transaction verification — 2026-08-09
-
-- Issue #119 / PR #120 close the RC reward-integrity gap where multi-key reward persistence could be interrupted into a partial wallet/stat/progression state.
-- `ProgressStore` now uses a versioned absolute-state pending reward journal plus a bounded completed-idempotency ledger; recovery runs before normal hydration, legacy saves default safely, and malformed journals are discarded without replaying grants.
-- Stable transaction IDs cover gameplay attempts, milestone/world first-clear rewards, daily rewards, daily missions, and explicit heart grants without changing existing reward amounts.
-- Durability hardening persists the completed transaction ID before mutating the in-memory ledger and treats pending-journal cleanup as best-effort only after durable completion.
-- PR Flutter CI #623 passed formatting, Analyze, all 226 Flutter tests, Debug APK build and upload on head `{pr_head}`; debug artifact {pr_artifact}.
-- PR #120 merged to `main` as `{merge_sha}`. Main Flutter CI #624 repeated the full gate set successfully on the merge commit; debug artifact {main_artifact}.
-- `REW-007` is VERIFIED. Next unblocked RC P0 selected from the catalog queue: `PRIV-001` privacy inventory, consent, and data minimization.
-
-'''
-              status = status.replace(section_anchor, rew_section + section_anchor, 1)
+              rew_lines = [
+                  '## REW-007 reward transaction verification — 2026-08-09',
+                  '',
+                  '- Issue #119 / PR #120 close the RC reward-integrity gap where multi-key reward persistence could be interrupted into a partial wallet/stat/progression state.',
+                  '- `ProgressStore` now uses a versioned absolute-state pending reward journal plus a bounded completed-idempotency ledger; recovery runs before normal hydration, legacy saves default safely, and malformed journals are discarded without replaying grants.',
+                  '- Stable transaction IDs cover gameplay attempts, milestone/world first-clear rewards, daily rewards, daily missions, and explicit heart grants without changing existing reward amounts.',
+                  '- Durability hardening persists the completed transaction ID before mutating the in-memory ledger and treats pending-journal cleanup as best-effort only after durable completion.',
+                  f'- PR Flutter CI #623 passed formatting, Analyze, all 226 Flutter tests, Debug APK build and upload on head `{pr_head}`; debug artifact {pr_artifact}.',
+                  f'- PR #120 merged to `main` as `{merge_sha}`. Main Flutter CI #624 repeated the full gate set successfully on the merge commit; debug artifact {main_artifact}.',
+                  '- `REW-007` is VERIFIED. Next unblocked RC P0 selected from the catalog queue: `PRIV-001` privacy inventory, consent, and data minimization.',
+                  '',
+                  '',
+              ]
+              status = status.replace(section_anchor, '\n'.join(rew_lines) + section_anchor, 1)
           status_path.write_text(status)
 
           catalog_path = Path('docs/FEATURE_CATALOG.md')
@@ -79,29 +76,34 @@ jobs:
               raise SystemExit('Active queue IN PROGRESS anchor missing')
           catalog = catalog.replace(old_in_progress, new_in_progress, 1)
 
-          old_next = '''## NEXT READY
-
-1. `ENG-010` Secret and credential handling — `ENG-009` is VERIFIED; audit injection, redaction, rotation, and CI protection gaps.
-2. `PRIV-001` Privacy inventory, consent, and data minimization — `ENG-001` is VERIFIED and the current privacy inventory gate provides a baseline for reconciliation.
-3. `ADS-002` Debug test IDs and release configuration — `ADS-001` and `ENG-009` are implemented/verified; reconcile remaining release-ad configuration evidence.'''
-          new_next = '''## NEXT READY
-
-1. `PRIV-001` Privacy inventory, consent, and data minimization — `ENG-001` is VERIFIED and the current privacy inventory gate provides a baseline for reconciling actual SDK/data behavior.
-2. `SEC-001` Mobile security baseline and threat model — `ENG-010` is VERIFIED; reconcile trust boundaries, secure-storage/network/tamper risks, and mitigations against the current app.
-3. `ECON-005` Versioned economy configuration and balance rules — `ECON-001` is implemented and `REW-007` is VERIFIED; centralize reward/price/source/sink/cap rules without changing live balances.'''
+          old_next = '\n'.join([
+              '## NEXT READY',
+              '',
+              '1. `ENG-010` Secret and credential handling — `ENG-009` is VERIFIED; audit injection, redaction, rotation, and CI protection gaps.',
+              '2. `PRIV-001` Privacy inventory, consent, and data minimization — `ENG-001` is VERIFIED and the current privacy inventory gate provides a baseline for reconciliation.',
+              '3. `ADS-002` Debug test IDs and release configuration — `ADS-001` and `ENG-009` are implemented/verified; reconcile remaining release-ad configuration evidence.',
+          ])
+          new_next = '\n'.join([
+              '## NEXT READY',
+              '',
+              '1. `PRIV-001` Privacy inventory, consent, and data minimization — `ENG-001` is VERIFIED and the current privacy inventory gate provides a baseline for reconciling actual SDK/data behavior.',
+              '2. `SEC-001` Mobile security baseline and threat model — `ENG-010` is VERIFIED; reconcile trust boundaries, secure-storage/network/tamper risks, and mitigations against the current app.',
+              '3. `ECON-005` Versioned economy configuration and balance rules — `ECON-001` is implemented and `REW-007` is VERIFIED; centralize reward/price/source/sink/cap rules without changing live balances.',
+          ])
           if old_next not in catalog:
               raise SystemExit('Active queue NEXT READY block missing')
           catalog = catalog.replace(old_next, new_next, 1)
 
           recent_anchor = '## Recently verified\n\n'
           if '- `REW-007` Reward transaction ledger and reconciliation' not in catalog:
-              recent = f'''- `REW-007` Reward transaction ledger and reconciliation — PR #120 merged as `{merge_sha}` after PR CI #623 and main CI #624 passed formatting, Analyze, 226 Flutter tests, Debug APK build and artifact upload; main artifact {main_artifact}.
-- `ADS-002` Debug test IDs and release configuration — PR #117 and reconciliation PR #118 are merged; release config is platform-safe and verified by CI #595/#597.
-- `ENG-010` Secret and credential handling — issue #113 / PR #114 are verified with secret scanning, diagnostic redaction, injection/rotation guidance, and CI evidence.
-'''
+              recent_lines = [
+                  f'- `REW-007` Reward transaction ledger and reconciliation — PR #120 merged as `{merge_sha}` after PR CI #623 and main CI #624 passed formatting, Analyze, 226 Flutter tests, Debug APK build and artifact upload; main artifact {main_artifact}.',
+                  '- `ADS-002` Debug test IDs and release configuration — PR #117 and reconciliation PR #118 are merged; release config is platform-safe and verified by CI #595/#597.',
+                  '- `ENG-010` Secret and credential handling — issue #113 / PR #114 are verified with secret scanning, diagnostic redaction, injection/rotation guidance, and CI evidence.',
+              ]
               if recent_anchor not in catalog:
                   raise SystemExit('Recently verified anchor missing')
-              catalog = catalog.replace(recent_anchor, recent_anchor + recent, 1)
+              catalog = catalog.replace(recent_anchor, recent_anchor + '\n'.join(recent_lines) + '\n', 1)
           catalog_path.write_text(catalog)
 
           work_path = Path('docs/work/REW-007.md')
@@ -110,15 +112,18 @@ jobs:
               raise SystemExit('REW-007 work status anchor missing')
           work = work.replace('Status: IN PROGRESS  ', 'Status: VERIFIED  ', 1)
           if '## Verification evidence' not in work:
-              work += f'''
-
-## Verification evidence
-
-- PR #120 head `{pr_head}`: Flutter CI #623 passed formatting, Analyze, all 226 Flutter tests, Debug APK build, and artifact upload; artifact {pr_artifact}.
-- PR #120 merged to `main` as `{merge_sha}`.
-- Merge commit `{merge_sha}`: Flutter CI #624 passed the complete gate set again, including 226 Flutter tests, Debug APK build, and artifact upload; artifact {main_artifact}.
-- FEATURE_CATALOG/STATUS reconciliation marks REW-007 VERIFIED and advances the next unblocked RC P0 to PRIV-001.
-'''
+              verification_lines = [
+                  '',
+                  '',
+                  '## Verification evidence',
+                  '',
+                  f'- PR #120 head `{pr_head}`: Flutter CI #623 passed formatting, Analyze, all 226 Flutter tests, Debug APK build, and artifact upload; artifact {pr_artifact}.',
+                  f'- PR #120 merged to `main` as `{merge_sha}`.',
+                  f'- Merge commit `{merge_sha}`: Flutter CI #624 passed the complete gate set again, including 226 Flutter tests, Debug APK build, and artifact upload; artifact {main_artifact}.',
+                  '- FEATURE_CATALOG/STATUS reconciliation marks REW-007 VERIFIED and advances the next unblocked RC P0 to PRIV-001.',
+                  '',
+              ]
+              work = work.rstrip() + '\n'.join(verification_lines)
           work_path.write_text(work)
           PY
           git diff --check
