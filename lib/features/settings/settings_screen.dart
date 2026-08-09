@@ -287,9 +287,7 @@ class _PrivacySheetState extends State<_PrivacySheet> {
                 key: const ValueKey('privacy-export-data-button'),
                 onPressed: _dataActionBusy ? null : _exportLocalData,
                 icon: const Icon(Icons.content_copy_rounded),
-                label: Text(
-                  ar ? 'نسخ تصدير البيانات' : 'Copy data export',
-                ),
+                label: Text(ar ? 'نسخ تصدير البيانات' : 'Copy data export'),
               ),
             ),
             const SizedBox(height: 8),
@@ -304,7 +302,9 @@ class _PrivacySheetState extends State<_PrivacySheet> {
                 ),
                 icon: const Icon(Icons.delete_forever_rounded),
                 label: Text(
-                  ar ? 'حذف وإعادة ضبط البيانات المحلية' : 'Delete & reset local data',
+                  ar
+                      ? 'حذف وإعادة ضبط البيانات المحلية'
+                      : 'Delete & reset local data',
                 ),
               ),
             ),
@@ -356,9 +356,7 @@ class _PrivacySheetState extends State<_PrivacySheet> {
       context: context,
       builder: (dialogContext) => AlertDialog(
         icon: Icon(Icons.warning_amber_rounded, color: Colors.red.shade700),
-        title: Text(
-          widget.ar ? 'حذف البيانات المحلية؟' : 'Delete local data?',
-        ),
+        title: Text(widget.ar ? 'حذف البيانات المحلية؟' : 'Delete local data?'),
         content: Text(
           widget.ar
               ? 'سيتم حذف التقدم والعملات والقلوب والجوائز والإعدادات وبيانات الاسترداد وسجل التشخيص المحلي. ستبدأ اللعبة من الحالة الافتراضية، ولا يمكن التراجع عن ذلك.'
