@@ -7,9 +7,9 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | Field | Value |
 |---|---|
 | Current phase | Android RC hardening — issue #79 |
-| Primary feature | None — `UI3D-009` Mission Debrief is merged; `ENG-005` remains the next dependency-ready catalog item. |
+| Primary feature | `ENG-005` Clean architecture boundaries — Issue #154 / branch `agent/eng-005-architecture-boundaries`. |
 | Completed checkpoint | `UI3D-009` premium Mission Result Debrief — PR #152 merged as `462ec0590866879f654a4e031209731bd4eb84fd` after green Flutter CI #722. |
-| Status | Victory/failure presentation now completes the premium Home → World Map → Mission Control → Gameplay → Mission Debrief journey while preserving reward, heart-loss, rewarded continuation, no-fill, duplicate-action and navigation contracts. REW-001/REW-002 remain IMPLEMENTED; full 3D reward animation remains REW-006. |
+| Status | ENG-005 audit is active. First checkpoint isolates application composition from `main.dart`, documents allowed dependency directions, and adds an automated architecture contract before any broader domain/storage migration. |
 | Previous checkpoint | `GAME-003` premium gameplay operations deck and tracking reconciliation — PRs #149/#150; current-main verification completed before UI3D-009. |
 | Next recommended feature | `ENG-005` Clean architecture boundaries — highest-priority dependency-ready catalog item after TEST-002; audit current presentation/domain/application/storage/assets/motion/analytics/service boundaries before changing architecture. |
 | Known blocker | `REL-007`/`REL-008` require real production AdMob/signing inputs and a production-signed candidate; final install/upgrade/device smoke requires an Android device or testing track. `TEST-009` also remains dependency-blocked while `PERF-001` is PLANNED. Visual Studio C++ components remain optional for Windows desktop only. |
