@@ -25,15 +25,23 @@ void main() {
   });
 
   test(
-    'RC builder forces release runtime configuration and external inputs',
+    'RC builder forces release runtime configuration through shared preflight',
     () {
       final script = read('BUILD_RC.ps1');
+      final preflight = read('VERIFY_RELEASE_INPUTS.ps1');
 
       expect(script, contains('--dart-define=APP_ENV=release'));
       expect(script, contains('AndroidAdMobAppId'));
       expect(script, contains('ADMOB_ANDROID_APP_ID'));
-      expect(script, contains('Assert-ReleaseSigningConfigured'));
-      expect(script, contains('ANDROID_KEYSTORE_PASSWORD'));
+      expect(script, contains('VERIFY_RELEASE_INPUTS.ps1'));
+      expect(script, contains(r'$preflight.Ready'));
+
+      expect(preflight, contains('ANDROID_KEYSTORE_PATH'));
+      expect(preflight, contains('ANDROID_KEYSTORE_PASSWORD'));
+      expect(preflight, contains('ANDROID_KEY_ALIAS'));
+      expect(preflight, contains('ANDROID_KEY_PASSWORD'));
+      expect(preflight, contains('key.properties'));
+      expect(preflight, contains('Google test configuration'));
     },
   );
 
