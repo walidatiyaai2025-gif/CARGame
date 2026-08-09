@@ -2,7 +2,7 @@ import 'dart:async';
 
 import '../application/optional_service_port.dart';
 
-export '../application/optional_service_port.dart';
+export '../domain/optional_service_state.dart';
 
 class OptionalServiceCoordinator implements OptionalServicePort {
   OptionalServiceCoordinator({
