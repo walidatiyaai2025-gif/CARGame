@@ -7,11 +7,11 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | Field | Value |
 |---|---|
 | Current phase | Android RC hardening — issue #79 |
-| Primary feature | None — `LEVEL-002` is VERIFIED; `TEST-002` is the next dependency-ready P0. |
+| Primary feature | `TEST-002` Level generator and solvability tests — IN PROGRESS under issue #143. |
 | Completed checkpoint | `LEVEL-002` quantitative difficulty curve — PR #137 merged after final current-main reconciliation and green Flutter CI #681. |
-| Status | LEVEL-002 is VERIFIED. All 150 generated levels satisfy typed difficulty envelopes and macro-progression checks; Expert levels intentionally tighten spare-move slack to 1–3 without changing level IDs, worlds, products, persistence keys, unlock IDs, or reward identity. |
+| Status | TEST-002 is consolidating the exact production 150-level catalog into one deterministic release gate covering regeneration parity, structural solvability, quantitative difficulty acceptance, and required boundaries 1/25/26/150. No production level change is planned unless the integrated gate exposes a real defect. |
 | Previous checkpoint | `AST-011` asset licensing/provenance current-main reconciliation — PR #131 merged as `9631b43fb697f9819fe83a7991212b490865f525` after Flutter CI #659. |
-| Next recommended feature | `TEST-002` Level generator and solvability tests — highest-priority dependency-ready P0 after LEVEL-002; consolidate generator, solvability, and difficulty acceptance into one deterministic regression gate. |
+| Next recommended feature | Complete TEST-002 issue #143 and reconcile verification evidence; select the next unblocked catalog item only after current-head CI passes. |
 | Known blocker | `REL-007`/`REL-008` require real production AdMob/signing inputs and a production-signed candidate; final install/upgrade/device smoke requires an Android device or testing track. `TEST-009` also remains dependency-blocked while `PERF-001` is PLANNED. Visual Studio C++ components remain optional for Windows desktop only. |
 
 ## LEVEL-002 quantitative difficulty curve verification — 2026-08-09

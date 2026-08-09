@@ -292,7 +292,7 @@ Codex must not mark a feature complete merely because UI code exists.
 | ID | Function | Priority | Status | Dependencies | Acceptance / evidence |
 |---|---|---:|---|---|---|
 | TEST-001 | Progress/economy unit tests | P0 | VERIFIED | ENG-008 | `progress_store_test.dart` covers wallet bounds, hearts, boosters, best-star persistence, milestone/world first-clear rewards, final-level bounds, duplicate daily-mission claims, corrupt-value backup/repair, and legacy-save compatibility with safe defaults for newer fields. PR #97 adds interruption-safe shop purchase/recovery coverage; PR #104 added explicit legacy-save migration compatibility. Flutter CI #546 passed Analyze, the full Flutter suite, Debug APK build, and artifact upload. |
-| TEST-002 | Level generator and solvability tests | P0 | PLANNED | LEVEL-003 | Levels 1, 25, 26, 150 and every generated configuration validate. |
+| TEST-002 | Level generator and solvability tests | P0 | IN PROGRESS | LEVEL-003 | Issue #143 consolidates the production 1..150 catalog into one deterministic release contract: exact identity, regeneration parity, `LevelSolvabilityValidator.validateAll`, `LevelDifficultyCurve.validateAll`, and explicit boundaries 1/25/26/150. Detailed negative cases stay in their owning suites; production level content changes only if integrated validation exposes a real defect. |
 | TEST-003 | Core screen widget tests | P1 | PLANNED | UI3D-006 | Home, map, briefing, game, result, and shop pass key sizes/languages. |
 | TEST-004 | Navigation race regression tests | P0 | VERIFIED | NAV-001 | PR #109 hardens result-route dismissal against repeated actions and adds deterministic integration coverage for repeated Next, Retry, and Home Start actions; existing `GameNavigator` tests cover concurrent/named duplicate-push guards. Flutter CI #571 passed formatting, Analyze, the full 214-test Flutter suite, Debug APK build, and artifact upload. Debug artifact #9031075109 is 80,515,902 bytes with SHA-256 `299e710a467672c57c91fd956669d67506cf5534b8741499066032ff9e60b539`. |
 | TEST-005 | Missing asset tests | P1 | PLANNED | AST-003 | Missing/corrupt asset fallback remains visible and functional. |
@@ -331,11 +331,11 @@ Codex must not mark a feature complete merely because UI code exists.
 
 ## IN PROGRESS
 
-- None.
+- `TEST-002` Level generator and solvability tests — issue #143; integrating deterministic generation, structural solvability, and quantitative difficulty acceptance into one release contract over the exact 150-level production catalog.
 
 ## NEXT READY
 
-- `TEST-002` Level generator and solvability tests — P0 and dependency-ready because `LEVEL-003` is VERIFIED; consolidate generator, structural solvability, and LEVEL-002 difficulty acceptance into one deterministic regression gate.
+- To be selected after TEST-002 verification.
 
 ## BLOCKED
 
