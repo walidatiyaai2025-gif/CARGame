@@ -1,4 +1,5 @@
 from pathlib import Path
+import subprocess
 
 config_path = Path('lib/core/economy/economy_config.dart')
 text = config_path.read_text()
@@ -95,3 +96,68 @@ if addition not in test_text:
         raise SystemExit('test insertion marker did not match')
     test_text = test_text.replace(marker, addition + marker, 1)
 test_path.write_text(test_text)
+
+
+progress_path = Path('lib/core/storage/progress_store.dart')
+progress = progress_path.read_text()
+old = """    if (savedVersion == null || savedVersion <= 0) {
+      await _prefs.setInt(_economyConfigVersionKey, currentVersion);
+      return;
+    }
+    if (savedVersion > currentVersion) {
+"""
+new = """    if (savedVersion == null) {
+      await _prefs.setInt(_economyConfigVersionKey, currentVersion);
+      return;
+    }
+    if (savedVersion <= 0) {
+      throw StateError('Invalid economy config version: $savedVersion.');
+    }
+    if (savedVersion > currentVersion) {
+"""
+if progress.count(old) != 1:
+    raise SystemExit('economy version migration anchor did not match')
+progress_path.write_text(progress.replace(old, new, 1))
+
+
+integration_path = Path('test/core/economy/economy_integration_test.dart')
+integration = integration_path.read_text()
+marker = """  test('future economy versions fail closed without rewriting wallet', () async {
+"""
+addition = """  test('invalid economy version markers fail closed without rewrites', () async {
+    final prefs = SharedPreferencesAsync();
+    await prefs.setInt('coins', 444);
+    await prefs.setInt('economy_config_version', 0);
+
+    final store = ProgressStore();
+    await expectLater(store.load(), throwsStateError);
+
+    expect(await prefs.getInt('coins'), 444);
+    expect(await prefs.getInt('economy_config_version'), 0);
+  });
+
+"""
+if addition not in integration:
+    if integration.count(marker) != 1:
+        raise SystemExit('migration test insertion marker did not match')
+    integration = integration.replace(marker, addition + marker, 1)
+integration_path.write_text(integration)
+
+subprocess.run(
+    [
+        'dart',
+        'format',
+        'lib/core/storage/progress_store.dart',
+        'test/core/economy/economy_integration_test.dart',
+    ],
+    check=True,
+)
+subprocess.run(
+    [
+        'git',
+        'add',
+        'lib/core/storage/progress_store.dart',
+        'test/core/economy/economy_integration_test.dart',
+    ],
+    check=True,
+)
