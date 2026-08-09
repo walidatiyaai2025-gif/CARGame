@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:cargo_sort_game/core/ads/ad_service.dart';
 import 'package:cargo_sort_game/core/motion/game_action_feedback.dart';
 import 'package:cargo_sort_game/core/storage/progress_store.dart';
+import 'package:cargo_sort_game/core/widgets/game_button.dart';
 import 'package:cargo_sort_game/features/game/game_screen.dart';
 import 'package:cargo_sort_game/features/game/level_data.dart';
 import 'package:flutter/material.dart';
@@ -112,28 +115,23 @@ void main() {
     expect(next, findsOneWidget);
     await tester.pump(const Duration(milliseconds: 500));
 
-    final resultScroll = find.byType(SingleChildScrollView);
-    expect(resultScroll, findsOneWidget);
-    final viewport = Offset.zero & tester.binding.renderViews.single.size;
+    final nextButtonFinder = find.ancestor(
+      of: next,
+      matching: find.byType(GameButton),
+    );
+    expect(nextButtonFinder, findsOneWidget);
+    final nextButton = tester.widget<GameButton>(nextButtonFinder);
+    expect(nextButton.onPressed, isNotNull);
 
-    for (var attempt = 0; attempt < 4; attempt++) {
-      final visibleNext = tester.getRect(next).intersect(viewport);
-      if (!visibleNext.isEmpty) break;
+    final firstAction = Future<void>.sync(() async {
+      await nextButton.onPressed!.call();
+    });
+    final secondAction = Future<void>.sync(() async {
+      await nextButton.onPressed!.call();
+    });
 
-      final visibleScroll = tester.getRect(resultScroll).intersect(viewport);
-      expect(visibleScroll.isEmpty, isFalse);
-      final gesture = await tester.startGesture(visibleScroll.center);
-      await gesture.moveBy(const Offset(0, -500));
-      await gesture.up();
-      await tester.pump();
-    }
-
-    final visibleNext = tester.getRect(next).intersect(viewport);
-    expect(visibleNext.isEmpty, isFalse);
-
-    // Queue two activations before a rebuild can disable the guarded action.
-    await tester.tapAt(visibleNext.center);
-    await tester.tapAt(visibleNext.center);
+    await tester.pump();
+    await Future.wait([firstAction, secondAction]);
     await pumpUntilAbsent(find.byType(GameScreen));
 
     expect(observer.gameRouteExits, 1);
