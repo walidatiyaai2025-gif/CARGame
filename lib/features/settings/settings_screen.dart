@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../core/ads/ad_consent_controller.dart';
+import '../../core/privacy/local_data_controller.dart';
 import '../../core/settings/app_settings_store.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/game_button.dart';
@@ -12,11 +14,15 @@ class SettingsScreen extends StatelessWidget {
     required this.settings,
     required this.onToggleLanguage,
     this.adConsentController,
+    this.localDataController,
+    this.onLocalDataDeleted,
   });
 
   final AppSettingsStore settings;
   final VoidCallback onToggleLanguage;
   final AdConsentController? adConsentController;
+  final LocalDataController? localDataController;
+  final Future<void> Function()? onLocalDataDeleted;
 
   @override
   Widget build(BuildContext context) {
@@ -125,20 +131,20 @@ class SettingsScreen extends StatelessWidget {
     final state = adConsentController?.state;
     if (state == null) {
       return ar
-          ? 'سياسة الخصوصية والإعلانات'
-          : 'Privacy and advertising information';
+          ? 'سياسة الخصوصية والبيانات المحلية'
+          : 'Privacy, ads and local data controls';
     }
     if (state.refreshing) {
       return ar ? 'جارٍ تحديث خيارات الخصوصية…' : 'Updating privacy choices…';
     }
     if (state.privacyOptionsRequired) {
       return ar
-          ? 'مراجعة أو تغيير خيارات الخصوصية'
-          : 'Review or change privacy choices';
+          ? 'خيارات الخصوصية والبيانات المحلية'
+          : 'Privacy choices and local data';
     }
     return ar
-        ? 'معلومات الخصوصية والإعلانات'
-        : 'Privacy and advertising information';
+        ? 'الخصوصية والإعلانات والبيانات المحلية'
+        : 'Privacy, ads and local data controls';
   }
 
   void _showPrivacyInfo(BuildContext context, bool ar) {
@@ -149,35 +155,54 @@ class SettingsScreen extends StatelessWidget {
       builder: (context) => SafeArea(
         top: false,
         child: SingleChildScrollView(
-          child: _PrivacySheet(ar: ar, controller: adConsentController),
+          child: _PrivacySheet(
+            ar: ar,
+            consentController: adConsentController,
+            localDataController: localDataController,
+            onLocalDataDeleted: onLocalDataDeleted,
+          ),
         ),
       ),
     );
   }
 }
 
-class _PrivacySheet extends StatelessWidget {
-  const _PrivacySheet({required this.ar, required this.controller});
+class _PrivacySheet extends StatefulWidget {
+  const _PrivacySheet({
+    required this.ar,
+    required this.consentController,
+    required this.localDataController,
+    required this.onLocalDataDeleted,
+  });
 
   final bool ar;
-  final AdConsentController? controller;
+  final AdConsentController? consentController;
+  final LocalDataController? localDataController;
+  final Future<void> Function()? onLocalDataDeleted;
+
+  @override
+  State<_PrivacySheet> createState() => _PrivacySheetState();
+}
+
+class _PrivacySheetState extends State<_PrivacySheet> {
+  bool _dataActionBusy = false;
 
   @override
   Widget build(BuildContext context) {
-    final consentController = controller;
-    final animation = consentController?.state;
-    if (animation == null) return _content(context, null);
+    final animation = widget.consentController?.state;
+    if (animation == null) return _content(context);
     return AnimatedBuilder(
       animation: animation,
-      builder: (context, _) => _content(context, consentController),
+      builder: (context, _) => _content(context),
     );
   }
 
-  Widget _content(
-    BuildContext context,
-    AdConsentController? consentController,
-  ) {
+  Widget _content(BuildContext context) {
+    final ar = widget.ar;
+    final consentController = widget.consentController;
     final state = consentController?.state;
+    final dataController = widget.localDataController;
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(22, 6, 22, 28),
       child: Column(
@@ -212,7 +237,7 @@ class _PrivacySheet extends StatelessWidget {
             const SizedBox(height: 16),
             FilledButton.icon(
               key: const ValueKey('privacy-options-button'),
-              onPressed: state!.refreshing
+              onPressed: state!.refreshing || _dataActionBusy
                   ? null
                   : () async {
                       final shown = await consentController!
@@ -234,9 +259,161 @@ class _PrivacySheet extends StatelessWidget {
               ),
             ),
           ],
+          if (dataController != null) ...[
+            const SizedBox(height: 22),
+            const Divider(),
+            const SizedBox(height: 14),
+            Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: Text(
+                ar ? 'بياناتك المحلية' : 'Your local data',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w900,
+                  color: AppTheme.navy,
+                ),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              ar
+                  ? 'يمكنك نسخ تصدير JSON لبيانات اللعبة المحلية أو حذف التقدم والإعدادات وسجل التشخيص المحلي. لا يحذف هذا بيانات تحتفظ بها Google؛ استخدم خيارات الخصوصية أعلاه لإدارة اختيارات الإعلانات.'
+                  : 'You can copy a JSON export of local game data or delete local progress, settings and diagnostic logs. This does not delete processor-side Google data; use the privacy choices above for ad privacy controls.',
+              style: const TextStyle(fontSize: 12, color: AppTheme.muted),
+            ),
+            const SizedBox(height: 14),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                key: const ValueKey('privacy-export-data-button'),
+                onPressed: _dataActionBusy ? null : _exportLocalData,
+                icon: const Icon(Icons.content_copy_rounded),
+                label: Text(
+                  ar ? 'نسخ تصدير البيانات' : 'Copy data export',
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                key: const ValueKey('privacy-delete-data-button'),
+                onPressed: _dataActionBusy ? null : _confirmDeleteLocalData,
+                style: FilledButton.styleFrom(
+                  backgroundColor: Colors.red.shade700,
+                  foregroundColor: Colors.white,
+                ),
+                icon: const Icon(Icons.delete_forever_rounded),
+                label: Text(
+                  ar ? 'حذف وإعادة ضبط البيانات المحلية' : 'Delete & reset local data',
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
+  }
+
+  Future<void> _exportLocalData() async {
+    final controller = widget.localDataController;
+    if (controller == null || _dataActionBusy) return;
+
+    setState(() => _dataActionBusy = true);
+    try {
+      final json = await controller.exportJson();
+      await Clipboard.setData(ClipboardData(text: json));
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            widget.ar
+                ? 'تم نسخ تصدير البيانات المحلية بصيغة JSON.'
+                : 'Local data export copied as JSON.',
+          ),
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            widget.ar
+                ? 'تعذر إنشاء تصدير البيانات الآن.'
+                : 'Could not create the local data export right now.',
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _dataActionBusy = false);
+    }
+  }
+
+  Future<void> _confirmDeleteLocalData() async {
+    final controller = widget.localDataController;
+    if (controller == null || _dataActionBusy) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        icon: Icon(Icons.warning_amber_rounded, color: Colors.red.shade700),
+        title: Text(
+          widget.ar ? 'حذف البيانات المحلية؟' : 'Delete local data?',
+        ),
+        content: Text(
+          widget.ar
+              ? 'سيتم حذف التقدم والعملات والقلوب والجوائز والإعدادات وبيانات الاسترداد وسجل التشخيص المحلي. ستبدأ اللعبة من الحالة الافتراضية، ولا يمكن التراجع عن ذلك.'
+              : 'This deletes progress, coins, hearts, rewards, settings, recovery data and local diagnostic logs. The game returns to default state and this cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            key: const ValueKey('privacy-delete-cancel-button'),
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(widget.ar ? 'إلغاء' : 'Cancel'),
+          ),
+          FilledButton(
+            key: const ValueKey('privacy-delete-confirm-button'),
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.red.shade700,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: Text(widget.ar ? 'حذف البيانات' : 'Delete data'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _dataActionBusy = true);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await controller.deleteAllLocalData();
+      await widget.onLocalDataDeleted?.call();
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            widget.ar
+                ? 'تم حذف البيانات المحلية وإعادة ضبط اللعبة.'
+                : 'Local data deleted and the game was reset.',
+          ),
+        ),
+      );
+      Navigator.of(context).pop();
+    } catch (_) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            widget.ar
+                ? 'تعذر إكمال حذف البيانات المحلية.'
+                : 'Could not complete local data deletion.',
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _dataActionBusy = false);
+    }
   }
 }
 
