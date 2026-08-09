@@ -7,12 +7,18 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | Field | Value |
 |---|---|
 | Current phase | Android RC hardening — issue #79 |
-| Primary feature | `ENG-010` secret and credential handling — issue #113. |
+| Primary feature | None after `ENG-010` verification; next RC P0 audit is `ADS-002` debug/release ad configuration. |
 | Completed checkpoint | `GAME-016` input determinism — PR #111 merged as `093d9a9384aec2d18503284a8edc95ba1ce1ecfb` after Flutter CI #580 passed formatting, Analyze, all 215 Flutter tests, Debug APK build, and artifact upload. |
-| Status | IN PROGRESS — auditing secret scanner policy, diagnostic redaction, local/CI release input injection, and rotation/recovery evidence. Initial gap: forced-tracked `*.credentials.local.json` is not explicitly forbidden by the scanner and the scanner has no focused regression harness. |
+| Status | `ENG-010` VERIFIED: tracked secret/config artifacts fail closed, scanner policy has focused regression coverage, standalone provider credentials are redacted from diagnostics, and local/CI injection plus rotation/recovery guidance is documented. |
 | Previous checkpoint | `TEST-004` navigation-race verification — PR #109 merged as `24aa922453f88af507e01e950f7d26048e1c6c3f`; its final current-head verification completed on Flutter CI #574. |
-| Next recommended feature | Finish `ENG-010` scanner regression/hardening, then reconcile redaction/injection/rotation evidence and continue remaining RC P0 gaps. |
+| Next recommended feature | Audit `ADS-002` against the existing ENG-009 release configuration so debug uses only public test IDs and release requires injected production IDs without fallback. |
 | Known blocker | `REL-007`/`REL-008` require real production AdMob/signing inputs and a production-signed candidate; final install/upgrade/device smoke requires an Android device or testing track. `TEST-009` also remains dependency-blocked while `PERF-001` is PLANNED. Visual Studio C++ components remain optional for Windows desktop only. |
+
+## ENG-010 secret and credential handling verification — 2026-08-09
+
+- Issue #113 / PR #114 hardened the tracked-file secret scanner, added a focused temporary-repository regression harness, and extended runtime diagnostic redaction to standalone high-confidence GitHub/AWS/Google/Slack credential signatures.
+- Existing `.gitignore`, Android signing procedure, and secret-handling policy keep keystores, `key.properties`, environment overrides, local credential JSON and reusable CI credentials outside source control; rotation/recovery procedures remain documented without storing secret values.
+- Flutter CI #588 passed secret hygiene, scanner policy regression, formatting, Analyze, the full Flutter test suite, Debug APK build, and artifact upload on head `84b9705e8fcfc950ac973b951cca407afd8b5bec`. Artifact #9031846609 is 80,518,478 bytes with SHA-256 `913d9a9ae3107cde00ced9e6e7197098f5f15e640de59ae3e474715661cf33df`.
 
 ## GAME-016 input determinism verification — 2026-08-09
 
