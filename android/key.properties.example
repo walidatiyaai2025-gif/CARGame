@@ -1,12 +1,17 @@
 # Copy this file to android/key.properties. The real file is ignored by Git.
-# Keep signing material outside source control and use an absolute or android-relative keystore path.
-storeFile=C:/secure/path/upload-keystore.jks
+# Keep signing material outside source control.
+# Production standard: use an ABSOLUTE keystore path to avoid module-relative ambiguity.
+# Gradle resolves a relative storeFile from android/app; VERIFY_RELEASE_INPUTS.ps1 matches that behavior.
+storeFile=C:/secure/path/cargame-upload.jks
 storePassword=CHANGE_ME
-keyAlias=upload
+keyAlias=cargame-upload
 keyPassword=CHANGE_ME
 
-# Alternative: omit android/key.properties and set all four environment variables:
-# ANDROID_KEYSTORE_PATH
+# Alternative: omit android/key.properties and set all four environment variables.
+# Environment variables override matching key.properties values when both are present.
+# ANDROID_KEYSTORE_PATH       (absolute path recommended)
 # ANDROID_KEYSTORE_PASSWORD
 # ANDROID_KEY_ALIAS
 # ANDROID_KEY_PASSWORD
+
+# Never commit this file after adding real values, and never print passwords in build logs.
