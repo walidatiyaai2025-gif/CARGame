@@ -62,6 +62,7 @@ class _GameScreenState extends State<GameScreen> {
   bool _madeWrongMove = false;
   bool _resultActionBusy = false;
   bool _resultVisible = false;
+  bool _resultSheetDismissed = false;
   bool _resolving = false;
 
   int get _matchedCount => widget.level.items.length - _remaining.length;
@@ -313,8 +314,13 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   void _dismissResultSheet(BuildContext sheetContext) {
+    if (_resultSheetDismissed) return;
     final route = ModalRoute.of(sheetContext);
-    if (route == null) return;
+    if (route == null || !route.isActive) {
+      _resultSheetDismissed = true;
+      return;
+    }
+    _resultSheetDismissed = true;
     Navigator.of(sheetContext).removeRoute(route);
   }
 
@@ -336,6 +342,7 @@ class _GameScreenState extends State<GameScreen> {
     _resultActionBusy = true;
 
     _dismissResultSheet(sheetContext);
+    await WidgetsBinding.instance.endOfFrame;
     if (!mounted) return;
     setState(() => _reset());
   }
@@ -349,6 +356,7 @@ class _GameScreenState extends State<GameScreen> {
     if (_resultVisible || !mounted) return;
     _resultVisible = true;
     _resultActionBusy = false;
+    _resultSheetDismissed = false;
 
     final skin = gameSkinById(widget.store.selectedTheme);
     final ar = Localizations.localeOf(context).languageCode == 'ar';
