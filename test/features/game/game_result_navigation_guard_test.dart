@@ -131,6 +131,7 @@ void main() {
     final visibleNext = tester.getRect(next).intersect(viewport);
     expect(visibleNext.isEmpty, isFalse);
 
+    // Queue two activations before a rebuild can disable the guarded action.
     await tester.tapAt(visibleNext.center);
     await tester.tapAt(visibleNext.center);
     await pumpUntilAbsent(find.byType(GameScreen));
