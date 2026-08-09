@@ -15,6 +15,12 @@ kotlin {
 }
 
 val googleTestAdMobApplicationId = "ca-app-pub-3940256099942544~3347511713"
+val allowTestAdsInRelease =
+    providers.environmentVariable("ALLOW_TEST_ADS_IN_RELEASE").orNull?.trim()
+        ?.equals("true", ignoreCase = true) == true
+val allowDebugSigningInRelease =
+    providers.environmentVariable("ALLOW_DEBUG_SIGNING_IN_RELEASE").orNull?.trim()
+        ?.equals("true", ignoreCase = true) == true
 val releaseAdMobApplicationId =
     providers.environmentVariable("ADMOB_ANDROID_APP_ID").orNull?.trim().orEmpty()
 
@@ -71,8 +77,13 @@ android {
     buildTypes {
         release {
             manifestPlaceholders["admobApplicationId"] = releaseAdMobApplicationId
-            if (hasCompleteReleaseSigning) {
-                signingConfig = signingConfigs.getByName("release")
+            when {
+                hasCompleteReleaseSigning -> {
+                    signingConfig = signingConfigs.getByName("release")
+                }
+                allowDebugSigningInRelease -> {
+                    signingConfig = signingConfigs.getByName("debug")
+                }
             }
         }
     }
@@ -85,22 +96,28 @@ val validateReleaseConfiguration = tasks.register("validateReleaseConfiguration"
                 "ADMOB_ANDROID_APP_ID is required for Android release builds.",
             )
         }
-        if (releaseAdMobApplicationId == googleTestAdMobApplicationId ||
-            releaseAdMobApplicationId.startsWith("ca-app-pub-3940256099942544~")) {
+        val usesGoogleTestAdMobApplicationId =
+            releaseAdMobApplicationId == googleTestAdMobApplicationId ||
+                releaseAdMobApplicationId.startsWith("ca-app-pub-3940256099942544~")
+        if (usesGoogleTestAdMobApplicationId && !allowTestAdsInRelease) {
             throw GradleException(
-                "Google test AdMob application IDs are forbidden in Android release builds.",
+                "Google test AdMob application IDs are forbidden in Android release builds. " +
+                    "Set ALLOW_TEST_ADS_IN_RELEASE=true only for explicit test release builds.",
             )
         }
-        if (!hasCompleteReleaseSigning) {
+        if (!hasCompleteReleaseSigning && !allowDebugSigningInRelease) {
             throw GradleException(
                 "Android release signing is incomplete. Provide android/key.properties " +
                     "or ANDROID_KEYSTORE_PATH, ANDROID_KEYSTORE_PASSWORD, " +
-                    "ANDROID_KEY_ALIAS and ANDROID_KEY_PASSWORD.",
+                    "ANDROID_KEY_ALIAS and ANDROID_KEY_PASSWORD. For explicit local QA only, " +
+                    "set ALLOW_DEBUG_SIGNING_IN_RELEASE=true to use the Android debug key.",
             )
         }
-        val store = file(releaseStorePath)
-        if (!store.isFile) {
-            throw GradleException("Android release keystore was not found: ${store.absolutePath}")
+        if (hasCompleteReleaseSigning) {
+            val store = file(releaseStorePath)
+            if (!store.isFile) {
+                throw GradleException("Android release keystore was not found: ${store.absolutePath}")
+            }
         }
     }
 }
