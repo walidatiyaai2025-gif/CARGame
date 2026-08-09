@@ -6,6 +6,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 
+import '../application/crash_reporting_port.dart';
+import '../config/app_build_config.dart';
+import '../diagnostics/privacy_gated_crash_reporting.dart';
 import '../security/secret_redactor.dart';
 
 class LoggedAppError {
@@ -249,25 +252,110 @@ class AppLogger extends ChangeNotifier {
 
 class AppErrorBoundary {
   static RawReceivePort? _isolateErrorPort;
+  static CrashReportingPort _crashReporting = const DisabledCrashReporting();
+  static CrashReportContext _crashContext = CrashReportContext.fromEnvironment();
 
-  static Future<void> install() async {
+  static Future<void> install({
+    CrashReportingPort? crashReporting,
+    CrashReportContext? crashContext,
+  }) async {
     final logger = AppLogger.instance;
     await logger.initialize();
 
+    _crashReporting = crashReporting ??
+        PrivacyGatedCrashReporting(
+          configEnabled: AppBuildConfig.current.enableRemoteDiagnostics,
+          privacy: const DenyAllCrashReportingPrivacy(),
+        );
+    _crashContext = crashContext ?? CrashReportContext.fromEnvironment();
+
     FlutterError.onError = (FlutterErrorDetails details) {
       unawaited(logger.flutterError(details));
+      unawaited(
+        _capture(
+          severity: CrashReportSeverity.nonFatal,
+          source: CrashReportSource.flutter,
+          message: details.exceptionAsString(),
+          stackTrace: details.stack ?? StackTrace.current,
+        ),
+      );
       FlutterError.presentError(details);
     };
 
     PlatformDispatcher.instance.onError =
         (Object error, StackTrace stackTrace) {
           unawaited(logger.platformError(error, stackTrace));
+          unawaited(
+            _capture(
+              severity: CrashReportSeverity.fatal,
+              source: CrashReportSource.platform,
+              message: error.toString(),
+              stackTrace: stackTrace,
+            ),
+          );
           return true;
         };
 
     _isolateErrorPort = RawReceivePort((dynamic pair) {
       unawaited(logger.isolateError(pair));
+      final parsed = _parseIsolateError(pair);
+      unawaited(
+        _capture(
+          severity: CrashReportSeverity.fatal,
+          source: CrashReportSource.isolate,
+          message: parsed.$1.toString(),
+          stackTrace: parsed.$2,
+        ),
+      );
     });
     Isolate.current.addErrorListener(_isolateErrorPort!.sendPort);
+  }
+
+  static Future<void> reportNonFatal(
+    String message, {
+    Object? error,
+    StackTrace? stackTrace,
+    CrashReportSource source = CrashReportSource.manual,
+  }) {
+    final details = error == null ? message : '$message: $error';
+    return _capture(
+      severity: CrashReportSeverity.nonFatal,
+      source: source,
+      message: details,
+      stackTrace: stackTrace ?? StackTrace.current,
+    );
+  }
+
+  static Future<void> _capture({
+    required CrashReportSeverity severity,
+    required CrashReportSource source,
+    required String message,
+    required StackTrace stackTrace,
+  }) async {
+    try {
+      await _crashReporting.capture(
+        CrashReport(
+          severity: severity,
+          source: source,
+          message: message,
+          stackTrace: stackTrace.toString(),
+          context: _crashContext,
+        ),
+      );
+    } catch (_) {
+      // Remote diagnostics must never interfere with local error handling.
+    }
+  }
+
+  static (Object, StackTrace) _parseIsolateError(dynamic errorData) {
+    Object error = 'Unknown isolate error';
+    StackTrace stackTrace = StackTrace.empty;
+    if (errorData is List && errorData.isNotEmpty) {
+      error = errorData.first ?? error;
+      if (errorData.length > 1 && errorData[1] != null) {
+        stackTrace = StackTrace.fromString(errorData[1].toString());
+      }
+    }
+    return (error, stackTrace);
   }
 }
