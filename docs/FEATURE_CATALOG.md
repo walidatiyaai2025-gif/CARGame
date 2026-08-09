@@ -187,7 +187,7 @@ Codex must not mark a feature complete merely because UI code exists.
 | REW-004 | Milestone reward | P1 | IMPLEMENTED | LEVEL-005 | Every fifth first-clear reward is granted once; tests remain. |
 | REW-005 | Next City action | P0 | IMPLEMENTED | NAV-001 | Guarded action returns to updated map without navigation lock; device test remains. |
 | REW-006 | 3D reward animation | P1 | PLANNED | MOT-008, AST-009 | Chest, stars, coins, XP, and boosters animate coherently. |
-| REW-007 | Reward transaction ledger and reconciliation | P0 | IN PROGRESS | ENG-008, REW-001 | Issue #119 / PR #120 add stable reason/idempotency keys, a bounded completed ledger, an absolute-state pending journal, and deterministic interruption recovery for level, daily reward, and daily mission grants; full CI/build verification is in progress. |
+| REW-007 | Reward transaction ledger and reconciliation | P0 | VERIFIED | ENG-008, REW-001 | Issue #119 / PR #120 add stable gameplay/daily/mission/heart reward idempotency keys, a bounded completed ledger, a validated absolute-state pending journal, deterministic interruption recovery, durable-ledger-before-memory ordering, and best-effort stale-journal cleanup while preserving legacy saves. PR #120 squash-merged as `b915d95b938d459133a9a8b120f38815178b1852`; Flutter CI #623 passed formatting, Analyze, the full Flutter suite, Debug APK build and artifact upload. Debug artifact #9032765167 is 80,530,583 bytes with SHA-256 `534037a3cdd4fe75d54a53df6452f8188d4c81cdcc859040a51725315f20070b`. |
 | REW-008 | Reward table configuration and probability disclosure | P1 | PLANNED | REW-007, RET-005 | Reward tables are versioned, testable, and odds are disclosed where legally/product required. |
 
 # K. Economy, progress, and shop
