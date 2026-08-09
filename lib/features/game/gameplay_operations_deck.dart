@@ -281,8 +281,7 @@ class GameplayBoosterDock extends StatelessWidget {
       children: [
         for (var index = 0; index < children.length; index++) ...[
           Expanded(child: children[index]),
-          if (index != children.length - 1)
-            SizedBox(width: compact ? 5 : 7),
+          if (index != children.length - 1) SizedBox(width: compact ? 5 : 7),
         ],
       ],
     ),

@@ -5,14 +5,17 @@ import 'package:flutter/material.dart';
 
 import '../../core/ads/ad_service.dart';
 import '../../core/economy/economy_config.dart';
+import '../../core/motion/ambient_motion_background.dart';
 import '../../core/motion/game_action_feedback.dart';
 import '../../core/motion/game_travel_motion.dart';
 import '../../core/storage/progress_store.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/game_skin.dart';
+import '../../core/theme/three_d_game_icon.dart';
 import '../../core/widgets/game_button.dart';
 import 'cargo_motion_tile.dart';
 import 'city_catalog.dart';
+import 'gameplay_operations_deck.dart';
 import 'level_data.dart';
 import 'mission_loadout.dart';
 
@@ -644,148 +647,160 @@ class _GameScreenState extends State<GameScreen> {
     final world = gameWorlds[widget.level.world - 1];
     final ar = Localizations.localeOf(context).languageCode == 'ar';
     final flight = _flight;
+    final canGoBack = Navigator.of(context).canPop();
 
     return PopScope(
       canPop: !_resultVisible && !_resolving,
       child: Scaffold(
-        appBar: AppBar(
-          title: Column(
-            children: [
-              Text(widget.level.cityName),
-              Text(
-                '${world.name} • ${ar ? 'المرحلة' : 'Level'} ${widget.level.number}',
-                style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-          centerTitle: true,
-          actions: [
-            IconButton(
-              tooltip: ar ? 'إعادة' : 'Restart',
-              onPressed: _finished || _resultVisible || _resolving
-                  ? null
-                  : () => setState(() => _reset()),
-              icon: const Icon(Icons.restart_alt_rounded),
-            ),
-          ],
-        ),
+        backgroundColor: const Color(0xFFF4F7FB),
         body: Stack(
           key: _motionLayerKey,
           children: [
-            Container(
-              decoration: BoxDecoration(gradient: skin.backgroundGradient),
-              child: SafeArea(
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    final compact =
-                        constraints.maxHeight < 690 ||
-                        constraints.maxWidth < 370;
-                    return Padding(
-                      padding: EdgeInsets.fromLTRB(
-                        compact ? 9 : 14,
-                        compact ? 8 : 12,
-                        compact ? 9 : 14,
-                        compact ? 10 : 16,
-                      ),
-                      child: Column(
-                        children: [
-                          _StatusPanel(
-                            moves: _moves,
-                            matched: _matchedCount,
-                            total: widget.level.items.length,
-                            progress: _progress,
-                            combo: _combo,
-                            hearts: widget.store.hearts,
-                            skin: skin,
-                            shieldActive: _shieldActive,
-                            compact: compact,
-                          ),
-                          SizedBox(height: compact ? 6 : 10),
-                          Text(
-                            widget.level.isBossCity
-                                ? (ar
-                                      ? 'مهمة مدينة الزعيم'
-                                      : 'BOSS CITY MISSION')
-                                : (ar ? 'رتّب كل الشحنات' : 'SORT ALL CARGO'),
-                            style: TextStyle(
-                              color: widget.level.isBossCity
-                                  ? skin.accent
-                                  : skin.primary,
-                              fontWeight: FontWeight.w900,
-                              fontSize: compact ? 14 : 17,
-                            ),
-                          ),
-                          SizedBox(height: compact ? 6 : 10),
-                          Expanded(
-                            flex: 3,
-                            child: _CargoBoard(
-                              items: _remaining,
-                              selectedIndex: _selectedIndex,
-                              travellingIndex: _resolving
-                                  ? _selectedIndex
-                                  : null,
-                              onTap: _choosePackage,
-                              compact: compact,
-                            ),
-                          ),
-                          SizedBox(height: compact ? 7 : 12),
-                          Expanded(
-                            flex: 2,
-                            child: _WarehouseBoard(
-                              warehouses: _warehouses,
-                              activeFlight: flight,
-                              onTap: _chooseWarehouse,
-                              compact: compact,
-                            ),
-                          ),
-                          SizedBox(height: compact ? 7 : 12),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _BoosterButton(
-                                  icon: Icons.lightbulb_rounded,
-                                  count:
-                                      widget.store.freeHints + _preparedHints,
-                                  active: _selected != null,
-                                  onPressed:
-                                      _selected == null ||
-                                          _finished ||
-                                          _resolving
-                                      ? null
-                                      : _useHint,
-                                ),
-                              ),
-                              const SizedBox(width: 7),
-                              Expanded(
-                                child: _BoosterButton(
-                                  icon: Icons.add_circle_rounded,
-                                  count: widget.store.extraMovesBoosters,
-                                  onPressed: _finished || _resolving
-                                      ? null
-                                      : _useExtraMoves,
-                                ),
-                              ),
-                              const SizedBox(width: 7),
-                              Expanded(
-                                child: _BoosterButton(
-                                  icon: Icons.shield_rounded,
-                                  count: widget.store.comboShields,
-                                  active: _shieldActive,
-                                  onPressed: _finished || _resolving
-                                      ? null
-                                      : _useComboShield,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    );
-                  },
+            Positioned.fill(
+              child: AmbientMotionBackground(
+                startColor: world.startColor,
+                endColor: world.endColor,
+              ),
+            ),
+            Positioned.fill(
+              child: IgnorePointer(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        const Color(0xFF091321).withValues(alpha: .82),
+                        const Color(0xFFF4F7FB).withValues(alpha: .82),
+                        const Color(0xFFF4F7FB).withValues(alpha: .97),
+                      ],
+                      stops: const [0, .31, 1],
+                    ),
+                  ),
                 ),
+              ),
+            ),
+            SafeArea(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final compact =
+                      constraints.maxHeight < 690 || constraints.maxWidth < 370;
+                  final horizontal = compact ? 9.0 : 14.0;
+                  return Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      horizontal,
+                      compact ? 6 : 9,
+                      horizontal,
+                      compact ? 8 : 12,
+                    ),
+                    child: Column(
+                      children: [
+                        GameplayCommandBar(
+                          cityName: widget.level.cityName,
+                          worldName: world.name,
+                          levelNumber: widget.level.number,
+                          difficulty: widget.level.difficulty,
+                          compact: compact,
+                          isArabic: ar,
+                          onBack: !canGoBack || _resultVisible || _resolving
+                              ? null
+                              : () => Navigator.maybePop(context),
+                          onRestart: _finished || _resultVisible || _resolving
+                              ? null
+                              : () => setState(() => _reset()),
+                        ),
+                        SizedBox(height: compact ? 6 : 9),
+                        GameplayStatusPanel(
+                          moves: _moves,
+                          matched: _matchedCount,
+                          total: widget.level.items.length,
+                          progress: _progress,
+                          combo: _combo,
+                          hearts: widget.store.hearts,
+                          skin: skin,
+                          shieldActive: _shieldActive,
+                          compact: compact,
+                          isArabic: ar,
+                        ),
+                        SizedBox(height: compact ? 5 : 8),
+                        GameplayMissionBanner(
+                          isBoss: widget.level.isBossCity,
+                          isArabic: ar,
+                          selectedCargo: _selected,
+                          resolving: _resolving,
+                          accent: skin.accent,
+                          primary: skin.primary,
+                          compact: compact,
+                        ),
+                        SizedBox(height: compact ? 5 : 8),
+                        Expanded(
+                          flex: 3,
+                          child: GameplayCargoBoard(
+                            items: _remaining,
+                            selectedIndex: _selectedIndex,
+                            travellingIndex: _resolving ? _selectedIndex : null,
+                            onTap: _choosePackage,
+                            compact: compact,
+                            isArabic: ar,
+                            accent: skin.primary,
+                          ),
+                        ),
+                        SizedBox(height: compact ? 6 : 9),
+                        Expanded(
+                          flex: 2,
+                          child: GameplayWarehouseBoard(
+                            warehouses: _warehouses,
+                            activeWarehouseId: flight?.warehouse.id,
+                            activeCargoId: flight?.item.id,
+                            onTap: _chooseWarehouse,
+                            compact: compact,
+                            isArabic: ar,
+                            accent: skin.primary,
+                          ),
+                        ),
+                        SizedBox(height: compact ? 6 : 9),
+                        GameplayBoosterDock(
+                          compact: compact,
+                          children: [
+                            GameplayBoosterButton(
+                              type: ThreeDIconType.hint,
+                              label: ar ? 'تلميح' : 'HINT',
+                              count: widget.store.freeHints + _preparedHints,
+                              active: _selected != null,
+                              accent: const Color(0xFFFFB300),
+                              compact: compact,
+                              onPressed:
+                                  _selected == null || _finished || _resolving
+                                  ? null
+                                  : _useHint,
+                            ),
+                            GameplayBoosterButton(
+                              type: ThreeDIconType.extraMoves,
+                              label: ar ? 'حركات' : 'MOVES',
+                              count: widget.store.extraMovesBoosters,
+                              accent: const Color(0xFF2D6CDF),
+                              compact: compact,
+                              onPressed: _finished || _resolving
+                                  ? null
+                                  : _useExtraMoves,
+                            ),
+                            GameplayBoosterButton(
+                              type: ThreeDIconType.shield,
+                              label: ar ? 'درع' : 'SHIELD',
+                              count: widget.store.comboShields,
+                              active: _shieldActive,
+                              accent: const Color(0xFF7B3FF2),
+                              compact: compact,
+                              onPressed: _finished || _resolving
+                                  ? null
+                                  : _useComboShield,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  );
+                },
               ),
             ),
             if (flight != null)
@@ -795,7 +810,7 @@ class _GameScreenState extends State<GameScreen> {
                 end: flight.end,
                 size: 58,
                 onCompleted: () => unawaited(_completeFlight(flight)),
-                child: _FlightCargo(item: flight.item),
+                child: GameplayFlightCargo(item: flight.item),
               ),
             if (_feedbackKind case final feedbackKind?)
               GameActionFeedback(
