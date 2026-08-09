@@ -64,57 +64,58 @@ void main() {
     expect(find.text('Local data export copied as JSON.'), findsOneWidget);
   });
 
-  testWidgets('delete requires confirmation and clears local first-party data', (
-    tester,
-  ) async {
-    final prefs = SharedPreferencesAsync();
-    await prefs.setInt('coins', 999);
-    await prefs.setBool('settings_sound', false);
-    await prefs.setString('storage_recovery_backup_v1', 'backup');
-    await AppLogger.instance.info('Delete from settings');
+  testWidgets(
+    'delete requires confirmation and clears local first-party data',
+    (tester) async {
+      final prefs = SharedPreferencesAsync();
+      await prefs.setInt('coins', 999);
+      await prefs.setBool('settings_sound', false);
+      await prefs.setString('storage_recovery_backup_v1', 'backup');
+      await AppLogger.instance.info('Delete from settings');
 
-    var rehydrateCalls = 0;
-    final controller = LocalDataController();
-    await tester.pumpWidget(
-      MaterialApp(
-        home: SettingsScreen(
-          settings: AppSettingsStore(),
-          onToggleLanguage: () {},
-          localDataController: controller,
-          onLocalDataDeleted: () async {
-            rehydrateCalls++;
-          },
+      var rehydrateCalls = 0;
+      final controller = LocalDataController();
+      await tester.pumpWidget(
+        MaterialApp(
+          home: SettingsScreen(
+            settings: AppSettingsStore(),
+            onToggleLanguage: () {},
+            localDataController: controller,
+            onLocalDataDeleted: () async {
+              rehydrateCalls++;
+            },
+          ),
         ),
-      ),
-    );
-    await _openPrivacySheet(tester);
+      );
+      await _openPrivacySheet(tester);
 
-    final deleteButton = find.byKey(
-      const ValueKey('privacy-delete-data-button'),
-    );
-    await tester.ensureVisible(deleteButton);
-    await tester.tap(deleteButton);
-    await tester.pumpAndSettle();
+      final deleteButton = find.byKey(
+        const ValueKey('privacy-delete-data-button'),
+      );
+      await tester.ensureVisible(deleteButton);
+      await tester.tap(deleteButton);
+      await tester.pumpAndSettle();
 
-    expect(find.text('Delete local data?'), findsOneWidget);
-    await tester.tap(
-      find.byKey(const ValueKey('privacy-delete-cancel-button')),
-    );
-    await tester.pumpAndSettle();
-    expect(await prefs.getInt('coins'), 999);
-    expect(rehydrateCalls, 0);
+      expect(find.text('Delete local data?'), findsOneWidget);
+      await tester.tap(
+        find.byKey(const ValueKey('privacy-delete-cancel-button')),
+      );
+      await tester.pumpAndSettle();
+      expect(await prefs.getInt('coins'), 999);
+      expect(rehydrateCalls, 0);
 
-    await tester.tap(deleteButton);
-    await tester.pumpAndSettle();
-    await tester.tap(
-      find.byKey(const ValueKey('privacy-delete-confirm-button')),
-    );
-    await tester.pumpAndSettle();
+      await tester.tap(deleteButton);
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(const ValueKey('privacy-delete-confirm-button')),
+      );
+      await tester.pumpAndSettle();
 
-    expect(await prefs.getKeys(), isEmpty);
-    expect(AppLogger.instance.entries, isEmpty);
-    expect(rehydrateCalls, 1);
-  });
+      expect(await prefs.getKeys(), isEmpty);
+      expect(AppLogger.instance.entries, isEmpty);
+      expect(rehydrateCalls, 1);
+    },
+  );
 }
 
 Future<void> _openPrivacySheet(WidgetTester tester) async {
