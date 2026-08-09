@@ -7,11 +7,11 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | Field | Value |
 |---|---|
 | Current phase | Android RC hardening — issue #79 |
-| Primary feature | `ADS-002` verification complete — issue #116 / PR #117; transitioning to the next RC P0. |
+| Primary feature | `REW-007` IN PROGRESS — issue #119 / draft PR #120 on `agent/rew-007-reward-ledger`. |
 | Completed checkpoint | `GAME-016` input determinism — PR #111 merged as `093d9a9384aec2d18503284a8edc95ba1ce1ecfb` after Flutter CI #580 passed formatting, Analyze, all 215 Flutter tests, Debug APK build, and artifact upload. |
-| Status | `ENG-010` VERIFIED: tracked secret/config artifacts fail closed, scanner policy has focused regression coverage, standalone provider credentials are redacted from diagnostics, and local/CI injection plus rotation/recovery guidance is documented. |
+| Status | `REW-007` implementation adds an interruption-safe absolute-state reward journal, bounded completed-idempotency ledger, deterministic recovery before load, and stable gameplay-attempt IDs; CI/build verification remains before VERIFIED. |
 | Previous checkpoint | `TEST-004` navigation-race verification — PR #109 merged as `24aa922453f88af507e01e950f7d26048e1c6c3f`; its final current-head verification completed on Flutter CI #574. |
-| Next recommended feature | `REW-007` reward transaction ledger and reconciliation: add stable grant reasons/idempotency keys and interruption-safe audit/reconciliation on top of the verified persistence/reward flows. |
+| Next recommended feature | Complete `REW-007` CI/build verification and tracking reconciliation; then select the next unblocked RC P0 from the catalog. |
 | Known blocker | `REL-007`/`REL-008` require real production AdMob/signing inputs and a production-signed candidate; final install/upgrade/device smoke requires an Android device or testing track. `TEST-009` also remains dependency-blocked while `PERF-001` is PLANNED. Visual Studio C++ components remain optional for Windows desktop only. |
 
 ## ADS-002 release ad configuration verification — 2026-08-09
