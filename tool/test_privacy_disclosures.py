@@ -15,20 +15,34 @@ def inventory_fixture() -> dict[str, object]:
         ],
         "dataFlows": [
             {"id": "game-progress", "processor": "local-device", "network": False},
-            {"id": "persistence-integrity", "processor": "local-device", "network": False},
-            {"id": "storage-recovery-backup", "processor": "local-device", "network": False},
+            {
+                "id": "persistence-integrity",
+                "processor": "local-device",
+                "network": False,
+            },
+            {
+                "id": "storage-recovery-backup",
+                "processor": "local-device",
+                "network": False,
+            },
             {"id": "app-settings", "processor": "local-device", "network": False},
-            {"id": "diagnostic-logs", "processor": "local-device", "network": False},
-            {"id": "ad-sdk-processing", "processor": "google-mobile-ads", "network": True},
+            {
+                "id": "diagnostic-logs",
+                "processor": "local-device",
+                "network": False,
+            },
+            {
+                "id": "ad-sdk-processing",
+                "processor": "google-mobile-ads",
+                "network": True,
+            },
         ],
         "explicitlyAbsent": [
             "account registration",
             "email address collection",
             "first-party analytics SDK",
         ],
-        "knownGaps": [
-            {"id": "in-app-data-controls", "owner": "PRIV-003"},
-        ],
+        "knownGaps": [],
     }
 
 
@@ -90,7 +104,7 @@ def disclosure_fixture() -> dict[str, object]:
             "collectsUserData": True,
             "sharesUserData": True,
             "accountCreationAvailable": False,
-            "deletionRequestMechanismAvailable": False,
+            "deletionRequestMechanismAvailable": True,
             "encryptedInTransit": {
                 "recommendedAnswer": True,
                 "requiresProductionConfirmation": True,
@@ -117,7 +131,7 @@ and device and account identifiers.
 ## Data we do not collect in first-party code
 No accounts.
 ## Retention and deletion
-In-app deletion is tracked by PRIV-003.
+Settings > Privacy provides a JSON export and confirmed local deletion/reset.
 ## Children and target audience
 Target audience confirmation is pending.
 ## Contact
@@ -169,8 +183,12 @@ class PrivacyDisclosureContractTests(unittest.TestCase):
 
     def test_missing_gma_purpose_is_rejected(self) -> None:
         disclosure = disclosure_fixture()
-        disclosure["flowMappings"][-1]["dataTypes"][0]["purposes"].remove("analytics")
-        with self.assertRaisesRegex(DisclosureError, "missing required Google Mobile Ads purposes"):
+        disclosure["flowMappings"][-1]["dataTypes"][0]["purposes"].remove(
+            "analytics"
+        )
+        with self.assertRaisesRegex(
+            DisclosureError, "missing required Google Mobile Ads purposes"
+        ):
             validate_models(inventory_fixture(), disclosure, policy_fixture())
 
     def test_explicit_absence_drift_is_rejected(self) -> None:
@@ -178,6 +196,25 @@ class PrivacyDisclosureContractTests(unittest.TestCase):
         disclosure["explicitlyAbsent"].pop()
         with self.assertRaisesRegex(DisclosureError, "explicitlyAbsent"):
             validate_models(inventory_fixture(), disclosure, policy_fixture())
+
+    def test_local_deletion_mechanism_cannot_regress(self) -> None:
+        disclosure = disclosure_fixture()
+        disclosure["playDataSafety"]["deletionRequestMechanismAvailable"] = False
+        with self.assertRaisesRegex(DisclosureError, "must remain available"):
+            validate_models(inventory_fixture(), disclosure, policy_fixture())
+
+    def test_completed_priv003_gap_cannot_return(self) -> None:
+        inventory = inventory_fixture()
+        inventory["knownGaps"].append(
+            {"id": "in-app-data-controls", "owner": "PRIV-003"}
+        )
+        with self.assertRaisesRegex(DisclosureError, "must not remain"):
+            validate_models(inventory, disclosure_fixture(), policy_fixture())
+
+    def test_policy_must_describe_local_controls(self) -> None:
+        policy = policy_fixture().replace("Settings > Privacy", "Settings")
+        with self.assertRaisesRegex(DisclosureError, "Settings > Privacy"):
+            validate_models(inventory_fixture(), disclosure_fixture(), policy)
 
     def test_draft_cannot_claim_play_console_submission(self) -> None:
         disclosure = disclosure_fixture()
@@ -229,7 +266,9 @@ class PrivacyDisclosureContractTests(unittest.TestCase):
             validate_models(inventory_fixture(), disclosure, policy)
 
     def test_policy_section_drift_is_rejected(self) -> None:
-        policy = policy_fixture().replace("## Advertising and Google Mobile Ads", "## Advertising")
+        policy = policy_fixture().replace(
+            "## Advertising and Google Mobile Ads", "## Advertising"
+        )
         with self.assertRaisesRegex(DisclosureError, "privacy policy is missing"):
             validate_models(inventory_fixture(), disclosure_fixture(), policy)
 
