@@ -7,12 +7,23 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | Field | Value |
 |---|---|
 | Current phase | Android RC hardening — issue #79 |
-| Primary feature | `REW-007` IN PROGRESS — issue #119 / draft PR #120 on `agent/rew-007-reward-ledger`. |
+| Primary feature | `REW-007` VERIFIED — implementation PR #120 merged; reconciliation evidence is being finalized on `agent/rew-007-reconciliation`. |
 | Completed checkpoint | `GAME-016` input determinism — PR #111 merged as `093d9a9384aec2d18503284a8edc95ba1ce1ecfb` after Flutter CI #580 passed formatting, Analyze, all 215 Flutter tests, Debug APK build, and artifact upload. |
-| Status | `REW-007` implementation adds an interruption-safe absolute-state reward journal, bounded completed-idempotency ledger, deterministic recovery before load, and stable gameplay-attempt IDs; CI/build verification remains before VERIFIED. |
+| Status | `REW-007` VERIFIED: level, daily reward, daily mission, and explicit heart grants use interruption-safe absolute-state journaling/idempotency; Flutter CI #623 and Debug APK artifact #9032765167 are green evidence. |
 | Previous checkpoint | `TEST-004` navigation-race verification — PR #109 merged as `24aa922453f88af507e01e950f7d26048e1c6c3f`; its final current-head verification completed on Flutter CI #574. |
-| Next recommended feature | Complete `REW-007` CI/build verification and tracking reconciliation; then select the next unblocked RC P0 from the catalog. |
+| Next recommended feature | `ECON-005` versioned economy configuration and balance rules — its `REW-007` dependency is now VERIFIED and it continues the RC save/economy/reward integrity audit. |
 | Known blocker | `REL-007`/`REL-008` require real production AdMob/signing inputs and a production-signed candidate; final install/upgrade/device smoke requires an Android device or testing track. `TEST-009` also remains dependency-blocked while `PERF-001` is PLANNED. Visual Studio C++ components remain optional for Windows desktop only. |
+
+## REW-007 reward transaction reconciliation — 2026-08-09
+
+- Issue #119 / PR #120 replace multi-key reward persistence risk with a validated absolute-state pending journal plus a bounded completed idempotency ledger.
+- Gameplay completion uses a stable per-attempt transaction ID; daily reward and daily mission claims use stable per-day keys; explicit heart grants are journaled and can clear the refill timestamp atomically when hearts reach the cap.
+- Recovery runs before normal state load, malformed journals are discarded safely, completed IDs are persisted before mutating the in-memory ledger, and stale pending cleanup is best-effort after the durable ledger is authoritative.
+- Legacy saves remain compatible because absent reward-ledger keys default to empty state; existing shop transaction recovery remains unchanged.
+- Flutter CI #623 / run `31295126718` passed secret/privacy/security gates, formatting, whitespace, Analyze, focused checks, the full Flutter test suite, Debug APK build, and artifact upload on head `2df14361ec829ae00739aac2e72e6b43cdc0a7e4`.
+- Debug artifact #9032765167 is 80,530,583 bytes with SHA-256 `534037a3cdd4fe75d54a53df6452f8188d4c81cdcc859040a51725315f20070b`.
+- PR #120 squash-merged to `main` as `b915d95b938d459133a9a8b120f38815178b1852`; `REW-007` is VERIFIED.
+- Next recommended RC P0: `ECON-005` versioned economy configuration and balance rules.
 
 ## ADS-002 release ad configuration verification — 2026-08-09
 
