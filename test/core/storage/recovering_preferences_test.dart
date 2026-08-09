@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:cargo_sort_game/core/storage/recovering_preferences.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -34,5 +36,68 @@ void main() {
     final repairedAt = DateTime.parse(repaired!);
     final tolerance = now.add(const Duration(minutes: 1));
     expect(repairedAt.isAfter(tolerance), isFalse);
+  });
+
+  test('first repair stores versioned pre-repair snapshot', () async {
+    final delegate = SharedPreferencesAsync();
+    await delegate.setInt('coins', -25);
+    await delegate.setInt('stats_wins', 7);
+
+    final prefs = RecoveringPreferences(delegate: delegate);
+    expect(await prefs.getInt('coins'), 0);
+
+    final backupText = await delegate.getString(RecoveringPreferences.backupKey);
+    expect(backupText, isNotNull);
+    final backup = jsonDecode(backupText!) as Map<String, dynamic>;
+    expect(backup['schemaVersion'], 1);
+    expect(backup['capturedAt'], isA<String>());
+
+    final values = backup['values'] as Map<String, dynamic>;
+    expect(values['coins'], -25);
+    expect(values['stats_wins'], 7);
+    expect(values.containsKey(RecoveringPreferences.backupKey), isFalse);
+    expect(await delegate.getInt('stats_wins'), 7);
+  });
+
+  test('multiple repairs preserve the original single backup', () async {
+    final delegate = SharedPreferencesAsync();
+    await delegate.setInt('coins', -25);
+    await delegate.setInt('hearts', 99);
+
+    final prefs = RecoveringPreferences(delegate: delegate);
+    expect(await prefs.getInt('coins'), 0);
+    final firstBackup = await delegate.getString(RecoveringPreferences.backupKey);
+
+    expect(await prefs.getInt('hearts'), 5);
+    final secondBackup = await delegate.getString(
+      RecoveringPreferences.backupKey,
+    );
+
+    expect(secondBackup, firstBackup);
+    expect(prefs.recoveryEvents, hasLength(2));
+
+    final backup = jsonDecode(firstBackup!) as Map<String, dynamic>;
+    final values = backup['values'] as Map<String, dynamic>;
+    expect(values['coins'], -25);
+    expect(values['hearts'], 99);
+  });
+
+  test('backup snapshot failure does not block repair', () async {
+    final delegate = SharedPreferencesAsync();
+    await delegate.setInt('coins', -25);
+    await delegate.setInt('stats_wins', 7);
+
+    final prefs = RecoveringPreferences(
+      delegate: delegate,
+      snapshotProvider: () async => throw StateError('snapshot unavailable'),
+    );
+
+    expect(await prefs.getInt('coins'), 0);
+    expect(await delegate.getInt('coins'), 0);
+    expect(await delegate.getInt('stats_wins'), 7);
+    expect(await delegate.containsKey(RecoveringPreferences.backupKey), isFalse);
+    expect(prefs.recoveryEvents, hasLength(1));
+    expect(prefs.recoveryEvents.single.key, 'coins');
+    expect(prefs.recoveryEvents.single.reason, 'out-of-range int -25 -> 0');
   });
 }
