@@ -147,10 +147,10 @@ class ProgressStore extends ChangeNotifier {
   }
 
   Future<void> load() async {
+    await _reconcileEconomyVersion();
     await _ensureRewardLedgerLoaded();
     await _recoverPendingRewardTransaction();
     await _recoverPendingShopPurchase();
-    await _reconcileEconomyVersion();
 
     highestUnlockedLevel = (await _prefs.getInt(_levelKey) ?? 1).clamp(
       1,
@@ -160,7 +160,7 @@ class ProgressStore extends ChangeNotifier {
     coins = savedCoins == null
         ? economy.startingCoins
         : (savedCoins < 0 ? 0 : savedCoins);
-    hearts = (await _prefs.getInt(_heartsKey) ?? maxHearts).clamp(
+    hearts = (await _prefs.getInt(_heartsKey) ?? economy.maxHearts).clamp(
       0,
       economy.maxHearts,
     );

@@ -25,29 +25,32 @@ void main() {
     expect(store.economy.maxHearts, 7);
   });
 
-  test('newer economy save version is rejected before journal replay', () async {
-    final prefs = SharedPreferencesAsync();
-    await prefs.setInt('economy_config_version', 99);
-    await prefs.setInt('coins', 100);
-    await prefs.setString(
-      'pending_reward_transaction_v1',
-      jsonEncode(<String, Object?>{
-        'version': 1,
-        'reason': 'daily_reward_claim',
-        'idempotencyKey': 'daily_reward:future-version-test',
-        'values': <String, Object?>{
-          'coins': 150,
-          'stats_coins_earned': 50,
-          'daily_reward_date': '2026-8-9',
-        },
-      }),
-    );
+  test(
+    'newer economy save version is rejected before journal replay',
+    () async {
+      final prefs = SharedPreferencesAsync();
+      await prefs.setInt('economy_config_version', 99);
+      await prefs.setInt('coins', 100);
+      await prefs.setString(
+        'pending_reward_transaction_v1',
+        jsonEncode(<String, Object?>{
+          'version': 1,
+          'reason': 'daily_reward_claim',
+          'idempotencyKey': 'daily_reward:future-version-test',
+          'values': <String, Object?>{
+            'coins': 150,
+            'stats_coins_earned': 50,
+            'daily_reward_date': '2026-8-9',
+          },
+        }),
+      );
 
-    final store = ProgressStore();
-    await expectLater(store.load(), throwsStateError);
+      final store = ProgressStore();
+      await expectLater(store.load(), throwsStateError);
 
-    expect(await prefs.getInt('coins'), 100);
-    expect(await prefs.containsKey('pending_reward_transaction_v1'), isTrue);
-    expect(await prefs.getInt('economy_config_version'), 99);
-  });
+      expect(await prefs.getInt('coins'), 100);
+      expect(await prefs.containsKey('pending_reward_transaction_v1'), isTrue);
+      expect(await prefs.getInt('economy_config_version'), 99);
+    },
+  );
 }
