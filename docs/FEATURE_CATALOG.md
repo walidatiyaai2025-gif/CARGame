@@ -198,7 +198,7 @@ Codex must not mark a feature complete merely because UI code exists.
 | ECON-002 | Heart system and refill | P0 | IMPLEMENTED | ENG-008 | Maximum, spend, refill timer, and persistence exist; lifecycle tests remain. |
 | ECON-003 | XP and player level | P1 | IMPLEMENTED | ENG-008 | XP/level calculation exists; animated presentation/tests remain. |
 | ECON-004 | Booster inventory | P0 | IMPLEMENTED | ENG-008 | Hint, moves, and shield persist and cannot become negative; tests remain. |
-| ECON-005 | Versioned economy configuration and balance rules | P0 | IN PROGRESS | ECON-001, REW-007 | Issue #122 centralizes the shipped economy into a typed schema-versioned v1 config with parity validation, authoritative shop IDs/prices, and non-destructive migration semantics; implementation and CI verification are in progress. |
+| ECON-005 | Versioned economy configuration and balance rules | P0 | VERIFIED | ECON-001, REW-007 | Issue #122 / PR #124 centralize all shipped v1 economy defaults, formulas, sinks, caps, mission thresholds, milestone/world rewards, and shop prices/quantities into immutable validated `EconomyConfig.v1` without rebalancing. `economy_config_version` adoption is non-destructive and fail-closed for corrupt/future markers; shop UI uses authoritative offer IDs; configured heart purchases remain atomic through SHOP-002 journaling. Flutter CI #647 / run `31296918681` passed formatting, whitespace, Analyze, full Flutter tests, Debug APK build and artifact upload on head `05217d3a1134b21ff014a58864615683db3ccb22`. Debug artifact #9033326885 is 80,544,514 bytes with SHA-256 `bbca79f780b9effc07a93ecc8a5a0b0dd73b523e6706531fe292127165d2872a`; PR #124 squash-merged as `2091cf35ff9b4a261fa76f9d90975735711c58e3`. |
 | SHOP-001 | 3D shop screen | P1 | IMPLEMENTED | UI3D-002 | Hearts, boosters, and themes use 3D-style components; final asset/motion pass remains. |
 | SHOP-002 | Safe purchase transaction | P0 | VERIFIED | ECON-001 | PR #97 adds an idempotent persisted shop-purchase journal using absolute final wallet/entitlement values, validates allowed keys/non-negative values, serializes overlapping purchases, recovers interrupted theme/booster writes without double debit/grant, and discards malformed journals safely. Flutter CI #536 passed the full test suite, Analyze, Debug APK build, and artifact upload before merge. |
 | SHOP-003 | Theme purchase and selection | P1 | IMPLEMENTED | SHOP-002 | Owned themes persist and selected theme applies; consistency pass remains. |
@@ -331,13 +331,13 @@ Codex must not mark a feature complete merely because UI code exists.
 
 ## IN PROGRESS
 
-- None after `GAME-016` verification.
+- None after `ECON-005` verification.
 
 ## NEXT READY
 
-1. `ENG-010` Secret and credential handling — `ENG-009` is VERIFIED; audit injection, redaction, rotation, and CI protection gaps.
-2. `PRIV-001` Privacy inventory, consent, and data minimization — `ENG-001` is VERIFIED and the current privacy inventory gate provides a baseline for reconciliation.
-3. `ADS-002` Debug test IDs and release configuration — `ADS-001` and `ENG-009` are implemented/verified; reconcile remaining release-ad configuration evidence.
+1. `PRIV-001` Privacy inventory, consent, and data minimization — `ENG-001` is VERIFIED; completing the release data inventory unlocks consent/store mapping and `TEST-011` privacy/security verification.
+2. `SEC-001` Mobile security baseline and threat model — `ENG-010` is VERIFIED; release trust boundaries and mitigations can now be reconciled against the existing security CI baseline.
+3. `AST-011` Asset licensing and provenance — `AST-001` is VERIFIED; commercial-use provenance remains a release-critical content-rights prerequisite.
 
 ## BLOCKED
 
@@ -347,6 +347,7 @@ Codex must not mark a feature complete merely because UI code exists.
 
 ## Recently verified
 
+- `ECON-005` Versioned economy configuration and balance rules — PR #124 merged as `2091cf35ff9b4a261fa76f9d90975735711c58e3` after Flutter CI #647 passed all merge gates and uploaded debug artifact #9033326885 (`bbca79f780b9effc07a93ecc8a5a0b0dd73b523e6706531fe292127165d2872a`). Shipped v1 balance parity is centralized, versioned, migration-safe, and authoritative across gameplay, progress/rewards, and shop flows.
 - `GAME-016` Input determinism and anti-spam state machine — PR #111 merged after Flutter CI #580 passed all 215 tests plus Debug APK build/upload; cargo/warehouse spam, selection locking, resolution input disablement, and result-boundary guards are deterministic.
 - `REL-006` Android signing and key-management procedure — PR #102 merged as `8f2e4ddb69d339938ba05911fb297960859e1a77`; Flutter CI #544 and Release Packaging Smoke #4 passed the redacted preflight, contract, APK/AAB packaging and evidence gates.
 - `TEST-001` Progress/economy unit tests — PR #104 merged as `2ab3578ecc214f995f194eff95f1a27b7cc3f442`; Flutter CI #546 passed full tests and Debug APK after adding explicit legacy-save/default migration coverage.
