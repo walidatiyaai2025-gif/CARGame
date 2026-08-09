@@ -1,28 +1,39 @@
-name: REW007 Format Probe
+name: REW007 Format Apply
 
 on:
-  pull_request:
+  push:
+    branches:
+      - agent/rew-007-reward-ledger
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  probe:
+  format:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Checkout
+      - name: Checkout branch
         uses: actions/checkout@v4
+        with:
+          ref: agent/rew-007-reward-ledger
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
           flutter-version: 3.44.8
           cache: true
-      - name: Print exact Dart formatter diff
+      - name: Apply canonical Dart formatting
         shell: bash
         run: |
           set -euo pipefail
           dart format lib/core/storage/progress_store.dart test/core/storage/reward_transaction_recovery_test.dart
-          git diff -- lib/core/storage/progress_store.dart test/core/storage/reward_transaction_recovery_test.dart
-          exit 1
+          if git diff --quiet -- lib/core/storage/progress_store.dart test/core/storage/reward_transaction_recovery_test.dart; then
+            echo "Formatting already canonical."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add lib/core/storage/progress_store.dart test/core/storage/reward_transaction_recovery_test.dart
+          git commit -m "style: format REW-007 Dart changes"
+          git push origin HEAD:agent/rew-007-reward-ledger
