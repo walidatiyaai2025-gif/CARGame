@@ -7,11 +7,11 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | Field | Value |
 |---|---|
 | Current phase | Android RC hardening — issue #79 |
-| Primary feature | None — `ENG-007` CI verification workflow is VERIFIED; `TEST-011` is the highest-priority dependency-ready catalog item. |
+| Primary feature | `SEC-002` Dependency, secret, and artifact security scans — Issue #163 / branch `agent/sec-002-security-scans`. |
 | Completed checkpoint | `ENG-007` CI verification and dashboard integrity — PR #161 merged as `1e1ffd1c36f1338dc36820a3f38e78ae4bbcb47a` after green Flutter CI #734. |
-| Status | ENG-007 is VERIFIED: normal Flutter CI now blocks dashboard/catalog parser drift and protected release-smoke contract regressions, backed by 12 focused tests, while preserving the full existing verification pipeline. |
-| Previous checkpoint | `ENG-006` dependency/package governance — VERIFIED after PRs #158/#159. |
-| Next recommended feature | `TEST-011` Privacy, consent, and security verification — P0; dependencies `PRIV-001` and `SEC-001` are satisfied. `REL-013` is not considered ready while its human-readable dependency “All P0 release blockers” remains unresolved. |
+| Status | SEC-002 is IN PROGRESS: preserve tracked-secret blocking, add enforced-lock/advisory dependency verification, and scan generated artifacts before upload. |
+| Previous checkpoint | `ENG-007` CI verification workflow — VERIFIED after PRs #161/#162. |
+| Next recommended feature | Complete `SEC-002` first. `TEST-011` remains P0 but its catalog blocker note requires `ADS-007`, `PRIV-003`, and `SEC-002` before its acceptance can pass. |
 | Known blocker | `REL-007`/`REL-008` require real production AdMob/signing inputs and a production-signed candidate; final install/upgrade/device smoke requires an Android device or testing track. `TEST-009` also remains dependency-blocked while `PERF-001` is PLANNED. Visual Studio C++ components remain optional for Windows desktop only. |
 
 ## ENG-007 CI verification workflow — 2026-08-09
@@ -24,7 +24,7 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 - Flutter CI #734 / run `31325664494` passed the new ENG-007 gates plus dynamic Android, secret/privacy/security/dependency/assets, formatting, whitespace, Analyze, optional-service/GameButton coverage, full Flutter suite, Debug APK build, and artifact upload on head `644a7635bc5f1f3289c05cd3d88bcf9510fee157`.
 - Debug artifact #9041540363 is 80,594,411 bytes with SHA-256 `35e6836f0b85a890bb8a159f0f71657ac3b4be1af8abdda1581fd3ae77822cf4`.
 - PR #161 squash-merged to main as `1e1ffd1c36f1338dc36820a3f38e78ae4bbcb47a`; Issue #160 closed Completed. ENG-007 has no remaining acceptance blocker and is VERIFIED.
-- A dependency-ready queue audit selects `TEST-011` (P0, dependencies `PRIV-001` and `SEC-001`) as the next valid feature. `REL-013` is intentionally excluded until its human-readable “All P0 release blockers” condition is truly satisfied.
+- Follow-up catalog reconciliation found that `TEST-011` cannot yet satisfy acceptance: the catalog explicitly requires `ADS-007`, `PRIV-003`, and `SEC-002`. `SEC-002` is the true P0 dependency-ready blocker because `ENG-006`, `ENG-010`, and `ENG-007` are VERIFIED.
 
 ## ENG-006 dependency governance verification — 2026-08-09
 

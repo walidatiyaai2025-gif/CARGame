@@ -312,7 +312,7 @@ Codex must not mark a feature complete merely because UI code exists.
 | PRIV-002 | Privacy policy and Play Data safety mapping | P0 | PLANNED | PRIV-001, ADS-007 | Published policy and store disclosures match actual SDK/data behavior. |
 | PRIV-003 | User data export/deletion readiness | P1 | PLANNED | PRIV-001, ENG-008 | Local/remote data handling includes deletion/reset/export procedures where applicable. |
 | SEC-001 | Mobile security baseline and threat model | P0 | VERIFIED | ENG-010 | Historical PR #35 established the threat-model/CI gate; issue #34 / PR #128 refreshed it against current main. The security model now mirrors PRIV-001 Ads/diagnostics runtime-control truth, classifies six protected asset groups including transaction/reward recovery state and the storage-recovery snapshot, and validates network processor/trust-boundary parity, protected-asset ownership, privacy security-gap ownership, threat structure, and secret-policy controls. Flutter CI #655 / run `31300172519` passed privacy/security validation, Analyze, full Flutter tests, Debug APK build and artifact upload on head `e25c4f8239635981d43e7c0865c2f9f04c3e8b8e`. Debug artifact #9034317021 is 80,544,512 bytes with SHA-256 `67938778535d63de844f455b324796a4488b1a33efe20ea004fe9894d9db135d`; PR #128 squash-merged as `c0e7c561e0bafa810ef9248322102b10b684a490`. SEC-002, SEC-003, ADS-007, ENG-013, PRIV-002, and TEST-011 remain explicit downstream gates. |
-| SEC-002 | Dependency, secret, and artifact security scans | P0 | PLANNED | ENG-006, ENG-010, ENG-007 | CI blocks committed secrets, critical vulnerable dependencies, and sensitive build artifacts. |
+| SEC-002 | Dependency, secret, and artifact security scans | P0 | IN PROGRESS | ENG-006, ENG-010, ENG-007 | Issue #163 is adding enforce-lockfile/advisory verification and post-build artifact scanning while preserving the existing tracked-secret gate and normal Flutter CI pipeline. |
 | SEC-003 | App integrity, obfuscation, and release hardening | P1 | PLANNED | SEC-001, REL-008 | R8/obfuscation/integrity choices are tested without breaking ads, logging, or stack traces. |
 | LEGAL-001 | Open-source notices and content rights | P0 | PLANNED | ENG-006, AST-011, AV-007 | Third-party licenses, asset/audio rights, notices, trademarks, and age-rating inputs are complete. |
 | REL-005 | Versioning and release notes | P1 | PLANNED | ENG-007 | Version/build are updated consistently and release notes/changelog are generated. |
@@ -331,17 +331,16 @@ Codex must not mark a feature complete merely because UI code exists.
 
 ## IN PROGRESS
 
-- None.
+- `SEC-002` Dependency, secret, and artifact security scans — P0; Issue #163 / branch `agent/sec-002-security-scans`.
 
 ## NEXT READY
 
-- `ENG-005` Clean architecture boundaries — P1 and dependency-ready through VERIFIED `ENG-001`; no remaining PLANNED P0 is currently dependency-ready, so this is the next highest-priority unblocked catalog item.
+- Complete `SEC-002` first; `TEST-011` remains a P0 verification target but cannot pass until `ADS-007`, `PRIV-003`, and `SEC-002` are complete.
 
 ## BLOCKED
 
 - `PRIV-002` remains blocked on `ADS-007`; policy/store disclosures must match the final consent-aware ad SDK behavior.
-- `SEC-002` remains dependency-blocked while `ENG-006` and `ENG-007` are PLANNED.
-- `TEST-011` now has its declared PRIV-001/SEC-001 prerequisites satisfied, but its acceptance cannot pass until ADS-007 consent, PRIV-003 deletion controls, and SEC-002 dependency/artifact scanning are completed.
+- `TEST-011` has its declared PRIV-001/SEC-001 prerequisites satisfied, but acceptance remains blocked until ADS-007 consent, PRIV-003 deletion controls, and the active SEC-002 dependency/artifact scanning checkpoint are complete.
 - `REL-007`/`REL-008` distribution-ready artifact verification requires the actual production AdMob application configuration and real release signing material, both intentionally external to source control.
 - `TEST-009` is not yet ready because its declared `PERF-001` dependency remains PLANNED; physical-device/API matrix work should follow performance-budget definition.
 - Final `TEST-012` install/update/soak evidence also requires an Android device or testing track with the production-signed candidate.
