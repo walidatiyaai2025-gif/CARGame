@@ -10,6 +10,8 @@ Google Mobile Ads is the only intentional third-party network data processor in 
 
 `ENABLE_DIAGNOSTICS` also exists in `AppBuildConfig`, but current bootstrap installs the local `AppLogger` unconditionally. Diagnostics remain local-only and redacted; ENG-013 owns any future privacy-gated remote crash/non-fatal reporting and the effective build/runtime diagnostics gate.
 
+PRIV-003 adds an explicit first-party local-data boundary: `LocalDataController` can produce a versioned JSON export without network transfer and can clear CARGame-managed SharedPreferences plus local diagnostic logs. Settings exposes both actions under Privacy; destructive reset requires confirmation, serializes concurrent delete attempts, reconstructs fresh progress/settings stores, and returns to the default route so stale in-memory reward/recovery state cannot be written back after deletion.
+
 ## Data flow inventory
 
 ### Gameplay progress and economy
@@ -29,7 +31,9 @@ Purpose: core offline gameplay, persistence, rewards, economy, and owned present
 
 Network transfer: none in first-party code.
 
-Retention: until application data is cleared/uninstalled or a future product reset/delete path removes it. A user-facing deletion/export/reset workflow remains tracked by PRIV-003.
+Retention: until the user selects **Settings > Privacy > Delete & reset local data**, application data is cleared, or the app is uninstalled.
+
+Deletion: the confirmed in-app reset clears this SharedPreferences state and fresh `ProgressStore` defaults are constructed before returning to the Home route.
 
 ### Transaction and migration integrity
 
@@ -46,9 +50,9 @@ Purpose: prevent duplicate debits/grants, recover interrupted writes, and fail c
 
 Network transfer: none.
 
-Retention: pending journals are removed after successful commit/recovery. The completed reward ledger is bounded to 128 entries. The economy schema marker persists with application data.
+Retention: pending journals are removed after successful commit/recovery. The completed reward ledger is bounded to 128 entries. The economy schema marker persists until local data is deleted/reset, application data is cleared, or the app is uninstalled.
 
-Deletion: clearing application data/uninstall; consolidated product reset/delete UX remains tracked by PRIV-003.
+Deletion: **Settings > Privacy > Delete & reset local data** clears transaction journals, the completed reward ledger, and economy-version metadata together with the rest of the app-owned SharedPreferences namespace.
 
 ### Storage corruption recovery snapshot
 
@@ -60,9 +64,9 @@ Purpose: preserve recoverable local evidence before automatic data repair.
 
 Network transfer: none.
 
-Retention: local until replaced by a later recovery snapshot or application data is cleared/uninstalled.
+Retention: local until replaced by a later recovery snapshot, deleted/reset in Settings > Privacy, application data is cleared, or the app is uninstalled.
 
-Deletion: clearing application data/uninstall; consolidated product reset/delete UX remains tracked by PRIV-003.
+Deletion: the confirmed local reset clears the recovery snapshot; application-data clearing/uninstall remains effective as well.
 
 ### User settings
 
@@ -74,7 +78,7 @@ Purpose: remember player-selected presentation preferences.
 
 Network transfer: none.
 
-Retention/deletion: until reset, application data is cleared, or the app is uninstalled.
+Retention/deletion: until **Settings > Privacy > Delete & reset local data**, application data is cleared, or the app is uninstalled. After the in-app reset a fresh `AppSettingsStore` uses safe defaults.
 
 ### Diagnostics
 
@@ -88,7 +92,17 @@ Network transfer: none. There is currently no remote crash-reporting or diagnost
 
 Current gate truth: local logging is installed during bootstrap. `ENABLE_DIAGNOSTICS` is represented in build configuration but is not currently an effective bootstrap gate; this gap is recorded for ENG-013 rather than hidden by the inventory.
 
-Deletion: `AppLogger.clear()`, clearing application data, or uninstalling.
+Deletion: `LocalDataController.deleteAllLocalData()` calls `AppLogger.clear()` as part of the confirmed Settings reset. Direct `AppLogger.clear()`, application-data clearing, and uninstall also remain effective.
+
+### First-party local export/reset control
+
+Sources: `lib/core/privacy/local_data_controller.dart`, `lib/features/settings/settings_screen.dart`, and `lib/bootstrap/cargo_sort_app.dart`.
+
+**Copy data export** creates a schema-versioned JSON object containing the current CARGame-managed SharedPreferences snapshot and the already-redacted in-memory diagnostic entries. It declares `networkTransfer: false` and is returned to Settings for an explicit clipboard copy; CARGame does not upload the export and adds no storage/network permission or backend for this action.
+
+**Delete & reset local data** requires an explicit confirmation dialog. The controller clears the CARGame-managed SharedPreferences namespace and local diagnostics. Concurrent delete callers join the same in-flight destructive operation. The app then constructs fresh progress/settings stores and returns the navigator to the first route so stale pre-delete state cannot be re-saved by an old Settings/game route.
+
+This control is first-party local only. It does not claim to export or delete data retained by Google Mobile Ads.
 
 ### Advertising
 
@@ -108,6 +122,7 @@ Current controls and gaps:
 - Settings keeps a publisher-rendered privacy entry; when Google reports privacy options are required, the user can re-open the privacy options form and runtime eligibility updates without restarting.
 - Release builds reject Google test ad-unit IDs.
 - No first-party server receives ad identifiers or ad telemetry, and first-party analytics remains absent/disabled until ENG-012 adds a separately privacy-gated design.
+- The first-party local reset does not claim to delete processor-side Google data; Google/UMP privacy controls remain separate.
 
 ## Explicitly absent in the current codebase
 
@@ -121,24 +136,29 @@ No application feature currently collects or stores account registration data, e
 4. CI extracts `*Key`/`*Prefix` SharedPreferences declarations from the current persistence sources and fails if the inventory omits a key or documents a stale key.
 5. Diagnostics must be redacted before persistence or copying and must not be remotely uploaded without a separate privacy-gated feature.
 6. Google UMP must remain the source of truth before Mobile Ads initialization/requests; app-owned ad paths must remain fail-closed behind current `canRequestAds` state and must not cache a duplicate consent-granted value.
-7. Build-time IDs/configuration are not treated as user data, but secrets and credentials remain governed by ENG-010.
+7. First-party local export must remain user-driven and zero-network; a future remote export/sync path requires a new privacy inventory flow before merge.
+8. First-party local deletion must continue to clear transaction/reward/recovery metadata and local diagnostics and must not imply deletion of third-party processor-side data.
+9. Build-time IDs/configuration are not treated as user data, but secrets and credentials remain governed by ENG-010.
 
 ## Known privacy gaps and owners
 
 - **ENG-013 — diagnostics gate:** `ENABLE_DIAGNOSTICS` exists but is not currently wired to suppress bootstrap installation of the local logger. Remote crash reporting remains absent.
-- **PRIV-003 — in-app data controls:** complete local deletion still relies on OS application-data clearing/uninstall; a consolidated reset/export/delete path is not yet implemented.
 
-These are explicit downstream gates. Their existence does not create an undocumented data flow and is not treated as completed work by PRIV-001.
+The previous PRIV-003 in-app data-controls gap is closed by the source-controlled local export/delete/reset implementation. No account/backend/cloud-save deletion gap exists because those first-party remote data paths are absent.
 
-## Retention and deletion gaps
+## Retention and deletion posture
 
-The app currently relies on OS-level application-data clearing/uninstall for complete local progress/settings/transaction/recovery deletion. Diagnostics additionally expose `AppLogger.clear()`. A consolidated in-app reset/export/delete experience is intentionally tracked by PRIV-003 and must reuse the inventory in this document.
+Complete first-party local deletion is available through **Settings > Privacy > Delete & reset local data**, Android application-data clearing, or uninstall. The in-app reset covers gameplay/progress/economy, settings, transaction/reward/economy-integrity metadata, the storage-recovery snapshot, and local diagnostic logs, then rehydrates safe default stores.
+
+A versioned **JSON export** is available through **Settings > Privacy > Copy data export**. It includes CARGame-managed SharedPreferences state and redacted local diagnostics and is copied locally without CARGame network transmission.
+
+Google Mobile Ads processor-side retention remains outside the first-party local reset and must be represented separately in PRIV-002/store disclosures.
 
 ## Processor map
 
 - Local device / SharedPreferences — first-party local-only gameplay, settings, transaction/migration integrity metadata, and storage-recovery snapshot state.
 - Local application-support directory — first-party local-only diagnostic log file.
-- Google Mobile Ads — third-party advertising processor initialized by the current optional-service bootstrap and used for ad requests when enabled.
+- Google Mobile Ads — third-party advertising processor initialized only when UMP eligibility permits ad requests.
 
 No other network data processor is declared by the current production dependency set.
 
@@ -156,13 +176,15 @@ No other network data processor is declared by the current production dependency
 - exact coverage of persisted `*Key`/`*Prefix` declarations in `ProgressStore`, `AppSettingsStore`, and `RecoveringPreferences`;
 - offline-first, analytics-disabled, and cloud-sync-disabled principles.
 
-This keeps PRIV-001 aligned with current source instead of relying on a one-time prose audit.
+`tool/verify_privacy_disclosures.py` additionally requires the local deletion mechanism to remain available, rejects reintroduction of the completed `in-app-data-controls` gap, and verifies the source anchors for `LocalDataController` plus Settings export/delete/confirmation controls.
+
+This keeps PRIV-001/PRIV-002/PRIV-003 aligned with current source instead of relying on a one-time prose audit.
 
 ## Follow-up gates
 
-- ADS-007: UMP consent and re-openable privacy controls now gate ad SDK initialization/requests; automated verification must remain green.
-- PRIV-002: privacy policy and Play Data Safety/store disclosure mapping.
-- PRIV-003: user reset/export/deletion readiness.
+- ADS-007: UMP consent and re-openable privacy controls now gate ad SDK initialization/requests; automated verification must remain green and production UMP evidence is still external.
+- PRIV-002: privacy policy and Play Data Safety/store disclosure mapping remain IMPLEMENTED pending publication/store evidence.
+- PRIV-003: first-party local reset/export/deletion readiness is source-complete and subject to repository verification evidence.
 - ENG-012: analytics remains disabled until a privacy-gated schema and consent path exist.
 - ENG-013: effective diagnostics gating and any future privacy-gated remote crash reporting.
 - TEST-011: release privacy/consent/security verification.
