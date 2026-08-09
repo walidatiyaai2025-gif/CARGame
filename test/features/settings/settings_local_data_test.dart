@@ -51,7 +51,7 @@ void main() {
     expect(exportButton, findsOneWidget);
     await tester.ensureVisible(exportButton);
     await tester.tap(exportButton);
-    await tester.pump();
+    await _pumpUi(tester);
 
     final clipboard = await Clipboard.getData(Clipboard.kTextPlain);
     final decoded = jsonDecode(clipboard!.text!) as Map<String, dynamic>;
@@ -94,22 +94,23 @@ void main() {
       );
       await tester.ensureVisible(deleteButton);
       await tester.tap(deleteButton);
-      await tester.pumpAndSettle();
+      await _pumpUi(tester);
 
       expect(find.text('Delete local data?'), findsOneWidget);
       await tester.tap(
         find.byKey(const ValueKey('privacy-delete-cancel-button')),
       );
-      await tester.pumpAndSettle();
+      await _pumpUi(tester);
       expect(await prefs.getInt('coins'), 999);
       expect(rehydrateCalls, 0);
 
       await tester.tap(deleteButton);
-      await tester.pumpAndSettle();
+      await _pumpUi(tester);
       await tester.tap(
         find.byKey(const ValueKey('privacy-delete-confirm-button')),
       );
-      await tester.pumpAndSettle();
+      await _pumpUi(tester);
+      await tester.pump();
 
       expect(await prefs.getKeys(), isEmpty);
       expect(AppLogger.instance.entries, isEmpty);
@@ -126,6 +127,10 @@ Future<void> _openPrivacySheet(WidgetTester tester) async {
   expect(privacyButtonFinder, findsOneWidget);
   final privacyButton = tester.widget<GameButton>(privacyButtonFinder);
   privacyButton.onPressed!.call();
+  await _pumpUi(tester);
+}
+
+Future<void> _pumpUi(WidgetTester tester) async {
   await tester.pump();
-  await tester.pump(const Duration(milliseconds: 400));
+  await tester.pump(const Duration(milliseconds: 500));
 }
