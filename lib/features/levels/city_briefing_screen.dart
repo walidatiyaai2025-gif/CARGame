@@ -86,7 +86,8 @@ class _CityBriefingScreenState extends State<CityBriefingScreen> {
     final skin = gameSkinById(store.selectedTheme);
     final world = gameWorlds[level.world - 1];
     final previousStars = store.starsForLevel(level.number);
-    final selectedCount = (_hint ? 1 : 0) + (_moves ? 1 : 0) + (_shield ? 1 : 0);
+    final selectedCount =
+        (_hint ? 1 : 0) + (_moves ? 1 : 0) + (_shield ? 1 : 0);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF4F7FB),
@@ -184,7 +185,8 @@ class _CityBriefingScreenState extends State<CityBriefingScreen> {
                                   final gap = compact ? 7.0 : 10.0;
                                   final width = columns == 1
                                       ? loadoutConstraints.maxWidth
-                                      : (loadoutConstraints.maxWidth - gap * 2) /
+                                      : (loadoutConstraints.maxWidth -
+                                                gap * 2) /
                                             3;
 
                                   return Wrap(
@@ -666,7 +668,9 @@ class _MissionTelemetry extends StatelessWidget {
                 children: [
                   Text(
                     level.isBossCity
-                        ? (isArabic ? 'تفاصيل مهمة الزعيم' : 'Boss Mission Brief')
+                        ? (isArabic
+                              ? 'تفاصيل مهمة الزعيم'
+                              : 'Boss Mission Brief')
                         : (isArabic ? 'تفاصيل المهمة' : 'Mission Brief'),
                     style: const TextStyle(
                       color: AppTheme.navy,
@@ -926,7 +930,10 @@ class _SelectableBoosterCard extends StatelessWidget {
                 end: 0,
                 top: 0,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     color: color.withValues(alpha: .10),
                     borderRadius: BorderRadius.circular(10),
