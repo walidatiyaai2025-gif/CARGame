@@ -16,8 +16,7 @@ Future<void> main() async {
     scannerPath: scanner.absolute.path,
     files: {
       '.env.example': 'API_KEY=your-example-api-key\n',
-      'config.txt':
-          'ad=ca-app-pub-3940256099942544/6300978111\nstatus=ready\n',
+      'config.txt': 'ad=ca-app-pub-3940256099942544/6300978111\nstatus=ready\n',
     },
     expectedExitCode: 0,
     failures: failures,
@@ -50,7 +49,9 @@ Future<void> main() async {
     failures: failures,
   );
 
-  final githubToken = 'ghp_' 'ABCDEFGHIJKLMNOPQRSTUVWX';
+  final githubToken =
+      'ghp_'
+      'ABCDEFGHIJKLMNOPQRSTUVWX';
   await _runCase(
     name: 'high confidence token signature is rejected',
     scannerPath: scanner.absolute.path,
@@ -82,7 +83,10 @@ Future<void> _runCase({
 }) async {
   final temp = await Directory.systemTemp.createTemp('cargame-secret-hygiene-');
   try {
-    final init = await Process.run('git', ['init', '--quiet'], workingDirectory: temp.path);
+    final init = await Process.run('git', [
+      'init',
+      '--quiet',
+    ], workingDirectory: temp.path);
     if (init.exitCode != 0) {
       failures.add('$name: unable to initialize temporary git repository');
       return;
@@ -94,21 +98,20 @@ Future<void> _runCase({
       await file.writeAsString(entry.value);
     }
 
-    final add = await Process.run(
-      'git',
-      ['add', '--force', '.'],
-      workingDirectory: temp.path,
-    );
+    final add = await Process.run('git', [
+      'add',
+      '--force',
+      '.',
+    ], workingDirectory: temp.path);
     if (add.exitCode != 0) {
       failures.add('$name: unable to stage fixture files');
       return;
     }
 
-    final result = await Process.run(
-      Platform.resolvedExecutable,
-      ['run', scannerPath],
-      workingDirectory: temp.path,
-    );
+    final result = await Process.run(Platform.resolvedExecutable, [
+      'run',
+      scannerPath,
+    ], workingDirectory: temp.path);
     if (result.exitCode != expectedExitCode) {
       failures.add(
         '$name: expected exit $expectedExitCode, got ${result.exitCode}; '

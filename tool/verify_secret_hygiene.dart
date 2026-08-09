@@ -88,7 +88,9 @@ Future<void> main() async {
     final extension = _extensionOf(lowerPath);
 
     if (_forbiddenFileExtensions.contains(extension)) {
-      violations.add('$path: tracked signing/private-key material is forbidden');
+      violations.add(
+        '$path: tracked signing/private-key material is forbidden',
+      );
       continue;
     }
 
