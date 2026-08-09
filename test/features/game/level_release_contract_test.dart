@@ -32,7 +32,11 @@ void main() {
         final cached = levels[number - 1];
         final regenerated = generateLevel(number);
 
-        expect(regenerated.number, cached.number, reason: 'level $number number');
+        expect(
+          regenerated.number,
+          cached.number,
+          reason: 'level $number number',
+        );
         expect(regenerated.world, cached.world, reason: 'level $number world');
         expect(regenerated.moves, cached.moves, reason: 'level $number moves');
         expect(
