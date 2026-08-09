@@ -7,12 +7,24 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | Field | Value |
 |---|---|
 | Current phase | Android RC hardening — issue #79 |
-| Primary feature | `TEST-002` Level generator and solvability tests — IN PROGRESS under issue #143. |
-| Completed checkpoint | `LEVEL-002` quantitative difficulty curve — PR #137 merged after final current-main reconciliation and green Flutter CI #681. |
-| Status | TEST-002 is consolidating the exact production 150-level catalog into one deterministic release gate covering regeneration parity, structural solvability, quantitative difficulty acceptance, and required boundaries 1/25/26/150. No production level change is planned unless the integrated gate exposes a real defect. |
+| Primary feature | None — `TEST-002` is VERIFIED; `ENG-005` is the next dependency-ready catalog item. |
+| Completed checkpoint | `TEST-002` integrated level release contract — PR #144 merged after current-main reconciliation and green Flutter CI #697. |
+| Status | TEST-002 is VERIFIED. One deterministic release gate now proves exact 1..150 identity, regeneration parity, structural solvability, quantitative difficulty acceptance, and boundaries 1/25/26/150 without changing production level content. |
 | Previous checkpoint | `AST-011` asset licensing/provenance current-main reconciliation — PR #131 merged as `9631b43fb697f9819fe83a7991212b490865f525` after Flutter CI #659. |
-| Next recommended feature | Complete TEST-002 issue #143 and reconcile verification evidence; select the next unblocked catalog item only after current-head CI passes. |
+| Next recommended feature | `ENG-005` Clean architecture boundaries — highest-priority dependency-ready catalog item after TEST-002; audit current presentation/domain/application/storage/assets/motion/analytics/service boundaries before changing architecture. |
 | Known blocker | `REL-007`/`REL-008` require real production AdMob/signing inputs and a production-signed candidate; final install/upgrade/device smoke requires an Android device or testing track. `TEST-009` also remains dependency-blocked while `PERF-001` is PLANNED. Visual Studio C++ components remain optional for Windows desktop only. |
+
+## TEST-002 integrated level release contract verification — 2026-08-09
+
+- Issue #143 / PR #144 add `level_release_contract_test.dart` as one release-level gate over the exact production `levels` catalog.
+- The gate requires exact sequential identity 1..150, regenerates every level and compares stable number/world/moves/difficulty plus ordered product IDs, then validates the full catalog through both `LevelSolvabilityValidator` and `LevelDifficultyCurve`.
+- Required release boundaries 1, 25, 26, and 150 pass both structural and quantitative contracts explicitly; detailed negative cases remain in their existing owning suites.
+- No production level, progression, save, economy, reward, or UI content changed for TEST-002.
+- UI3D-007 / PR #141 advanced main during verification, so TEST-002 was reconciled to main `c6e22c1fca7e82e8c48a3d79071ff0dc515471de` before the final gate.
+- Final Flutter CI #697 / run `31310666540` passed dynamic-target, secret/privacy/security/asset gates, formatting, whitespace, Analyze, optional-service regressions, the full Flutter suite, Debug APK build, and artifact upload on head `a0f1de0e14b78f090bb770643c93492cc5164ebe`.
+- Debug artifact #9037363042 is 80,562,923 bytes with SHA-256 `ef6c18142dc7b1925f131848217ba8db8386f534aaee24becaede3d3ed598a9b`.
+- PR #144 squash-merged to main as `d9afbb06564a08ee571ed7c9e4784adf99a7c3fe`.
+- `TEST-002` is VERIFIED; no PLANNED P0 is currently dependency-ready, so `ENG-005` is the next highest-priority unblocked catalog item.
 
 ## LEVEL-002 quantitative difficulty curve verification — 2026-08-09
 
