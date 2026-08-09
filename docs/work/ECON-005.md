@@ -42,3 +42,4 @@ Tracking: issue #122 / RC-001 #79
 - A present non-positive `economy_config_version` is treated as corrupted metadata and fails closed; only an absent marker is considered a legacy v1 save.
 - Configured heart purchases now debit coins and grant hearts inside the existing SHOP-002 absolute-state purchase journal, including atomic refill-timestamp clearing when the cap is reached.
 - The v1 schema keeps non-negative price validation semantics; shipped balance values are unchanged.
+- Focused review-hardening run `31296816764` passed Analyze plus ECON-005, ProgressStore, SHOP-002, and REW-007 regression suites before producing the clean implementation head.
