@@ -1,0 +1,95 @@
+name: Temporary TEST-004 retry patch
+
+on:
+  push:
+    branches:
+      - agent/test-004-navigation-race-current
+    paths:
+      - .github/workflows/_temporary_test004_retry_patch.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/test-004-navigation-race-current
+          fetch-depth: 0
+      - name: Harden result sheet dismissal
+        shell: python
+        run: |
+          from pathlib import Path
+          path = Path('lib/features/game/game_screen.dart')
+          text = path.read_text()
+
+          text = text.replace(
+              '  bool _resultActionBusy = false;\n  bool _resultVisible = false;\n  bool _resolving = false;',
+              '  bool _resultActionBusy = false;\n  bool _resultVisible = false;\n  bool _resultSheetDismissed = false;\n  bool _resolving = false;',
+              1,
+          )
+
+          old_dismiss = '\n'.join([
+              '  void _dismissResultSheet(BuildContext sheetContext) {',
+              '    final route = ModalRoute.of(sheetContext);',
+              '    if (route == null) return;',
+              '    Navigator.of(sheetContext).removeRoute(route);',
+              '  }',
+          ])
+          new_dismiss = '\n'.join([
+              '  void _dismissResultSheet(BuildContext sheetContext) {',
+              '    if (_resultSheetDismissed) return;',
+              '    final route = ModalRoute.of(sheetContext);',
+              '    if (route == null || !route.isActive) {',
+              '      _resultSheetDismissed = true;',
+              '      return;',
+              '    }',
+              '    _resultSheetDismissed = true;',
+              '    Navigator.of(sheetContext).removeRoute(route);',
+              '  }',
+          ])
+          if old_dismiss not in text:
+              raise SystemExit('Expected dismiss helper not found')
+          text = text.replace(old_dismiss, new_dismiss, 1)
+
+          old_retry = '\n'.join([
+              '  Future<void> _retryFromResult(BuildContext sheetContext) async {',
+              '    if (_resultActionBusy) return;',
+              '    _resultActionBusy = true;',
+              '',
+              '    _dismissResultSheet(sheetContext);',
+              '    if (!mounted) return;',
+              '    setState(() => _reset());',
+              '  }',
+          ])
+          new_retry = '\n'.join([
+              '  Future<void> _retryFromResult(BuildContext sheetContext) async {',
+              '    if (_resultActionBusy) return;',
+              '    _resultActionBusy = true;',
+              '',
+              '    _dismissResultSheet(sheetContext);',
+              '    await WidgetsBinding.instance.endOfFrame;',
+              '    if (!mounted) return;',
+              '    setState(() => _reset());',
+              '  }',
+          ])
+          if old_retry not in text:
+              raise SystemExit('Expected retry helper not found')
+          text = text.replace(old_retry, new_retry, 1)
+
+          marker = '    _resultVisible = true;\n    _resultActionBusy = false;'
+          replacement = marker + '\n    _resultSheetDismissed = false;'
+          if marker not in text:
+              raise SystemExit('Expected result initialization not found')
+          text = text.replace(marker, replacement, 1)
+          path.write_text(text)
+      - name: Remove temporary workflow and push
+        run: |
+          git rm .github/workflows/_temporary_test004_retry_patch.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add lib/features/game/game_screen.dart
+          git commit -m 'fix: make result sheet dismissal idempotent'
+          git push origin HEAD:agent/test-004-navigation-race-current
