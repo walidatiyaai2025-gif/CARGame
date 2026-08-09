@@ -7,11 +7,11 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | Field | Value |
 |---|---|
 | Current phase | Android RC hardening — issue #79 |
-| Primary feature | None after `GAME-016` verification; next RC P0 is `ENG-010` secret and credential handling. |
+| Primary feature | `ENG-010` secret and credential handling — issue #113. |
 | Completed checkpoint | `GAME-016` input determinism — PR #111 merged as `093d9a9384aec2d18503284a8edc95ba1ce1ecfb` after Flutter CI #580 passed formatting, Analyze, all 215 Flutter tests, Debug APK build, and artifact upload. |
-| Status | `GAME-016` VERIFIED: repeated warehouse input and cargo reselection during resolution remain deterministic with exactly one move/feedback event; boosters, restart, and back are disabled while resolving, and result-boundary races remain covered by `TEST-004`. |
+| Status | IN PROGRESS — auditing secret scanner policy, diagnostic redaction, local/CI release input injection, and rotation/recovery evidence. Initial gap: forced-tracked `*.credentials.local.json` is not explicitly forbidden by the scanner and the scanner has no focused regression harness. |
 | Previous checkpoint | `TEST-004` navigation-race verification — PR #109 merged as `24aa922453f88af507e01e950f7d26048e1c6c3f`; its final current-head verification completed on Flutter CI #574. |
-| Next recommended feature | Start `ENG-010` secret and credential handling audit, then continue the remaining unblocked RC P0 gaps. |
+| Next recommended feature | Finish `ENG-010` scanner regression/hardening, then reconcile redaction/injection/rotation evidence and continue remaining RC P0 gaps. |
 | Known blocker | `REL-007`/`REL-008` require real production AdMob/signing inputs and a production-signed candidate; final install/upgrade/device smoke requires an Android device or testing track. `TEST-009` also remains dependency-blocked while `PERF-001` is PLANNED. Visual Studio C++ components remain optional for Windows desktop only. |
 
 ## GAME-016 input determinism verification — 2026-08-09
