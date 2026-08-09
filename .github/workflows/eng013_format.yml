@@ -1,0 +1,32 @@
+name: ENG-013 Apply Dart Format
+
+on:
+  push:
+    branches:
+      - agent/eng-013-crash-reporting
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/eng-013-crash-reporting
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.44.8
+      - name: Apply canonical Dart formatting
+        run: dart format lib/core/application/crash_reporting_port.dart lib/core/diagnostics/privacy_gated_crash_reporting.dart lib/core/logging/app_logger.dart test/core/diagnostics/privacy_gated_crash_reporting_test.dart
+      - name: Commit formatter output and remove one-shot workflow
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/eng013_format.yml
+          git add lib/core/application/crash_reporting_port.dart lib/core/diagnostics/privacy_gated_crash_reporting.dart lib/core/logging/app_logger.dart test/core/diagnostics/privacy_gated_crash_reporting_test.dart
+          git commit -m 'ENG-013: apply canonical Dart formatting'
+          git push origin HEAD:agent/eng-013-crash-reporting
