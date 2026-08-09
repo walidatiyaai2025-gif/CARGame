@@ -179,6 +179,7 @@ void main() {
 
     await tester.pump();
     await Future.wait([firstAction, secondAction]);
+    await tester.pump();
 
     expect(find.byType(GameScreen), findsOneWidget);
     expect(retry, findsNothing);
