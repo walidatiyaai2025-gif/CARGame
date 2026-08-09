@@ -7,22 +7,23 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | Field | Value |
 |---|---|
 | Current phase | Android RC hardening — issue #79 |
-| Primary feature | `ENG-012` Analytics event schema and privacy gating — IN PROGRESS under Issue #175. |
-| Completed checkpoint | `ENG-011` canonical developer workflows and documentation drift guard — VERIFIED and squash-merged via PR #174 as `52d983dc251d3daf839b468d8065a13e849505db`. |
-| Status | ENG-012 is IN PROGRESS: define a versioned pure-Dart event contract and application port, add a build/runtime privacy gate that fails closed, and keep production analytics non-collecting with no SDK/network processor. |
-| Previous checkpoint | `ENG-011` developer tooling/documentation — VERIFIED after final-head Flutter CI #778 / run `31340173104` and merged as `52d983dc251d3daf839b468d8065a13e849505db`. |
-| Next recommended feature | Complete ENG-012 acceptance and verification before selecting another primary feature. |
+| Primary feature | None — `ENG-012` analytics event schema and privacy gating is VERIFIED on PR #176. |
+| Completed checkpoint | `ENG-012` versioned analytics schema and fail-closed privacy gate — VERIFIED after Flutter CI #785 / run `31341159553`. |
+| Status | ENG-012 is VERIFIED: schema v1 and the application analytics boundary are source-controlled, production first-party collection remains disabled by build/runtime gates with no emitter/processor/network path, and UMP advertising consent is not reused. |
+| Previous checkpoint | `ENG-011` developer tooling/documentation — VERIFIED and squash-merged via PR #174 as `52d983dc251d3daf839b468d8065a13e849505db`. |
+| Next recommended feature | `ENG-013` Crash reporting and non-fatal diagnostics — P1; ENG-004 is IMPLEMENTED and PRIV-001 is VERIFIED. |
 | Known blocker | `TEST-011` requires real production UMP/privacy-message/regulatory-device verification. `REL-007`/`REL-008` require real production AdMob/signing inputs and a production-signed candidate; final install/upgrade/device smoke requires an Android device or testing track. `TEST-009` also remains dependency-blocked while `PERF-001` is PLANNED. Visual Studio C++ components remain optional for Windows desktop only. |
 
 ## ENG-012 analytics schema and privacy gate — 2026-08-10
 
-- Issue #175 / branch `agent/eng-012-analytics-schema` is the single active primary workstream.
-- Current repository truth has no first-party analytics implementation or analytics network processor; Google Mobile Ads remains the sole declared network processor.
-- The checkpoint will add a pure-Dart versioned event vocabulary plus an application-layer port while preserving the ENG-005 inward dependency rule.
-- `ENABLE_ANALYTICS` will default to false, and production runtime privacy eligibility will also default to false; both gates are required before an outward adapter may accept an event.
-- Google UMP advertising consent is not reused as first-party analytics consent, and this checkpoint persists no analytics-consent value.
-- No event is queued, persisted, uploaded, or transmitted by the production composition in this checkpoint.
-- Acceptance requires focused schema/gate tests plus the full privacy/security/dependency/catalog/Analyze/Flutter-test/Debug-APK/artifact-security CI path.
+- Issue #175 / PR #176 implement schema v1 with stable event names, typed/allowlisted properties, required-property validation, numeric bounds, immutable validated payloads, and explicit wire serialization.
+- `AnalyticsPort` and `AnalyticsPrivacyPort` keep the application boundary vendor-neutral; `PrivacyGatedAnalytics` requires build enablement, explicit first-party runtime privacy eligibility, and an outward emitter before collection can become active.
+- `ENABLE_ANALYTICS` defaults to false. Production composition installs `DenyAllAnalyticsPrivacy` and no emitter, so first-party analytics remains non-collecting even if the build flag is accidentally enabled.
+- Google UMP advertising consent is not reused as first-party analytics consent. No analytics SDK, processor, persistence queue, upload, or network transport was introduced.
+- `tool/verify_analytics_privacy.py` blocks analytics SDK/processor drift, non-versioned/unbounded schema changes, advertising/storage/network coupling, default-on collection, and production emitter installation.
+- Flutter CI #785 / run `31341159553` passed privacy/security/dependency/catalog gates, formatting, Analyze, focused analytics tests, existing focused regressions, the full Flutter suite, Debug APK build, artifact security and upload on head `eb8dd6623cc35809bd6c7eb270235c30437627cf`.
+- Debug artifact #9045957178 is 80,626,055 bytes with SHA-256 `102b965b14dab94df5fa4137ac760a58ee2281c6ad512127f553955f74723720`.
+- All repository-owned ENG-012 acceptance criteria are VERIFIED; any future real collector/processor still requires an explicit first-party privacy decision plus inventory/disclosure review before enablement.
 
 ## ENG-011 developer tooling and documentation — 2026-08-10
 
