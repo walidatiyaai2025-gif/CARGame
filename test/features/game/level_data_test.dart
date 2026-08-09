@@ -1,4 +1,5 @@
 import 'package:cargo_sort_game/features/game/level_data.dart';
+import 'package:cargo_sort_game/features/game/level_difficulty_policy.dart';
 import 'package:cargo_sort_game/features/game/level_validator.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -89,7 +90,10 @@ void main() {
 
     test('every generated configuration stays inside move budget rules', () {
       for (final level in levels) {
-        final safetyMoves = (6 - level.world).clamp(2, 5);
+        final safetyMoves = LevelDifficultyPolicy.safetyMoveBaseForLevel(
+          levelNumber: level.number,
+          world: level.world,
+        );
         final extraMoves = level.moves - level.items.length;
 
         expect(
