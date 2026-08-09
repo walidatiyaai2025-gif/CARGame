@@ -7,11 +7,24 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | Field | Value |
 |---|---|
 | Current phase | Android RC hardening — issue #79 |
-| Completed checkpoint | `RC-004` Android release APK/AAB packaging path — PR #99 merged as `35e53031fbf59741da0ace89fad36d84eb738377` after Flutter CI #539 and Android Release Packaging Smoke #2 both passed. |
-| Status | RC P0 audit is materially advanced: responsive acceptance is VERIFIED, Android release configuration is hardened, local shop purchases are interruption-safe, and non-distributable release APK/AAB packaging is proven. Real production/store artifacts still require the actual production AdMob application ID, external release signing material, and device/install smoke validation. |
-| Previous checkpoint | `RC-003` interruption-safe local shop purchases — PR #97 merged as `e5a40cb7e3e5d071bbd42952a288cff793e00818` after Flutter CI #536 passed full tests, Analyze, Debug APK build, and artifact upload. |
-| Next recommended feature | `REL-006` Android signing/key-management procedure and production release-input handoff; then `REL-007`/`REL-008` production-signed candidate build plus `TEST-009`/`TEST-012` device smoke evidence. |
+| Primary feature | `REL-006` Android signing and key-management procedure — issue #101 |
+| Completed checkpoint | RC tracking reconciliation — PR #100 merged as `938915bf32ddd6853737065d4cacce87a969fd37` after Flutter CI #541 passed the complete gate set. |
+| Status | IN PROGRESS — #101 is adding a reusable redacted release-input preflight, wiring `BUILD_RC.ps1` and the release-packaging smoke to the same contract, and documenting key generation, ownership, backup, recovery, rotation, and production handoff. |
+| Previous checkpoint | `RC-004` release APK/AAB packaging smoke — PR #99 merged as `35e53031fbf59741da0ace89fad36d84eb738377`; current-head smoke built both release formats with ephemeral signing and redacted credentials. |
+| Next recommended feature | Finish and verify `REL-006`; then prepare `TEST-009` device/API matrix and execute `REL-007`/`REL-008` only when the real production AdMob/signing inputs and Android validation target are available. |
 | Known blocker | No known Android source/build blocker. Distribution-ready APK/AAB verification is externally blocked on production AdMob configuration, real release signing material, and an Android device/test track for install/upgrade smoke. Visual Studio C++ components remain optional for Windows desktop only. |
+
+## REL-006 signing/key-management implementation — 2026-08-09
+
+- Issue #101 is the sole primary IN PROGRESS feature under RC #79.
+- The implementation branch is `agent/rel-006-signing-procedure`, based on main `938915bf32ddd6853737065d4cacce87a969fd37`.
+- `VERIFY_RELEASE_INPUTS.ps1` provides a reusable release-input preflight shared by humans/automation and `BUILD_RC.ps1`; it validates production AdMob ID formats, rejects Google test IDs, resolves signing inputs with environment-over-`key.properties` precedence, verifies keystore presence, and reports only redacted configuration state.
+- `BUILD_RC.ps1` now delegates release-input checks to the shared preflight instead of maintaining a second weaker validation implementation.
+- `tool/test_release_input_preflight.ps1` covers missing signing inputs, environment-backed signing, Google test application/ad-unit rejection, and `key.properties` relative-keystore resolution using safe fixtures.
+- `docs/ANDROID_SIGNING.md` defines upload-key generation, production input handoff, ownership/access, encrypted backup, recovery, replacement/rotation, and validation rules without containing credentials.
+- `android/key.properties.example` now recommends an absolute production keystore path and documents environment-variable precedence.
+- The Android Release Packaging Smoke workflow now runs the preflight contract and the shared preflight before release APK/AAB compilation.
+- `REL-006` remains IN PROGRESS until both normal Flutter CI and Release Packaging Smoke pass on the final branch head and the implementation evidence is reconciled.
 
 ## RC P0 audit and release reconciliation — 2026-08-09
 
@@ -25,8 +38,8 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 - Release Packaging Smoke #2 built a non-distributable release APK (55.8 MB, SHA-256 `2f6b2b5d3eb7de9a9029b0f51ae2e8a7e69a3c3278feb230abb116e4b56778dd`) and release AAB (57.0 MB, SHA-256 `957c1d4b696ee2547e97faa796544b3ab514fa2660681d4f01876af83a48c548`).
 - Smoke signing is generated ephemerally inside the runner; generated passwords are masked before build steps. Only checksum/evidence text is uploaded, never the smoke binaries. Evidence artifact #9029778593 has SHA-256 `45e8057fb3a835b946dfe5ae001c48485c463ea4755aa9938b42e5beeb665059`.
 - Flutter CI #539 on the same PR head passed secret/security checks, formatting, Analyze, focused checks, the full Flutter test suite, Debug APK build, and debug artifact upload.
+- PR #100 reconciled `ENG-009` and `SHOP-002` to VERIFIED, `TEST-001` to IMPLEMENTED, and kept `REL-007`/`REL-008` PLANNED; Flutter CI #541 passed and uploaded debug artifact #9029962050 with SHA-256 `3289c9a41ef4cfad4c45e81fb4a40b621e87d902094b4d4b343d134ecab80906`.
 - `REL-007` and `REL-008` remain PLANNED: packaging is proven, but their acceptance requires a real production-signed candidate and install/store/device validation. The smoke outputs are explicitly non-distributable and do not satisfy those acceptance criteria.
-- The next release-critical work is `REL-006` signing/key-management procedure plus handoff of external production inputs, followed by production candidate/device smoke evidence.
 
 ## RC / UI3D reconciliation — 2026-08-09
 
@@ -116,6 +129,7 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | 2026-08-09 | Android release AAB packaging smoke | PASSED — PR #99 / Release Packaging Smoke #2 / 57.0 MB / SHA-256 `957c1d4b696ee2547e97faa796544b3ab514fa2660681d4f01876af83a48c548` |
 | 2026-08-09 | Release smoke credential redaction | PASSED — ephemeral signing passwords masked as `***`; only checksum evidence artifact #9029778593 uploaded |
 | 2026-08-09 | Flutter CI after release-smoke workflow | PASSED — CI #539 full suite + Debug APK + artifact on PR #99 head |
+| 2026-08-09 | RC tracking reconciliation | PASSED — PR #100 / CI #541 / Debug APK artifact #9029962050 / SHA-256 `3289c9a41ef4cfad4c45e81fb4a40b621e87d902094b4d4b343d134ecab80906` |
 
 ## Test locally
 
@@ -127,6 +141,7 @@ flutter pub get
 dart format lib test
 flutter analyze --no-fatal-infos --no-fatal-warnings
 flutter test
+.\VERIFY_RELEASE_INPUTS.ps1 -AndroidAdMobAppId '<production-app-id>'
 # Production release builds require real external AdMob/signing inputs.
 .\BUILD_RC.ps1 -AndroidAdMobAppId '<production-app-id>'
 .\BUILD_RC.ps1 -BuildAppBundle -AndroidAdMobAppId '<production-app-id>'
