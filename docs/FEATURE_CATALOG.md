@@ -50,7 +50,7 @@ Codex must not mark a feature complete merely because UI code exists.
 | ENG-006 | Dependency and package governance | P1 | PLANNED | ENG-001 | Dependencies are reviewed, pinned sensibly, licensed, and upgrade policy is documented. |
 | ENG-007 | CI verification workflow | P1 | PLANNED | ENG-002 | CI runs format, analyze, tests, dashboard parser validation, debug build, and protected release checks. |
 | ENG-008 | Migration-safe local persistence | P0 | IMPLEMENTED | ENG-001 | Existing keys remain readable and new schema versions have tested safe defaults/migrations. |
-| ENG-009 | Environment and build configuration | P0 | IN PROGRESS | ENG-002 | RC audit #94 is hardening Android release configuration: release variants must use external non-test AdMob application configuration and external signing material, must never silently fall back to Google test app IDs or the debug signing key, and debug CI must remain unaffected. |
+| ENG-009 | Environment and build configuration | P0 | VERIFIED | ENG-002 | PR #95 externalized Android release AdMob/signing inputs, forbids Google test application IDs and debug-signing fallback in release, and fails early on incomplete release configuration. PR #99 then exercised the guarded release APK/AAB packaging path successfully while Flutter CI #539 remained green. Real production credentials remain external by design. |
 | ENG-010 | Secret and credential handling | P0 | PLANNED | ENG-009 | No secret is committed; local/CI injection, rotation, and redaction rules are documented and tested. |
 | ENG-011 | Developer tooling and documentation | P1 | PLANNED | ENG-001 | Setup, run, repair, dashboard, release, and troubleshooting workflows are reproducible on a clean machine. |
 | ENG-012 | Analytics event schema and privacy gating | P1 | PLANNED | ENG-005, PRIV-001 | Versioned event names/properties exist; collection is disabled until consent/config permits it. |
@@ -200,7 +200,7 @@ Codex must not mark a feature complete merely because UI code exists.
 | ECON-004 | Booster inventory | P0 | IMPLEMENTED | ENG-008 | Hint, moves, and shield persist and cannot become negative; tests remain. |
 | ECON-005 | Versioned economy configuration and balance rules | P0 | PLANNED | ECON-001, REW-007 | Prices, rewards, sinks, sources, caps, and migrations are versioned and validated. |
 | SHOP-001 | 3D shop screen | P1 | IMPLEMENTED | UI3D-002 | Hearts, boosters, and themes use 3D-style components; final asset/motion pass remains. |
-| SHOP-002 | Safe purchase transaction | P0 | IMPLEMENTED | ECON-001 | Insufficient funds and duplicate actions are handled; atomicity tests remain. |
+| SHOP-002 | Safe purchase transaction | P0 | VERIFIED | ECON-001 | PR #97 adds an idempotent persisted shop-purchase journal using absolute final wallet/entitlement values, validates allowed keys/non-negative values, serializes overlapping purchases, recovers interrupted theme/booster writes without double debit/grant, and discards malformed journals safely. Flutter CI #536 passed the full test suite, Analyze, Debug APK build, and artifact upload before merge. |
 | SHOP-003 | Theme purchase and selection | P1 | IMPLEMENTED | SHOP-002 | Owned themes persist and selected theme applies; consistency pass remains. |
 | SHOP-004 | Purchase history/audit | P2 | PLANNED | SHOP-002 | Local transaction records support debugging and reconciliation. |
 | SHOP-005 | Optional in-app purchase abstraction | P3 | PLANNED | ENG-009, PRIV-001 | Store billing can be added without coupling core economy; restore/verification/error states are specified. |
@@ -291,7 +291,7 @@ Codex must not mark a feature complete merely because UI code exists.
 
 | ID | Function | Priority | Status | Dependencies | Acceptance / evidence |
 |---|---|---:|---|---|---|
-| TEST-001 | Progress/economy unit tests | P0 | PLANNED | ENG-008 | Hearts, coins, boosters, milestones, worlds, duplicate guards, and migrations are covered. |
+| TEST-001 | Progress/economy unit tests | P0 | IMPLEMENTED | ENG-008 | Existing persistence/economy coverage plus PR #97 now verifies normal booster purchase persistence, interrupted booster recovery, interrupted theme recovery, idempotent replay, and malformed purchase-journal handling. Full acceptance still requires reconciling heart, milestone, world, duplicate-guard, and migration coverage before VERIFIED. |
 | TEST-002 | Level generator and solvability tests | P0 | PLANNED | LEVEL-003 | Levels 1, 25, 26, 150 and every generated configuration validate. |
 | TEST-003 | Core screen widget tests | P1 | PLANNED | UI3D-006 | Home, map, briefing, game, result, and shop pass key sizes/languages. |
 | TEST-004 | Navigation race regression tests | P0 | PLANNED | NAV-001 | Repeated Next/Retry/Start and external entry cannot duplicate actions/routes. |
@@ -317,8 +317,8 @@ Codex must not mark a feature complete merely because UI code exists.
 | LEGAL-001 | Open-source notices and content rights | P0 | PLANNED | ENG-006, AST-011, AV-007 | Third-party licenses, asset/audio rights, notices, trademarks, and age-rating inputs are complete. |
 | REL-005 | Versioning and release notes | P1 | PLANNED | ENG-007 | Version/build are updated consistently and release notes/changelog are generated. |
 | REL-006 | Android signing and key-management procedure | P0 | PLANNED | ENG-002, ENG-010 | Secure local/CI signing, backup, rotation, access, and recovery are documented without committed keys. |
-| REL-007 | Release APK | P0 | PLANNED | TEST-012, REL-006 | Signed candidate installs, launches, upgrades, and passes smoke checks. |
-| REL-008 | Release AAB | P0 | PLANNED | REL-006, PERF-007 | Bundle builds, validates, and supports required ABI/API targets. |
+| REL-007 | Release APK | P0 | PLANNED | TEST-012, REL-006 | PR #99 proves release-mode APK packaging with ephemeral CI signing (55.8 MB; SHA-256 `2f6b2b5d3eb7de9a9029b0f51ae2e8a7e69a3c3278feb230abb116e4b56778dd`), but this smoke binary is non-distributable. VERIFIED still requires the real production-signed candidate to install, launch, upgrade, and pass device smoke checks. |
+| REL-008 | Release AAB | P0 | PLANNED | REL-006, PERF-007 | PR #99 proves release-mode AAB packaging with ephemeral CI signing (57.0 MB; SHA-256 `957c1d4b696ee2547e97faa796544b3ab514fa2660681d4f01876af83a48c548`), but this smoke bundle is non-distributable. VERIFIED still requires real production signing plus bundle/ABI/API/store validation. |
 | REL-009 | Play Store listing and asset readiness | P1 | PLANNED | REL-008, PRIV-002, LEGAL-001 | Listing copy, screenshots, feature graphic, icon, localization, category, rating, and contact are complete. |
 | REL-010 | Internal/closed/open testing tracks | P1 | PLANNED | REL-008 | Tester groups, staged rollout, feedback, crash/ANR review, and promotion criteria are documented. |
 | REL-011 | Production monitoring and rollback | P0 | PLANNED | ENG-013, REL-010 | Crash/ANR/ratings/ads/retention monitoring, rollback/stop rules, and hotfix ownership are documented. |
@@ -331,26 +331,30 @@ Codex must not mark a feature complete merely because UI code exists.
 
 ## IN PROGRESS
 
-- `ENG-009` RC release configuration hardening under issue #94: remove test AdMob app configuration from release variants, eliminate debug signing fallback, and require external release inputs without breaking debug CI.
+- None during this documentation-only reconciliation. The next implementation work starts with `REL-006` after the catalog/status PR is green and merged.
 
 ## NEXT READY
 
-1. `RC-001` Continue the remaining P0/P1 runtime-blocker audit after ENG-009/#94.
-2. `TEST-001` Add progress/economy unit tests where RC audit confirms remaining integrity gaps.
-3. `AST-004` Implement bounded asset precache and memory policy on top of the existing typed registry when it becomes release-critical.
+1. `REL-006` Document and validate Android signing/key-management and production release-input handoff without committing secrets.
+2. `TEST-001` Reconcile and fill the remaining progress/economy coverage gaps before promoting the test feature to VERIFIED.
+3. `TEST-009` Prepare the Android API/ABI/device smoke matrix needed for the production candidate.
 
 ## BLOCKED
 
-- Release artifact verification will require external production AdMob application configuration and external signing material; neither belongs in source control.
+- `REL-007`/`REL-008` distribution-ready artifact verification requires the actual production AdMob application configuration and real release signing material, both intentionally external to source control.
+- Final `TEST-012` install/update/soak evidence also requires an Android device or testing track with the production-signed candidate.
 
 ## Recently verified
 
-- `UI3D-006` Responsive screen shell and safe areas — shared fit-shell acceptance plus compact/reference/tablet, large-text, cutout/view-inset, RTL, gameplay/result and scrollable-screen regressions passed through PRs #86–#92; latest CI #522 built and uploaded the Debug APK successfully.
+- `ENG-009` Environment and build configuration — PR #95 hardened Android release inputs and PR #99 proved guarded release APK/AAB packaging while current Flutter CI stayed green.
+- `SHOP-002` Safe purchase transaction — PR #97 adds interruption-safe absolute-state journaling and idempotent recovery; Flutter CI #536 passed full tests and Debug APK artifact generation.
+- `UI3D-006` Responsive screen shell and safe areas — shared fit-shell acceptance plus compact/reference/tablet, large-text, cutout/view-inset, RTL, gameplay/result and scrollable-screen regressions passed through PRs #86–#92; CI #522 built and uploaded the Debug APK successfully.
 - `AST-001` Asset folder taxonomy and naming standard — production paths, stable names/IDs, render profiles, lighting, export budgets, accessibility, and provenance handoff are documented and mechanically validated.
 - `ENG-001` Repository audit and baseline — architecture, commands, tooling, assets, persistence keys, debt, and risks are recorded in human- and machine-readable evidence.
 
 ## Recently implemented
 
+- `TEST-001` Progress/economy unit tests — existing coverage plus PR #97 now covers interruption/recovery for coin-backed theme/booster transactions; broader heart/milestone/world/migration coverage still needs reconciliation before VERIFIED.
 - `NAV-002` Shared route adoption — Home/app-shell and Mission Briefing→Gameplay use the guarded navigator with stable route names; result/back-guard regression coverage is present, while device-wide RC validation remains under #79.
 - `AST-002` Asset manifest and typed registry — typed asset metadata, manifest, and registry implementation plus focused tests are present; release/device verification remains before VERIFIED.
 - `AST-003` Missing-asset fallback — runtime asset views provide visible fallback behavior with focused widget coverage; release/device verification remains before VERIFIED.
