@@ -1,0 +1,55 @@
+name: LEVEL002 Focused Validation
+
+on:
+  push:
+    branches:
+      - agent/level-002-quantitative-difficulty-curve
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.44.8
+          cache: true
+
+      - name: Restore packages
+        run: flutter pub get
+
+      - name: Format LEVEL-002 files
+        run: |
+          dart format \
+            lib/features/game/level_data.dart \
+            lib/features/game/level_difficulty_policy.dart \
+            lib/features/game/level_difficulty_curve.dart \
+            test/features/game/level_difficulty_curve_test.dart
+
+      - name: Analyze
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+
+      - name: Focused difficulty and solvability tests
+        run: |
+          flutter test \
+            test/features/game/level_difficulty_curve_test.dart \
+            test/features/game/level_validator_test.dart
+
+      - name: Commit formatting and remove helper
+        shell: bash
+        run: |
+          rm .github/workflows/level002_focused_validation.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "test: verify LEVEL-002 quantitative curve"
+          git push origin HEAD:${GITHUB_REF_NAME}
