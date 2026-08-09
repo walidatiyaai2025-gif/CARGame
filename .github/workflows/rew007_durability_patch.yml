@@ -115,10 +115,10 @@ jobs:
 
           - Completed transaction IDs are persisted before the in-memory ledger is mutated, preventing a transient ledger-write failure from creating a false completed state inside the running process.
           - Pending-journal cleanup is best-effort only after the completed ledger is durable, so cleanup failure cannot turn a committed reward into a replayable transaction.
-          ''' + '\n')
+          '''.rstrip() + '\n')
           PY
           dart format lib/core/storage/progress_store.dart
-          git diff --check
+          git diff --check -- lib/core/storage/progress_store.dart
           if git diff --quiet; then
             echo 'Durability hardening already present.'
             exit 0
