@@ -170,11 +170,15 @@ void main() {
     final retryButton = tester.widget<GameButton>(retryButtonFinder);
     expect(retryButton.onPressed, isNotNull);
 
-    await Future.wait([
-      Future<void>.sync(() async => retryButton.onPressed!.call()),
-      Future<void>.sync(() async => retryButton.onPressed!.call()),
-    ]);
+    final firstAction = Future<void>.sync(() async {
+      await retryButton.onPressed!.call();
+    });
+    final secondAction = Future<void>.sync(() async {
+      await retryButton.onPressed!.call();
+    });
+
     await tester.pump();
+    await Future.wait([firstAction, secondAction]);
 
     expect(find.byType(GameScreen), findsOneWidget);
     expect(retry, findsNothing);
