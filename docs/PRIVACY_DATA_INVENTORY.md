@@ -6,7 +6,7 @@ This document is the human-readable PRIV-001 evidence. The machine-readable sour
 
 CARGame is offline-first. Core progression, economy, settings, transaction-recovery metadata, storage-recovery snapshots, and diagnostics are stored locally on the device. The current production dependency set contains no first-party analytics, account, cloud-save, or remote crash-reporting SDK.
 
-Google Mobile Ads is the only intentional third-party network data processor in the current runtime dependency set. The app's `AdService` blocks ad load/show calls when `ENABLE_ADS=false`, but current bootstrap still calls `MobileAds.instance.initialize()` after the offline UI becomes available. Production consent and regulated-region gating before SDK initialization/requests therefore remains an explicit ADS-007 blocker rather than a capability claimed by PRIV-001.
+Google Mobile Ads is the only intentional third-party network data processor in the current runtime dependency set. ADS-007 uses Google UMP as the privacy source of truth: consent information is refreshed on launch, required forms are shown before ad startup, and `canRequestAds` gates Mobile Ads initialization plus banner/rewarded/interstitial request paths. No duplicate app-side consent-granted value is persisted.
 
 `ENABLE_DIAGNOSTICS` also exists in `AppBuildConfig`, but current bootstrap installs the local `AppLogger` unconditionally. Diagnostics remain local-only and redacted; ENG-013 owns any future privacy-gated remote crash/non-fatal reporting and the effective build/runtime diagnostics gate.
 
@@ -92,7 +92,7 @@ Deletion: `AppLogger.clear()`, clearing application data, or uninstalling.
 
 ### Advertising
 
-Sources: `lib/main.dart`, `lib/core/ads/ad_service.dart`, and `lib/core/config/app_build_config.dart`.
+Sources: `lib/main.dart`, `lib/core/ads/ad_consent_controller.dart`, `lib/core/ads/ad_service.dart`, `lib/core/ads/banner_ad_footer.dart`, and `lib/core/config/app_build_config.dart`.
 
 Processor: Google Mobile Ads SDK (`google_mobile_ads`).
 
@@ -102,11 +102,12 @@ The app issues standard `AdRequest` objects only when ad loading is enabled. The
 
 Current controls and gaps:
 
-- `AdService` refuses ad preload/load/show operations when `ENABLE_ADS=false`.
+- Google UMP consent information is refreshed on launch and any required consent form is presented before ad startup.
+- `ConsentInformation.canRequestAds()` is the runtime source of truth for whether the app may initialize/request ads; no cached consent-granted preference is maintained by CARGame.
+- `AdService` and `BannerAdFooter` refuse request/load/show operations unless both `ENABLE_ADS` and current consent state permit requests, and loaded app-owned ads are disposed when eligibility is revoked.
+- Settings keeps a publisher-rendered privacy entry; when Google reports privacy options are required, the user can re-open the privacy options form and runtime eligibility updates without restarting.
 - Release builds reject Google test ad-unit IDs.
-- No first-party server receives ad identifiers or ad telemetry in the current codebase.
-- `MobileAds.instance.initialize()` is still invoked by optional-service bootstrap independently of the `AdService` request gate.
-- Production consent and regulated-region handling before SDK initialization/requests are not complete; ADS-007 owns that blocker.
+- No first-party server receives ad identifiers or ad telemetry, and first-party analytics remains absent/disabled until ENG-012 adds a separately privacy-gated design.
 
 ## Explicitly absent in the current codebase
 
@@ -119,12 +120,11 @@ No application feature currently collects or stores account registration data, e
 3. Any new persisted key family requires purpose, retention, deletion/reset path, processor, consent basis, and source ownership in the inventory.
 4. CI extracts `*Key`/`*Prefix` SharedPreferences declarations from the current persistence sources and fails if the inventory omits a key or documents a stale key.
 5. Diagnostics must be redacted before persistence or copying and must not be remotely uploaded without a separate privacy-gated feature.
-6. Production ad consent must be implemented before SDK initialization/requests where required; PRIV-001 documents the present gap and ADS-007 owns remediation.
+6. Google UMP must remain the source of truth before Mobile Ads initialization/requests; app-owned ad paths must remain fail-closed behind current `canRequestAds` state and must not cache a duplicate consent-granted value.
 7. Build-time IDs/configuration are not treated as user data, but secrets and credentials remain governed by ENG-010.
 
 ## Known privacy gaps and owners
 
-- **ADS-007 — ad SDK bootstrap consent:** request/load calls are config-gated, but current bootstrap still initializes Google Mobile Ads. Production consent/regulated-region gating must execute before SDK initialization and requests.
 - **ENG-013 — diagnostics gate:** `ENABLE_DIAGNOSTICS` exists but is not currently wired to suppress bootstrap installation of the local logger. Remote crash reporting remains absent.
 - **PRIV-003 — in-app data controls:** complete local deletion still relies on OS application-data clearing/uninstall; a consolidated reset/export/delete path is not yet implemented.
 
@@ -160,7 +160,7 @@ This keeps PRIV-001 aligned with current source instead of relying on a one-time
 
 ## Follow-up gates
 
-- ADS-007: production consent and privacy controls before ad SDK initialization/requests.
+- ADS-007: UMP consent and re-openable privacy controls now gate ad SDK initialization/requests; automated verification must remain green.
 - PRIV-002: privacy policy and Play Data Safety/store disclosure mapping.
 - PRIV-003: user reset/export/deletion readiness.
 - ENG-012: analytics remains disabled until a privacy-gated schema and consent path exist.

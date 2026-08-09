@@ -7,11 +7,11 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | Field | Value |
 |---|---|
 | Current phase | Android RC hardening — issue #79 |
-| Primary feature | None — `SEC-002` is VERIFIED; `ADS-007` is the next dependency-ready blocker toward `TEST-011`. |
+| Primary feature | `ADS-007` Consent/privacy integration — Issue #166 / branch `agent/ads-007-consent-privacy`. |
 | Completed checkpoint | `SEC-002` dependency, secret, and artifact security scans — PR #164 merged as `5b96ee94f1d82a36bb6bbffd53b7719b64c175d3` after green Flutter CI #738 and Release Packaging Smoke #7. |
-| Status | SEC-002 is VERIFIED: CI enforces the committed lockfile, blocks active unreviewed dependency advisories, preserves tracked-secret scanning, and scans Debug/release APK+AAB artifacts before evidence upload. |
-| Previous checkpoint | `ENG-007` CI verification workflow — VERIFIED after PRs #161/#162. |
-| Next recommended feature | `ADS-007` Consent/privacy integration — P1, dependency-ready (`ADS-002`, `PRIV-001` VERIFIED). `TEST-011` still waits on ADS-007 and PRIV-003; SEC-002 is now satisfied. |
+| Status | ADS-007 is IN PROGRESS: implement UMP consent before Mobile Ads initialization/requests, runtime fail-closed ad eligibility, and re-openable privacy options from Settings. |
+| Previous checkpoint | `SEC-002` dependency, secret, and artifact security scans — VERIFIED after PRs #164/#165. |
+| Next recommended feature | Complete `ADS-007` first. `TEST-011` remains blocked by ADS-007 and PRIV-003; PRIV-003 is the next remaining dependency-ready blocker after consent integration. |
 | Known blocker | `REL-007`/`REL-008` require real production AdMob/signing inputs and a production-signed candidate; final install/upgrade/device smoke requires an Android device or testing track. `TEST-009` also remains dependency-blocked while `PERF-001` is PLANNED. Visual Studio C++ components remain optional for Windows desktop only. |
 
 ## SEC-002 security scan verification — 2026-08-09

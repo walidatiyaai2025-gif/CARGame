@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/ads/ad_consent_controller.dart';
 import '../../core/settings/app_settings_store.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/game_button.dart';
@@ -10,10 +11,12 @@ class SettingsScreen extends StatelessWidget {
     super.key,
     required this.settings,
     required this.onToggleLanguage,
+    this.adConsentController,
   });
 
   final AppSettingsStore settings;
   final VoidCallback onToggleLanguage;
+  final AdConsentController? adConsentController;
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +37,7 @@ class SettingsScreen extends StatelessWidget {
         ),
         child: SafeArea(
           child: AnimatedBuilder(
-            animation: settings,
+            animation: Listenable.merge([settings, adConsentController?.state]),
             builder: (context, _) => GameFitView(
               padding: const EdgeInsets.fromLTRB(14, 8, 14, 12),
               child: Column(
@@ -90,10 +93,8 @@ class SettingsScreen extends StatelessWidget {
                       _ActionTile(
                         icon: Icons.privacy_tip_rounded,
                         title: ar ? 'الخصوصية' : 'Privacy',
-                        subtitle: ar
-                            ? 'سياسة الخصوصية والإعلانات'
-                            : 'Privacy and advertising information',
-                        onTap: () => _showInfo(context, ar),
+                        subtitle: _privacySubtitle(ar),
+                        onTap: () => _showPrivacyInfo(context, ar),
                         hapticsEnabled: settings.vibrationEnabled,
                       ),
                       const SizedBox(height: 6),
@@ -120,32 +121,120 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  void _showInfo(BuildContext context, bool ar) {
+  String _privacySubtitle(bool ar) {
+    final state = adConsentController?.state;
+    if (state == null) {
+      return ar
+          ? 'سياسة الخصوصية والإعلانات'
+          : 'Privacy and advertising information';
+    }
+    if (state.refreshing) {
+      return ar ? 'جارٍ تحديث خيارات الخصوصية…' : 'Updating privacy choices…';
+    }
+    if (state.privacyOptionsRequired) {
+      return ar
+          ? 'مراجعة أو تغيير خيارات الخصوصية'
+          : 'Review or change privacy choices';
+    }
+    return ar
+        ? 'معلومات الخصوصية والإعلانات'
+        : 'Privacy and advertising information';
+  }
+
+  void _showPrivacyInfo(BuildContext context, bool ar) {
     showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
-      builder: (context) => Padding(
-        padding: const EdgeInsets.fromLTRB(22, 6, 22, 28),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.shield_rounded, size: 54, color: AppTheme.green),
-            const SizedBox(height: 12),
-            Text(
-              ar ? 'الخصوصية والإعلانات' : 'Privacy & Ads',
-              style: Theme.of(
-                context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
-            ),
+      isScrollControlled: true,
+      builder: (context) => SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          child: _PrivacySheet(ar: ar, controller: adConsentController),
+        ),
+      ),
+    );
+  }
+}
+
+class _PrivacySheet extends StatelessWidget {
+  const _PrivacySheet({required this.ar, required this.controller});
+
+  final bool ar;
+  final AdConsentController? controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final consentController = controller;
+    final animation = consentController?.state;
+    if (animation == null) return _content(context, null);
+    return AnimatedBuilder(
+      animation: animation,
+      builder: (context, _) => _content(context, consentController),
+    );
+  }
+
+  Widget _content(
+    BuildContext context,
+    AdConsentController? consentController,
+  ) {
+    final state = consentController?.state;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(22, 6, 22, 28),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.shield_rounded, size: 54, color: AppTheme.green),
+          const SizedBox(height: 12),
+          Text(
+            ar ? 'الخصوصية والإعلانات' : 'Privacy & Ads',
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            ar
+                ? 'تستخدم اللعبة التخزين المحلي لحفظ التقدم. يتم طلب الإعلانات فقط عندما تسمح حالة الخصوصية الحالية بذلك، ولا تجمع اللعبة تحليلات خاصة بها حاليًا.'
+                : 'The game stores progress locally. Ad requests are made only when the current privacy state permits them, and the game does not currently collect first-party analytics.',
+            textAlign: TextAlign.center,
+          ),
+          if (state?.lastError != null) ...[
             const SizedBox(height: 10),
             Text(
               ar
-                  ? 'تستخدم اللعبة التخزين المحلي لحفظ التقدم، وقد تعرض إعلانات من شبكات الإعلانات المدعومة.'
-                  : 'The game uses local storage for progress and may display ads from supported advertising networks.',
+                  ? 'تعذر تحديث حالة الخصوصية الآن. ستظل اللعبة متاحة بدون إعلانات.'
+                  : 'Privacy status could not be refreshed right now. The game remains available without ads.',
               textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.redAccent),
             ),
           ],
-        ),
+          if (state?.privacyOptionsRequired == true) ...[
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              key: const ValueKey('privacy-options-button'),
+              onPressed: state!.refreshing
+                  ? null
+                  : () async {
+                      final shown = await consentController!
+                          .showPrivacyOptions();
+                      if (!context.mounted || shown) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            ar
+                                ? 'تعذر فتح خيارات الخصوصية الآن.'
+                                : 'Privacy options are unavailable right now.',
+                          ),
+                        ),
+                      );
+                    },
+              icon: const Icon(Icons.manage_accounts_rounded),
+              label: Text(
+                ar ? 'إدارة خيارات الخصوصية' : 'Manage privacy choices',
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }

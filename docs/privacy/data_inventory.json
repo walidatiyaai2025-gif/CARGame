@@ -5,11 +5,12 @@
     "offlineFirst": true,
     "analyticsEnabled": false,
     "cloudSyncEnabled": false,
-    "adsFailClosedByConfig": false,
+    "adsFailClosedByConfig": true,
     "adRequestsFailClosedByConfig": true,
-    "adSdkInitializationConsentGated": false,
+    "adSdkInitializationConsentGated": true,
     "diagnosticsBuildGateEffective": false,
-    "diagnosticsRedactedBeforePersistence": true
+    "diagnosticsRedactedBeforePersistence": true,
+    "adRequestsConsentGated": true
   },
   "processors": [
     {
@@ -165,24 +166,20 @@
       "id": "ad-sdk-processing",
       "category": "advertising",
       "examples": [
-        "SDK/device/network signals potentially processed by Google Mobile Ads after SDK bootstrap and when ad requests are enabled"
+        "UMP consent state and privacy options determine whether Google Mobile Ads requests are permitted",
+        "SDK/device/network signals potentially processed by Google Mobile Ads only after the consent gate permits ad requests"
       ],
-      "purpose": "Initialize Google Mobile Ads and load banner, rewarded, and interstitial advertisements",
+      "purpose": "Refresh UMP privacy state, initialize Google Mobile Ads only when requests are permitted, and load banner, rewarded, and interstitial advertisements",
       "processor": "google-mobile-ads",
       "storage": "controlled by Google Mobile Ads SDK/platform",
       "network": true,
-      "consent": "AdService blocks ad load/show when ENABLE_ADS=false, but current app bootstrap still initializes MobileAds; ADS-007 must add production consent/regulated-region gating before SDK initialization and requests",
+      "consent": "Google UMP is refreshed on launch; Mobile Ads initialization and all app-owned ad request/load/show paths are fail-closed behind current canRequestAds state. The app does not persist a duplicate consent-granted value.",
       "retention": "third-party processor policy; must be reflected in PRIV-002/store disclosures",
       "deletion": "no first-party server copy exists; SDK/processor controls third-party retention",
-      "source": "lib/core/ads/ad_service.dart"
+      "source": "lib/core/ads/ad_consent_controller.dart"
     }
   ],
   "knownGaps": [
-    {
-      "id": "ad-sdk-bootstrap-consent",
-      "owner": "ADS-007",
-      "description": "MobileAds initializes during optional-service bootstrap even when AdService request/load calls are disabled; production consent and regulated-region gating must run before SDK initialization and requests."
-    },
     {
       "id": "diagnostics-build-gate",
       "owner": "ENG-013",

@@ -220,6 +220,42 @@ def main() -> None:
         fail("analyticsEnabled changed without inventory review")
     if principles.get("cloudSyncEnabled") is not False:
         fail("cloudSyncEnabled changed without inventory review")
+    for key in (
+        "adsFailClosedByConfig",
+        "adRequestsFailClosedByConfig",
+        "adSdkInitializationConsentGated",
+        "adRequestsConsentGated",
+    ):
+        if principles.get(key) is not True:
+            fail(f"{key} must remain true after ADS-007")
+
+    consent_source = (ROOT / "lib/core/ads/ad_consent_controller.dart").read_text(
+        encoding="utf-8"
+    )
+    main_source = (ROOT / "lib/main.dart").read_text(encoding="utf-8")
+    ad_service_source = (ROOT / "lib/core/ads/ad_service.dart").read_text(
+        encoding="utf-8"
+    )
+    banner_source = (ROOT / "lib/core/ads/banner_ad_footer.dart").read_text(
+        encoding="utf-8"
+    )
+    settings_source = (ROOT / "lib/features/settings/settings_screen.dart").read_text(
+        encoding="utf-8"
+    )
+    required_source_contracts = {
+        "UMP launch refresh": (consent_source, "requestConsentInfoUpdate"),
+        "UMP required form": (consent_source, "loadAndShowConsentFormIfRequired"),
+        "UMP request eligibility": (consent_source, "canRequestAds"),
+        "privacy options form": (consent_source, "showPrivacyOptionsForm"),
+        "bootstrap consent refresh": (main_source, "_composition.adConsent.refresh()"),
+        "bootstrap request gate": (main_source, "if (!_composition.adConsent.state.canRequestAds) return;"),
+        "fullscreen ad gate": (ad_service_source, "_requestGate.canRequestAds"),
+        "banner ad gate": (banner_source, "_consentState.canRequestAds"),
+        "publisher privacy entry": (settings_source, "privacy-options-button"),
+    }
+    for label, (source, token) in required_source_contracts.items():
+        if token not in source:
+            fail(f"ADS-007 source contract missing {label}: {token}")
 
     print(
         "Privacy inventory validation PASSED: "

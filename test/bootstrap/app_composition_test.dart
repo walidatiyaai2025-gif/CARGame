@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:cargo_sort_game/bootstrap/app_composition.dart';
+import 'package:cargo_sort_game/core/ads/ad_consent_controller.dart';
 import 'package:cargo_sort_game/core/application/optional_service_port.dart';
 import 'package:cargo_sort_game/core/settings/app_settings_store.dart';
 import 'package:cargo_sort_game/core/storage/progress_store.dart';
@@ -33,6 +34,7 @@ void main() {
       expect(composition.progressStore, isA<ProgressStore>());
       expect(composition.settingsStore, isA<AppSettingsStore>());
       expect(composition.optionalServices, isA<OptionalServicePort>());
+      expect(composition.adConsent, isA<AdConsentController>());
 
       await composition.dispose();
     },

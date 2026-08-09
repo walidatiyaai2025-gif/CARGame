@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
+import '../core/ads/ad_consent_controller.dart';
 import '../core/logging/app_logger.dart';
 import '../core/logging/log_viewer_screen.dart';
 import '../core/motion/motion_lifecycle_scope.dart';
@@ -17,10 +18,16 @@ import '../features/settings/settings_screen.dart';
 import '../l10n/app_localizations.dart';
 
 class CargoSortApp extends StatefulWidget {
-  const CargoSortApp({super.key, required this.store, required this.settings});
+  const CargoSortApp({
+    super.key,
+    required this.store,
+    required this.settings,
+    this.adConsentController,
+  });
 
   final ProgressStore store;
   final AppSettingsStore settings;
+  final AdConsentController? adConsentController;
 
   @override
   State<CargoSortApp> createState() => _CargoSortAppState();
@@ -72,6 +79,7 @@ class _CargoSortAppState extends State<CargoSortApp>
         builder: (_) => SettingsScreen(
           settings: widget.settings,
           onToggleLanguage: _toggleLanguage,
+          adConsentController: widget.adConsentController,
         ),
       ),
     );
@@ -152,6 +160,7 @@ class _CargoSortAppState extends State<CargoSortApp>
               store: widget.store,
               settings: widget.settings,
               onToggleLanguage: _toggleLanguage,
+              adConsentState: widget.adConsentController?.state,
             ),
             PositionedDirectional(
               top: 66,

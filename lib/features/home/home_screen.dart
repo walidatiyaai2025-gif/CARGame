@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/ads/ad_consent_controller.dart';
 import '../../core/ads/banner_ad_footer.dart';
 import '../../core/logging/log_viewer_screen.dart';
 import '../../core/motion/ambient_motion_background.dart';
@@ -27,11 +28,13 @@ class HomeScreen extends StatefulWidget {
     required this.store,
     required this.settings,
     required this.onToggleLanguage,
+    this.adConsentState,
   });
 
   final ProgressStore store;
   final AppSettingsStore settings;
   final VoidCallback onToggleLanguage;
+  final AdConsentState? adConsentState;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -120,7 +123,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      bottomNavigationBar: const BannerAdFooter(),
+      bottomNavigationBar: BannerAdFooter(consentState: widget.adConsentState),
       body: AnimatedBuilder(
         animation: store,
         builder: (context, _) {

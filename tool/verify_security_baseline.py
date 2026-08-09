@@ -246,10 +246,7 @@ def main() -> None:
             fail(f"security known gap {gap_id} requires securityImpact")
         security_gap_by_id[gap_id] = gap
 
-    required_security_gap_ids = {
-        "ad-sdk-bootstrap-consent",
-        "diagnostics-build-gate",
-    }
+    required_security_gap_ids = {"diagnostics-build-gate"}
     for gap_id in required_security_gap_ids:
         privacy_gap = privacy_gap_by_id.get(gap_id)
         security_gap = security_gap_by_id.get(gap_id)
@@ -316,10 +313,10 @@ def main() -> None:
         fail(f"missing threat categories: {', '.join(sorted(missing_categories))}")
 
     advertising_threat = threats_by_category["advertising-boundary"]
-    if advertising_threat.get("owner") != security_gap_by_id[
-        "ad-sdk-bootstrap-consent"
-    ].get("owner"):
-        fail("advertising threat owner must match the ad SDK bootstrap gap owner")
+    if advertising_threat.get("owner") != "ADS-007":
+        fail("advertising threat must remain owned by ADS-007 after consent integration")
+    if principles.get("adSdkInitializationConsentGated") is not True:
+        fail("advertising boundary requires consent-gated Mobile Ads initialization")
     diagnostics_threat = threats_by_category["diagnostic-privacy"]
     if diagnostics_threat.get("followUp") != security_gap_by_id[
         "diagnostics-build-gate"
