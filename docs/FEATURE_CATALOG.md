@@ -53,7 +53,7 @@ Codex must not mark a feature complete merely because UI code exists.
 | ENG-009 | Environment and build configuration | P0 | VERIFIED | ENG-002 | PR #95 externalized Android release AdMob/signing inputs, forbids Google test application IDs and debug-signing fallback in release, and fails early on incomplete release configuration. PR #99 then exercised the guarded release APK/AAB packaging path successfully while Flutter CI #539 remained green. Real production credentials remain external by design. |
 | ENG-010 | Secret and credential handling | P0 | VERIFIED | ENG-009 | Issue #113 / PR #114 align tracked-secret scanning with local ignore policy, add focused scanner regression coverage, redact standalone high-confidence GitHub/AWS/Google/Slack credentials in diagnostics, and document local/CI injection plus rotation/recovery rules. Flutter CI #588 passed secret hygiene, policy regression, formatting, Analyze, full Flutter tests, Debug APK build, and artifact upload. Debug artifact #9031846609 is 80,518,478 bytes with SHA-256 `913d9a9ae3107cde00ced9e6e7197098f5f15e640de59ae3e474715661cf33df`. |
 | ENG-011 | Developer tooling and documentation | P1 | VERIFIED | ENG-001 | Issue #173 / PR #174 replace stale root setup/release guidance with `docs/DEVELOPER_WORKFLOWS.md` as the canonical clean-checkout, run, repair, dashboard, CI-parity, privacy, troubleshooting, and guarded-release workflow; current supported scripts remain the single operational surface rather than adding a competing launcher. `tool/verify_developer_workflows.py` protects 16 required entry points/current guidance and rejects project regeneration, obsolete bootstrap instructions, tracked AdMob-ID replacement, manual duplicate UMP integration, hard-coded emulator serials, and direct release-build bypasses; 10 focused regressions cover the contract. Flutter CI #773 / run `31339612397` passed the new ENG-011 gates, privacy/security/dependency/dashboard/catalog/assets checks, formatting, Analyze, the full Flutter suite, Debug APK build, artifact security and upload on implementation head `c34881bda12a6a355930755b39e47d09d24f0f3d`; artifact #9045499219 is 80,619,633 bytes with SHA-256 `2baf734f6a3362837f140cbbd25863c7ea189b15de3ea81d75d5b7dde43e7d5b`. |
-| ENG-012 | Analytics event schema and privacy gating | P1 | PLANNED | ENG-005, PRIV-001 | Versioned event names/properties exist; collection is disabled until consent/config permits it. |
+| ENG-012 | Analytics event schema and privacy gating | P1 | IN PROGRESS | ENG-005, PRIV-001 | Issue #175: implement a pure-Dart versioned event schema, application analytics port, and fail-closed privacy/config gate. No analytics SDK, processor, persistence, or network transfer is introduced; `ENABLE_ANALYTICS` must default false and production runtime privacy eligibility must remain false until an explicit first-party privacy decision exists. |
 | ENG-013 | Crash reporting and non-fatal diagnostics | P1 | PLANNED | ENG-004, PRIV-001 | Release-safe crash/non-fatal capture is privacy-gated, strips sensitive data, and supports symbol/version correlation. |
 | ENG-014 | Offline-first service isolation | P0 | IMPLEMENTED | ENG-005, ENG-008 | Offline core opens before Mobile Ads; optional services use isolated timeout, deduplicated initialization, bounded attempts, lifecycle retry, observable failure state, and focused tests. Flutter/device offline verification remains. |
 
@@ -331,11 +331,11 @@ Codex must not mark a feature complete merely because UI code exists.
 
 ## IN PROGRESS
 
-- None.
+- `ENG-012` Analytics event schema and privacy gating — issue #175; checkpoint: pure-Dart versioned schema + application port + disabled-by-default privacy/config gate, with no SDK, persistence, processor, or network transfer.
 
 ## NEXT READY
 
-- `ENG-012` Analytics event schema and privacy gating — P1; `ENG-005` is IMPLEMENTED and `PRIV-001` is VERIFIED. Repository search confirms no current first-party analytics implementation, so the next safe checkpoint is a versioned schema/port that remains disabled until explicit privacy/config eligibility rather than introducing a network SDK.
+- None while `ENG-012` is the active primary feature; select the next dependency-ready item only after this checkpoint reaches a clean verified/implemented/blocked state.
 
 ## BLOCKED
 
