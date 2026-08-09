@@ -50,7 +50,16 @@ jobs:
         run: python3 tool/verify_security_baseline.py
 
       - name: Restore packages
-        run: flutter pub get
+        shell: bash
+        run: |
+          set -euo pipefail
+          flutter pub get --enforce-lockfile 2>&1 | tee /tmp/cargame-pub-get.log
+
+      - name: Verify dependency security advisories
+        run: python3 tool/verify_dependency_security.py --input-log /tmp/cargame-pub-get.log
+
+      - name: Test security scan policy
+        run: python3 tool/test_security_scans.py
 
       - name: Verify dependency governance
         run: python3 tool/dependency_governance.py verify
@@ -124,6 +133,9 @@ jobs:
 
       - name: Build debug APK
         run: flutter build apk --debug --no-pub
+
+      - name: Verify debug APK artifact security
+        run: python3 tool/verify_build_artifact_security.py build/app/outputs/flutter-apk/app-debug.apk
 
       - name: Upload debug APK
         if: success()

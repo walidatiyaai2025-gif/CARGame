@@ -10,6 +10,10 @@ on:
       - 'BUILD_COMMON.ps1'
       - 'VERIFY_RELEASE_INPUTS.ps1'
       - 'tool/test_release_input_preflight.ps1'
+      - 'tool/verify_dependency_security.py'
+      - 'tool/security_advisory_exceptions.json'
+      - 'tool/verify_build_artifact_security.py'
+      - 'tool/test_security_scans.py'
       - 'pubspec.yaml'
       - 'pubspec.lock'
 
@@ -38,7 +42,13 @@ jobs:
           cache: true
 
       - name: Restore packages
-        run: flutter pub get
+        shell: bash
+        run: |
+          set -euo pipefail
+          flutter pub get --enforce-lockfile 2>&1 | tee /tmp/cargame-release-pub-get.log
+
+      - name: Verify dependency security advisories
+        run: python3 tool/verify_dependency_security.py --input-log /tmp/cargame-release-pub-get.log
 
       - name: Generate localization
         run: flutter gen-l10n
@@ -97,6 +107,12 @@ jobs:
           --dart-define=APP_ENV=release
           --dart-define=ENABLE_ADS=false
 
+      - name: Verify release artifact security
+        run: >-
+          python3 tool/verify_build_artifact_security.py
+          build/app/outputs/flutter-apk/app-release.apk
+          build/app/outputs/bundle/release/app-release.aab
+
       - name: Verify release outputs
         shell: bash
         run: |
@@ -109,6 +125,7 @@ jobs:
           {
             echo 'NON-DISTRIBUTABLE RELEASE PACKAGING SMOKE'
             echo 'Ephemeral CI signing; synthetic compile-only AdMob application ID; runtime ads disabled.'
+            echo 'Dependency advisories and packaged artifact leakage checks passed before evidence upload.'
             sha256sum "$apk"
             sha256sum "$aab"
           } | tee build/release-smoke-evidence/checksums.txt

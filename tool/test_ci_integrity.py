@@ -9,6 +9,7 @@ from verify_ci_integrity import (
     parse_catalog,
     validate_dashboard_html,
     validate_release_workflow,
+    validate_flutter_ci,
 )
 
 
@@ -49,6 +50,10 @@ VALID_RELEASE = r"""
 permissions:
   contents: read
 steps:
+  - name: Restore packages
+    run: flutter pub get --enforce-lockfile
+  - name: Verify dependency security advisories
+    run: python3 tool/verify_dependency_security.py
   - name: Test release input preflight contract
     run: ./tool/test_release_input_preflight.ps1
   - name: Prepare ephemeral release signing
@@ -61,6 +66,8 @@ steps:
     run: flutter build apk --release --no-pub --dart-define=ENABLE_ADS=false
   - name: Build release AAB smoke
     run: flutter build appbundle --release --no-pub --dart-define=ENABLE_ADS=false
+  - name: Verify release artifact security
+    run: python3 tool/verify_build_artifact_security.py app-release.apk app-release.aab
   - name: Verify release outputs
     run: |
       echo NON-DISTRIBUTABLE RELEASE PACKAGING SMOKE
@@ -70,6 +77,32 @@ steps:
     with:
       name: cargame-release-smoke-evidence
 """
+
+
+VALID_FLUTTER_CI = "\n".join(
+    f"- name: {step}"
+    for step in (
+        "Verify dynamic Android targets",
+        "Verify secret hygiene",
+        "Verify privacy data inventory",
+        "Verify security baseline",
+        "Restore packages",
+        "Verify dependency security advisories",
+        "Test security scan policy",
+        "Verify dependency governance",
+        "Test dependency governance policy",
+        "Verify dashboard and release CI contracts",
+        "Test dashboard and release CI contracts",
+        "Validate 3D asset registry and provenance",
+        "Verify changed Dart formatting",
+        "Verify whitespace integrity",
+        "Analyze",
+        "Run full test suite",
+        "Build debug APK",
+        "Verify debug APK artifact security",
+        "Upload debug APK",
+    )
+)
 
 
 class CatalogContractTests(unittest.TestCase):
@@ -145,6 +178,25 @@ class ReleaseWorkflowContractTests(unittest.TestCase):
         text = VALID_RELEASE + "\nenv:\n  STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}\n"
         with self.assertRaisesRegex(ContractError, "must not depend on production repository secrets"):
             validate_release_workflow(text)
+
+
+class FlutterCiContractTests(unittest.TestCase):
+    def test_valid_flutter_ci_contract_passes(self) -> None:
+        validate_flutter_ci(VALID_FLUTTER_CI)
+
+    def test_dependency_security_gate_is_required(self) -> None:
+        text = VALID_FLUTTER_CI.replace(
+            "- name: Verify dependency security advisories\n", "", 1
+        )
+        with self.assertRaisesRegex(ContractError, "dependency security advisories"):
+            validate_flutter_ci(text)
+
+    def test_artifact_security_gate_is_required(self) -> None:
+        text = VALID_FLUTTER_CI.replace(
+            "- name: Verify debug APK artifact security\n", "", 1
+        )
+        with self.assertRaisesRegex(ContractError, "debug APK artifact security"):
+            validate_flutter_ci(text)
 
 
 if __name__ == "__main__":

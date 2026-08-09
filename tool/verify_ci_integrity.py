@@ -221,6 +221,10 @@ def validate_release_workflow(text: str) -> None:
         "checksum evidence": "sha256sum",
         "artifact upload": "actions/upload-artifact@v4",
         "evidence artifact name": "cargame-release-smoke-evidence",
+        "enforced release lockfile": "--enforce-lockfile",
+        "dependency advisory security": "Verify dependency security advisories",
+        "release artifact security": "Verify release artifact security",
+        "release artifact scanner": "tool/verify_build_artifact_security.py",
     }
     errors = [
         f"Release smoke lost {label} contract"
@@ -241,6 +245,8 @@ def validate_flutter_ci(text: str) -> None:
         "Verify privacy data inventory",
         "Verify security baseline",
         "Restore packages",
+        "Verify dependency security advisories",
+        "Test security scan policy",
         "Verify dependency governance",
         "Test dependency governance policy",
         "Verify dashboard and release CI contracts",
@@ -251,6 +257,7 @@ def validate_flutter_ci(text: str) -> None:
         "Analyze",
         "Run full test suite",
         "Build debug APK",
+        "Verify debug APK artifact security",
         "Upload debug APK",
     )
     errors: list[str] = []
