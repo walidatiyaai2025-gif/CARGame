@@ -7,12 +7,19 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | Field | Value |
 |---|---|
 | Current phase | Android RC hardening — issue #79 |
-| Primary feature | None — `ENG-005` first architecture-boundary checkpoint is merged; `ENG-006` is the next dependency-ready engineering item. |
+| Primary feature | `ENG-006` Dependency and package governance — Issue #157 / branch `agent/eng-006-dependency-governance`. |
 | Completed checkpoint | `ENG-005` enforceable clean-architecture boundary checkpoint — PR #155 merged as `07fb50182efe5ce315cdda8bf823ba4da855c2df` after green Flutter CI #726. |
-| Status | ENG-005 is IMPLEMENTED at the core/composition boundary: `main.dart` is thin, process dependencies are owned by `AppComposition`, optional-service state/port live in inward layers, and architecture tests prohibit outward domain/application imports. Presentation-to-adapter migration debt remains, so ENG-005 is not VERIFIED. |
+| Status | ENG-006 audit and implementation are active. Direct hosted package sources, lockfile alignment, reviewed license families, and upgrade drift are now enforced/reported by code; no production dependency version change is planned for this checkpoint. |
 | Previous checkpoint | `UI3D-009` premium Mission Result Debrief and tracking reconciliation — PRs #152/#153. |
-| Next recommended feature | `ENG-006` Dependency and package governance — review/pin dependency policy, licenses, and safe upgrade workflow now that the architecture boundary is enforceable. |
+| Next recommended feature | Complete `ENG-006` governance verification and full CI/APK before selecting the next dependency-ready catalog item. |
 | Known blocker | `REL-007`/`REL-008` require real production AdMob/signing inputs and a production-signed candidate; final install/upgrade/device smoke requires an Android device or testing track. `TEST-009` also remains dependency-blocked while `PERF-001` is PLANNED. Visual Studio C++ components remain optional for Windows desktop only. |
+
+## ENG-006 dependency governance audit — 2026-08-09
+
+- Issue #157 audits the dependency graph against the committed `pubspec.yaml` / `pubspec.lock` pair before changing any package version.
+- Direct hosted packages resolve from pub.dev with reviewed licenses: Flame 1.38.0 MIT; Google Mobile Ads 9.0.0 Apache-2.0; Shared Preferences 2.5.5 BSD-3-Clause; Path Provider 2.1.6 BSD-3-Clause; Cupertino Icons 1.0.9 MIT; Flutter Lints 6.0.0 BSD-3-Clause; Shared Preferences Platform Interface 2.4.2 BSD-3-Clause.
+- `flutter pub outdated --json` reports seven newer versions outside current constraints, all transitive (`hooks`, `intl`, `matcher`, `meta`, `record_use`, `test_api`, `vector_math`); no direct hosted dependency requires a version change for this checkpoint.
+- The implementation adds an executable source/constraint/lock/license contract, a reviewed direct-license inventory, regression tests, CI enforcement after package restore, and non-blocking drift visibility.
 
 ## ENG-005 clean architecture boundary checkpoint — 2026-08-09
 
