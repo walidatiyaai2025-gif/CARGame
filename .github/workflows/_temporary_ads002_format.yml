@@ -1,0 +1,36 @@
+name: Temporary ADS-002 Dart formatter
+
+on:
+  push:
+    branches:
+      - agent/ads-002-release-config-audit
+    paths:
+      - '.github/workflows/_temporary_ads002_format.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/ads-002-release-config-audit
+          fetch-depth: 0
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.44.8
+          cache: true
+      - name: Format changed Dart files and remove helper
+        shell: bash
+        run: |
+          set -euo pipefail
+          dart format lib/core/config/app_build_config.dart test/core/config/app_build_config_test.dart
+          git rm .github/workflows/_temporary_ads002_format.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add lib/core/config/app_build_config.dart test/core/config/app_build_config_test.dart
+          git commit -m 'style: format ADS-002 configuration changes'
+          git push origin HEAD:agent/ads-002-release-config-audit
