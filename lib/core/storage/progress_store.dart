@@ -324,7 +324,9 @@ class ProgressStore extends ChangeNotifier {
 
     final nextMissionStars = missionStars + safeStars;
     final nextPerfectWins = perfectWins + (safeStars == 3 ? 1 : 0);
-    final nextLevelStars = safeStars > previousStars ? safeStars : previousStars;
+    final nextLevelStars = safeStars > previousStars
+        ? safeStars
+        : previousStars;
 
     final values = <String, Object?>{
       _levelKey: nextHighestUnlockedLevel,
@@ -730,9 +732,10 @@ class ProgressStore extends ChangeNotifier {
       if (reason is! String || !_isValidJournalToken(reason)) {
         throw const FormatException('Reward journal has invalid reason.');
       }
-      if (idempotencyKey is! String ||
-          !_isValidJournalToken(idempotencyKey)) {
-        throw const FormatException('Reward journal has invalid idempotency key.');
+      if (idempotencyKey is! String || !_isValidJournalToken(idempotencyKey)) {
+        throw const FormatException(
+          'Reward journal has invalid idempotency key.',
+        );
       }
       if (rawValues is! Map<String, dynamic>) {
         throw const FormatException('Reward journal has no values.');
@@ -896,7 +899,8 @@ class ProgressStore extends ChangeNotifier {
   Future<void> _recordCompletedRewardTransaction(String idempotencyKey) async {
     await _ensureRewardLedgerLoaded();
     if (!_completedRewardTransactions.add(idempotencyKey)) return;
-    while (_completedRewardTransactions.length > _rewardTransactionLedgerLimit) {
+    while (_completedRewardTransactions.length >
+        _rewardTransactionLedgerLimit) {
       _completedRewardTransactions.remove(_completedRewardTransactions.first);
     }
     await _prefs.setStringList(

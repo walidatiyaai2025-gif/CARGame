@@ -76,10 +76,7 @@ void main() {
     expect(store.missionCoins, snapshot['missionCoins']);
     expect(store.perfectWins, snapshot['perfectWins']);
     expect(store.starsForLevel(1), 3);
-    expect(
-      store.completedRewardTransactions,
-      contains('level:1:attempt-001'),
-    );
+    expect(store.completedRewardTransactions, contains('level:1:attempt-001'));
   });
 
   test('load reconciles an interrupted level reward exactly once', () async {
@@ -144,7 +141,9 @@ void main() {
     final prefs = SharedPreferencesAsync();
     await prefs.setInt('coins', 150);
     await prefs.setInt('stats_coins_earned', 50);
-    await prefs.setStringList(rewardLedgerKey, <String>['daily_reward:2026-8-9']);
+    await prefs.setStringList(rewardLedgerKey, <String>[
+      'daily_reward:2026-8-9',
+    ]);
     await prefs.setString(
       pendingRewardKey,
       jsonEncode(<String, Object?>{
@@ -167,17 +166,20 @@ void main() {
     expect(await prefs.containsKey(pendingRewardKey), isFalse);
   });
 
-  test('malformed pending reward is discarded without wallet changes', () async {
-    final prefs = SharedPreferencesAsync();
-    await prefs.setInt('coins', 90);
-    await prefs.setString(pendingRewardKey, '{not-json');
+  test(
+    'malformed pending reward is discarded without wallet changes',
+    () async {
+      final prefs = SharedPreferencesAsync();
+      await prefs.setInt('coins', 90);
+      await prefs.setString(pendingRewardKey, '{not-json');
 
-    final store = ProgressStore();
-    await store.load();
+      final store = ProgressStore();
+      await store.load();
 
-    expect(store.coins, 90);
-    expect(await prefs.containsKey(pendingRewardKey), isFalse);
-  });
+      expect(store.coins, 90);
+      expect(await prefs.containsKey(pendingRewardKey), isFalse);
+    },
+  );
 
   test('daily mission claim is persisted through the reward ledger', () async {
     final now = DateTime.now();
@@ -197,10 +199,7 @@ void main() {
     expect(store.coins, 300);
     expect(store.lifetimeCoinsEarned, 200);
     expect(store.missionClaimed, isTrue);
-    expect(
-      store.completedRewardTransactions,
-      contains('daily_mission:$today'),
-    );
+    expect(store.completedRewardTransactions, contains('daily_mission:$today'));
 
     expect(await store.claimDailyMission(), isNull);
     expect(store.coins, 300);
