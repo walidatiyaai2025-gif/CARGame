@@ -162,7 +162,7 @@ Codex must not mark a feature complete merely because UI code exists.
 | GAME-013 | Gameplay tutorial | P1 | PLANNED | GAME-003 | Interactive first-level tutorial and contextual onboarding are skippable/replayable. |
 | GAME-014 | Accessibility feedback | P2 | PLANNED | GAME-003, A11Y-001 | Semantics, non-color cues, scalable text, and reduced motion cover the core loop. |
 | GAME-015 | App interruption and recovery | P0 | PLANNED | GAME-009, ENG-008 | Backgrounding, phone interruptions, process restart, and route loss cannot corrupt/duplicate a run. |
-| GAME-016 | Input determinism and anti-spam state machine | P0 | PLANNED | GAME-003, GAME-011 | Rapid taps/gestures during resolution are ignored or queued deterministically and tested. |
+| GAME-016 | Input determinism and anti-spam state machine | P0 | IN PROGRESS | GAME-003, GAME-011 | Issue #110: rapid taps/gestures during cargo travel, placement feedback, and result boundaries must be ignored or handled deterministically with exactly one move/feedback/result transition. Existing warehouse-spam coverage is being expanded to cargo reselection and boundary regressions. |
 
 # I. Level design and content
 

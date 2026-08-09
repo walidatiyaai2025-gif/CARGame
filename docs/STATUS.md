@@ -7,11 +7,11 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | Field | Value |
 |---|---|
 | Current phase | Android RC hardening — issue #79 |
-| Primary feature | None after TEST-004 verification; next RC P0 selection follows this checkpoint. |
+| Primary feature | `GAME-016` input determinism and anti-spam state machine — issue #110. |
 | Completed checkpoint | `TEST-001` legacy-save compatibility — PR #104 merged as `2ab3578ecc214f995f194eff95f1a27b7cc3f442` after Flutter CI #546 passed Analyze, the full Flutter suite, Debug APK build, and artifact upload. |
-| Status | `TEST-004` VERIFIED on PR #109 / Flutter CI #571: repeated Next, Retry, and Home Start actions are deterministic; result-sheet dismissal is idempotent; Analyze, all 214 Flutter tests, Debug APK build, and artifact upload passed. `REL-004` remains VERIFIED by PR #107 / CI #551. |
+| Status | IN PROGRESS — `GAME-016` is extending gameplay resolution anti-spam coverage from repeated warehouse taps to rapid cargo reselection and result-boundary determinism. `TEST-004` is VERIFIED and merged via PR #109. |
 | Previous checkpoint | `REL-006` Android signing/key-management — PR #102 merged as `8f2e4ddb69d339938ba05911fb297960859e1a77`; Flutter CI #544 and Android Release Packaging Smoke #4 both passed. |
-| Next recommended feature | Audit `GAME-016` rapid-input determinism, then continue the remaining unblocked RC P0 gaps. |
+| Next recommended feature | Finish `GAME-016` deterministic rapid-input regressions, then continue the remaining unblocked RC P0 gaps. |
 | Known blocker | `REL-007`/`REL-008` require real production AdMob/signing inputs and a production-signed candidate; final install/upgrade/device smoke requires an Android device or testing track. `TEST-009` also remains dependency-blocked while `PERF-001` is PLANNED. Visual Studio C++ components remain optional for Windows desktop only. |
 
 ## TEST-004 navigation race verification — 2026-08-09
