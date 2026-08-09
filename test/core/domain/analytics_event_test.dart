@@ -104,10 +104,7 @@ void main() {
       source['screen'] = 'home';
 
       expect(event.properties['screen'], 'settings');
-      expect(
-        () => event.properties['screen'] = 'home',
-        throwsUnsupportedError,
-      );
+      expect(() => event.properties['screen'] = 'home', throwsUnsupportedError);
     });
   });
 }

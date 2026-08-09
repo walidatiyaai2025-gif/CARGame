@@ -17,128 +17,99 @@ final class AnalyticsPropertyRule {
 }
 
 enum AnalyticsEventName {
-  appOpened(
-    'app_opened',
-    <String, AnalyticsPropertyRule>{},
-  ),
-  screenViewed(
-    'screen_viewed',
-    <String, AnalyticsPropertyRule>{
-      'screen': AnalyticsPropertyRule(
-        type: AnalyticsPropertyType.string,
-        required: true,
-        allowedStrings: <String>{
-          'home',
-          'world_map',
-          'mission_briefing',
-          'gameplay',
-          'result',
-          'shop',
-          'progress',
-          'settings',
-        },
-      ),
-    },
-  ),
-  levelStarted(
-    'level_started',
-    <String, AnalyticsPropertyRule>{
-      'level': AnalyticsPropertyRule(
-        type: AnalyticsPropertyType.integer,
-        required: true,
-        minInteger: 1,
-        maxInteger: 150,
-      ),
-      'world': AnalyticsPropertyRule(
-        type: AnalyticsPropertyType.integer,
-        required: true,
-        minInteger: 1,
-        maxInteger: 6,
-      ),
-      'difficulty': AnalyticsPropertyRule(
-        type: AnalyticsPropertyType.string,
-        required: true,
-        allowedStrings: <String>{
-          'tutorial',
-          'easy',
-          'medium',
-          'hard',
-          'expert',
-        },
-      ),
-    },
-  ),
-  levelCompleted(
-    'level_completed',
-    <String, AnalyticsPropertyRule>{
-      'level': AnalyticsPropertyRule(
-        type: AnalyticsPropertyType.integer,
-        required: true,
-        minInteger: 1,
-        maxInteger: 150,
-      ),
-      'world': AnalyticsPropertyRule(
-        type: AnalyticsPropertyType.integer,
-        required: true,
-        minInteger: 1,
-        maxInteger: 6,
-      ),
-      'stars': AnalyticsPropertyRule(
-        type: AnalyticsPropertyType.integer,
-        required: true,
-        minInteger: 0,
-        maxInteger: 3,
-      ),
-      'moves_left': AnalyticsPropertyRule(
-        type: AnalyticsPropertyType.integer,
-        required: true,
-        minInteger: 0,
-      ),
-    },
-  ),
-  levelFailed(
-    'level_failed',
-    <String, AnalyticsPropertyRule>{
-      'level': AnalyticsPropertyRule(
-        type: AnalyticsPropertyType.integer,
-        required: true,
-        minInteger: 1,
-        maxInteger: 150,
-      ),
-      'world': AnalyticsPropertyRule(
-        type: AnalyticsPropertyType.integer,
-        required: true,
-        minInteger: 1,
-        maxInteger: 6,
-      ),
-      'reason': AnalyticsPropertyRule(
-        type: AnalyticsPropertyType.string,
-        required: true,
-        allowedStrings: <String>{
-          'moves_exhausted',
-          'quit',
-          'restart',
-          'unknown',
-        },
-      ),
-    },
-  ),
-  boosterUsed(
-    'booster_used',
-    <String, AnalyticsPropertyRule>{
-      'level': AnalyticsPropertyRule(
-        type: AnalyticsPropertyType.integer,
-        required: true,
-        minInteger: 1,
-        maxInteger: 150,
-      ),
-      'booster': AnalyticsPropertyRule(
-        type: AnalyticsPropertyType.string,
-        required: true,
-        allowedStrings: <String>{'hint', 'extra_moves', 'combo_shield'},
-      ),
-    },
-  );
+  appOpened('app_opened', <String, AnalyticsPropertyRule>{}),
+  screenViewed('screen_viewed', <String, AnalyticsPropertyRule>{
+    'screen': AnalyticsPropertyRule(
+      type: AnalyticsPropertyType.string,
+      required: true,
+      allowedStrings: <String>{
+        'home',
+        'world_map',
+        'mission_briefing',
+        'gameplay',
+        'result',
+        'shop',
+        'progress',
+        'settings',
+      },
+    ),
+  }),
+  levelStarted('level_started', <String, AnalyticsPropertyRule>{
+    'level': AnalyticsPropertyRule(
+      type: AnalyticsPropertyType.integer,
+      required: true,
+      minInteger: 1,
+      maxInteger: 150,
+    ),
+    'world': AnalyticsPropertyRule(
+      type: AnalyticsPropertyType.integer,
+      required: true,
+      minInteger: 1,
+      maxInteger: 6,
+    ),
+    'difficulty': AnalyticsPropertyRule(
+      type: AnalyticsPropertyType.string,
+      required: true,
+      allowedStrings: <String>{'tutorial', 'easy', 'medium', 'hard', 'expert'},
+    ),
+  }),
+  levelCompleted('level_completed', <String, AnalyticsPropertyRule>{
+    'level': AnalyticsPropertyRule(
+      type: AnalyticsPropertyType.integer,
+      required: true,
+      minInteger: 1,
+      maxInteger: 150,
+    ),
+    'world': AnalyticsPropertyRule(
+      type: AnalyticsPropertyType.integer,
+      required: true,
+      minInteger: 1,
+      maxInteger: 6,
+    ),
+    'stars': AnalyticsPropertyRule(
+      type: AnalyticsPropertyType.integer,
+      required: true,
+      minInteger: 0,
+      maxInteger: 3,
+    ),
+    'moves_left': AnalyticsPropertyRule(
+      type: AnalyticsPropertyType.integer,
+      required: true,
+      minInteger: 0,
+    ),
+  }),
+  levelFailed('level_failed', <String, AnalyticsPropertyRule>{
+    'level': AnalyticsPropertyRule(
+      type: AnalyticsPropertyType.integer,
+      required: true,
+      minInteger: 1,
+      maxInteger: 150,
+    ),
+    'world': AnalyticsPropertyRule(
+      type: AnalyticsPropertyType.integer,
+      required: true,
+      minInteger: 1,
+      maxInteger: 6,
+    ),
+    'reason': AnalyticsPropertyRule(
+      type: AnalyticsPropertyType.string,
+      required: true,
+      allowedStrings: <String>{'moves_exhausted', 'quit', 'restart', 'unknown'},
+    ),
+  }),
+  boosterUsed('booster_used', <String, AnalyticsPropertyRule>{
+    'level': AnalyticsPropertyRule(
+      type: AnalyticsPropertyType.integer,
+      required: true,
+      minInteger: 1,
+      maxInteger: 150,
+    ),
+    'booster': AnalyticsPropertyRule(
+      type: AnalyticsPropertyType.string,
+      required: true,
+      allowedStrings: <String>{'hint', 'extra_moves', 'combo_shield'},
+    ),
+  });
 
   const AnalyticsEventName(this.wireName, this.properties);
 
@@ -184,7 +155,9 @@ final class AnalyticsEvent {
     final rules = name.properties;
     for (final entry in rules.entries) {
       if (entry.value.required && !input.containsKey(entry.key)) {
-        throw ArgumentError('Missing required analytics property: ${entry.key}');
+        throw ArgumentError(
+          'Missing required analytics property: ${entry.key}',
+        );
       }
     }
 
@@ -217,7 +190,9 @@ final class AnalyticsEvent {
         }
         if (rule.allowedStrings.isNotEmpty &&
             !rule.allowedStrings.contains(value)) {
-          throw ArgumentError('Analytics property $key has an unsupported value.');
+          throw ArgumentError(
+            'Analytics property $key has an unsupported value.',
+          );
         }
       case AnalyticsPropertyType.integer:
         if (value is! int) {
@@ -231,7 +206,9 @@ final class AnalyticsEvent {
         }
       case AnalyticsPropertyType.number:
         if (value is! num || !value.isFinite) {
-          throw ArgumentError('Analytics property $key must be a finite number.');
+          throw ArgumentError(
+            'Analytics property $key must be a finite number.',
+          );
         }
       case AnalyticsPropertyType.boolean:
         if (value is! bool) {
