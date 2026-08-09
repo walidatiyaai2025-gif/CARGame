@@ -172,11 +172,33 @@ if result_chip_start == -1 or booster_start == -1 or booster_start <= result_chi
     raise SystemExit('legacy result chip block not found')
 text = text[:result_chip_start] + text[booster_start:]
 
+legacy_start = text.find('\nclass _BoosterButton extends StatelessWidget {')
+cargo_flight_start = text.find('\nclass _CargoFlight {')
+if legacy_start == -1 or cargo_flight_start == -1 or cargo_flight_start <= legacy_start:
+    raise SystemExit('superseded gameplay widget block not found')
+text = text[:legacy_start] + '\n' + text[cargo_flight_start:]
+
+global_center_start = text.find('\nOffset _globalCenter(BuildContext context) {')
+if global_center_start == -1:
+    raise SystemExit('legacy global-center helper not found')
+text = text[:global_center_start].rstrip() + '\n'
+
 text = text.replace("import '../../core/theme/app_theme.dart';\n", '')
 text = text.replace("import '../../core/widgets/game_button.dart';\n", '')
+text = text.replace("import 'cargo_motion_tile.dart';\n", '')
 
-if '_ResultChip' in text:
-    raise SystemExit('legacy result chip still present')
+for obsolete in (
+    '_ResultChip',
+    '_BoosterButton',
+    '_CargoBoard',
+    '_WarehouseBoard',
+    '_StatusPanel',
+    '_Metric',
+    '_FlightCargo',
+    '_globalCenter',
+):
+    if obsolete in text:
+        raise SystemExit(f'legacy presentation symbol still present: {obsolete}')
 if 'GameplayResultDebrief(' not in text:
     raise SystemExit('result debrief was not wired')
 if 'AppTheme.' in text:
