@@ -128,6 +128,12 @@ jobs:
       - name: Analyze
         run: flutter analyze --no-fatal-infos --no-fatal-warnings
 
+      - name: Test local data privacy controls
+        run: >-
+          flutter test
+          test/core/privacy/local_data_controller_test.dart
+          test/features/settings/settings_local_data_test.dart
+
       - name: Test optional-service isolation
         run: flutter test test/core/services/optional_service_coordinator_test.dart
 
