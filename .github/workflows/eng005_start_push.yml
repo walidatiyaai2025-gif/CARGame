@@ -1,0 +1,57 @@
+name: ENG-005 Start Push
+
+on:
+  push:
+    branches:
+      - agent/eng-005-architecture-boundaries
+    paths:
+      - .github/workflows/eng005_start_push.yml
+
+permissions:
+  contents: write
+
+jobs:
+  start:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/eng-005-architecture-boundaries
+          fetch-depth: 0
+      - name: Mark ENG-005 in progress
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          catalog = Path('docs/FEATURE_CATALOG.md')
+          text = catalog.read_text()
+          old = '| ENG-005 | Clean architecture boundaries | P1 | PLANNED | ENG-001 | Presentation, domain, application, storage, assets, motion, analytics, and services are separated and documented. |'
+          new = '| ENG-005 | Clean architecture boundaries | P1 | IN PROGRESS | ENG-001 | Issue #154 establishes enforceable architecture boundaries: typed composition root, documented dependency directions, and automated dependency-contract coverage while preserving shipped storage, startup, navigation, ads, gameplay, and economy behavior. |'
+          if old not in text:
+              raise SystemExit('ENG-005 catalog row not found')
+          catalog.write_text(text.replace(old, new, 1))
+
+          status = Path('docs/STATUS.md')
+          text = status.read_text()
+          old = '| Primary feature | None — `UI3D-009` Mission Debrief is merged; `ENG-005` remains the next dependency-ready catalog item. |'
+          new = '| Primary feature | `ENG-005` Clean architecture boundaries — Issue #154 / branch `agent/eng-005-architecture-boundaries`. |'
+          if old not in text:
+              raise SystemExit('status primary row not found')
+          text = text.replace(old, new, 1)
+          old_status = '| Status | Victory/failure presentation now completes the premium Home → World Map → Mission Control → Gameplay → Mission Debrief journey while preserving reward, heart-loss, rewarded continuation, no-fill, duplicate-action and navigation contracts. REW-001/REW-002 remain IMPLEMENTED; full 3D reward animation remains REW-006. |'
+          new_status = '| Status | ENG-005 audit is active. First checkpoint isolates application composition from `main.dart`, documents allowed dependency directions, and adds an automated architecture contract before any broader domain/storage migration. |'
+          if old_status not in text:
+              raise SystemExit('status detail row not found')
+          status.write_text(text.replace(old_status, new_status, 1))
+
+          work = Path('docs/work/ENG-005.md')
+          work.write_text('''# ENG-005 — Clean architecture boundaries\n\nIssue: #154\nBranch: `agent/eng-005-architecture-boundaries`\n\n## State\n\nIN PROGRESS.\n\n## Current checkpoint\n\nEstablish enforceable boundaries without a destabilizing repository-wide move:\n\n1. keep `main.dart` as a thin Flutter entry point; move concrete dependency construction/lifecycle ownership into a typed composition root;\n2. document dependency directions for presentation, domain/application, storage, assets, motion, analytics, and optional services;\n3. add an automated source dependency contract that blocks prohibited imports from core domain/application code;\n4. preserve all public screen contracts, persistence keys, ads, optional-service startup, localization, navigation, gameplay, rewards, and economy behavior.\n\n## Acceptance\n\n- composition root owns ProgressStore, AppSettingsStore, and OptionalServiceCoordinator creation/disposal;\n- `main.dart` no longer constructs those concrete dependencies directly;\n- architecture policy is executable in tests and covers prohibited direction examples;\n- no save/economy/gameplay semantics change;\n- format, Analyze, focused architecture/bootstrap tests, full Flutter suite, Debug APK, and artifact upload pass;\n- branch is reconciled with current main before merge.\n''')
+          PY
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/FEATURE_CATALOG.md docs/STATUS.md docs/work/ENG-005.md
+          git rm .github/workflows/eng005_start_push.yml
+          git commit -m 'docs: start ENG-005 architecture boundaries'
+          git push origin HEAD:agent/eng-005-architecture-boundaries
