@@ -7,12 +7,24 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | Field | Value |
 |---|---|
 | Current phase | Android RC hardening — issue #79 |
-| Primary feature | `ENG-007` CI verification workflow — Issue #160 / branch `agent/eng-007-ci-verification`. |
-| Completed checkpoint | `ENG-006` dependency and package governance — PRs #158/#159, latest reconciliation `8caabd9629b46714041d4fdcb8aabca1690f1135`. |
-| Status | ENG-007 is IN PROGRESS: dashboard/catalog parser integrity and protected release-workflow contracts are being made executable in normal Flutter CI without changing runtime behavior. |
+| Primary feature | None — `ENG-007` CI verification workflow is VERIFIED; `TEST-011` is the highest-priority dependency-ready catalog item. |
+| Completed checkpoint | `ENG-007` CI verification and dashboard integrity — PR #161 merged as `1e1ffd1c36f1338dc36820a3f38e78ae4bbcb47a` after green Flutter CI #734. |
+| Status | ENG-007 is VERIFIED: normal Flutter CI now blocks dashboard/catalog parser drift and protected release-smoke contract regressions, backed by 12 focused tests, while preserving the full existing verification pipeline. |
 | Previous checkpoint | `ENG-006` dependency/package governance — VERIFIED after PRs #158/#159. |
-| Next recommended feature | Complete `ENG-007` focused CI-contract validation, full Flutter CI, Debug APK artifact, and current-main reconciliation before selecting the next catalog item. |
+| Next recommended feature | `TEST-011` Privacy, consent, and security verification — P0; dependencies `PRIV-001` and `SEC-001` are satisfied. `REL-013` is not considered ready while its human-readable dependency “All P0 release blockers” remains unresolved. |
 | Known blocker | `REL-007`/`REL-008` require real production AdMob/signing inputs and a production-signed candidate; final install/upgrade/device smoke requires an Android device or testing track. `TEST-009` also remains dependency-blocked while `PERF-001` is PLANNED. Visual Studio C++ components remain optional for Windows desktop only. |
+
+## ENG-007 CI verification workflow — 2026-08-09
+
+- Issue #160 / PR #161 close the remaining CI acceptance gaps without changing runtime behavior.
+- `tool/verify_ci_integrity.py` validates all 19 catalog phases and 192 current feature rows, exact six-column Markdown structure, stable/unique feature IDs, status/priority vocabulary, dependency references, and the single-primary-work invariant.
+- The same verifier protects the Developer Portal runtime parser contract so `docs/dashboard/index.html` continues to load and audit `docs/FEATURE_CATALOG.md` instead of maintaining a second status copy.
+- The protected release-smoke contract requires release-input preflight, ephemeral CI signing, synthetic compile-only AdMob input, ads-disabled release APK+AAB builds, output/checksum evidence, and artifact upload while rejecting production repository-secret dependencies.
+- Twelve focused regressions cover catalog, dashboard, and release-workflow failure modes. Focused probe run `31325591817` passed the real 19-phase / 192-feature catalog, all 12 tests, Analyze, and whitespace validation.
+- Flutter CI #734 / run `31325664494` passed the new ENG-007 gates plus dynamic Android, secret/privacy/security/dependency/assets, formatting, whitespace, Analyze, optional-service/GameButton coverage, full Flutter suite, Debug APK build, and artifact upload on head `644a7635bc5f1f3289c05cd3d88bcf9510fee157`.
+- Debug artifact #9041540363 is 80,594,411 bytes with SHA-256 `35e6836f0b85a890bb8a159f0f71657ac3b4be1af8abdda1581fd3ae77822cf4`.
+- PR #161 squash-merged to main as `1e1ffd1c36f1338dc36820a3f38e78ae4bbcb47a`; Issue #160 closed Completed. ENG-007 has no remaining acceptance blocker and is VERIFIED.
+- A dependency-ready queue audit selects `TEST-011` (P0, dependencies `PRIV-001` and `SEC-001`) as the next valid feature. `REL-013` is intentionally excluded until its human-readable “All P0 release blockers” condition is truly satisfied.
 
 ## ENG-006 dependency governance verification — 2026-08-09
 
