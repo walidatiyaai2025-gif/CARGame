@@ -3,8 +3,7 @@ import '../security/secret_redactor.dart';
 
 typedef CrashReportEmitter = Future<void> Function(Map<String, Object> payload);
 
-final class DenyAllCrashReportingPrivacy
-    implements CrashReportingPrivacyPort {
+final class DenyAllCrashReportingPrivacy implements CrashReportingPrivacyPort {
   const DenyAllCrashReportingPrivacy();
 
   @override

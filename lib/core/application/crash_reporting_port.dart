@@ -28,10 +28,7 @@ final class CrashReportContext {
       'APP_BUILD_NUMBER',
       defaultValue: '3',
     ),
-    environment: const String.fromEnvironment(
-      'APP_ENV',
-      defaultValue: 'debug',
-    ),
+    environment: const String.fromEnvironment('APP_ENV', defaultValue: 'debug'),
   );
 
   final String appVersion;

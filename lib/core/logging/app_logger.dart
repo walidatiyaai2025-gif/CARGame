@@ -263,7 +263,8 @@ class AppLogger extends ChangeNotifier {
 class AppErrorBoundary {
   static RawReceivePort? _isolateErrorPort;
   static CrashReportingPort _crashReporting = const DisabledCrashReporting();
-  static CrashReportContext _crashContext = CrashReportContext.fromEnvironment();
+  static CrashReportContext _crashContext =
+      CrashReportContext.fromEnvironment();
 
   static Future<void> install({
     CrashReportingPort? crashReporting,
@@ -272,7 +273,8 @@ class AppErrorBoundary {
     final logger = AppLogger.instance;
     await logger.initialize(enabled: AppBuildConfig.current.enableDiagnostics);
 
-    _crashReporting = crashReporting ??
+    _crashReporting =
+        crashReporting ??
         PrivacyGatedCrashReporting(
           configEnabled: AppBuildConfig.current.enableRemoteDiagnostics,
           privacy: const DenyAllCrashReportingPrivacy(),
