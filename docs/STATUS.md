@@ -7,11 +7,11 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | Field | Value |
 |---|---|
 | Current phase | Android RC hardening — issue #79 |
-| Primary feature | `REW-007` VERIFIED — implementation PR #120 merged; reconciliation evidence is being finalized on `agent/rew-007-reconciliation`. |
+| Primary feature | `ECON-005` IN PROGRESS — issue #122 on `agent/econ-005-versioned-economy-config`. |
 | Completed checkpoint | `GAME-016` input determinism — PR #111 merged as `093d9a9384aec2d18503284a8edc95ba1ce1ecfb` after Flutter CI #580 passed formatting, Analyze, all 215 Flutter tests, Debug APK build, and artifact upload. |
-| Status | `REW-007` VERIFIED: level, daily reward, daily mission, and explicit heart grants use interruption-safe absolute-state journaling/idempotency; Flutter CI #623 and Debug APK artifact #9032765167 are green evidence. |
+| Status | `ECON-005` audit confirms release-critical economy values are scattered across gameplay, progress/rewards, and shop presentation. v1 will centralize/version/validate the existing numbers without rebalancing player outcomes. |
 | Previous checkpoint | `TEST-004` navigation-race verification — PR #109 merged as `24aa922453f88af507e01e950f7d26048e1c6c3f`; its final current-head verification completed on Flutter CI #574. |
-| Next recommended feature | `ECON-005` versioned economy configuration and balance rules — its `REW-007` dependency is now VERIFIED and it continues the RC save/economy/reward integrity audit. |
+| Next recommended feature | Complete `ECON-005` typed v1 configuration, parity/migration regressions, and full Android CI verification before selecting another RC P0. |
 | Known blocker | `REL-007`/`REL-008` require real production AdMob/signing inputs and a production-signed candidate; final install/upgrade/device smoke requires an Android device or testing track. `TEST-009` also remains dependency-blocked while `PERF-001` is PLANNED. Visual Studio C++ components remain optional for Windows desktop only. |
 
 ## REW-007 reward transaction reconciliation — 2026-08-09
