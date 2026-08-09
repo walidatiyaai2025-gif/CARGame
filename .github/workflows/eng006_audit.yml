@@ -1,0 +1,31 @@
+name: ENG-006 Dependency Audit
+
+on:
+  push:
+    branches:
+      - agent/eng-006-dependency-governance
+    paths:
+      - .github/workflows/eng006_audit.yml
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/eng-006-dependency-governance
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.44.8
+          cache: true
+      - name: Restore packages
+        run: flutter pub get
+      - name: Audit direct dependency licenses
+        run: python3 .github/scripts/eng006_probe.py
+      - name: Report dependency drift
+        continue-on-error: true
+        run: flutter pub outdated --json
