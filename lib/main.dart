@@ -62,12 +62,14 @@ class _BootstrapAppState extends State<BootstrapApp>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _composition.adConsent.state.addListener(_handleConsentChanged);
     unawaited(_bootstrap());
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _composition.adConsent.state.removeListener(_handleConsentChanged);
     unawaited(_composition.dispose());
     super.dispose();
   }
@@ -77,6 +79,13 @@ class _BootstrapAppState extends State<BootstrapApp>
     if (state != AppLifecycleState.resumed) return;
 
     unawaited(_applyImmersiveFullscreen());
+    final consent = _composition.adConsent.state;
+    if (!consent.canRequestAds) {
+      if (consent.lastError != null) {
+        unawaited(_refreshConsentAndInitializeAds());
+      }
+      return;
+    }
     if (_composition.optionalServices.snapshot(_adsServiceName).canRetry) {
       unawaited(_initializeAdsInBackground(forceRetry: true));
     }
@@ -137,7 +146,7 @@ class _BootstrapAppState extends State<BootstrapApp>
 
     // Network-backed and platform services begin only after the offline core
     // experience is available. Failure is contained by the coordinator.
-    unawaited(_initializeAdsInBackground());
+    unawaited(_refreshConsentAndInitializeAds());
   }
 
   Future<void> _runOptionalStartupTask(
@@ -170,7 +179,33 @@ class _BootstrapAppState extends State<BootstrapApp>
     }
   }
 
+  void _handleConsentChanged() {
+    if (!_composition.adConsent.state.canRequestAds) return;
+    final snapshot = _composition.optionalServices.snapshot(_adsServiceName);
+    if (snapshot.isReady) return;
+    unawaited(_initializeAdsInBackground(forceRetry: snapshot.canRetry));
+  }
+
+  Future<void> _refreshConsentAndInitializeAds() async {
+    final canRequestAds = await _composition.adConsent.refresh();
+    if (!canRequestAds) {
+      try {
+        await AppLogger.instance.info(
+          'Ads remain unavailable until privacy requirements permit requests.',
+          details:
+              '${_composition.adConsent.state.lastError ?? 'consent not granted/required state'}',
+        );
+      } catch (_) {
+        // Privacy/ads are optional and must never block offline play.
+      }
+      return;
+    }
+    final snapshot = _composition.optionalServices.snapshot(_adsServiceName);
+    await _initializeAdsInBackground(forceRetry: snapshot.canRetry);
+  }
+
   Future<void> _initializeAdsInBackground({bool forceRetry = false}) async {
+    if (!_composition.adConsent.state.canRequestAds) return;
     final initialized = forceRetry
         ? await _composition.optionalServices.retry(
             _adsServiceName,
@@ -215,6 +250,7 @@ class _BootstrapAppState extends State<BootstrapApp>
       return CargoSortApp(
         store: _composition.progressStore,
         settings: _composition.settingsStore,
+        adConsentController: _composition.adConsent,
       );
     }
 

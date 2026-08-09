@@ -10,7 +10,7 @@
     "remoteDiagnosticsEnabled": false,
     "cleartextNetworkPermitted": false,
     "adRequestsRespectEnableAds": true,
-    "adSdkInitializationConsentGated": false
+    "adSdkInitializationConsentGated": true
   },
   "trustBoundaries": [
     {
@@ -25,7 +25,7 @@
     },
     {
       "id": "google-mobile-ads",
-      "description": "Third-party Google Mobile Ads SDK and its network endpoints; current bootstrap initializes the SDK while AdService request/load/show operations are separately gated",
+      "description": "Third-party Google UMP and Mobile Ads SDK/network endpoints; UMP state is refreshed before startup and current canRequestAds eligibility gates app-owned Mobile Ads initialization and requests",
       "trusted": false
     },
     {
@@ -95,11 +95,6 @@
     ]
   },
   "knownGaps": [
-    {
-      "id": "ad-sdk-bootstrap-consent",
-      "owner": "ADS-007",
-      "securityImpact": "Google Mobile Ads SDK initialization is not yet gated by production consent/regulated-region state even though AdService request/load/show operations honor ENABLE_ADS."
-    },
     {
       "id": "diagnostics-build-gate",
       "owner": "ENG-013",
@@ -235,11 +230,12 @@
       "severity": "high",
       "mitigations": [
         "Google Mobile Ads is explicitly declared as the only current network processor in PRIV-001",
-        "AdService request/preload/load/show operations honor AppBuildConfig.enableAds",
-        "Release configuration rejects Google test ad-unit IDs",
-        "ADS-007 remains the blocking owner for production consent and regulated-region gating before SDK initialization and requests"
+        "ADS-007 refreshes Google UMP consent state before ad startup and uses canRequestAds as the runtime eligibility source",
+        "AdService and BannerAdFooter fail closed when consent/configuration does not permit requests and discard loaded app-owned ads after revocation",
+        "Settings exposes Google privacy options when the SDK reports that a publisher entry point is required",
+        "Release configuration rejects Google test ad-unit IDs"
       ],
-      "residualRisk": "Current bootstrap still initializes MobileAds independently of the AdService request gate, so SDK initialization is not yet consent-gated until ADS-007 is verified.",
+      "residualRisk": "Google privacy-message configuration and third-party processor behavior remain external to the client and must stay aligned with PRIV-002 store disclosures and TEST-011 release verification.",
       "owner": "ADS-007",
       "followUp": "PRIV-002"
     }

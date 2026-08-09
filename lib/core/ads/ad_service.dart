@@ -1,11 +1,20 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 import '../config/app_build_config.dart';
+import 'ad_consent_controller.dart';
 import 'reward_grant_guard.dart';
 
 class AdService {
+  AdService({AdRequestGate? requestGate})
+    : _requestGate = requestGate ?? AdConsentState.shared {
+    final gate = _requestGate;
+    _listenableGate = gate is Listenable ? gate as Listenable : null;
+    _listenableGate?.addListener(_handleRequestGateChanged);
+  }
+
   static String get bannerId => Platform.isAndroid
       ? AppBuildConfig.current.adMob.androidBanner
       : AppBuildConfig.current.adMob.iosBanner;
@@ -18,44 +27,70 @@ class AdService {
       ? AppBuildConfig.current.adMob.androidInterstitial
       : AppBuildConfig.current.adMob.iosInterstitial;
 
+  final AdRequestGate _requestGate;
+  Listenable? _listenableGate;
   RewardedAd? _rewarded;
   InterstitialAd? _interstitial;
+  bool _disposed = false;
 
-  bool get rewardedReady =>
-      AppBuildConfig.current.enableAds && _rewarded != null;
+  bool get _adsAllowed =>
+      AppBuildConfig.current.enableAds && _requestGate.canRequestAds;
+
+  bool get rewardedReady => _adsAllowed && _rewarded != null;
 
   void preload() {
-    if (!AppBuildConfig.current.enableAds) return;
+    if (!_adsAllowed || _disposed) return;
     _loadRewarded();
     _loadInterstitial();
   }
 
+  void _handleRequestGateChanged() {
+    if (_disposed) return;
+    if (!_adsAllowed) {
+      _disposeLoadedAds();
+      return;
+    }
+    preload();
+  }
+
   void _loadRewarded() {
-    if (!AppBuildConfig.current.enableAds) return;
+    if (!_adsAllowed || _disposed || _rewarded != null) return;
     RewardedAd.load(
       adUnitId: rewardedId,
       request: const AdRequest(),
       rewardedAdLoadCallback: RewardedAdLoadCallback(
-        onAdLoaded: (ad) => _rewarded = ad,
+        onAdLoaded: (ad) {
+          if (!_adsAllowed || _disposed) {
+            ad.dispose();
+            return;
+          }
+          _rewarded = ad;
+        },
         onAdFailedToLoad: (_) => _rewarded = null,
       ),
     );
   }
 
   void _loadInterstitial() {
-    if (!AppBuildConfig.current.enableAds) return;
+    if (!_adsAllowed || _disposed || _interstitial != null) return;
     InterstitialAd.load(
       adUnitId: interstitialId,
       request: const AdRequest(),
       adLoadCallback: InterstitialAdLoadCallback(
-        onAdLoaded: (ad) => _interstitial = ad,
+        onAdLoaded: (ad) {
+          if (!_adsAllowed || _disposed) {
+            ad.dispose();
+            return;
+          }
+          _interstitial = ad;
+        },
         onAdFailedToLoad: (_) => _interstitial = null,
       ),
     );
   }
 
   bool showRewarded({required void Function() onReward}) {
-    if (!AppBuildConfig.current.enableAds) return false;
+    if (!_adsAllowed || _disposed) return false;
 
     final ad = _rewarded;
     if (ad == null) {
@@ -77,16 +112,14 @@ class AdService {
     );
     ad.show(
       onUserEarnedReward: (_, _) {
-        if (rewardGuard.claim()) {
-          onReward();
-        }
+        if (rewardGuard.claim()) onReward();
       },
     );
     return true;
   }
 
   void showInterstitial() {
-    if (!AppBuildConfig.current.enableAds) return;
+    if (!_adsAllowed || _disposed) return;
 
     final ad = _interstitial;
     if (ad == null) {
@@ -107,8 +140,18 @@ class AdService {
     ad.show();
   }
 
-  void dispose() {
+  void _disposeLoadedAds() {
     _rewarded?.dispose();
+    _rewarded = null;
     _interstitial?.dispose();
+    _interstitial = null;
+  }
+
+  void dispose() {
+    if (_disposed) return;
+    _disposed = true;
+    _listenableGate?.removeListener(_handleRequestGateChanged);
+    _listenableGate = null;
+    _disposeLoadedAds();
   }
 }
