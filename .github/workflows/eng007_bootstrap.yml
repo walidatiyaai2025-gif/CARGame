@@ -1,0 +1,32 @@
+name: ENG-007 Bootstrap
+
+on:
+  push:
+    branches:
+      - agent/eng-007-ci-verification
+    paths:
+      - '.github/workflows/eng007_bootstrap.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  bootstrap:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/eng-007-ci-verification
+          fetch-depth: 0
+      - name: Mark ENG-007 in progress
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/eng007_bootstrap.py
+          git diff --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/FEATURE_CATALOG.md docs/STATUS.md
+          git rm .github/scripts/eng007_bootstrap.py .github/workflows/eng007_bootstrap.yml
+          git commit -m 'docs: mark ENG-007 in progress'
+          git push origin HEAD:agent/eng-007-ci-verification
