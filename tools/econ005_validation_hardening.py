@@ -6,7 +6,9 @@ text = config_path.read_text()
 old = """    nonNegative('hintCoinCost', gameplay.hintCoinCost);
     positive('extraMovesPerBooster', gameplay.extraMovesPerBooster);
 """
-new = """    positive('hintCoinCost', gameplay.hintCoinCost);
+new = """    if (gameplay.hintCoinCost <= 0) {
+      throw ArgumentError.value(gameplay.hintCoinCost, 'hintCoinCost');
+    }
     positive('extraMovesPerBooster', gameplay.extraMovesPerBooster);
 """
 if text.count(old) != 1:
@@ -21,8 +23,8 @@ new = """      positive('offer.amount', offer.amount);
           offer.kind == EconomyShopOfferKind.theme &&
           targetId == 'classic' &&
           offer.price == 0;
-      if (!zeroPricedClassicTheme) {
-        positive('offer.price', offer.price);
+      if (offer.price < 0 || (offer.price == 0 && !zeroPricedClassicTheme)) {
+        throw ArgumentError.value(offer.price, 'offer.price');
       }
       if (offer.kind != EconomyShopOfferKind.hearts) {
 """
@@ -35,7 +37,7 @@ test_path = Path('test/core/economy/economy_config_test.dart')
 test_text = test_path.read_text()
 marker = """    test('rejects unsafe formula inputs and unknown offers', () {
 """
-addition = """    test('rejects economy values that runtime cannot transact', () {
+addition = """    test('rejects a zero-cost gameplay hint sink', () {
       expect(
         () => EconomyConfig.validated(
           schemaVersion: 1,
@@ -50,7 +52,9 @@ addition = """    test('rejects economy values that runtime cannot transact', ()
         ),
         throwsArgumentError,
       );
+    });
 
+    test('rejects zero-priced booster offers', () {
       expect(
         () => EconomyConfig.validated(
           schemaVersion: 1,
@@ -69,7 +73,9 @@ addition = """    test('rejects economy values that runtime cannot transact', ()
         ),
         throwsArgumentError,
       );
+    });
 
+    test('only the shipped classic theme may be zero-priced', () {
       expect(
         () => EconomyConfig.validated(
           schemaVersion: 1,
