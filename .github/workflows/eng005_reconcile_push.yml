@@ -1,0 +1,97 @@
+name: ENG-005 Reconcile Push
+
+on:
+  push:
+    branches:
+      - agent/eng-005-reconcile
+    paths:
+      - .github/workflows/eng005_reconcile_push.yml
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/eng-005-reconcile
+          fetch-depth: 0
+      - name: Reconcile ENG-005 evidence
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          catalog = Path('docs/FEATURE_CATALOG.md')
+          text = catalog.read_text()
+          old = '| ENG-005 | Clean architecture boundaries | P1 | IN PROGRESS | ENG-001 | Issue #154 establishes enforceable architecture boundaries: typed composition root, documented dependency directions, and automated dependency-contract coverage while preserving shipped storage, startup, navigation, ads, gameplay, and economy behavior. |'
+          new = '| ENG-005 | Clean architecture boundaries | P1 | IMPLEMENTED | ENG-001 | Issue #154 / PR #155 establish the first enforceable production boundary: documented inward dependency rules, pure-Dart domain/application optional-service contracts, a typed `AppComposition` root, a separated `CargoSortApp` presentation shell, and an executable architecture scanner that rejects outward imports from core domain/application. Existing public app-shell imports remain source-compatible and startup/storage/ads/navigation/gameplay/economy behavior is preserved. Flutter CI #726 passed formatting, Analyze, full Flutter suite, Debug APK build and artifact upload; PR #155 squash-merged as `07fb50182efe5ce315cdda8bf823ba4da855c2df`. Feature presentation still has direct adapter dependencies to migrate before ENG-005 can be VERIFIED. |'
+          if old not in text:
+              raise SystemExit('ENG-005 catalog row not found')
+          catalog.write_text(text.replace(old, new, 1))
+
+          status = Path('docs/STATUS.md')
+          text = status.read_text()
+          replacements = {
+              '| Primary feature | `ENG-005` Clean architecture boundaries — Issue #154 / branch `agent/eng-005-architecture-boundaries`. |': '| Primary feature | None — `ENG-005` first architecture-boundary checkpoint is merged; `ENG-006` is the next dependency-ready engineering item. |',
+              '| Completed checkpoint | `UI3D-009` premium Mission Result Debrief — PR #152 merged as `462ec0590866879f654a4e031209731bd4eb84fd` after green Flutter CI #722. |': '| Completed checkpoint | `ENG-005` enforceable clean-architecture boundary checkpoint — PR #155 merged as `07fb50182efe5ce315cdda8bf823ba4da855c2df` after green Flutter CI #726. |',
+              '| Status | ENG-005 audit is active. First checkpoint isolates application composition from `main.dart`, documents allowed dependency directions, and adds an automated architecture contract before any broader domain/storage migration. |': '| Status | ENG-005 is IMPLEMENTED at the core/composition boundary: `main.dart` is thin, process dependencies are owned by `AppComposition`, optional-service state/port live in inward layers, and architecture tests prohibit outward domain/application imports. Presentation-to-adapter migration debt remains, so ENG-005 is not VERIFIED. |',
+              '| Previous checkpoint | `GAME-003` premium gameplay operations deck and tracking reconciliation — PRs #149/#150; current-main verification completed before UI3D-009. |': '| Previous checkpoint | `UI3D-009` premium Mission Result Debrief and tracking reconciliation — PRs #152/#153. |',
+              '| Next recommended feature | `ENG-005` Clean architecture boundaries — highest-priority dependency-ready catalog item after TEST-002; audit current presentation/domain/application/storage/assets/motion/analytics/service boundaries before changing architecture. |': '| Next recommended feature | `ENG-006` Dependency and package governance — review/pin dependency policy, licenses, and safe upgrade workflow now that the architecture boundary is enforceable. |',
+          }
+          for old_value, new_value in replacements.items():
+              if old_value not in text:
+                  raise SystemExit(f'status row not found: {old_value}')
+              text = text.replace(old_value, new_value, 1)
+
+          marker = '## UI3D-009 mission result debrief verification — 2026-08-09\n'
+          section = '''## ENG-005 clean architecture boundary checkpoint — 2026-08-09
+
+- Issue #154 / PR #155 document and enforce inward dependency direction: composition root -> adapters/presentation -> application -> domain.
+- `AppComposition` owns ProgressStore, AppSettingsStore, and optional-service construction/disposal; `main.dart` no longer imports or constructs those concrete adapters directly.
+- `CargoSortApp` moved to a bootstrap/presentation shell and remains re-exported from `main.dart` for source compatibility with existing callers/tests.
+- Optional-service state is pure Dart in `core/domain`; `OptionalServicePort` lives in `core/application`; `OptionalServiceCoordinator` remains the outward implementation with a narrow compatibility export.
+- `tool/architecture/architecture_contract.dart` plus focused tests automatically reject Flutter, feature, storage, service implementation, and other outward imports from domain/application code.
+- Focused branch verification passed architecture 4/4, composition 2/2, optional-service 6/6, splash responsive 2/2, Home/widget 3/3, Analyze, and whitespace validation.
+- Flutter CI #726 / run `31322368738` passed dynamic Android, secret/privacy/security/asset gates, formatting, whitespace, Analyze, optional-service isolation, animated GameButton, the full Flutter suite, Debug APK build, and artifact upload on head `4f1a4e2cade00cb8dadbec527aefb8d6a3dfe86f`.
+- Debug artifact #9040624907 is 80,594,413 bytes with SHA-256 `ccae51e0c45fa6062017c07ac2fc9bf95049bbd1e95a7d51705517a36bb82f81`.
+- PR #155 squash-merged to main as `07fb50182efe5ce315cdda8bf823ba4da855c2df`; Issue #154 closed Completed.
+- ENG-005 remains IMPLEMENTED rather than VERIFIED because existing feature presentation still has direct storage/ad adapter dependencies that should migrate behind application ports incrementally.
+
+'''
+          if marker not in text:
+              raise SystemExit('status insertion marker not found')
+          status.write_text(text.replace(marker, section + marker, 1))
+
+          work = Path('docs/work/ENG-005.md')
+          text = work.read_text()
+          old_state = 'IN PROGRESS.'
+          new_state = 'IMPLEMENTED. PR #155 passed current-main Flutter CI #726 and squash-merged to `main` as `07fb50182efe5ce315cdda8bf823ba4da855c2df`. The enforceable core/composition checkpoint is complete; presentation-to-adapter migration debt remains before VERIFIED.'
+          if old_state not in text:
+              raise SystemExit('ENG-005 work state not found')
+          text = text.replace(old_state, new_state, 1)
+          evidence = '''
+
+## Verification evidence
+
+- Architecture dependency contract: 4/4 focused tests passed.
+- AppComposition ownership/production construction: 2/2 passed.
+- Existing OptionalServiceCoordinator suite: 6/6 passed.
+- Startup splash responsive: 2/2 passed; Home/widget compatibility: 3/3 passed.
+- Flutter CI #726 / run `31322368738` passed Analyze, the full Flutter suite, Debug APK build, and artifact upload on head `4f1a4e2cade00cb8dadbec527aefb8d6a3dfe86f`.
+- Debug artifact #9040624907: 80,594,413 bytes; SHA-256 `ccae51e0c45fa6062017c07ac2fc9bf95049bbd1e95a7d51705517a36bb82f81`.
+- Issue #154 closed Completed when PR #155 squash-merged as `07fb50182efe5ce315cdda8bf823ba4da855c2df`.
+- Remaining debt: feature presentation continues to use some concrete storage/ad adapters; future checkpoints should migrate those behind application ports without changing save keys or player behavior.
+'''
+          work.write_text(text.rstrip() + evidence + '\n')
+          PY
+
+          git diff --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/FEATURE_CATALOG.md docs/STATUS.md docs/work/ENG-005.md
+          git rm .github/workflows/eng005_reconcile_push.yml
+          git commit -m 'docs: reconcile ENG-005 architecture evidence'
+          git push origin HEAD:agent/eng-005-reconcile
