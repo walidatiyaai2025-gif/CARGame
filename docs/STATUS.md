@@ -7,39 +7,53 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | Field | Value |
 |---|---|
 | Current phase | Android RC hardening — issue #79 |
-| Primary feature | `REL-006` Android signing and key-management procedure — issue #101 |
-| Completed checkpoint | RC tracking reconciliation — PR #100 merged as `938915bf32ddd6853737065d4cacce87a969fd37` after Flutter CI #541 passed the complete gate set. |
-| Status | IN PROGRESS — #101 is adding a reusable redacted release-input preflight, wiring `BUILD_RC.ps1` and the release-packaging smoke to the same contract, and documenting key generation, ownership, backup, recovery, rotation, and production handoff. |
-| Previous checkpoint | `RC-004` release APK/AAB packaging smoke — PR #99 merged as `35e53031fbf59741da0ace89fad36d84eb738377`; current-head smoke built both release formats with ephemeral signing and redacted credentials. |
-| Next recommended feature | Finish and verify `REL-006`; then prepare `TEST-009` device/API matrix and execute `REL-007`/`REL-008` only when the real production AdMob/signing inputs and Android validation target are available. |
-| Known blocker | No known Android source/build blocker. Distribution-ready APK/AAB verification is externally blocked on production AdMob configuration, real release signing material, and an Android device/test track for install/upgrade smoke. Visual Studio C++ components remain optional for Windows desktop only. |
+| Primary feature | None during evidence-only reconciliation; next implementation selection follows this docs checkpoint. |
+| Completed checkpoint | `TEST-001` legacy-save compatibility — PR #104 merged as `2ab3578ecc214f995f194eff95f1a27b7cc3f442` after Flutter CI #546 passed Analyze, the full Flutter suite, Debug APK build, and artifact upload. |
+| Status | `REL-006`, `TEST-001`, and `REL-001` are VERIFIED from current repository/CI evidence. No Android source/build blocker is known; production-signed distribution verification remains externally blocked. |
+| Previous checkpoint | `REL-006` Android signing/key-management — PR #102 merged as `8f2e4ddb69d339938ba05911fb297960859e1a77`; Flutter CI #544 and Android Release Packaging Smoke #4 both passed. |
+| Next recommended feature | `REL-004` reconcile storage corruption backup/recovery evidence and fill only any remaining P0 persistence gap; then reconcile `TEST-004` navigation-race coverage and audit `GAME-016` rapid-input determinism. |
+| Known blocker | `REL-007`/`REL-008` require real production AdMob/signing inputs and a production-signed candidate; final install/upgrade/device smoke requires an Android device or testing track. `TEST-009` also remains dependency-blocked while `PERF-001` is PLANNED. Visual Studio C++ components remain optional for Windows desktop only. |
+
+## RC persistence/signing verification reconciliation — 2026-08-09
+
+- PR #102 (`REL-006`) merged as `8f2e4ddb69d339938ba05911fb297960859e1a77`.
+- Flutter CI #544 passed secret/privacy/security checks, formatting, Analyze, focused tests, the full Flutter suite, Debug APK build, and artifact upload. Debug artifact #9030167112 has SHA-256 `53f309ad514a9c2525555c8b23f66374769f3be26bd358557eeddb63af52eb54`.
+- Android Release Packaging Smoke #4 passed the PowerShell preflight contract, shared redacted release-input preflight, ephemeral signing, release APK build, release AAB build, output verification, and evidence upload. Evidence artifact #9030181913 has SHA-256 `6b27c786fe315739f27825e39514971a1f05f182bb34cdb36ac77cc0a625589f`.
+- `REL-006` is VERIFIED: `VERIFY_RELEASE_INPUTS.ps1`, `BUILD_RC.ps1`, `docs/ANDROID_SIGNING.md`, safe signing fixtures, backup/recovery/rotation guidance, and production handoff now satisfy the catalog acceptance without committed or echoed secrets.
+- PR #104 (`TEST-001`) merged as `2ab3578ecc214f995f194eff95f1a27b7cc3f442` and added explicit legacy/unversioned save compatibility coverage while leaving production persistence code unchanged.
+- Flutter CI #546 passed dynamic Android target validation, secret/privacy/security checks, formatting, Analyze, focused tests, the full Flutter suite, Debug APK build, and artifact upload. Debug artifact #9030311765 has SHA-256 `cdef9c5c5fbc9576d1760009956aab53ab6e63491248a2ba43ea5288797855b7`.
+- `TEST-001` is VERIFIED: coverage now explicitly includes wallet bounds, hearts, boosters, stars, milestone/world first-clear rewards, duplicate daily-mission claims, corrupt-value backup/repair, interruption-safe shop transactions, and legacy-save compatibility with safe defaults for newer fields.
+- `REL-001` is VERIFIED from the same current CI gate: `tool/verify_dynamic_android_targets.dart` rejected fixed emulator serials, literal AVD targets/defaults, and fixed `adb -s` targets across all 38 discovered PowerShell/batch scripts.
+- `REL-007` and `REL-008` remain PLANNED because ephemeral smoke signing is intentionally non-distributable and does not replace a real production-signed candidate/device/store verification.
+- `TEST-009` is not currently NEXT READY because its declared `PERF-001` dependency remains PLANNED.
+- The next release-critical unblocked reconciliation target is `REL-004` storage corruption backup/recovery.
 
 ## REL-006 signing/key-management implementation — 2026-08-09
 
-- Issue #101 is the sole primary IN PROGRESS feature under RC #79.
-- The implementation branch is `agent/rel-006-signing-procedure`, based on main `938915bf32ddd6853737065d4cacce87a969fd37`.
-- `VERIFY_RELEASE_INPUTS.ps1` provides a reusable release-input preflight shared by humans/automation and `BUILD_RC.ps1`; it validates production AdMob ID formats, rejects Google test IDs, resolves signing inputs with environment-over-`key.properties` precedence, verifies keystore presence, and reports only redacted configuration state.
-- `BUILD_RC.ps1` now delegates release-input checks to the shared preflight instead of maintaining a second weaker validation implementation.
+- Issue #101 was completed by PR #102 and is closed.
+- The implementation branch `agent/rel-006-signing-procedure` added `VERIFY_RELEASE_INPUTS.ps1`, a reusable release-input preflight shared by humans/automation and `BUILD_RC.ps1`; it validates production AdMob ID formats, rejects Google test IDs, resolves signing inputs with environment-over-`key.properties` precedence, verifies keystore presence, and reports only redacted configuration state.
+- `BUILD_RC.ps1` delegates release-input checks to the shared preflight instead of maintaining a second weaker validation implementation.
 - `tool/test_release_input_preflight.ps1` covers missing signing inputs, environment-backed signing, Google test application/ad-unit rejection, and `key.properties` relative-keystore resolution using safe fixtures.
 - `docs/ANDROID_SIGNING.md` defines upload-key generation, production input handoff, ownership/access, encrypted backup, recovery, replacement/rotation, and validation rules without containing credentials.
-- `android/key.properties.example` now recommends an absolute production keystore path and documents environment-variable precedence.
-- The Android Release Packaging Smoke workflow now runs the preflight contract and the shared preflight before release APK/AAB compilation.
-- `REL-006` remains IN PROGRESS until both normal Flutter CI and Release Packaging Smoke pass on the final branch head and the implementation evidence is reconciled.
+- `android/key.properties.example` recommends an absolute production keystore path and documents environment-variable precedence.
+- The Android Release Packaging Smoke workflow runs the preflight contract and the shared preflight before release APK/AAB compilation.
+- `REL-006` is VERIFIED by PR #102, Flutter CI #544, and Android Release Packaging Smoke #4.
 
 ## RC P0 audit and release reconciliation — 2026-08-09
 
 - Issue #79 remains the Android Release Candidate umbrella.
 - `UI3D-006` responsive acceptance is VERIFIED through PRs #86–#92.
 - PR #95 (`RC-002`) merged as `887739aef683964cf2b54b0684e6ef255d665907` and hardened Android release configuration: debug retains official Google test configuration, while release requires an externally supplied non-test AdMob application ID and external signing values/keystore and no longer falls back to debug signing.
-- `ENG-009` is now VERIFIED: PR #95 implemented the release guards and PR #99 exercised the guarded release APK/AAB packaging path successfully while normal Flutter CI remained green.
-- PR #97 (`RC-003`) merged as `e5a40cb7e3e5d071bbd42952a288cff793e00818`; shop theme/booster purchases now persist an idempotent absolute-state journal, replay interrupted writes safely, reject malformed journals, and serialize overlapping purchases.
-- `SHOP-002` is now VERIFIED by PR #97 plus Flutter CI #536. `TEST-001` is promoted only to IMPLEMENTED because the new transaction-recovery tests materially extend economy coverage but the catalog definition also includes broader heart/milestone/world/migration coverage that still requires reconciliation.
+- `ENG-009` is VERIFIED: PR #95 implemented the release guards and PR #99 exercised the guarded release APK/AAB packaging path successfully while normal Flutter CI remained green.
+- PR #97 (`RC-003`) merged as `e5a40cb7e3e5d071bbd42952a288cff793e00818`; shop theme/booster purchases persist an idempotent absolute-state journal, replay interrupted writes safely, reject malformed journals, and serialize overlapping purchases.
+- `SHOP-002` is VERIFIED by PR #97 plus Flutter CI #536.
+- `TEST-001` is VERIFIED after PR #104/CI #546 closed the final explicit legacy-save/default migration coverage gap on top of the existing heart, economy, milestone, world, duplicate-guard, corruption, and shop-recovery tests.
 - PR #99 (`RC-004`) merged as `35e53031fbf59741da0ace89fad36d84eb738377` and added a dedicated release-packaging smoke workflow.
 - Release Packaging Smoke #2 built a non-distributable release APK (55.8 MB, SHA-256 `2f6b2b5d3eb7de9a9029b0f51ae2e8a7e69a3c3278feb230abb116e4b56778dd`) and release AAB (57.0 MB, SHA-256 `957c1d4b696ee2547e97faa796544b3ab514fa2660681d4f01876af83a48c548`).
 - Smoke signing is generated ephemerally inside the runner; generated passwords are masked before build steps. Only checksum/evidence text is uploaded, never the smoke binaries. Evidence artifact #9029778593 has SHA-256 `45e8057fb3a835b946dfe5ae001c48485c463ea4755aa9938b42e5beeb665059`.
 - Flutter CI #539 on the same PR head passed secret/security checks, formatting, Analyze, focused checks, the full Flutter test suite, Debug APK build, and debug artifact upload.
-- PR #100 reconciled `ENG-009` and `SHOP-002` to VERIFIED, `TEST-001` to IMPLEMENTED, and kept `REL-007`/`REL-008` PLANNED; Flutter CI #541 passed and uploaded debug artifact #9029962050 with SHA-256 `3289c9a41ef4cfad4c45e81fb4a40b621e87d902094b4d4b343d134ecab80906`.
-- `REL-007` and `REL-008` remain PLANNED: packaging is proven, but their acceptance requires a real production-signed candidate and install/store/device validation. The smoke outputs are explicitly non-distributable and do not satisfy those acceptance criteria.
+- PR #100 reconciled `ENG-009` and `SHOP-002` to VERIFIED and kept `REL-007`/`REL-008` PLANNED; Flutter CI #541 passed and uploaded debug artifact #9029962050 with SHA-256 `3289c9a41ef4cfad4c45e81fb4a40b621e87d902094b4d4b343d134ecab80906`.
+- `REL-007` and `REL-008` remain PLANNED: packaging is proven, but acceptance requires a real production-signed candidate and install/store/device validation. Smoke outputs are explicitly non-distributable.
 
 ## RC / UI3D reconciliation — 2026-08-09
 
@@ -130,6 +144,9 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | 2026-08-09 | Release smoke credential redaction | PASSED — ephemeral signing passwords masked as `***`; only checksum evidence artifact #9029778593 uploaded |
 | 2026-08-09 | Flutter CI after release-smoke workflow | PASSED — CI #539 full suite + Debug APK + artifact on PR #99 head |
 | 2026-08-09 | RC tracking reconciliation | PASSED — PR #100 / CI #541 / Debug APK artifact #9029962050 / SHA-256 `3289c9a41ef4cfad4c45e81fb4a40b621e87d902094b4d4b343d134ecab80906` |
+| 2026-08-09 | REL-006 signing/key-management verification | PASSED — PR #102 / Flutter CI #544 + Release Packaging Smoke #4 / debug artifact #9030167112 / release evidence #9030181913 |
+| 2026-08-09 | TEST-001 progress/economy + legacy-save compatibility | PASSED — PR #104 / Flutter CI #546 / full suite + Debug APK artifact #9030311765 / SHA-256 `cdef9c5c5fbc9576d1760009956aab53ab6e63491248a2ba43ea5288797855b7` |
+| 2026-08-09 | REL-001 dynamic Android targets | PASSED — Flutter CI #546 validated 38 PowerShell/batch scripts with no fixed emulator/AVD/adb target |
 
 ## Test locally
 
