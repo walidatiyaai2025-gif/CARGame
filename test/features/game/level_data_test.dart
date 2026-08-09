@@ -109,25 +109,28 @@ void main() {
       }
     });
 
-    test('every product occurrence belongs to the catalog and has a partner', () {
-      final validIds = productCatalog.map((item) => item.id).toSet();
+    test(
+      'every product occurrence belongs to the catalog and has a partner',
+      () {
+        final validIds = productCatalog.map((item) => item.id).toSet();
 
-      for (final level in levels) {
-        final counts = <int, int>{};
-        for (final item in level.items) {
-          expect(validIds, contains(item.id), reason: 'level ${level.number}');
-          counts.update(item.id, (value) => value + 1, ifAbsent: () => 1);
-        }
+        for (final level in levels) {
+          final counts = <int, int>{};
+          for (final item in level.items) {
+            expect(validIds, contains(item.id), reason: 'level ${level.number}');
+            counts.update(item.id, (value) => value + 1, ifAbsent: () => 1);
+          }
 
-        for (final entry in counts.entries) {
-          expect(
-            entry.value,
-            greaterThanOrEqualTo(2),
-            reason: 'level ${level.number}, product ${entry.key}',
-          );
+          for (final entry in counts.entries) {
+            expect(
+              entry.value,
+              greaterThanOrEqualTo(2),
+              reason: 'level ${level.number}, product ${entry.key}',
+            );
+          }
         }
-      }
-    });
+      },
+    );
 
     test('generated collections are immutable', () {
       expect(
