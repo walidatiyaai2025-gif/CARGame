@@ -20,6 +20,7 @@ void main() {
   Future<void> pumpHome(
     WidgetTester tester, {
     required Size size,
+    Locale locale = const Locale('en'),
     TextScaler textScaler = TextScaler.noScaling,
     EdgeInsets padding = EdgeInsets.zero,
     EdgeInsets viewInsets = EdgeInsets.zero,
@@ -27,10 +28,16 @@ void main() {
     await tester.binding.setSurfaceSize(size);
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
+    final store = ProgressStore();
+    final settings = AppSettingsStore();
+    addTearDown(store.dispose);
+    addTearDown(settings.dispose);
+
     await tester.pumpWidget(
       MaterialApp(
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light,
+        locale: locale,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: MediaQuery(
@@ -42,8 +49,8 @@ void main() {
             textScaler: textScaler,
           ),
           child: HomeScreen(
-            store: ProgressStore(),
-            settings: AppSettingsStore(),
+            store: store,
+            settings: settings,
             onToggleLanguage: () {},
           ),
         ),
@@ -52,6 +59,32 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
   }
+
+  testWidgets('home is overflow-free on a compact phone', (tester) async {
+    await pumpHome(tester, size: const Size(360, 640));
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('Cargo Sort'), findsOneWidget);
+    expect(find.byType(GameButton), findsOneWidget);
+  });
+
+  testWidgets('home uses Arabic locale and RTL on a reference phone', (
+    tester,
+  ) async {
+    await pumpHome(
+      tester,
+      size: const Size(412, 915),
+      locale: const Locale('ar'),
+    );
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('ترتيب الشحنات'), findsOneWidget);
+    expect(
+      Directionality.of(tester.element(find.text('ترتيب الشحنات'))),
+      TextDirection.rtl,
+    );
+    expect(find.byType(GameButton), findsOneWidget);
+  });
 
   testWidgets('home survives large text on a tablet', (tester) async {
     await pumpHome(

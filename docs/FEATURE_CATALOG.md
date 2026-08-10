@@ -293,7 +293,7 @@ Codex must not mark a feature complete merely because UI code exists.
 |---|---|---:|---|---|---|
 | TEST-001 | Progress/economy unit tests | P0 | VERIFIED | ENG-008 | `progress_store_test.dart` covers wallet bounds, hearts, boosters, best-star persistence, milestone/world first-clear rewards, final-level bounds, duplicate daily-mission claims, corrupt-value backup/repair, and legacy-save compatibility with safe defaults for newer fields. PR #97 adds interruption-safe shop purchase/recovery coverage; PR #104 added explicit legacy-save migration compatibility. Flutter CI #546 passed Analyze, the full Flutter suite, Debug APK build, and artifact upload. |
 | TEST-002 | Level generator and solvability tests | P0 | VERIFIED | LEVEL-003 | Issue #143 / PR #144 consolidate the exact production 1..150 catalog into one deterministic release contract: sequential identity, regeneration parity, `LevelSolvabilityValidator.validateAll`, `LevelDifficultyCurve.validateAll`, and explicit boundaries 1/25/26/150. No production level content changed. After UI3D-007 / PR #141 advanced main, PR #144 was reconciled and Flutter CI #697 / run `31310666540` passed all gates on head `a0f1de0e14b78f090bb770643c93492cc5164ebe`; artifact #9037363042 is 80,562,923 bytes with SHA-256 `ef6c18142dc7b1925f131848217ba8db8386f534aaee24becaede3d3ed598a9b`. PR #144 squash-merged as `d9afbb06564a08ee571ed7c9e4784adf99a7c3fe`. |
-| TEST-003 | Core screen widget tests | P1 | PLANNED | UI3D-006 | Home, map, briefing, game, result, and shop pass key sizes/languages. |
+| TEST-003 | Core screen widget tests | P1 | IN PROGRESS | UI3D-006 | Issue #179: consolidate the existing Home/World Map/Mission Briefing/Gameplay/Result/Shop responsive coverage into an explicit compact/reference/tablet plus EN/AR widget contract, adding only missing locale/viewport cases and a CI matrix guard. Completing this task unblocks P0 TEST-007. |
 | TEST-004 | Navigation race regression tests | P0 | VERIFIED | NAV-001 | PR #109 hardens result-route dismissal against repeated actions and adds deterministic integration coverage for repeated Next, Retry, and Home Start actions; existing `GameNavigator` tests cover concurrent/named duplicate-push guards. Flutter CI #571 passed formatting, Analyze, the full 214-test Flutter suite, Debug APK build, and artifact upload. Debug artifact #9031075109 is 80,515,902 bytes with SHA-256 `299e710a467672c57c91fd956669d67506cf5534b8741499066032ff9e60b539`. |
 | TEST-005 | Missing asset tests | P1 | PLANNED | AST-003 | Missing/corrupt asset fallback remains visible and functional. |
 | TEST-006 | Golden visual tests | P2 | PLANNED | UI3D-004 | Critical screens have stable EN/AR snapshots at representative sizes. |
@@ -331,11 +331,11 @@ Codex must not mark a feature complete merely because UI code exists.
 
 ## IN PROGRESS
 
-- None.
+- `TEST-003` Core screen widget tests — issue #179; close missing real-locale and viewport coverage across Home, World Map, Mission Briefing, Gameplay, Result, and Shop, then add a machine matrix guard.
 
 ## NEXT READY
 
-- None pending the post-ENG-013 dependency-ready scan; do not start another primary workstream until PR #178 is merged.
+- None while `TEST-003` is the active primary workstream. When VERIFIED, `TEST-007` becomes dependency-ready P0 work because TEST-001 is already VERIFIED.
 
 ## BLOCKED
 
