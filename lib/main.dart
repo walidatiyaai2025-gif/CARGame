@@ -6,6 +6,7 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 import 'bootstrap/app_composition.dart';
 import 'bootstrap/cargo_sort_app.dart';
+import 'core/assets/game_image_memory_policy.dart';
 import 'core/logging/app_logger.dart';
 import 'core/motion/motion_lifecycle_scope.dart';
 import 'core/theme/app_theme.dart';
@@ -27,6 +28,9 @@ Future<void> _applyImmersiveFullscreen() async {
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  GameImageMemoryPolicy.standard.configureImageCache(
+    PaintingBinding.instance.imageCache,
+  );
   unawaited(_applyImmersiveFullscreen());
   SystemChrome.setSystemUIChangeCallback((systemOverlaysAreVisible) async {
     if (!systemOverlaysAreVisible) return;

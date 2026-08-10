@@ -7,12 +7,21 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | Field | Value |
 |---|---|
 | Current phase | Android RC hardening — issue #79 |
-| Primary feature | None — `PERF-001` source-controlled implementation is merged; issue #196 remains open only for real Android device/profile verification. |
+| Primary feature | `PERF-002` Memory and image budget — IN PROGRESS under issue #199 on `agent/perf-002-memory-image-budget`. |
 | Completed checkpoint | `PERF-001` frame performance budget — IMPLEMENTED on main as `f2b2c829755a5abdd3342dba731e1e669f42f57f`; exact-main Flutter CI #849 / run `31415750686` passed 332/332 tests, 88.21% authored-source coverage, Debug APK, artifact security and upload. |
-| Status | PERF-001 source-controlled acceptance is IMPLEMENTED: bounded rolling frame timing drives a presentation-only full/constrained/reduced quality state machine; sustained pressure sheds ambient motion and scales shared effects while reduced-motion accessibility remains authoritative. Main debug artifact #9073641322 is 80,644,379 bytes with artifact ZIP SHA-256 `4d2726add801d28d517cc29461506e2d4580e57fb86b6b50e362847d0628f13b`; latest-verified promotion #37 / run `31416602117` produced the 55,943,559-byte QA APK with SHA-256 `358d38a81708fce2a667f9b78a00b6b1bd28ae2f68013cdb60266ecbc65da1a2`. VERIFIED remains pending honest physical-device/profile frame evidence. |
+| Status | PERF-002 is active: Flutter ImageCache retention and manifest image decode sizes now have explicit source-controlled ceilings; display and precache paths use bounded resize targets while AST-004 race/LRU/failure behavior stays authoritative. No device RSS/GPU measurement is claimed yet. |
 | Previous checkpoint | `TEST-008` coverage thresholds and flaky-test policy — VERIFIED and merged; exact-main Flutter CI #836 passed 310 tests and 88.01% authored-source coverage before AST-004. |
-| Next recommended feature | After PERF-001 reconciliation, run a fresh dependency-ready/team scan and select exactly one source-controlled workstream; keep TEST-009 blocked until PERF-001 receives real device/profile evidence and becomes VERIFIED. |
+| Next recommended feature | Finish PERF-002 focused/full CI and Debug APK verification, then reconcile source-controlled acceptance honestly; keep TEST-009 blocked until PERF-001 is physically VERIFIED. |
 | Known blocker | `TEST-011` requires real production UMP/privacy-message/regulatory-device verification. `REL-007`/`REL-008` require real production AdMob/signing inputs and a production-signed candidate; final install/upgrade/device smoke requires an Android device or testing track. `TEST-009` remains dependency-blocked until selected next workstream `PERF-001` is VERIFIED. Visual Studio C++ components remain optional for Windows desktop only. |
+
+## PERF-002 memory and image budget — 2026-08-10
+
+- Issue #199 / branch `agent/perf-002-memory-image-budget` are the single active source-controlled workstream after a fresh P0 dependency scan.
+- `GameImageMemoryPolicy.standard` defines 96 global Flutter ImageCache entries, 48 MiB global decoded cache bytes, 6 MiB per manifest image, a 1536 px hard decode dimension, and a 1024 px layout-free precache target.
+- `GameAssetView` converts logical render size through DPR and passes bounded `cacheWidth`/`cacheHeight`, never upsamples beyond authored dimensions, preserves aspect ratio, and falls back to bounded sizing when layout hints are absent or invalid.
+- AST-004 production precache now uses the same resize policy while retaining its injected `AssetImage` callbacks for existing deterministic tests; production eviction uses the matching resized provider.
+- Startup explicitly configures Flutter `ImageCache`; application LRU/failure history remains independently bounded by AST-004.
+- `docs/MEMORY_IMAGE_BUDGET.md` records the safety and verification boundary: CI can prove source budgets/build behavior, while real process RSS/GPU/device memory profiling remains separate evidence.
 
 ## PERF-001 adaptive frame performance budget — 2026-08-10
 

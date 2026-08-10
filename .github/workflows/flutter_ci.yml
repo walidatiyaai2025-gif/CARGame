@@ -100,6 +100,12 @@ jobs:
       - name: Test PERF-001 frame performance validator
         run: python3 tool/test_frame_performance_budget.py
 
+      - name: Verify PERF-002 memory and image budget
+        run: python3 tool/verify_memory_image_budget.py
+
+      - name: Test PERF-002 memory budget validator
+        run: python3 tool/test_memory_image_budget.py
+
       - name: Restore packages
         shell: bash
         run: |
@@ -182,6 +188,13 @@ jobs:
           test/core/performance/frame_performance_budget_test.dart
           test/core/performance/frame_performance_scope_test.dart
           test/core/motion/game_motion_test.dart
+
+      - name: Test PERF-002 memory and image budget
+        run: >-
+          flutter test
+          test/core/assets/game_image_memory_policy_test.dart
+          test/core/assets/game_asset_view_memory_test.dart
+          test/core/assets/game_asset_cache_policy_test.dart
 
       - name: Test core screen widget matrix
         run: >-
