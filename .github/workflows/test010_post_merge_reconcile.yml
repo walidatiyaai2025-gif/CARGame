@@ -1,5 +1,6 @@
 name: TEST-010 post-merge reconciliation
 
+# One-shot branch-only reconciliation trigger.
 on:
   push:
     branches:
