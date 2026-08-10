@@ -1,0 +1,166 @@
+name: Maintain Latest Verified APK
+
+on:
+  workflow_run:
+    workflows:
+      - Flutter CI
+    types:
+      - completed
+
+permissions:
+  contents: write
+
+concurrency:
+  group: latest-verified-apk-main
+  cancel-in-progress: true
+
+jobs:
+  promote-latest-apk:
+    name: Build and promote latest verified APK
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.event == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+
+    env:
+      SOURCE_SHA: ${{ github.event.workflow_run.head_sha }}
+      OUTPUT_DIR: Last verified APK
+      OUTPUT_APK: Last verified APK/CARGame-latest-verified.apk
+      OUTPUT_METADATA: Last verified APK/LATEST.txt
+
+    steps:
+      - name: Checkout verified source commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.44.8
+          cache: true
+
+      - name: Restore packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          flutter pub get --enforce-lockfile 2>&1 | tee /tmp/cargame-latest-apk-pub-get.log
+
+      - name: Verify dependency security advisories
+        run: python3 tool/verify_dependency_security.py --input-log /tmp/cargame-latest-apk-pub-get.log
+
+      - name: Generate localization
+        run: flutter gen-l10n
+
+      - name: Test release input preflight contract
+        shell: pwsh
+        run: ./tool/test_release_input_preflight.ps1
+
+      - name: Prepare ephemeral release signing
+        shell: bash
+        run: |
+          set -euo pipefail
+          password="$(openssl rand -hex 24)"
+          keystore="$RUNNER_TEMP/cargame-latest-verified.jks"
+          echo "::add-mask::$password"
+
+          keytool -genkeypair \
+            -noprompt \
+            -keystore "$keystore" \
+            -storepass "$password" \
+            -alias latest-verified \
+            -keypass "$password" \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 1 \
+            -dname 'CN=CARGame Latest Verified APK, OU=CI, O=WALKA, L=Kuwait, C=KW'
+
+          {
+            echo 'ADMOB_ANDROID_APP_ID=ca-app-pub-0000000000000000~0000000000'
+            echo "ANDROID_KEYSTORE_PATH=$keystore"
+            echo "ANDROID_KEYSTORE_PASSWORD=$password"
+            echo 'ANDROID_KEY_ALIAS=latest-verified'
+            echo "ANDROID_KEY_PASSWORD=$password"
+          } >> "$GITHUB_ENV"
+
+      - name: Verify release inputs
+        shell: pwsh
+        run: |
+          $result = ./VERIFY_RELEASE_INPUTS.ps1 `
+            -AndroidAdMobAppId $env:ADMOB_ANDROID_APP_ID `
+            -Quiet
+          if (-not $result.Ready) {
+            throw 'Latest verified APK release-input preflight did not report ready.'
+          }
+          Write-Host 'Latest verified APK release inputs: PASSED (values redacted)'
+
+      - name: Build release APK
+        run: >-
+          flutter build apk --release --no-pub
+          --dart-define=APP_ENV=release
+          --dart-define=ENABLE_ADS=false
+
+      - name: Verify release APK artifact security
+        run: >-
+          python3 tool/verify_build_artifact_security.py
+          build/app/outputs/flutter-apk/app-release.apk
+
+      - name: Verify APK output and prepare promotion
+        shell: bash
+        run: |
+          set -euo pipefail
+          apk='build/app/outputs/flutter-apk/app-release.apk'
+          test -s "$apk"
+          mkdir -p "$RUNNER_TEMP/latest-verified-apk"
+          cp "$apk" "$RUNNER_TEMP/latest-verified-apk/CARGame-latest-verified.apk"
+          sha256sum "$apk" | tee "$RUNNER_TEMP/latest-verified-apk/sha256.txt"
+          stat -c '%s' "$apk" | tee "$RUNNER_TEMP/latest-verified-apk/size-bytes.txt"
+
+      - name: Promote only if source is still current main
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          git fetch origin main
+          current_main="$(git rev-parse origin/main)"
+          if [[ "$current_main" != "$SOURCE_SHA" ]]; then
+            echo "main advanced from $SOURCE_SHA to $current_main; leaving the previous verified APK untouched."
+            exit 0
+          fi
+
+          mkdir -p "$OUTPUT_DIR"
+          cp "$RUNNER_TEMP/latest-verified-apk/CARGame-latest-verified.apk" "$OUTPUT_APK"
+
+          apk_sha="$(cut -d' ' -f1 "$RUNNER_TEMP/latest-verified-apk/sha256.txt")"
+          apk_size="$(cat "$RUNNER_TEMP/latest-verified-apk/size-bytes.txt")"
+          generated_at="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          cat > "$OUTPUT_METADATA" <<EOF
+          CARGame latest verified release-mode APK
+          ========================================
+          Source commit: $SOURCE_SHA
+          Flutter CI run: ${{ github.event.workflow_run.id }}
+          Promotion workflow run: $GITHUB_RUN_ID
+          Generated UTC: $generated_at
+          File: CARGame-latest-verified.apk
+          Size bytes: $apk_size
+          SHA-256: $apk_sha
+          Signing: ephemeral CI signing
+          Runtime ads: disabled
+          Distribution status: QA/installable evidence only; NOT production/Play Store signed
+          EOF
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- "$OUTPUT_APK" "$OUTPUT_METADATA"
+
+          if git diff --cached --quiet; then
+            echo 'Latest verified APK is already current.'
+            exit 0
+          fi
+
+          git commit -m 'chore: update latest verified APK [skip ci]'
+          git push origin HEAD:main
