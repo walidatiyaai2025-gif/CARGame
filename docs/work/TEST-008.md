@@ -2,7 +2,7 @@
 
 - Issue: #190
 - Branch: `agent/test-008-coverage-flaky-policy`
-- State: IN PROGRESS
+- State: IN PROGRESS — implementation CI green; final merge/reconciliation pending
 - Dependency: ENG-007 VERIFIED
 
 ## Objective
@@ -58,8 +58,8 @@ Make coverage and flaky-test handling explicit, versioned, and enforceable witho
 - [x] T45 Document coverage, quarantine ownership, and floor-ratcheting rules.
 - [x] T46 Expand focused policy/LCOV/workflow regressions to 30 tests.
 - [x] T47 Run the focused TEST-008 suite locally: 30/30 PASS.
-- [ ] T48 Open the TEST-008 pull request against `main`.
-- [ ] T49 Pass normal Flutter CI including Analyze, full tests, Debug APK, artifact security, and upload.
+- [x] T48 Open and review TEST-008 pull request #191 against `main`.
+- [x] T49 Pass normal Flutter CI including Analyze, full tests, Debug APK, artifact security, and upload.
 - [ ] T50 Reconcile catalog/status with exact CI evidence, merge, and close issue #190.
 
 ## Policy summary
@@ -78,5 +78,17 @@ Make coverage and flaky-test handling explicit, versioned, and enforceable witho
 `python3 tool/test_test_quality.py` passes 30/30 focused regressions covering policy schema/floors/targets, include/exclude boundaries, blanket retry rejection, quarantine schema/ownership/issue/expiry/orphan/duplicate rules, strict LCOV parsing and summary consistency, absolute GitHub Actions path normalization, non-`lib/` exclusion, preserved CI gates/order, and below-floor enforcement.
 
 A synthetic 34% authored-line report is rejected below the 35% floor. Absolute GitHub Actions paths under `.../lib/l10n/` are correctly excluded after normalization.
+
+## Implementation CI evidence
+
+- Pull request: #191.
+- Implementation head: `3ca59939f2a8576ce368863a98649fd5b8aeefbb`.
+- Flutter CI: #834 / run `31404482884` — all workflow steps passed.
+- Full Flutter suite: 310 tests passed.
+- Authored source line coverage: 5,584 / 6,345 = **88.01%**, above both the 35% enforced floor and 60% improvement target.
+- Debug APK build: PASSED.
+- Build artifact security scan: PASSED.
+- Debug artifact: #9069316062, 80,633,605 bytes, SHA-256 `652a776a8a33a6279572607ce6fd1a065e8f721f26a3360086fd053b065329e4`.
+- TEST-007, TEST-010, privacy, security, dependency, formatting, whitespace, Analyze, and asset gates all remained green.
 
 No production gameplay, economy, persistence, navigation, ads, privacy, signing, package, or asset behavior is intentionally changed by TEST-008.
