@@ -7,12 +7,21 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | Field | Value |
 |---|---|
 | Current phase | Android RC hardening — issue #79 |
-| Primary feature | None — `AST-004` Precache and memory policy is VERIFIED after 100/100 checkpoints; `PERF-001` is selected next but not started. |
-| Completed checkpoint | `AST-004` bounded asset precache and memory policy — VERIFIED; issue #192 / PR #193 completed 100/100 checkpoints, PR #193 squash-merged as `22239a6cdd7af3770a03a4b9a86e8d32d078a01b`, and exact-main Flutter CI #840 / run `31409971405` passed all gates with 320 tests and 88.34% authored-source coverage. |
-| Status | AST-004 is VERIFIED: same-ID precache work is shared, clear/forget invalidation is race-safe, LRU/failure state is bounded, observability is immutable, raw precache bypasses are CI-blocked, and descriptor-only fallback behavior remains intact. Exact-main artifact #9071436511 is 80,633,603 bytes with artifact ZIP SHA-256 `b7150ca0969b0f32e3741ca4a47e9c51e7c8d6ce02880af9d47b5f1cfbfec562`; latest-verified promotion #28 / run `31410745473` produced the 55,878,023-byte QA APK with SHA-256 `df60e5bc0471cdf99ab66a3e01987cc7948fc52ba353da647070b29bcd137a72`. |
+| Primary feature | `PERF-001` Frame performance budget — IN PROGRESS under issue #196 on `agent/perf-001-frame-budget`. |
+| Completed checkpoint | `AST-004` bounded asset precache and memory policy — VERIFIED and reconciled on main as `82fbc4ac9abeb12ebad6484def9860c71e2027ca`; PERF-001 is the new single primary workstream. |
+| Status | PERF-001 implementation is active: bounded rolling frame timing drives a presentation-only full/constrained/reduced quality state machine; sustained pressure sheds ambient motion and scales shared effects while reduced-motion accessibility remains authoritative. No gameplay/economy/persistence/ad/privacy truth is affected. |
 | Previous checkpoint | `TEST-008` coverage thresholds and flaky-test policy — VERIFIED and merged; exact-main Flutter CI #836 passed 310 tests and 88.01% authored-source coverage before AST-004. |
-| Next recommended feature | `PERF-001` Frame performance budget — P0, now dependency-ready via MOT-001 + AST-004. Establish measurable frame targets and graceful fallback before TEST-009 device/API matrix work. |
+| Next recommended feature | Finish PERF-001 focused/full CI and Debug APK verification; if source-controlled gates pass, reconcile as IMPLEMENTED pending real device-tier frame profiling, then rescan dependencies before TEST-009. |
 | Known blocker | `TEST-011` requires real production UMP/privacy-message/regulatory-device verification. `REL-007`/`REL-008` require real production AdMob/signing inputs and a production-signed candidate; final install/upgrade/device smoke requires an Android device or testing track. `TEST-009` remains dependency-blocked until selected next workstream `PERF-001` is VERIFIED. Visual Studio C++ components remain optional for Windows desktop only. |
+
+## PERF-001 adaptive frame performance budget — 2026-08-10
+
+- Issue #196 / branch `agent/perf-001-frame-budget` are the single active primary workstream after AST-004 reconciliation.
+- `FramePerformancePolicy.mobile60Hz` defines a 60 Hz target, nominal 16.67 ms frame budget, >24 ms jank threshold, >34 ms severe-jank threshold, 60-frame bounded history, 30-sample warmup, and 15-frame evaluation stride.
+- Sustained pressure degrades visual quality one level at a time from full to constrained to reduced; recovery requires three healthy evaluation windows and also occurs one level at a time to prevent oscillation.
+- `FramePerformanceScope` observes Flutter `FrameTiming` for the full app route tree. Shared motion shortens/scales nonessential effects under pressure, and ambient motion stops outside full quality; system reduced-motion remains the strongest override.
+- `FramePerformanceSnapshot` is local-only, bounded diagnostic state. PERF-001 adds no remote telemetry, persistence, packages, production identifiers, or gameplay/economy/ad/privacy changes.
+- `docs/PERFORMANCE_BUDGET.md` records the verification boundary: CI proves deterministic policy/integration/build safety, while actual device-tier frame measurements remain later device/profile evidence and must not be fabricated.
 
 ## AST-004 bounded asset precache and memory policy — 2026-08-10
 

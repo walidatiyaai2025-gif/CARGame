@@ -63,9 +63,9 @@ Establish a deterministic 60 Hz frame-budget policy and bounded runtime adaptati
 - [x] T41 Add bounded-history and diagnostic regressions.
 - [x] T42 Add degradation/recovery/hysteresis regressions.
 - [x] T43 Add scope propagation and reduced-motion precedence widget regressions.
-- [ ] T44 Add machine ownership/drift validator and its focused regressions.
-- [ ] T45 Add PERF-001 validator and focused Flutter tests to normal CI.
-- [ ] T46 Update FEATURE_CATALOG and STATUS to IN PROGRESS with honest verification boundary.
+- [x] T44 Add machine ownership/drift validator and its focused regressions.
+- [x] T45 Add PERF-001 validator and focused Flutter tests to normal CI.
+- [x] T46 Update FEATURE_CATALOG and STATUS to IN PROGRESS with honest verification boundary.
 - [ ] T47 Run formatting and Analyze.
 - [ ] T48 Pass focused PERF-001 tests plus full Flutter coverage suite and TEST-008 threshold.
 - [ ] T49 Build/security-scan/upload Debug APK through normal Flutter CI.
