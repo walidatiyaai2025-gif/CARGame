@@ -68,7 +68,9 @@ class GameMotionProfile {
       GameVisualQuality.reduced => .55,
     };
     final micros = (value.inMicroseconds * factor).round();
-    return Duration(microseconds: micros.clamp(60000, value.inMicroseconds));
+    return Duration(
+      microseconds: micros.clamp(60000, value.inMicroseconds).toInt(),
+    );
   }
 
   double distance(double value) => reducedMotion ? 0 : value * effectsScale;
