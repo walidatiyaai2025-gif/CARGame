@@ -7,21 +7,21 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | Field | Value |
 |---|---|
 | Current phase | Android RC hardening — issue #79 |
-| Primary feature | `TEST-008` Coverage thresholds and flaky-test policy — IN PROGRESS under issue #190. |
-| Completed checkpoint | `TEST-010` dashboard/catalog parser validation — VERIFIED and merged; final clean-head Flutter CI #827 / run `31385221550` passed 45/45 on `a7fd43118ec42852984aaf3f2b4f723534fad6b5`, PR #188 squash-merged as `d148ac820ee7dcfbacd0f88304a9cf168bc66b41`, and exact-merge main CI #828 / run `31385904664` also passed 45/45. |
-| Status | TEST-008 implementation is active: repository-owned coverage/flaky policy, LCOV validation, focused regressions, and CI wiring are being added without changing game runtime behavior. TEST-007 and TEST-010 remain protected gates. |
-| Previous checkpoint | `TEST-007` critical path — 50/50 release checkpoints VERIFIED; final-head Flutter CI #816 / run `31380502193` passed all gates and PR #184 squash-merged as `b7f858f9cac6c1a8c5b0d1f9058be599f9ce792c`. |
-| Next recommended feature | Finish TEST-008 normal-CI verification/reconciliation, then run a fresh dependency-ready scan before selecting the next single primary workstream. |
+| Primary feature | None — TEST-008 is VERIFIED and reconciled; run a fresh dependency-ready scan before starting the next single primary workstream. |
+| Completed checkpoint | `TEST-008` coverage thresholds and flaky-test policy — 50/50 sprint VERIFIED; clean-head CI #835 and exact-merge main CI #836 passed all gates, PR #191 squash-merged as `87ab162c1fe1a73b962dd98370ac04aee7d15b90`, and Issue #190 closed completed. |
+| Status | TEST-008 is VERIFIED on main: 310 Flutter tests passed at 88.01% authored-source line coverage; exact-merge main CI #836 / run `31406357471` uploaded debug artifact #9070055072, and promotion run `31407149670` updated the latest-verified QA APK. No game runtime behavior changed. |
+| Previous checkpoint | `TEST-010` dashboard/catalog parser validation — VERIFIED; PR #188 squash-merged as `d148ac820ee7dcfbacd0f88304a9cf168bc66b41`, exact-merge main CI #828 / run `31385904664` passed all gates. |
+| Next recommended feature | Run a fresh dependency-ready scan and select exactly one next primary workstream; preserve TEST-007, TEST-008, TEST-010, and latest-verified-APK gates. |
 | Known blocker | `TEST-011` requires real production UMP/privacy-message/regulatory-device verification. `REL-007`/`REL-008` require real production AdMob/signing inputs and a production-signed candidate; final install/upgrade/device smoke requires an Android device or testing track. `TEST-009` also remains dependency-blocked while `PERF-001` is PLANNED. Visual Studio C++ components remain optional for Windows desktop only. |
 
 ## TEST-008 coverage thresholds and flaky-test policy — 2026-08-10
 
-- Issue #190 / branch `agent/test-008-coverage-flaky-policy` are the single active primary workstream after TEST-010.
-- `tool/test_quality_policy.json` defines a 35% enforced repository line-coverage floor, 60% improvement target, zero blanket retries, at most one temporary quarantine retry, a 14-day quarantine ceiling, and currently zero active quarantines.
-- `tool/verify_test_quality.py` validates policy shape, quarantine ownership/issue/reason/expiry, preserved TEST-007/TEST-010 workflow anchors, LCOV structure, generated-localization exclusion, and the enforced line-coverage floor.
-- `tool/test_test_quality.py` contains 10 focused policy/LCOV/workflow regressions; local execution passed 10/10 before CI wiring.
-- Normal Flutter CI runs policy/regression validation before package restore, generates LCOV from the full suite, and enforces the threshold before Debug APK packaging.
-- No gameplay, economy, persistence, navigation, ads, privacy, signing, package, or asset behavior is intentionally changed.
+- Issue #190 is closed completed; PR #191 squash-merged as `87ab162c1fe1a73b962dd98370ac04aee7d15b90`.
+- The 50-checkpoint sprint is complete: strict authored-source LCOV validation, 35% hard floor, 60% target, zero blanket retries, bounded owned/issue-linked quarantines, and 30 focused validator regressions are versioned and enforced.
+- Final clean PR head `456c762818e6b1e0746651ef6f9b3cefcbb32dea` passed Flutter CI #835 / run `31405428616`; the full Flutter suite passed 310 tests at 88.01% line coverage (5,584/6,345 authored lines).
+- Exact-merge main CI #836 / run `31406357471` passed all workflow gates and uploaded debug artifact #9070055072 (80,633,605 bytes; artifact ZIP SHA-256 `5b66f915d19184feda6ca2a061e73fdaaa6abed4ac6cc9b2c2002c3c33e9a476`).
+- Maintain Latest Verified APK run `31407149670` passed release-mode QA build/security/current-main promotion and committed `3945b6fad174ec913c381fabfc8788de4e5323d7`; `Last verified APK` is 55,878,023 bytes with SHA-256 `adf8907ad545b6c30113c17eabbd4d8a572c79d3821b05212cee0f562468f64a`, ephemeral CI signing, ads disabled, and not production/Play Store signed.
+- TEST-007 and TEST-010 remain blocking normal-CI gates. No gameplay, economy, persistence, navigation, ads, privacy runtime, signing policy, packages, or assets changed.
 
 ## TEST-010 dashboard/catalog parser validation — 2026-08-10
 

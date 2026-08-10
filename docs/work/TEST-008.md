@@ -2,7 +2,7 @@
 
 - Issue: #190
 - Branch: `agent/test-008-coverage-flaky-policy`
-- State: IN PROGRESS — implementation CI green; final merge/reconciliation pending
+- State: VERIFIED — merged, exact-main CI green, latest-verified QA APK promoted, and tracking reconciled
 - Dependency: ENG-007 VERIFIED
 
 ## Objective
@@ -60,7 +60,7 @@ Make coverage and flaky-test handling explicit, versioned, and enforceable witho
 - [x] T47 Run the focused TEST-008 suite locally: 30/30 PASS.
 - [x] T48 Open and review TEST-008 pull request #191 against `main`.
 - [x] T49 Pass normal Flutter CI including Analyze, full tests, Debug APK, artifact security, and upload.
-- [ ] T50 Reconcile catalog/status with exact CI evidence, merge, and close issue #190.
+- [x] T50 Reconcile catalog/status with exact CI evidence, merge PR #191, close issue #190, and record exact-main/promotion evidence.
 
 ## Policy summary
 
@@ -90,5 +90,13 @@ A synthetic 34% authored-line report is rejected below the 35% floor. Absolute G
 - Build artifact security scan: PASSED.
 - Debug artifact: #9069316062, 80,633,605 bytes, SHA-256 `652a776a8a33a6279572607ce6fd1a065e8f721f26a3360086fd053b065329e4`.
 - TEST-007, TEST-010, privacy, security, dependency, formatting, whitespace, Analyze, and asset gates all remained green.
+
+## Final merge and promotion evidence
+
+- Final clean PR head: `456c762818e6b1e0746651ef6f9b3cefcbb32dea`; Flutter CI #835 / run `31405428616` passed all gates.
+- PR #191 squash-merged as `87ab162c1fe1a73b962dd98370ac04aee7d15b90`; Issue #190 closed with state reason completed.
+- Exact-merge main Flutter CI #836 / run `31406357471` passed all gates; debug artifact #9070055072 is 80,633,605 bytes with artifact ZIP SHA-256 `5b66f915d19184feda6ca2a061e73fdaaa6abed4ac6cc9b2c2002c3c33e9a476`.
+- Latest-verified promotion run `31407149670` committed `3945b6fad174ec913c381fabfc8788de4e5323d7`; QA APK is 55,878,023 bytes with SHA-256 `adf8907ad545b6c30113c17eabbd4d8a572c79d3821b05212cee0f562468f64a`, ephemeral CI signing, ads disabled.
+- TEST-008 is fully VERIFIED and its 50/50 execution sprint is complete.
 
 No production gameplay, economy, persistence, navigation, ads, privacy, signing, package, or asset behavior is intentionally changed by TEST-008.
