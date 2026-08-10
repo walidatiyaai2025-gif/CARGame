@@ -275,7 +275,7 @@ Codex must not mark a feature complete merely because UI code exists.
 
 | ID | Function | Priority | Status | Dependencies | Acceptance / evidence |
 |---|---|---:|---|---|---|
-| PERF-001 | Frame performance budget | P0 | PLANNED | MOT-001, AST-004 | Core gameplay meets documented frame targets with graceful fallback. |
+| PERF-001 | Frame performance budget | P0 | IN PROGRESS | MOT-001, AST-004 | Issue #196 adds the source-controlled 60 Hz/16.67 ms frame policy, bounded rolling FrameTiming evaluation, deterministic full/constrained/reduced visual-quality state machine, conservative recovery hysteresis, app-wide performance scope, shared-motion degradation, ambient ticker shedding, focused regressions and CI ownership gates. Physical-device frame-time proof remains intentionally external before VERIFIED. |
 | PERF-002 | Memory and image budget | P0 | PLANNED | AST-004 | No unbounded cache and large assets decode near display size. |
 | PERF-003 | Pause off-screen animations | P1 | PLANNED | MOT-005 | TickerMode/lifecycle prevents hidden animation work. |
 | PERF-004 | Startup time budget | P0 | IMPLEMENTED | ENG-003 | Main UI opens with defaults when optional services are slow; profiling remains. |

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../performance/frame_performance_budget.dart';
+import '../performance/frame_performance_scope.dart';
+
 abstract final class GameMotionDurations {
   static const Duration tap = Duration(milliseconds: 90);
   static const Duration fast = Duration(milliseconds: 140);
@@ -31,29 +34,65 @@ abstract final class GameMotionSprings {
 }
 
 class GameMotionProfile {
-  const GameMotionProfile({required this.reducedMotion});
+  const GameMotionProfile({
+    required this.reducedMotion,
+    this.performanceQuality = GameVisualQuality.full,
+  });
 
   final bool reducedMotion;
+  final GameVisualQuality performanceQuality;
 
-  Duration duration(Duration value) {
-    if (!reducedMotion) {
-      return value;
-    }
-    if (value <= GameMotionDurations.fast) {
-      return const Duration(milliseconds: 60);
-    }
-    return const Duration(milliseconds: 100);
+  bool get allowAmbientMotion =>
+      !reducedMotion && performanceQuality == GameVisualQuality.full;
+
+  double get effectsScale {
+    if (reducedMotion) return 0;
+    return switch (performanceQuality) {
+      GameVisualQuality.full => 1,
+      GameVisualQuality.constrained => .65,
+      GameVisualQuality.reduced => .35,
+    };
   }
 
-  double distance(double value) => reducedMotion ? 0 : value;
+  Duration duration(Duration value) {
+    if (reducedMotion) {
+      if (value <= GameMotionDurations.fast) {
+        return const Duration(milliseconds: 60);
+      }
+      return const Duration(milliseconds: 100);
+    }
 
-  double scale(double value) => reducedMotion ? 1 : value;
+    final factor = switch (performanceQuality) {
+      GameVisualQuality.full => 1.0,
+      GameVisualQuality.constrained => .8,
+      GameVisualQuality.reduced => .55,
+    };
+    final micros = (value.inMicroseconds * factor).round();
+    return Duration(
+      microseconds: micros.clamp(60000, value.inMicroseconds).toInt(),
+    );
+  }
 
-  Curve curve(Curve value) => reducedMotion ? Curves.linear : value;
+  double distance(double value) => reducedMotion ? 0 : value * effectsScale;
+
+  double scale(double value) {
+    if (reducedMotion) return 1;
+    final delta = value - 1;
+    return 1 + delta * effectsScale;
+  }
+
+  Curve curve(Curve value) {
+    if (reducedMotion) return Curves.linear;
+    if (performanceQuality == GameVisualQuality.reduced) {
+      return Curves.easeOut;
+    }
+    return value;
+  }
 }
 
 abstract final class GameMotion {
   static GameMotionProfile of(BuildContext context) => GameMotionProfile(
     reducedMotion: MediaQuery.maybeOf(context)?.disableAnimations ?? false,
+    performanceQuality: FramePerformanceScope.qualityOf(context),
   );
 }

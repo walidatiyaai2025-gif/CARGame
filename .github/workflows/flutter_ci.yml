@@ -94,6 +94,12 @@ jobs:
       - name: Test AST-004 cache policy validator
         run: python3 tool/test_asset_cache_policy.py
 
+      - name: Verify PERF-001 frame performance budget
+        run: python3 tool/verify_frame_performance_budget.py
+
+      - name: Test PERF-001 frame performance validator
+        run: python3 tool/test_frame_performance_budget.py
+
       - name: Restore packages
         shell: bash
         run: |
@@ -169,6 +175,13 @@ jobs:
 
       - name: Test AST-004 asset cache policy
         run: flutter test test/core/assets/game_asset_cache_policy_test.dart
+
+      - name: Test PERF-001 frame performance budget
+        run: >-
+          flutter test
+          test/core/performance/frame_performance_budget_test.dart
+          test/core/performance/frame_performance_scope_test.dart
+          test/core/motion/game_motion_test.dart
 
       - name: Test core screen widget matrix
         run: >-
