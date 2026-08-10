@@ -42,9 +42,11 @@ Turn the existing ENG-007 dashboard/catalog integrity baseline into a dedicated 
 
 ## Verification evidence
 
-- PR: #188; implementation head: `fc560c2668fcf6eef8aded139e13b1aa329a467d`.
+- PR: #188; Issue #187 closed completed after squash merge.
 - Catalog integrity: 19 phases / 192 features; dashboard-equivalent identity matches the authoritative parser; seven dashboard statuses match the catalog vocabulary; dependency graph is acyclic.
 - Focused regressions: existing CI integrity 15/15 PASS; TEST-010 parity regressions 9/9 PASS.
-- Flutter CI #822 / run `31384332431`: all 45 workflow steps PASS, including TEST-007, TEST-010, formatting, Analyze, full Flutter tests, Debug APK build, artifact security and upload.
-- Debug artifact #9061312211: 80,633,603 bytes; SHA-256 `d5d370e02469ba47db3f773e1de88e97293f394df5d904f5f881cf450275028a`.
-- Final merge remains gated on a normal Flutter CI run of the reconciled tracking head.
+- Implementation checkpoint: Flutter CI #822 / run `31384332431` passed all 45 steps.
+- Final clean-head checkpoint: `a7fd43118ec42852984aaf3f2b4f723534fad6b5` passed Flutter CI #827 / run `31385221550` 45/45; debug artifact #9061656030 is 80,633,607 bytes, SHA-256 `04a7620731d146aac4aec44f305d895fd21454472e2126cab46e365ea3a4d0e3`.
+- Merge: PR #188 squash-merged as `d148ac820ee7dcfbacd0f88304a9cf168bc66b41`. Exact-merge main Flutter CI #828 / run `31385904664` passed 45/45; debug artifact #9061890276 is 80,633,607 bytes, SHA-256 `a2684e4697cf2e153ee75f471cc1bfeaaf0feb15638e43a788984c2bc585b173`.
+- Latest verified APK promotion: run `31386487136` passed release build/security/promotion and committed `743356b2a8e66b699feadb09e1c9f5fa60b858a7`. `Last verified APK/CARGame-latest-verified.apk` is 55,878,023 bytes with SHA-256 `7b24570855c3e3f48007f53eac9770cde3a6a9fe0de519abff35fcb36925383f`; ephemeral CI signing, ads disabled, QA/installable evidence only, not production/Play Store signed.
+- TEST-010 is fully VERIFIED, merged, and reconciled. The next workstream must be selected by a fresh dependency-ready scan.
