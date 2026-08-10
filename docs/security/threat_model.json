@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-08-09",
+  "updatedAt": "2026-08-10",
   "securityPrinciples": {
     "clientIsUntrusted": true,
     "privilegedSecretsInClient": false,
     "offlineCoreAvailable": true,
     "diagnosticsRedacted": true,
-    "diagnosticsBuildGateEffective": false,
+    "diagnosticsBuildGateEffective": true,
     "remoteDiagnosticsEnabled": false,
     "cleartextNetworkPermitted": false,
     "adRequestsRespectEnableAds": true,
@@ -94,13 +94,7 @@
       "privacy inventory update before enabling new data flows"
     ]
   },
-  "knownGaps": [
-    {
-      "id": "diagnostics-build-gate",
-      "owner": "ENG-013",
-      "securityImpact": "ENABLE_DIAGNOSTICS is not yet an effective bootstrap gate for the local logger; diagnostics remain redacted and local-only and there is no remote crash-reporting SDK."
-    }
-  ],
+  "knownGaps": [],
   "threats": [
     {
       "id": "SEC-T01",
@@ -180,17 +174,18 @@
     {
       "id": "SEC-T06",
       "category": "diagnostic-privacy",
-      "scenario": "Runtime errors expose tokens, user-specific paths, private keys, or sensitive context, or diagnostics are enabled more broadly than intended.",
+      "scenario": "Runtime errors expose tokens, user-specific paths, private keys, or sensitive context, or diagnostics are enabled or transmitted more broadly than intended.",
       "severity": "high",
       "mitigations": [
-        "Central SecretRedactor runs before memory/file/debug/clipboard/runtime broadcasts",
-        "Diagnostics remain local-only in the current product and no remote crash-reporting SDK is integrated",
-        "PRIV-001 inventories the local diagnostic flow and deletion path",
-        "ENG-013 owns the ineffective ENABLE_DIAGNOSTICS bootstrap gate and any future remote reporting boundary"
+        "Central SecretRedactor runs before local memory/file/debug/clipboard/runtime broadcasts",
+        "ENABLE_DIAGNOSTICS now gates local logger retention/output while the error boundary remains installed",
+        "ENG-013 remote crash payloads are redacted and hard-bounded before any future emitter",
+        "ENABLE_REMOTE_DIAGNOSTICS defaults off and production runtime privacy is deny-all with no emitter or remote processor",
+        "PRIV-001 inventories the local diagnostic flow, deletion path, and explicit absence of remote diagnostic upload"
       ],
-      "residualRisk": "Unexpected sensitive formats may appear in third-party exception text, and the local logger currently installs regardless of ENABLE_DIAGNOSTICS.",
-      "owner": "ENG-010",
-      "followUp": "ENG-013"
+      "residualRisk": "Unexpected sensitive formats may appear in third-party exception text; any future remote processor requires a new privacy/disclosure/security review before enablement.",
+      "owner": "ENG-013",
+      "followUp": "TEST-011"
     },
     {
       "id": "SEC-T07",
@@ -202,7 +197,7 @@
         "PRIV-001 blocks selected unreviewed analytics/cloud/crash SDK additions until inventory review",
         "Secret, privacy, security, and asset CI guards run before build"
       ],
-      "residualRisk": "Automated vulnerability/license scanning and dependency governance remain incomplete until SEC-002 and ENG-006 are verified.",
+      "residualRisk": "Automated scans reduce known drift, but future dependency additions still require review and can introduce newly disclosed risk.",
       "owner": "ENG-006",
       "followUp": "SEC-002"
     },

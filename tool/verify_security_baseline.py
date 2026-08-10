@@ -63,6 +63,7 @@ def main() -> None:
     runtime_parity = {
         "diagnosticsRedactedBeforePersistence": "diagnosticsRedacted",
         "diagnosticsBuildGateEffective": "diagnosticsBuildGateEffective",
+        "remoteDiagnosticsEnabled": "remoteDiagnosticsEnabled",
         "adRequestsFailClosedByConfig": "adRequestsRespectEnableAds",
         "adSdkInitializationConsentGated": "adSdkInitializationConsentGated",
     }
@@ -112,13 +113,14 @@ def main() -> None:
             fail("every trust boundary requires an id")
         if boundary_id in boundary_ids:
             fail(f"duplicate trust boundary id: {boundary_id}")
+        network = boundary.get("trusted")
+        if not isinstance(network, bool):
+            fail(f"trust boundary {boundary_id} must declare trusted as a boolean")
         boundary_ids.add(boundary_id)
         if not isinstance(boundary.get("description"), str) or not boundary[
             "description"
         ].strip():
             fail(f"trust boundary {boundary_id} requires a description")
-        if not isinstance(boundary.get("trusted"), bool):
-            fail(f"trust boundary {boundary_id} must declare trusted as a boolean")
 
     required_boundaries = {
         "mobile-client",
@@ -246,8 +248,14 @@ def main() -> None:
             fail(f"security known gap {gap_id} requires securityImpact")
         security_gap_by_id[gap_id] = gap
 
-    required_security_gap_ids = {"diagnostics-build-gate"}
-    for gap_id in required_security_gap_ids:
+    diagnostics_gate_effective = principles.get("diagnosticsBuildGateEffective") is True
+    if diagnostics_gate_effective:
+        if "diagnostics-build-gate" in privacy_gap_by_id:
+            fail("completed diagnostics-build-gate must be removed from PRIV-001")
+        if "diagnostics-build-gate" in security_gap_by_id:
+            fail("completed diagnostics-build-gate must be removed from security model")
+    else:
+        gap_id = "diagnostics-build-gate"
         privacy_gap = privacy_gap_by_id.get(gap_id)
         security_gap = security_gap_by_id.get(gap_id)
         if privacy_gap is None:
@@ -318,7 +326,10 @@ def main() -> None:
     if principles.get("adSdkInitializationConsentGated") is not True:
         fail("advertising boundary requires consent-gated Mobile Ads initialization")
     diagnostics_threat = threats_by_category["diagnostic-privacy"]
-    if diagnostics_threat.get("followUp") != security_gap_by_id[
+    if diagnostics_gate_effective:
+        if diagnostics_threat.get("followUp") != "TEST-011":
+            fail("closed diagnostics gate must hand residual verification to TEST-011")
+    elif diagnostics_threat.get("followUp") != security_gap_by_id[
         "diagnostics-build-gate"
     ].get("owner"):
         fail("diagnostic threat followUp must match the diagnostics gate owner")

@@ -7,12 +7,24 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | Field | Value |
 |---|---|
 | Current phase | Android RC hardening — issue #79 |
-| Primary feature | None — `ENG-012` analytics event schema and privacy gating is VERIFIED on PR #176. |
-| Completed checkpoint | `ENG-012` versioned analytics schema and fail-closed privacy gate — VERIFIED after Flutter CI #785 / run `31341159553`. |
-| Status | ENG-012 is VERIFIED: schema v1 and the application analytics boundary are source-controlled, production first-party collection remains disabled by build/runtime gates with no emitter/processor/network path, and UMP advertising consent is not reused. |
-| Previous checkpoint | `ENG-011` developer tooling/documentation — VERIFIED and squash-merged via PR #174 as `52d983dc251d3daf839b468d8065a13e849505db`. |
-| Next recommended feature | `ENG-013` Crash reporting and non-fatal diagnostics — P1; ENG-004 is IMPLEMENTED and PRIV-001 is VERIFIED. |
+| Primary feature | None — `ENG-013` crash reporting and non-fatal diagnostics is VERIFIED on PR #178 pending merge. |
+| Completed checkpoint | `ENG-013` privacy-gated crash/non-fatal diagnostics boundary — VERIFIED after Flutter CI #796 / run `31342815876`. |
+| Status | ENG-013 is VERIFIED: local diagnostics obey `ENABLE_DIAGNOSTICS`; remote diagnostics defaults off and remains deny-all/no-emitter in production; crash payloads are redacted, bounded, and correlated to version/build/environment without account/device identifiers. |
+| Previous checkpoint | `ENG-012` analytics schema/privacy gate — VERIFIED and squash-merged via PR #176 as `d09f51d24c9ea6fc5e8e75e0bad6632d727ea9e3`. |
+| Next recommended feature | Run the dependency-ready scan after PR #178 merges; keep a single primary workstream. |
 | Known blocker | `TEST-011` requires real production UMP/privacy-message/regulatory-device verification. `REL-007`/`REL-008` require real production AdMob/signing inputs and a production-signed candidate; final install/upgrade/device smoke requires an Android device or testing track. `TEST-009` also remains dependency-blocked while `PERF-001` is PLANNED. Visual Studio C++ components remain optional for Windows desktop only. |
+
+## ENG-013 crash reporting and non-fatal diagnostics — 2026-08-10
+
+- Issue #177 / PR #178 add schema-v1 `CrashReport`/`CrashReportContext` plus vendor-neutral reporting/privacy ports.
+- `ENABLE_DIAGNOSTICS` now effectively gates local `AppLogger` initialization, retention, persistence, debug output, runtime broadcasts, and clipboard diagnostics while the error boundary remains installed.
+- Flutter, platform, isolate, and explicit non-fatal failures flow through the fail-closed reporting boundary; emitter failures are isolated from startup/gameplay.
+- `ENABLE_REMOTE_DIAGNOSTICS` defaults false. Production runtime privacy is deny-all and no remote crash SDK, emitter, processor, queue, persistence, or network upload path is installed.
+- Crash payloads are secret/path-redacted and hard-bounded before any future emitter and carry only schema/severity/source/version/build/environment/UTC timestamp correlation.
+- `tool/verify_crash_reporting_privacy.py` blocks remote crash SDK/processor drift, network/storage/ads coupling, default-on reporting, missing redaction/bounds, and `pubspec.yaml` version/build correlation drift.
+- Flutter CI #796 / run `31342815876` passed all repository gates including Analyze, focused ENG-013 tests, the full Flutter suite, Debug APK build, artifact security, and upload on head `b7a5851aa0ad028746d0b5631c8bec14f9551847`.
+- Debug artifact #9046424192 is 80,633,604 bytes with SHA-256 `c724866c8b1eef49bcc084221697db299d604215b00c473145b9aac585431276`.
+- Repository-owned ENG-013 acceptance is VERIFIED. Any future remote diagnostics processor remains a separate privacy/security/disclosure decision.
 
 ## ENG-012 analytics schema and privacy gate — 2026-08-10
 

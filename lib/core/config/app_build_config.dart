@@ -110,6 +110,7 @@ final class AppBuildConfig {
     required this.enableDiagnostics,
     required this.enableAds,
     required this.enableAnalytics,
+    required this.enableRemoteDiagnostics,
     required this.adMob,
     required this.adMobPlatform,
   });
@@ -126,6 +127,10 @@ final class AppBuildConfig {
     enableAds: const bool.fromEnvironment('ENABLE_ADS', defaultValue: true),
     enableAnalytics: const bool.fromEnvironment(
       'ENABLE_ANALYTICS',
+      defaultValue: false,
+    ),
+    enableRemoteDiagnostics: const bool.fromEnvironment(
+      'ENABLE_REMOTE_DIAGNOSTICS',
       defaultValue: false,
     ),
     adMobPlatform: Platform.isAndroid
@@ -166,6 +171,7 @@ final class AppBuildConfig {
     required bool enableDiagnostics,
     required bool enableAds,
     bool enableAnalytics = false,
+    bool enableRemoteDiagnostics = false,
     required AdMobUnitIds adMob,
     AdMobPlatform? adMobPlatform,
   }) {
@@ -175,6 +181,7 @@ final class AppBuildConfig {
       enableDiagnostics: enableDiagnostics,
       enableAds: enableAds,
       enableAnalytics: enableAnalytics,
+      enableRemoteDiagnostics: enableRemoteDiagnostics,
       adMob: adMob,
       adMobPlatform: adMobPlatform,
     );
@@ -186,6 +193,7 @@ final class AppBuildConfig {
   final bool enableDiagnostics;
   final bool enableAds;
   final bool enableAnalytics;
+  final bool enableRemoteDiagnostics;
   final AdMobUnitIds adMob;
   final AdMobPlatform? adMobPlatform;
 

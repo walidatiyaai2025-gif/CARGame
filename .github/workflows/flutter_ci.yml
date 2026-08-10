@@ -49,6 +49,9 @@ jobs:
       - name: Verify analytics privacy contract
         run: python3 tool/verify_analytics_privacy.py
 
+      - name: Verify crash reporting privacy contract
+        run: python3 tool/verify_crash_reporting_privacy.py
+
       - name: Verify Play Data Safety disclosures
         run: python3 tool/verify_privacy_disclosures.py
 
@@ -144,6 +147,13 @@ jobs:
           test/core/analytics/privacy_gated_analytics_test.dart
           test/core/config/analytics_build_config_test.dart
           test/bootstrap/analytics_composition_test.dart
+
+      - name: Test crash reporting and diagnostics gates
+        run: >-
+          flutter test
+          test/core/diagnostics/privacy_gated_crash_reporting_test.dart
+          test/core/config/remote_diagnostics_build_config_test.dart
+          test/core/logging/app_logger_gate_test.dart
 
       - name: Test local data controller
         run: flutter test test/core/privacy/local_data_controller_test.dart

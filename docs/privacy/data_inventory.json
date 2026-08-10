@@ -8,7 +8,8 @@
     "adsFailClosedByConfig": true,
     "adRequestsFailClosedByConfig": true,
     "adSdkInitializationConsentGated": true,
-    "diagnosticsBuildGateEffective": false,
+    "diagnosticsBuildGateEffective": true,
+    "remoteDiagnosticsEnabled": false,
     "diagnosticsRedactedBeforePersistence": true,
     "adRequestsConsentGated": true,
     "localDataExportAvailable": true,
@@ -157,11 +158,14 @@
       "processor": "local-device",
       "storage": "application support directory/logs/app_error.log and bounded in-memory entries",
       "network": false,
-      "consent": "local operational diagnostics are not remotely uploaded; the existing ENABLE_DIAGNOSTICS build value is not yet wired to bootstrap logging and ENG-013 owns that future gate",
+      "consent": "local operational diagnostics are build-gated by ENABLE_DIAGNOSTICS and are not remotely uploaded; ENABLE_REMOTE_DIAGNOSTICS is a separate default-off eligibility gate and production has deny-all runtime privacy plus no emitter/processor",
       "retention": "bounded to 300 in-memory entries; file persists locally until AppLogger.clear(), Settings > Privacy local reset, application data removal, or uninstall",
       "deletion": "Settings > Privacy > Delete & reset local data invokes local log clearing; AppLogger.clear(), clear application data, or uninstall are also effective",
       "safeguards": [
-        "SecretRedactor before memory/file/debug output/runtime broadcast/clipboard"
+        "ENABLE_DIAGNOSTICS gates local logger initialization and retention",
+        "SecretRedactor before memory/file/debug output/runtime broadcast/clipboard",
+        "remote crash payload redaction and hard message/stack bounds before any outward emitter",
+        "production remote diagnostics privacy is deny-all and no emitter is installed"
       ],
       "source": "lib/core/logging/app_logger.dart"
     },
@@ -182,13 +186,7 @@
       "source": "lib/core/ads/ad_consent_controller.dart"
     }
   ],
-  "knownGaps": [
-    {
-      "id": "diagnostics-build-gate",
-      "owner": "ENG-013",
-      "description": "ENABLE_DIAGNOSTICS exists in AppBuildConfig but current bootstrap installs the local logger unconditionally; remote reporting remains absent and future diagnostics gating must be explicit."
-    }
-  ],
+  "knownGaps": [],
   "explicitlyAbsent": [
     "account registration",
     "email address collection",
