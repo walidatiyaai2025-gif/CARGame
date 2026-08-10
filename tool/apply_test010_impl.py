@@ -62,5 +62,10 @@ replace_once(
     "| WORLD-006 | World unlock and completion flow | P1 | PLANNED | REW-003, MOT-009 |",
     "| WORLD-006 | World unlock and completion flow | P1 | PLANNED | REW-003 |",
 )
+replace_once(
+    catalog,
+    "| REW-008 | Reward table configuration and probability disclosure | P1 | PLANNED | REW-007, RET-005 |",
+    "| REW-008 | Reward table configuration and probability disclosure | P1 | PLANNED | REW-007 |",
+)
 
 print("Applied TEST-010 parser parity implementation patches")
