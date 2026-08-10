@@ -23,7 +23,7 @@ class AmbientMotionBackground extends StatefulWidget {
 class _AmbientMotionBackgroundState extends State<AmbientMotionBackground>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
-  bool _reducedMotion = false;
+  bool _ambientMotionDisabled = false;
 
   @override
   void initState() {
@@ -37,12 +37,13 @@ class _AmbientMotionBackgroundState extends State<AmbientMotionBackground>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final reducedMotion = GameMotion.of(context).reducedMotion;
-    if (_reducedMotion == reducedMotion && _controller.isAnimating) {
+    final ambientMotionDisabled = !GameMotion.of(context).allowAmbientMotion;
+    if (_ambientMotionDisabled == ambientMotionDisabled &&
+        _controller.isAnimating) {
       return;
     }
-    _reducedMotion = reducedMotion;
-    if (reducedMotion) {
+    _ambientMotionDisabled = ambientMotionDisabled;
+    if (ambientMotionDisabled) {
       _controller
         ..stop()
         ..value = 0;
@@ -67,7 +68,7 @@ class _AmbientMotionBackgroundState extends State<AmbientMotionBackground>
             progress: _controller.value,
             startColor: widget.startColor,
             endColor: widget.endColor,
-            reducedMotion: _reducedMotion,
+            reducedMotion: _ambientMotionDisabled,
           ),
           child: const SizedBox.expand(),
         ),
