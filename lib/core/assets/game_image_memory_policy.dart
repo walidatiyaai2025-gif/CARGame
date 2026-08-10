@@ -129,8 +129,10 @@ final class GameImageMemoryPolicy {
       scale = math.min(scale, math.sqrt(maxDecodedImageBytes / nativeBytes));
     }
 
-    final width = math.max(1, (native.width * scale).round());
-    final height = math.max(1, (native.height * scale).round());
+    // Floor keeps the estimated RGBA footprint on the conservative side of
+    // the configured byte ceiling after floating-point scale calculations.
+    final width = math.max(1, (native.width * scale).floor());
+    final height = math.max(1, (native.height * scale).floor());
     final bytes = width * height * bytesPerPixel;
     return GameImageDecodeTarget(
       width: width,
