@@ -1,0 +1,76 @@
+# PERF-002 — Bounded memory and near-display image decode budget
+
+- Issue: #199
+- Branch: `agent/perf-002-memory-image-budget`
+- State: IN PROGRESS
+- Dependency: AST-004 VERIFIED
+
+## Objective
+
+Bound Flutter image-cache retention and manifest-backed decoded image memory while preserving AST-004 race-safe precache behavior and all gameplay truth.
+
+## 50-task execution contract
+
+### A. Selection and audit
+- [x] T01 Confirm PERF-001 reconciliation is merged on current main.
+- [x] T02 Run a fresh P0 dependency-ready scan.
+- [x] T03 Confirm PERF-002 is the highest ready source-controlled P0.
+- [x] T04 Confirm AST-004 is VERIFIED.
+- [x] T05 Confirm no active PERF-002 issue exists.
+- [x] T06 Confirm no active PERF-002 PR exists.
+- [x] T07 Confirm no active PERF-002 branch exists.
+- [x] T08 Open issue #199.
+- [x] T09 Create `agent/perf-002-memory-image-budget` from current main.
+- [x] T10 Audit `GameAssetView`, manifest bridge, AST-004 cache, bootstrap, and cache tests.
+
+### B. Global and per-image budgets
+- [x] T11 Add immutable `GameImageMemoryPolicy`.
+- [x] T12 Add immutable decoded-target diagnostics.
+- [x] T13 Define an explicit 96-entry Flutter ImageCache ceiling.
+- [x] T14 Define an explicit 48 MiB Flutter ImageCache byte ceiling.
+- [x] T15 Define a 6 MiB estimated decoded RGBA ceiling per manifest image.
+- [x] T16 Define a 1536 px longest-side hard decode cap.
+- [x] T17 Define a 1024 px layout-free precache target.
+- [x] T18 Configure Flutter ImageCache during startup.
+- [x] T19 Keep AST-004 completed-cache entries separately bounded at 24 by default.
+- [x] T20 Keep all budget state local and non-persistent.
+
+### C. Near-display decode sizing
+- [x] T21 Convert logical display size through device pixel ratio.
+- [x] T22 Never upscale beyond authored native dimensions.
+- [x] T23 Preserve source aspect ratio.
+- [x] T24 Implement `contain`/`scaleDown` physical sizing.
+- [x] T25 Implement `cover` physical sizing.
+- [x] T26 Implement fit-width and fit-height physical sizing.
+- [x] T27 Bound fill/none requests without distorting the source target.
+- [x] T28 Fall back safely for absent/invalid layout hints.
+- [x] T29 Enforce longest-side cap before decode.
+- [x] T30 Enforce decoded-byte cap conservatively.
+
+### D. Runtime view and precache integration
+- [x] T31 Pass bounded `cacheWidth`/`cacheHeight` through `GameAssetView`.
+- [x] T32 Use descriptor-native dimensions as sizing authority.
+- [x] T33 Preserve existing visible error/fallback behavior.
+- [x] T34 Preserve existing semantic-label behavior.
+- [x] T35 Make production AST-004 precache resize-aware.
+- [x] T36 Preserve legacy/injected `AssetImage` precache callback compatibility.
+- [x] T37 Preserve legacy/injected `AssetImage` eviction callback compatibility.
+- [x] T38 Evict the matching resized provider in production.
+- [x] T39 Preserve AST-004 LRU/in-flight/failure/invalidation behavior.
+- [x] T40 Keep near-future precache sequential and bounded.
+
+### E. Tests, ownership, CI, and handoff
+- [x] T41 Add global ImageCache ceiling regression.
+- [x] T42 Add DPR/native/no-upsample sizing regressions.
+- [x] T43 Add fit/aspect/hard-cap/byte-cap sizing regressions.
+- [x] T44 Add `GameAssetView` ResizeImage widget regressions.
+- [ ] T45 Add PERF-002 machine ownership/drift validator and regressions.
+- [ ] T46 Add PERF-002 gates to normal Flutter CI and mark tracking IN PROGRESS.
+- [ ] T47 Run formatting, Analyze, PERF-002 focused tests, and AST-004 regressions.
+- [ ] T48 Pass full Flutter suite and TEST-008 coverage floor/target.
+- [ ] T49 Build/security-scan/upload the Debug APK through normal CI.
+- [ ] T50 Merge only after final-head CI is green; run exact-main verification/promotion and reconcile honestly without inventing device RSS/GPU measurements.
+
+## Safety boundary
+
+No gameplay, economy, persistence, ads, consent/privacy, analytics, navigation identity, package versions, asset provenance, or binary asset changes are in scope. Physical-device memory profiling remains separate evidence.
