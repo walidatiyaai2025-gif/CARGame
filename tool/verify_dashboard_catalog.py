@@ -33,7 +33,10 @@ HARDCODED_AGGREGATES = (
         r"COMPLETION_PERCENT|COMPLETION_PERCENTAGE)\b\s*[:=]\s*\d+",
         re.IGNORECASE,
     ),
-    re.compile(r"data-(?:total-features|feature-count|completion-percent)\s*=\s*['\"]\d+", re.IGNORECASE),
+    re.compile(
+        r"data-(?:total-features|feature-count|completion-percent)\s*=\s*['\"]\d+",
+        re.IGNORECASE,
+    ),
 )
 
 STRICT_DASHBOARD_TOKENS = {
@@ -50,7 +53,9 @@ def _cells(line: str) -> tuple[str, ...]:
     return tuple(cell.replace("`", "").strip() for cell in line.split("|")[1:-1])
 
 
-def dashboard_equivalent_identity(text: str) -> tuple[tuple[str, ...], tuple[tuple[str, str], ...]]:
+def dashboard_equivalent_identity(
+    text: str,
+) -> tuple[tuple[str, ...], tuple[tuple[str, str], ...]]:
     """Independently model the dashboard's strict Markdown identity parsing."""
 
     phases: list[str] = []
@@ -88,31 +93,64 @@ def dashboard_equivalent_identity(text: str) -> tuple[tuple[str, ...], tuple[tup
 
 
 def validate_dependency_graph(model: CatalogModel) -> None:
-    graph: dict[str, tuple[str, ...]] = {}
-    for feature in model.features:
-        graph[feature.feature_id] = tuple(DEPENDENCY_ID.findall(feature.dependencies))
+    """Reject self-dependencies and every strongly connected dependency cycle."""
 
-    visiting: list[str] = []
-    visited: set[str] = set()
+    graph: dict[str, tuple[str, ...]] = {
+        feature.feature_id: tuple(DEPENDENCY_ID.findall(feature.dependencies))
+        for feature in model.features
+    }
+    self_dependencies = sorted(
+        feature_id for feature_id, dependencies in graph.items() if feature_id in dependencies
+    )
+    if self_dependencies:
+        raise ContractError(
+            "Self dependency detected: " + ", ".join(self_dependencies)
+        )
 
-    def visit(node: str) -> None:
-        if node in visited:
-            return
-        if node in visiting:
-            start = visiting.index(node)
-            cycle = visiting[start:] + [node]
-            raise ContractError("Dependency cycle detected: " + " -> ".join(cycle))
-        visiting.append(node)
+    index = 0
+    indexes: dict[str, int] = {}
+    lowlinks: dict[str, int] = {}
+    stack: list[str] = []
+    on_stack: set[str] = set()
+    cycles: list[tuple[str, ...]] = []
+
+    def strong_connect(node: str) -> None:
+        nonlocal index
+        indexes[node] = index
+        lowlinks[node] = index
+        index += 1
+        stack.append(node)
+        on_stack.add(node)
+
         for dependency in graph[node]:
-            if dependency == node:
-                raise ContractError(f"Feature {node} depends on itself")
-            if dependency in graph:
-                visit(dependency)
-        visiting.pop()
-        visited.add(node)
+            if dependency not in graph:
+                continue
+            if dependency not in indexes:
+                strong_connect(dependency)
+                lowlinks[node] = min(lowlinks[node], lowlinks[dependency])
+            elif dependency in on_stack:
+                lowlinks[node] = min(lowlinks[node], indexes[dependency])
+
+        if lowlinks[node] != indexes[node]:
+            return
+
+        component: list[str] = []
+        while True:
+            member = stack.pop()
+            on_stack.remove(member)
+            component.append(member)
+            if member == node:
+                break
+        if len(component) > 1:
+            cycles.append(tuple(sorted(component)))
 
     for feature_id in graph:
-        visit(feature_id)
+        if feature_id not in indexes:
+            strong_connect(feature_id)
+
+    if cycles:
+        rendered = "; ".join(" <-> ".join(cycle) for cycle in sorted(cycles))
+        raise ContractError("Dependency cycle detected: " + rendered)
 
 
 def dashboard_status_vocabulary(text: str) -> set[str]:
@@ -157,7 +195,9 @@ def validate_contract(catalog_text: str, dashboard_text: str) -> CatalogModel:
     validate_dashboard_source(dashboard_text)
 
     dashboard_phases, dashboard_features = dashboard_equivalent_identity(catalog_text)
-    authoritative_features = tuple((feature.phase, feature.feature_id) for feature in model.features)
+    authoritative_features = tuple(
+        (feature.phase, feature.feature_id) for feature in model.features
+    )
     if dashboard_phases != model.phases:
         raise ContractError(
             "Dashboard-equivalent phase parsing drifted from authoritative catalog parsing: "
