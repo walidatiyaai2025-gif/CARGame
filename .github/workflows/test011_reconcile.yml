@@ -22,6 +22,20 @@ jobs:
       - name: Apply final TEST-011 evidence
         run: python3 tool/reconcile_test011.py
 
+      - name: Preserve one authoritative external-evidence marker
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('docs/TEST_011_PRIVACY_SECURITY.md')
+          text = path.read_text(encoding='utf-8')
+          old = '- Repository status is IMPLEMENTED. `External UMP regulated-device verification: PENDING` remains authoritative, so TEST-011 MUST NOT be marked VERIFIED from CI-only evidence.'
+          new = '- Repository status is IMPLEMENTED. The external UMP regulated-device verification remains PENDING, so TEST-011 MUST NOT be marked VERIFIED from CI-only evidence.'
+          if text.count(old) != 1:
+              raise SystemExit(f'expected one completion marker, found {text.count(old)}')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
+
       - name: Validate final tracking
         shell: bash
         run: |
