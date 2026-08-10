@@ -7,11 +7,11 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | Field | Value |
 |---|---|
 | Current phase | Android RC hardening — issue #79 |
-| Primary feature | None — `TEST-007` Integration and end-to-end critical path is VERIFIED and merged; run the dependency-ready scan before starting the next single primary workstream. |
+| Primary feature | `TEST-010` Dashboard/catalog parser validation — IN PROGRESS on issue #187 / `agent/test-010-dashboard-catalog-parity`. |
 | Completed checkpoint | `TEST-007` critical path — 50/50 release checkpoints VERIFIED; final-head Flutter CI #816 / run `31380502193` passed all gates on `874fe658456723c5f0455e6c1935bd5b9dada8b5`, and PR #184 squash-merged as `b7f858f9cac6c1a8c5b0d1f9058be599f9ce792c`. |
-| Status | TEST-007 is VERIFIED and on `main`: the deterministic 50-checkpoint offline contract covers first run, guarded navigation, completion/reward idempotency, shop recovery, restart/restore, EN/AR RTL, responsive surfaces, and CI drift protection. |
+| Status | Dependency-ready scan selected TEST-010 as the next source-contained P1 gate; implementation is adding parser parity, dependency-cycle rejection, complete status-vocabulary coverage, and dashboard aggregate-drift protection without touching runtime behavior. |
 | Previous checkpoint | `TEST-003` Core screen widget matrix — VERIFIED by CI #803 and squash-merged via PR #180 as `4ca093a843ab685dfeef8df2c86e3950a13f482f`. |
-| Next recommended feature | Run the catalog dependency-ready scan and select exactly one next workstream; preserve the verified TEST-007 gate in normal Flutter CI. |
+| Next recommended feature | Finish TEST-010 focused validator/regressions, run normal Flutter CI, reconcile evidence, then select the next single dependency-ready workstream. |
 | Known blocker | `TEST-011` requires real production UMP/privacy-message/regulatory-device verification. `REL-007`/`REL-008` require real production AdMob/signing inputs and a production-signed candidate; final install/upgrade/device smoke requires an Android device or testing track. `TEST-009` also remains dependency-blocked while `PERF-001` is PLANNED. Visual Studio C++ components remain optional for Windows desktop only. |
 
 ## TEST-007 critical-path integration contract — 2026-08-10

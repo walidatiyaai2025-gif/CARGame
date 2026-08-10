@@ -300,7 +300,7 @@ Codex must not mark a feature complete merely because UI code exists.
 | TEST-007 | Integration and end-to-end critical path | P0 | VERIFIED | TEST-001, TEST-003 | Issue #181 / PR #184 establish the executable 50-checkpoint release contract for first-run state, Home -> World Map -> Mission Briefing -> Gameplay, completion/result, reward idempotency, shop transaction recovery, restart/restore, EN/AR RTL, representative viewports, offline determinism, and CI drift protection. Implementation CI #810 / run `31379676066` passed the focused contract and full suite; final-head Flutter CI #816 / run `31380502193` passed all 43 steps on `874fe658456723c5f0455e6c1935bd5b9dada8b5`, including Debug APK build, artifact security, and upload. Final PR artifact #9059883319 is 80,633,608 bytes with SHA-256 `76756ff72098c353f676ffd18008e253a2c1532da88208d8f3730b19b92c3e70`. PR #184 squash-merged as `b7f858f9cac6c1a8c5b0d1f9058be599f9ce792c` and Issue #181 closed completed. |
 | TEST-008 | Coverage thresholds and flaky-test policy | P1 | PLANNED | ENG-007 | Coverage targets, retries, quarantine rules, and failure ownership are enforced. |
 | TEST-009 | Device/API compatibility matrix | P0 | PLANNED | ENG-002, PERF-001 | Supported Android API/ABI, phone/tablet, low/mid/high tiers, and physical-device smoke tests are recorded. |
-| TEST-010 | Dashboard/catalog parser validation | P1 | PLANNED | ENG-007 | CI confirms phases A–S, table schema, unique IDs, valid statuses/dependencies, and dashboard rendering. |
+| TEST-010 | Dashboard/catalog parser validation | P1 | IN PROGRESS | ENG-007 | Issue #187 / branch `agent/test-010-dashboard-catalog-parity` are active. Dedicated parser-parity, dependency-cycle, full-status-vocabulary, and no-hard-coded-aggregate CI contracts are being added on top of the VERIFIED ENG-007 integrity baseline. |
 | TEST-011 | Privacy, consent, and security verification | P0 | PLANNED | PRIV-001, SEC-001 | Consent, data deletion, redaction, secret scan, dependency scan, and network policy pass. |
 | TEST-012 | Release candidate smoke and soak tests | P0 | PLANNED | REL-008, TEST-007 | Signed candidate installs/updates, survives repeated sessions, offline/online changes, and backgrounding. |
 
@@ -331,11 +331,11 @@ Codex must not mark a feature complete merely because UI code exists.
 
 ## IN PROGRESS
 
-- None.
+- `TEST-010` Dashboard/catalog parser validation — issue #187; dedicated parity/regression gate is the sole primary workstream.
 
 ## NEXT READY
 
-- Run the dependency-ready scan after PR #184 merges; do not start another primary workstream before the verified TEST-007 checkpoint lands on `main`.
+- None while TEST-010 is IN PROGRESS; preserve TEST-007 and latest-verified-APK gates.
 
 ## BLOCKED
 
