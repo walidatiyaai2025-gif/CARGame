@@ -7,21 +7,23 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | Field | Value |
 |---|---|
 | Current phase | Android RC hardening — issue #79 |
-| Primary feature | `TEST-011` Privacy, consent, and security verification — IN PROGRESS under issue #202 on `agent/test-011-privacy-security-verification`. |
-| Completed checkpoint | `PERF-002` memory and image budget — IMPLEMENTED; PR #200 merged as `5298d70218d8e33d766a54813d423bd7de090d16`, full merged-tree retrigger CI #853 passed, PR #201 merged as `27ddbe3e9d2e20b32e7b89dfc3f56c6c171153cb`, and exact-main Flutter CI #854 passed every normal gate. Physical-device RSS/GPU residency remains unclaimed. |
-| Status | TEST-011 is active: repository-owned UMP request gating, local privacy controls, analytics/diagnostics privacy, redaction, secret/dependency/network-policy checks, and APK security are being consolidated into one mutation-tested release contract. CI cannot satisfy the separate production UMP regulated-region/device evidence. |
-| Previous checkpoint | `TEST-008` coverage thresholds and flaky-test policy — VERIFIED and merged; exact-main Flutter CI #836 passed 310 tests and 88.01% authored-source coverage before AST-004. |
-| Next recommended feature | Finish TEST-011 source-controlled evidence/CI and reconcile as IMPLEMENTED if green; then run a fresh dependency-ready scan. TEST-009 remains blocked on PERF-001 physical-device profiling. |
-| Known blocker | `TEST-011` requires real production UMP/privacy-message/regulatory-device verification. `REL-007`/`REL-008` require real production AdMob/signing inputs and a production-signed candidate; final install/upgrade/device smoke requires an Android device or testing track. `TEST-009` remains dependency-blocked until selected next workstream `PERF-001` is VERIFIED. Visual Studio C++ components remain optional for Windows desktop only. |
+| Primary feature | None — `TEST-011` completed 100/100 source-controlled checkpoints as IMPLEMENTED; `UI3D-007` is selected next but not started. |
+| Completed checkpoint | `TEST-011` privacy, consent, and security verification — IMPLEMENTED; issue #202 / PR #203 completed 100/100 repository checkpoints, PR #203 merged as `eb3f4df464173dab6729bfb6ed4ccf7289747057`, and exact-main Flutter CI #857 / run `31440863970` passed all 60 gates. |
+| Status | TEST-011 repository-owned acceptance is IMPLEMENTED: 17/17 mutation regressions, 38 focused privacy/consent/security tests, 345 full-suite tests, 88.22% authored-source coverage, Debug APK build/security/upload, and exact-main verification are green. External production UMP/privacy-message regulated-region/device evidence remains PENDING, so VERIFIED is intentionally blocked. |
+| Previous checkpoint | `PERF-002` memory and image budget — IMPLEMENTED with final PR CI #852, merged-runtime CI #853, and exact-main CI #854; physical-device RSS/GPU residency remains unclaimed. |
+| Next recommended feature | `UI3D-007` Reduced motion and low-performance visual mode — P1, dependency-ready via MOT-001. Start fresh from current `main`; stale `agent/ui3d-007-world-map-refresh` is reference-only. |
+| Known blocker | `TEST-011` VERIFIED still requires real production AdMob Privacy & messaging/UMP regulated-region/device evidence. `TEST-009` remains blocked on PERF-001 physical-device frame profiling. `REL-007`/`REL-008` require real production AdMob/signing inputs and a production-signed candidate; final install/upgrade/device smoke requires an Android device/testing track. |
 
 ## TEST-011 privacy consent and security verification — 2026-08-11
 
-- Issue #202 owns a 100-checkpoint P0 verification sprint and is the single active source-controlled workstream.
-- Existing Google UMP integration refreshes consent information, handles required forms, exposes live `canRequestAds`, re-opens privacy options from Settings, and keeps first-party analytics consent separate.
-- Mobile Ads initialization plus banner/rewarded/interstitial request paths are fail-closed behind current consent eligibility; revocation disposes app-owned loaded ads and UMP failure does not block offline core play.
-- Existing PRIV-001/PRIV-002/PRIV-003 and SEC-001/SEC-002 controls cover inventory/Data Safety, local export/deletion, redaction, secrets, dependency advisories, trust boundaries, and packaged-artifact security.
-- `docs/TEST_011_PRIVACY_SECURITY.md`, `tool/verify_test_011_privacy_security.py`, and mutation regressions make the combined release assertion executable. Normal Flutter CI also runs a focused consent/privacy/security/local-data matrix.
-- Production AdMob Privacy & messaging configuration and regulated-region/device behavior are explicitly external evidence. TEST-011 may become IMPLEMENTED from repository CI but MUST NOT become VERIFIED while that evidence is pending.
+- Issue #202 / PR #203 complete the 100-checkpoint source-controlled sprint. Repository status is IMPLEMENTED, not VERIFIED.
+- The release contract mechanically protects UMP consent refresh/form handling/live `canRequestAds`, fail-closed Mobile Ads initialization and banner/rewarded/interstitial paths, runtime revocation disposal, Settings privacy options, and offline-core availability.
+- Local export/deletion, analytics/diagnostics privacy isolation, redaction, tracked-secret checks, dependency advisories, network/trust-boundary parity, and packaged APK security remain blocking CI evidence.
+- TEST-011 machine validation passes with 17/17 mutation regressions; the focused Flutter privacy/consent/security matrix passes 38/38.
+- Final PR head `d07dc2a1b84f5f949cf1cf5925b8348c581cb27b` passed Flutter CI #856 / run `31440184413`: 345 Flutter tests, 88.22% authored-source coverage, Debug APK, artifact security and upload. Artifact #9082737774 is 80,650,503 bytes with artifact ZIP SHA-256 `f2e73219019f78fa16f67f56a0cd551ab822f2d2cad52b301b6eddc834800cb7`.
+- PR #203 squash-merged as `eb3f4df464173dab6729bfb6ed4ccf7289747057`. Exact-main Flutter CI #857 / run `31440863970` passed all 60 gates and uploaded artifact #9082985280 (80,650,506 bytes; artifact ZIP SHA-256 `30024ca046038fb7c9ed3b1425d72366830750389bb011a65b4a3b86648ad3ca`).
+- Production AdMob Privacy & messaging/UMP configuration and regulated-region/device observations remain external PENDING evidence. CI success must not promote TEST-011 to VERIFIED.
+- Fresh dependency-ready scan found no higher source-controlled P0 that can be completed without external/device evidence. `UI3D-007` is selected next at P1 via MOT-001; its old world-map branch is 45 commits behind and reference-only.
 
 ## PERF-002 memory and image budget — 2026-08-10
 
