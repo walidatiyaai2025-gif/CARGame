@@ -30,17 +30,14 @@ jobs:
           python3 tool/verify_dashboard_catalog.py
           python3 tool/test_dashboard_catalog.py
 
-      - name: Remove one-shot implementation helpers
-        run: rm -f tool/apply_test010_impl.py .github/workflows/test010_apply_impl.yml
-
-      - name: Commit implementation
+      - name: Commit non-workflow implementation
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add docs/FEATURE_CATALOG.md docs/dashboard/index.html tool/verify_ci_integrity.py tool/test_ci_integrity.py tool/verify_dashboard_catalog.py tool/test_dashboard_catalog.py .github/workflows/flutter_ci.yml tool/apply_test010_impl.py .github/workflows/test010_apply_impl.yml
+          git add docs/FEATURE_CATALOG.md docs/dashboard/index.html tool/verify_ci_integrity.py tool/test_ci_integrity.py tool/verify_dashboard_catalog.py tool/test_dashboard_catalog.py
           if git diff --cached --quiet; then
-            echo "No implementation changes required"
+            echo "No non-workflow implementation changes required"
             exit 0
           fi
-          git commit -m "TEST-010: enforce dashboard catalog parity"
+          git commit -m "TEST-010: enforce dashboard catalog parity contracts"
           git push origin HEAD:agent/test-010-dashboard-catalog-parity
