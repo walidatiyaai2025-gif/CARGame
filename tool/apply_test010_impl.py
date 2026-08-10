@@ -32,8 +32,8 @@ replace_once(
 )
 replace_once(
     verify_ci,
-    '        "Test TEST-007 critical-path validator",\n        "Restore packages",',
-    '        "Test TEST-007 critical-path validator",\n        "Verify TEST-010 dashboard catalog parity",\n        "Test TEST-010 dashboard catalog validator",\n        "Restore packages",',
+    '        "Verify security baseline",\n        "Restore packages",',
+    '        "Verify security baseline",\n        "Verify TEST-010 dashboard catalog parity",\n        "Test TEST-010 dashboard catalog validator",\n        "Restore packages",',
 )
 
 test_ci = ROOT / "tool" / "test_ci_integrity.py"
