@@ -116,7 +116,7 @@ Codex must not mark a feature complete merely because UI code exists.
 | HOME-006 | Shop and progress navigation | P1 | IMPLEMENTED | SHOP-001, PROG-001 | Navigation exists and must adopt shared transitions. |
 | NAV-001 | Navigation guard framework | P0 | IMPLEMENTED | ENG-003 | Double push/pop and result action races are prevented; regression tests remain. |
 | NAV-002 | Unified animated route transitions | P1 | IMPLEMENTED | MOT-004 | Home/app-shell Journey, Shop, Progress, Logs, Settings, and runtime Log Viewer now use `GameNavigator` with stable names and duplicate-push guards; Mission Briefing→Gameplay also uses the shared named route. Result/back-guard regression coverage is present; broader device validation remains in RC-001. |
-| NAV-003 | Deep-link and notification route safety | P2 | PLANNED | NAV-001, RET-008 | External entry opens only allowed destinations and never duplicates navigation. |
+| NAV-003 | Deep-link and notification route safety | P2 | PLANNED | NAV-001 | External entry opens only allowed destinations and never duplicates navigation. |
 | HOME-007 | First-run onboarding and returning-player resume | P1 | PLANNED | GAME-013, ENG-008 | New players receive concise onboarding; returning players resume the correct journey safely. |
 
 # F. Worlds, cities, and level map
@@ -128,7 +128,7 @@ Codex must not mark a feature complete merely because UI code exists.
 | WORLD-003 | Locked/open/completed city states | P1 | IMPLEMENTED | WORLD-001 | States and star progress are visible. |
 | WORLD-004 | 3D city nodes | P1 | IMPLEMENTED | UI3D-002 | Procedural 3D-style nodes exist; production asset integration remains. |
 | WORLD-005 | Boss city presentation | P1 | IMPLEMENTED | WORLD-001 | Every 25th level has boss visual treatment. |
-| WORLD-006 | World unlock and completion flow | P1 | PLANNED | REW-003, MOT-009 | New world opens once with persistent state and animated reveal. |
+| WORLD-006 | World unlock and completion flow | P1 | PLANNED | REW-003 | New world opens once with persistent state and animated reveal. |
 | WORLD-007 | Preserve map scroll position | P2 | PLANNED | WORLD-002 | Returning from gameplay restores the relevant world/city position. |
 | WORLD-008 | World content versioning and migration | P1 | PLANNED | WORLD-001, ENG-008 | Updates can add/rebalance content without invalidating unlocked progress or rewards. |
 
@@ -188,7 +188,7 @@ Codex must not mark a feature complete merely because UI code exists.
 | REW-005 | Next City action | P0 | IMPLEMENTED | NAV-001 | Guarded action returns to updated map without navigation lock; device test remains. |
 | REW-006 | 3D reward animation | P1 | PLANNED | MOT-008, AST-009 | Chest, stars, coins, XP, and boosters animate coherently. |
 | REW-007 | Reward transaction ledger and reconciliation | P0 | VERIFIED | ENG-008, REW-001 | Issue #119 / PR #120 add stable gameplay/daily/mission/heart reward idempotency keys, a bounded completed ledger, a validated absolute-state pending journal, deterministic interruption recovery, durable-ledger-before-memory ordering, and best-effort stale-journal cleanup while preserving legacy saves. PR #120 squash-merged as `b915d95b938d459133a9a8b120f38815178b1852`; Flutter CI #623 passed formatting, Analyze, the full Flutter suite, Debug APK build and artifact upload. Debug artifact #9032765167 is 80,530,583 bytes with SHA-256 `534037a3cdd4fe75d54a53df6452f8188d4c81cdcc859040a51725315f20070b`. |
-| REW-008 | Reward table configuration and probability disclosure | P1 | PLANNED | REW-007, RET-005 | Reward tables are versioned, testable, and odds are disclosed where legally/product required. |
+| REW-008 | Reward table configuration and probability disclosure | P1 | PLANNED | REW-007 | Reward tables are versioned, testable, and odds are disclosed where legally/product required. |
 
 # K. Economy, progress, and shop
 
@@ -281,7 +281,7 @@ Codex must not mark a feature complete merely because UI code exists.
 | PERF-004 | Startup time budget | P0 | IMPLEMENTED | ENG-003 | Main UI opens with defaults when optional services are slow; profiling remains. |
 | PERF-005 | Low-end device mode | P2 | PLANNED | UI3D-007 | Particles, blur, shadows, and simultaneous animations reduce predictably. |
 | PERF-006 | Network and battery efficiency | P1 | PLANNED | ENG-014, RET-007 | Background work, retries, telemetry, ads, and downloads use bounded policies. |
-| PERF-007 | App size and asset delivery budget | P1 | PLANNED | AST-010, REL-008 | APK/AAB size, native libs, fonts, and assets meet documented thresholds. |
+| PERF-007 | App size and asset delivery budget | P1 | PLANNED | AST-010 | APK/AAB size, native libs, fonts, and assets meet documented thresholds. |
 | REL-001 | ADB/device scripts remain dynamic | P0 | VERIFIED | ENG-002 | `tool/verify_dynamic_android_targets.dart` rejects fixed emulator serials, literal AVD arguments/defaults, and fixed `adb -s` targets; Flutter CI #546 passed the dynamic-target gate across 38 scripts on the merged TEST-001 checkpoint. |
 | REL-002 | Kotlin incremental-cache recovery | P0 | IMPLEMENTED | ENG-002 | Shared build repair performs cleanup/retry; multi-machine verification remains. |
 | REL-003 | Runtime resilience and watchdog policy | P1 | PLANNED | ENG-004, ENG-014 | Recoverable failures surface actionable UI/logs without restart loops or data loss. |
@@ -300,7 +300,7 @@ Codex must not mark a feature complete merely because UI code exists.
 | TEST-007 | Integration and end-to-end critical path | P0 | VERIFIED | TEST-001, TEST-003 | Issue #181 / PR #184 establish the executable 50-checkpoint release contract for first-run state, Home -> World Map -> Mission Briefing -> Gameplay, completion/result, reward idempotency, shop transaction recovery, restart/restore, EN/AR RTL, representative viewports, offline determinism, and CI drift protection. Implementation CI #810 / run `31379676066` passed the focused contract and full suite; final-head Flutter CI #816 / run `31380502193` passed all 43 steps on `874fe658456723c5f0455e6c1935bd5b9dada8b5`, including Debug APK build, artifact security, and upload. Final PR artifact #9059883319 is 80,633,608 bytes with SHA-256 `76756ff72098c353f676ffd18008e253a2c1532da88208d8f3730b19b92c3e70`. PR #184 squash-merged as `b7f858f9cac6c1a8c5b0d1f9058be599f9ce792c` and Issue #181 closed completed. |
 | TEST-008 | Coverage thresholds and flaky-test policy | P1 | PLANNED | ENG-007 | Coverage targets, retries, quarantine rules, and failure ownership are enforced. |
 | TEST-009 | Device/API compatibility matrix | P0 | PLANNED | ENG-002, PERF-001 | Supported Android API/ABI, phone/tablet, low/mid/high tiers, and physical-device smoke tests are recorded. |
-| TEST-010 | Dashboard/catalog parser validation | P1 | PLANNED | ENG-007 | CI confirms phases A–S, table schema, unique IDs, valid statuses/dependencies, and dashboard rendering. |
+| TEST-010 | Dashboard/catalog parser validation | P1 | VERIFIED | ENG-007 | Issue #187 / PR #188 add a dedicated dashboard/catalog parity validator plus 9 focused regressions, strict six-column/feature-ID/priority/status parsing, exact seven-status vocabulary parity, acyclic dependency validation, and hard-coded aggregate rejection. The gate exposed and corrected four circular planning edges without changing runtime behavior. Flutter CI #822 / run `31384332431` passed all 45 workflow steps on `fc560c2668fcf6eef8aded139e13b1aa329a467d`, including TEST-007, TEST-010, formatting, Analyze, full Flutter tests, Debug APK build, artifact security, and upload. Debug artifact #9061312211 is 80,633,603 bytes with SHA-256 `d5d370e02469ba47db3f773e1de88e97293f394df5d904f5f881cf450275028a`. |
 | TEST-011 | Privacy, consent, and security verification | P0 | PLANNED | PRIV-001, SEC-001 | Consent, data deletion, redaction, secret scan, dependency scan, and network policy pass. |
 | TEST-012 | Release candidate smoke and soak tests | P0 | PLANNED | REL-008, TEST-007 | Signed candidate installs/updates, survives repeated sessions, offline/online changes, and backgrounding. |
 
@@ -331,11 +331,11 @@ Codex must not mark a feature complete merely because UI code exists.
 
 ## IN PROGRESS
 
-- None.
+- None. TEST-010 is VERIFIED; select exactly one next workstream only after a fresh dependency-ready scan.
 
 ## NEXT READY
 
-- Run the dependency-ready scan after PR #184 merges; do not start another primary workstream before the verified TEST-007 checkpoint lands on `main`.
+- Run the catalog dependency-ready scan and select exactly one next primary workstream; preserve TEST-007, TEST-010, and latest-verified-APK gates.
 
 ## BLOCKED
 
@@ -346,6 +346,7 @@ Codex must not mark a feature complete merely because UI code exists.
 
 ## Recently verified
 
+- `TEST-010` Dashboard/catalog parser validation — issue #187 / PR #188 add strict independent dashboard/catalog parsing parity, complete status-vocabulary coverage, cycle rejection, aggregate-drift protection, and blocking pre-restore CI gates. Flutter CI #822 / run `31384332431` passed all 45 steps on `fc560c2668fcf6eef8aded139e13b1aa329a467d`; artifact #9061312211 is 80,633,603 bytes with SHA-256 `d5d370e02469ba47db3f773e1de88e97293f394df5d904f5f881cf450275028a`.
 - `ENG-011` Developer tooling and documentation — issue #173 / PR #174 establish one canonical developer workflow over the existing supported scripts, replace stale README setup/release guidance, and add a blocking 16-entry-point/current-guidance drift validator with 10 focused regressions. Flutter CI #773 / run `31339612397` passed the new gates, full Flutter tests, Debug APK and artifact security; artifact #9045499219 is 80,619,633 bytes with SHA-256 `2baf734f6a3362837f140cbbd25863c7ea189b15de3ea81d75d5b7dde43e7d5b`.
 - `PRIV-003` User data export/deletion readiness — issue #171 / PR #172 add zero-network schema-versioned JSON export, confirmed local reset across progress/economy/settings/transaction/reward/recovery state and diagnostics, fresh-store rehydration with stale-route removal, source-anchored privacy drift validation, and dedicated controller/Settings CI gates. Flutter CI #768 / run `31338337454` passed all repository gates, full Flutter tests, Debug APK and artifact security; artifact #9045113026 is 80,619,639 bytes with SHA-256 `6c101a90e89053b48836dd48be72b76ceb9290401ae3643310ad46730b653ddf`.
 - `TEST-002` Level generator and solvability tests — issue #143 / PR #144 add one integrated deterministic release contract over the exact 150-level production catalog, combining regeneration parity, structural solvability, quantitative difficulty acceptance, and required boundaries 1/25/26/150. Final current-main Flutter CI #697 / run `31310666540` passed all gates and uploaded artifact #9037363042 (`ef6c18142dc7b1925f131848217ba8db8386f534aaee24becaede3d3ed598a9b`); PR #144 squash-merged as `d9afbb06564a08ee571ed7c9e4784adf99a7c3fe`.

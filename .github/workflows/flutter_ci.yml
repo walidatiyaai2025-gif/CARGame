@@ -76,6 +76,12 @@ jobs:
       - name: Test TEST-007 critical-path validator
         run: python3 tool/test_test_007_critical_path.py
 
+      - name: Verify TEST-010 dashboard catalog parity
+        run: python3 tool/verify_dashboard_catalog.py
+
+      - name: Test TEST-010 dashboard catalog validator
+        run: python3 tool/test_dashboard_catalog.py
+
       - name: Restore packages
         shell: bash
         run: |
