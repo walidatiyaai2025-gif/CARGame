@@ -1,0 +1,157 @@
+#!/usr/bin/env python3
+"""One-shot reconciliation for TEST-003/TEST-007 verified tracking."""
+
+from __future__ import annotations
+
+import re
+from pathlib import Path
+
+
+def replace_once(text: str, old: str, new: str, label: str) -> str:
+    count = text.count(old)
+    if count != 1:
+        raise SystemExit(f"{label}: expected exactly one match, found {count}")
+    return text.replace(old, new, 1)
+
+
+def reconcile_catalog() -> None:
+    path = Path("docs/FEATURE_CATALOG.md")
+    text = path.read_text(encoding="utf-8")
+
+    text = replace_once(
+        text,
+        "| TEST-003 | Core screen widget tests | P1 | IN PROGRESS | UI3D-006 | Issue #179: consolidate the existing Home/World Map/Mission Briefing/Gameplay/Result/Shop responsive coverage into an explicit compact/reference/tablet plus EN/AR widget contract, adding only missing locale/viewport cases and a CI matrix guard. Completing this task unblocks P0 TEST-007. |",
+        "| TEST-003 | Core screen widget tests | P1 | VERIFIED | UI3D-006 | Issue #179 / PR #180 establish the explicit Home/World Map/Mission Briefing/Gameplay/Result/Shop compact/reference/tablet plus EN/AR widget contract and blocking matrix guard. Flutter CI #803 / run `31344139284` passed all gates on head `8d7c48fbde9dceffeb9fb6edb87a02bd941643ab`; debug artifact #9046841743 is 80,633,606 bytes with SHA-256 `f4f2b86d7dae9c44ecaf66042a91321a121356f8bd36f355dc38cf227e69e94f`. PR #180 squash-merged as `4ca093a843ab685dfeef8df2c86e3950a13f482f`, unblocking TEST-007. |",
+        "TEST-003 catalog row",
+    )
+    text = replace_once(
+        text,
+        "| TEST-007 | Integration and end-to-end critical path | P0 | PLANNED | TEST-001, TEST-003 | First run through level completion, reward, shop, restart, and restore passes. |",
+        "| TEST-007 | Integration and end-to-end critical path | P0 | VERIFIED | TEST-001, TEST-003 | Issue #181 / PR #184 add an executable 50-checkpoint release contract for first-run state, Home -> World Map -> Mission Briefing -> Gameplay, completion/result, reward idempotency, shop transaction recovery, restart/restore, EN/AR RTL, representative viewports, offline determinism, and CI drift protection. Flutter CI #810 / run `31379676066` passed the TEST-007 validator, six validator regressions, formatting, Analyze, focused TEST-007, full Flutter suite, Debug APK, artifact security, and upload on implementation head `4882ac1b9449fb399ea3456ce89fa460dcfbcb98`; artifact #9059551183 is 80,633,604 bytes with SHA-256 `283bf954510ac7eec6cb78e36f58995157379b3afe923b2af524003d3a4b415b`. |",
+        "TEST-007 catalog row",
+    )
+
+    text, count = re.subn(
+        r"## IN PROGRESS\n\n- `TEST-003` Core screen widget tests — issue #179;[^\n]*\n",
+        "## IN PROGRESS\n\n- None.\n",
+        text,
+        count=1,
+    )
+    if count != 1:
+        raise SystemExit(f"catalog IN PROGRESS section: expected 1 replacement, got {count}")
+
+    text, count = re.subn(
+        r"## NEXT READY\n\n- None while `TEST-003`[^\n]*\n",
+        "## NEXT READY\n\n- Run the dependency-ready scan after PR #184 merges; do not start another primary workstream before the verified TEST-007 checkpoint lands on `main`.\n",
+        text,
+        count=1,
+    )
+    if count != 1:
+        raise SystemExit(f"catalog NEXT READY section: expected 1 replacement, got {count}")
+
+    path.write_text(text, encoding="utf-8")
+
+
+def reconcile_status() -> None:
+    path = Path("docs/STATUS.md")
+    text = path.read_text(encoding="utf-8")
+
+    replacements = [
+        (
+            "| Primary feature | `TEST-003` Core screen widget tests — IN PROGRESS under Issue #179. |",
+            "| Primary feature | `TEST-007` Integration and end-to-end critical path — VERIFIED on Issue #181 / PR #184 pending merge. |",
+            "STATUS primary feature",
+        ),
+        (
+            "| Completed checkpoint | `ENG-013` privacy-gated crash/non-fatal diagnostics boundary — VERIFIED and squash-merged via PR #178 as `cdf57de2269d8ffb0356ba3ccdfe66dc2bb6e000`; final-head Flutter CI #801 / run `31343310250` was green. |",
+            "| Completed checkpoint | `TEST-007` critical path — 50/50 release checkpoints VERIFIED by Flutter CI #810 / run `31379676066` on implementation head `4882ac1b9449fb399ea3456ce89fa460dcfbcb98`; debug artifact #9059551183 passed artifact-security and upload. |",
+            "STATUS completed checkpoint",
+        ),
+        (
+            "| Status | TEST-003 is IN PROGRESS: preserve existing responsive tests, add the missing real Arabic locale/reference/tablet cases across the six critical screens, and enforce the matrix in CI without duplicating TEST-006 golden or TEST-007 E2E scope. |",
+            "| Status | TEST-007 is VERIFIED at implementation head: the 50-checkpoint deterministic offline contract covers first run, guarded navigation, completion/reward idempotency, shop recovery, restart/restore, EN/AR RTL, responsive surfaces, and CI drift protection; PR #184 remains to be merged. |",
+            "STATUS status row",
+        ),
+        (
+            "| Previous checkpoint | `ENG-013` crash reporting/non-fatal diagnostics — VERIFIED and merged as `cdf57de2269d8ffb0356ba3ccdfe66dc2bb6e000`. |",
+            "| Previous checkpoint | `TEST-003` Core screen widget matrix — VERIFIED by CI #803 and squash-merged via PR #180 as `4ca093a843ab685dfeef8df2c86e3950a13f482f`. |",
+            "STATUS previous checkpoint",
+        ),
+        (
+            "| Next recommended feature | Complete TEST-003; once VERIFIED, P0 `TEST-007` becomes dependency-ready because TEST-001 is already VERIFIED. |",
+            "| Next recommended feature | Merge verified PR #184, then run the catalog dependency-ready scan and select exactly one next workstream. |",
+            "STATUS next feature",
+        ),
+    ]
+    for old, new, label in replacements:
+        text = replace_once(text, old, new, label)
+
+    test007_section = "\n".join(
+        [
+            "## TEST-007 critical-path integration contract — 2026-08-10",
+            "",
+            "- Issue #181 / PR #184 implement exactly 50 named release checkpoints T01..T50 as one deterministic release contract.",
+            "- The executable path covers fresh state, Home, World Map, Mission Briefing, Gameplay, completion/result, authoritative reward/XP, duplicate reward protection, Shop purchase/recovery, restart, and fresh-store restore.",
+            "- EN/LTR and AR/RTL plus compact/reference/tablet surfaces are included; the test uses in-memory/local persistence and introduces no live network dependency, production identifier, balance change, or new package.",
+            "- `tool/verify_test_007_critical_path.py` requires T01..T50 exactly once, production journey/state anchors, the offline boundary, and blocking CI execution; six focused Python regressions protect the validator itself.",
+            "- Flutter CI #810 / run `31379676066` passed all repository gates including formatting, Analyze, core screen matrix, focused TEST-007, full Flutter suite, Debug APK build, artifact security, and upload on implementation head `4882ac1b9449fb399ea3456ce89fa460dcfbcb98`.",
+            "- Debug artifact #9059551183 is 80,633,604 bytes with SHA-256 `283bf954510ac7eec6cb78e36f58995157379b3afe923b2af524003d3a4b415b`.",
+            "- Repository-owned TEST-007 acceptance is VERIFIED; PR #184 remains the only merge step before this checkpoint lands on `main`.",
+            "",
+        ]
+    )
+    marker = "## TEST-003 core screen widget matrix — 2026-08-10\n"
+    if marker not in text:
+        raise SystemExit("STATUS TEST-003 section marker not found")
+    text = text.replace(marker, test007_section + "\n" + marker, 1)
+
+    start = text.index("## TEST-003 core screen widget matrix — 2026-08-10")
+    end = text.index(
+        "\n## ENG-013 crash reporting and non-fatal diagnostics — 2026-08-10",
+        start,
+    )
+    verified_test003 = "\n".join(
+        [
+            "## TEST-003 core screen widget matrix — 2026-08-10",
+            "",
+            "- Issue #179 / PR #180 are completed and merged; the explicit release matrix covers Home, World Map, Mission Briefing, Gameplay, Result, and Shop across compact/reference/tablet classes and EN/AR behavior.",
+            "- Missing locale/viewport gaps were closed without changing production UI behavior, adding golden snapshots, or introducing network dependencies.",
+            "- `tool/verify_core_screen_widget_matrix.py` is a blocking CI guard for the six screen families and compact/reference/tablet plus EN/AR anchors.",
+            "- Flutter CI #803 / run `31344139284` passed formatting, Analyze, focused matrix tests, full Flutter suite, Debug APK, privacy/security/dependency/catalog gates, artifact security, and upload on head `8d7c48fbde9dceffeb9fb6edb87a02bd941643ab`.",
+            "- Debug artifact #9046841743 is 80,633,606 bytes with SHA-256 `f4f2b86d7dae9c44ecaf66042a91321a121356f8bd36f355dc38cf227e69e94f`.",
+            "- PR #180 squash-merged as `4ca093a843ab685dfeef8df2c86e3950a13f482f`; TEST-003 is VERIFIED and its dependency on P0 TEST-007 is satisfied.",
+        ]
+    )
+    text = text[:start] + verified_test003 + text[end:]
+    path.write_text(text, encoding="utf-8")
+
+
+def reconcile_test003_work() -> None:
+    path = Path("docs/work/TEST-003.md")
+    text = path.read_text(encoding="utf-8")
+    text, count = re.subn(
+        r"## Current checkpoint\n\n`IN PROGRESS`[^\n]*",
+        "## Current checkpoint\n\n`VERIFIED` — Issue #179 / PR #180 completed the explicit compact/reference/tablet plus EN/AR matrix and blocking CI guard without production UI redesign, golden snapshots, or live network dependency.",
+        text,
+        count=1,
+    )
+    if count != 1:
+        raise SystemExit(f"TEST-003 checkpoint section: expected 1 replacement, got {count}")
+    text = replace_once(
+        text,
+        "## Verification\n\nPending implementation and GitHub Actions verification.",
+        "## Verification\n\nFlutter CI #803 / run `31344139284` passed the matrix validator, formatting, Analyze, focused TEST-003 suite, full Flutter suite, Debug APK build, privacy/security/dependency/catalog gates, artifact security, and upload on head `8d7c48fbde9dceffeb9fb6edb87a02bd941643ab`. Debug artifact #9046841743 is 80,633,606 bytes with SHA-256 `f4f2b86d7dae9c44ecaf66042a91321a121356f8bd36f355dc38cf227e69e94f`. PR #180 squash-merged to `main` as `4ca093a843ab685dfeef8df2c86e3950a13f482f`; TEST-003 is VERIFIED and TEST-007 is dependency-ready.",
+        "TEST-003 work verification",
+    )
+    path.write_text(text, encoding="utf-8")
+
+
+def main() -> None:
+    reconcile_catalog()
+    reconcile_status()
+    reconcile_test003_work()
+    print("TEST-003/TEST-007 verified tracking reconciliation complete.")
+
+
+if __name__ == "__main__":
+    main()
