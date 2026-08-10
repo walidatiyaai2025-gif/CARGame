@@ -1,0 +1,141 @@
+name: AST-004 Main Reconcile
+
+on:
+  push:
+    branches:
+      - agent/ast-004-cache-policy
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout AST-004 branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/ast-004-cache-policy
+          fetch-depth: 0
+
+      - name: Merge current main and resolve tracking intentionally
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git fetch origin main
+
+          set +e
+          git merge --no-ff --no-commit origin/main
+          merge_rc=$?
+          set -e
+
+          if (( merge_rc != 0 )); then
+            mapfile -t unresolved < <(git diff --name-only --diff-filter=U)
+            printf 'Merge conflicts: %s\n' "${unresolved[*]:-none}"
+            for path in "${unresolved[@]}"; do
+              case "$path" in
+                docs/FEATURE_CATALOG.md|docs/STATUS.md)
+                  git checkout --ours -- "$path"
+                  ;;
+                docs/work/TEST-008.md)
+                  git checkout --theirs -- "$path"
+                  ;;
+                *)
+                  echo "Unexpected merge conflict: $path" >&2
+                  exit 1
+                  ;;
+              esac
+            done
+          fi
+
+          python3 - <<'PY'
+          from pathlib import Path
+          import subprocess
+
+          def main_text(path: str) -> str:
+              return subprocess.check_output(
+                  ['git', 'show', f'origin/main:{path}'], text=True, encoding='utf-8'
+              )
+
+          # Preserve AST-004 as the active primary workstream, but carry forward
+          # the authoritative final TEST-008 row + recently-verified promotion evidence.
+          catalog_path = Path('docs/FEATURE_CATALOG.md')
+          catalog = catalog_path.read_text(encoding='utf-8')
+          main_catalog = main_text('docs/FEATURE_CATALOG.md')
+          main_test008_row = next(
+              line for line in main_catalog.splitlines()
+              if line.startswith('| TEST-008 |')
+          )
+          lines = catalog.splitlines()
+          replaced = 0
+          for i, line in enumerate(lines):
+              if line.startswith('| TEST-008 |'):
+                  lines[i] = main_test008_row
+                  replaced += 1
+          if replaced != 1:
+              raise SystemExit(f'expected one TEST-008 catalog row, found {replaced}')
+          catalog = '\n'.join(lines) + ('\n' if catalog.endswith('\n') else '')
+
+          main_recent = next(
+              line for line in main_catalog.splitlines()
+              if line.startswith('- `TEST-008` Coverage thresholds and flaky-test policy — issue #190 / PR #191 completed the 50-checkpoint quality sprint.')
+          )
+          if main_recent not in catalog:
+              marker = '## Recently verified\n\n'
+              if catalog.count(marker) != 1:
+                  raise SystemExit('Recently verified marker missing or duplicated')
+              catalog = catalog.replace(marker, marker + main_recent + '\n', 1)
+          catalog_path.write_text(catalog, encoding='utf-8')
+
+          # Keep AST-004 current-work fields, but replace the TEST-008 evidence section
+          # with the exact final-main/promotion section from reconciled main.
+          status_path = Path('docs/STATUS.md')
+          status = status_path.read_text(encoding='utf-8')
+          main_status = main_text('docs/STATUS.md')
+          start = '## TEST-008 coverage thresholds and flaky-test policy — 2026-08-10\n'
+          end = '## TEST-010 dashboard/catalog parser validation — 2026-08-10\n'
+          if status.count(start) != 1 or status.count(end) != 1:
+              raise SystemExit('AST status TEST-008/TEST-010 anchors invalid')
+          if main_status.count(start) != 1 or main_status.count(end) != 1:
+              raise SystemExit('main status TEST-008/TEST-010 anchors invalid')
+          main_section = start + main_status.split(start, 1)[1].split(end, 1)[0]
+          before = status.split(start, 1)[0]
+          after = status.split(end, 1)[1]
+          status_path.write_text(before + main_section + end + after, encoding='utf-8')
+          PY
+
+          # TEST-008 work log should be byte-for-byte the reconciled main version.
+          git checkout origin/main -- docs/work/TEST-008.md
+
+          if git diff --name-only --diff-filter=U | grep -q .; then
+            echo 'Unresolved conflicts remain' >&2
+            git diff --name-only --diff-filter=U >&2
+            exit 1
+          fi
+
+          git add docs/FEATURE_CATALOG.md docs/STATUS.md docs/work/TEST-008.md
+
+      - name: Validate reconciled contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tool/verify_asset_cache_policy.py
+          python3 tool/test_asset_cache_policy.py
+          python3 tool/verify_test_quality.py
+          python3 tool/test_test_quality.py
+          python3 tool/verify_dashboard_catalog.py
+          python3 tool/test_dashboard_catalog.py
+          python3 tool/verify_ci_integrity.py
+          python3 tool/test_ci_integrity.py
+          git diff --check
+
+      - name: Commit merge reconciliation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git status --short
+          git commit -m "AST-004: reconcile with verified TEST-008 main"
+          git push origin HEAD:agent/ast-004-cache-policy
