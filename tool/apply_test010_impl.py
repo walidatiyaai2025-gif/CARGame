@@ -67,5 +67,10 @@ replace_once(
     "| REW-008 | Reward table configuration and probability disclosure | P1 | PLANNED | REW-007, RET-005 |",
     "| REW-008 | Reward table configuration and probability disclosure | P1 | PLANNED | REW-007 |",
 )
+replace_once(
+    catalog,
+    "| PERF-007 | App size and asset delivery budget | P1 | PLANNED | AST-010, REL-008 |",
+    "| PERF-007 | App size and asset delivery budget | P1 | PLANNED | AST-010 |",
+)
 
 print("Applied TEST-010 parser parity implementation patches")
