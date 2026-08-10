@@ -13,14 +13,17 @@ void main() {
     service.dispose();
   });
 
-  test('AdService refuses interstitial operations when consent gate is closed', () {
-    final service = AdService(requestGate: _Gate(false));
+  test(
+    'AdService refuses interstitial operations when consent gate is closed',
+    () {
+      final service = AdService(requestGate: _Gate(false));
 
-    expect(() => service.showInterstitial(), returnsNormally);
-    expect(() => service.preload(), returnsNormally);
+      expect(() => service.showInterstitial(), returnsNormally);
+      expect(() => service.preload(), returnsNormally);
 
-    service.dispose();
-  });
+      service.dispose();
+    },
+  );
 }
 
 class _Gate implements AdRequestGate {
