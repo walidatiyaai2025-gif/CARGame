@@ -89,7 +89,8 @@ class _FramePerformanceScopeState extends State<FramePerformanceScope> {
   }
 }
 
-class _FramePerformanceInherited extends InheritedNotifier<FramePerformanceController> {
+class _FramePerformanceInherited
+    extends InheritedNotifier<FramePerformanceController> {
   const _FramePerformanceInherited({
     required this.controller,
     required super.child,

@@ -81,9 +81,7 @@ class FramePerformanceSnapshot {
 }
 
 class FramePerformanceController extends ChangeNotifier {
-  FramePerformanceController({
-    this.policy = FramePerformancePolicy.mobile60Hz,
-  });
+  FramePerformanceController({this.policy = FramePerformancePolicy.mobile60Hz});
 
   final FramePerformancePolicy policy;
   final ListQueue<Duration> _samples = ListQueue<Duration>();

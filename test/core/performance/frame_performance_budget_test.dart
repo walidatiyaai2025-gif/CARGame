@@ -7,7 +7,10 @@ void main() {
       const policy = FramePerformancePolicy.mobile60Hz;
 
       expect(policy.targetFps, 60);
-      expect(policy.targetFrameBudget.inMicroseconds, inInclusiveRange(16666, 16667));
+      expect(
+        policy.targetFrameBudget.inMicroseconds,
+        inInclusiveRange(16666, 16667),
+      );
       expect(policy.jankFrameBudget, const Duration(milliseconds: 24));
       expect(policy.severeFrameBudget, const Duration(milliseconds: 34));
     });

@@ -46,7 +46,9 @@ void main() {
     expect(profile.effectsScale, .65);
   });
 
-  testWidgets('system reduced motion wins over adaptive quality', (tester) async {
+  testWidgets('system reduced motion wins over adaptive quality', (
+    tester,
+  ) async {
     const policy = FramePerformancePolicy(
       windowSize: 5,
       minimumSamples: 5,
