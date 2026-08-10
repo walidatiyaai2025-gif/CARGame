@@ -2,7 +2,7 @@
 
 - Issue: #202
 - Branch: `agent/test-011-privacy-security-verification`
-- State: IN PROGRESS
+- State: IMPLEMENTED
 - Dependencies: PRIV-001 VERIFIED, SEC-001 VERIFIED
 - Verification ceiling: IMPLEMENTED until production UMP/privacy-message regulated-region/device evidence exists.
 
@@ -115,23 +115,33 @@ Make every repository-owned privacy, consent, local-data, diagnostics, secret, d
 - [x] T084 Preserve TEST-008 coverage/flaky policy gates.
 - [x] T085 Preserve TEST-010 dashboard/catalog parity gates.
 - [x] T086 Preserve AST-004/PERF-001/PERF-002 gates.
-- [ ] T087 Run formatting and whitespace validation.
-- [ ] T088 Run Flutter Analyze.
-- [ ] T089 Run focused privacy/consent/security/local-data tests.
-- [ ] T090 Run the complete Flutter test suite and coverage threshold.
+- [x] T087 Run formatting and whitespace validation.
+- [x] T088 Run Flutter Analyze.
+- [x] T089 Run focused privacy/consent/security/local-data tests.
+- [x] T090 Run the complete Flutter test suite and coverage threshold.
 
 ### J. Build, merge, and honest release-state reconciliation
-- [ ] T091 Build the Debug APK in normal CI.
-- [ ] T092 Pass packaged APK artifact-security scanning.
-- [ ] T093 Upload the CI Debug APK artifact.
-- [ ] T094 Record final-head CI run/test/coverage/artifact evidence.
-- [ ] T095 Keep TEST-011 IMPLEMENTED rather than VERIFIED while real UMP regulated-device evidence is absent.
-- [ ] T096 Merge only with a green final PR head and no unresolved source-controlled blocker.
-- [ ] T097 Run/review exact-main CI after merge.
-- [ ] T098 Reconcile FEATURE_CATALOG/STATUS/work evidence on main.
-- [ ] T099 Record the precise external steps still required for TEST-011 VERIFIED status.
-- [ ] T100 Run a fresh dependency-ready scan and select exactly one next source-controlled workstream.
+- [x] T091 Build the Debug APK in normal CI.
+- [x] T092 Pass packaged APK artifact-security scanning.
+- [x] T093 Upload the CI Debug APK artifact.
+- [x] T094 Record final-head CI run/test/coverage/artifact evidence.
+- [x] T095 Keep TEST-011 IMPLEMENTED rather than VERIFIED while real UMP regulated-device evidence is absent.
+- [x] T096 Merge only with a green final PR head and no unresolved source-controlled blocker.
+- [x] T097 Run/review exact-main CI after merge.
+- [x] T098 Reconcile FEATURE_CATALOG/STATUS/work evidence on main.
+- [x] T099 Record the precise external steps still required for TEST-011 VERIFIED status.
+- [x] T100 Run a fresh dependency-ready scan and select exactly one next source-controlled workstream.
 
 ## Safety boundary
 
 No production UMP/privacy-message configuration, production AdMob IDs, credentials, production signing evidence, regulated-region observations, or physical-device claims may be invented. Repository CI may complete source-owned acceptance and move TEST-011 to IMPLEMENTED, but VERIFIED requires the external/device evidence in `docs/TEST_011_PRIVACY_SECURITY.md`.
+
+
+## Final source-controlled completion evidence
+
+- Final PR head `d07dc2a1b84f5f949cf1cf5925b8348c581cb27b` passed Flutter CI #856 / run `31440184413`: formatting/whitespace, Analyze, TEST-011 validator, 17/17 mutation regressions, focused TEST-011 matrix 38/38, full Flutter suite 345/345, authored-source coverage 5,840 / 6,620 = 88.22%, Debug APK build, packaged-artifact security and upload.
+- PR artifact #9082737774 is 80,650,503 bytes with artifact ZIP SHA-256 `f2e73219019f78fa16f67f56a0cd551ab822f2d2cad52b301b6eddc834800cb7`.
+- PR #203 squash-merged to `main` as `eb3f4df464173dab6729bfb6ed4ccf7289747057`.
+- Exact-main Flutter CI #857 / run `31440863970` passed every one of the 60 workflow gates, including TEST-011 validator/mutations/focused matrix, full suite, coverage, Debug APK, artifact security and upload. Main artifact #9082985280 is 80,650,506 bytes with artifact ZIP SHA-256 `30024ca046038fb7c9ed3b1425d72366830750389bb011a65b4a3b86648ad3ca`.
+- T001-T100 are complete for the repository-owned sprint. TEST-011 remains IMPLEMENTED because production AdMob Privacy & messaging/UMP regulated-region/device verification is an explicit external evidence boundary and remains PENDING.
+- T100 fresh dependency scan selects P1 `UI3D-007` Reduced motion and low-performance visual mode as the next source-controlled workstream. It must start from current `main`; stale `agent/ui3d-007-world-map-refresh` is 45 commits behind and reference-only.
