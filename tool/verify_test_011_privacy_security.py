@@ -98,7 +98,14 @@ def validate(root: Path = ROOT) -> None:
         ("Privacy/ads are optional and must never block offline play", "offline consent failure posture"),
     ):
         _require(main, needle, label)
-    if main.find("setState(() => _ready = true)") > main.find("unawaited(_refreshConsentAndInitializeAds())"):
+    bootstrap_start = main.find("Future<void> _bootstrap() async {")
+    bootstrap_end = main.find("\n  Future<void> _runOptionalStartupTask", bootstrap_start)
+    if bootstrap_start < 0 or bootstrap_end < 0:
+        raise ValidationError("cannot isolate BootstrapApp._bootstrap for startup-order validation")
+    bootstrap_body = main[bootstrap_start:bootstrap_end]
+    ready_index = bootstrap_body.find("setState(() => _ready = true)")
+    consent_index = bootstrap_body.find("unawaited(_refreshConsentAndInitializeAds())")
+    if ready_index < 0 or consent_index < 0 or ready_index > consent_index:
         raise ValidationError("consent/ad startup moved before offline core readiness")
 
     consent_tests = _read(root, "test/core/ads/ad_consent_controller_test.dart")
