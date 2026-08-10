@@ -66,11 +66,21 @@ Bound Flutter image-cache retention and manifest-backed decoded image memory whi
 - [x] T44 Add `GameAssetView` ResizeImage widget regressions.
 - [x] T45 Add PERF-002 machine ownership/drift validator and regressions.
 - [x] T46 Add PERF-002 gates to normal Flutter CI and mark tracking IN PROGRESS.
-- [ ] T47 Run formatting, Analyze, PERF-002 focused tests, and AST-004 regressions.
-- [ ] T48 Pass full Flutter suite and TEST-008 coverage floor/target.
-- [ ] T49 Build/security-scan/upload the Debug APK through normal CI.
+- [x] T47 Run formatting, Analyze, PERF-002 focused tests, and AST-004 regressions.
+- [x] T48 Pass full Flutter suite and TEST-008 coverage floor/target.
+- [x] T49 Build/security-scan/upload the Debug APK through normal Flutter CI.
 - [ ] T50 Merge only after final-head CI is green; run exact-main verification/promotion and reconcile honestly without inventing device RSS/GPU measurements.
 
 ## Safety boundary
 
 No gameplay, economy, persistence, ads, consent/privacy, analytics, navigation identity, package versions, asset provenance, or binary asset changes are in scope. Physical-device memory profiling remains separate evidence.
+
+## Clean PR verification evidence
+
+- Clean implementation head `2aac141babbd3bc170c831fc4fac30b7e3357fba` passed Flutter CI #851 / run `31419243682` end-to-end.
+- PERF-002 machine ownership validation passed with 9/9 focused validator regressions; the focused memory/view/AST-004 Flutter suite passed 26/26.
+- Changed-Dart formatting, whitespace integrity, and `flutter analyze --no-fatal-infos --no-fatal-warnings` passed.
+- Full Flutter suite passed 344/344 tests. Authored-source coverage is 5,838 / 6,620 = 88.19%, above the TEST-008 35% floor and 60% target.
+- Debug APK build and packaged-artifact security passed. Artifact #9074950206 is 80,650,504 bytes with artifact ZIP SHA-256 `760003d5c5cca8c151c15a8aaf562f946aad803cc231df31c64bab78976a43c1`.
+- TEST-007, TEST-008, TEST-010, AST-004, PERF-001, privacy/security/dependency, dashboard/catalog, asset-pipeline, full coverage and Debug APK gates all remained green.
+- The next gate is a full normal-CI run on this evidence-bearing final PR head before merge. Physical-device process RSS/GPU residency is still deliberately not claimed.
