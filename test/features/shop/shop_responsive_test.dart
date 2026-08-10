@@ -1,5 +1,6 @@
 import 'package:cargo_sort_game/core/storage/progress_store.dart';
 import 'package:cargo_sort_game/features/shop/shop_screen.dart';
+import 'package:cargo_sort_game/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
@@ -16,8 +17,8 @@ Future<ProgressStore> _store() async {
 Future<void> _pumpShop(
   WidgetTester tester, {
   required Size size,
+  Locale locale = const Locale('en'),
   TextScaler textScaler = TextScaler.noScaling,
-  TextDirection textDirection = TextDirection.ltr,
   EdgeInsets padding = EdgeInsets.zero,
 }) async {
   await tester.binding.setSurfaceSize(size);
@@ -28,17 +29,17 @@ Future<void> _pumpShop(
 
   await tester.pumpWidget(
     MaterialApp(
-      home: Directionality(
-        textDirection: textDirection,
-        child: MediaQuery(
-          data: MediaQueryData(
-            size: size,
-            textScaler: textScaler,
-            padding: padding,
-            viewPadding: padding,
-          ),
-          child: ShopScreen(store: store),
+      locale: locale,
+      supportedLocales: AppLocalizations.supportedLocales,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      home: MediaQuery(
+        data: MediaQueryData(
+          size: size,
+          textScaler: textScaler,
+          padding: padding,
+          viewPadding: padding,
         ),
+        child: ShopScreen(store: store),
       ),
     ),
   );
@@ -81,16 +82,21 @@ void main() {
     expect(find.text('Visual Themes'), findsOneWidget);
   });
 
-  testWidgets('shop remains overflow-free in RTL on a tall phone', (
+  testWidgets('shop derives RTL from the Arabic locale on a tall phone', (
     tester,
   ) async {
     await _pumpShop(
       tester,
       size: const Size(412, 915),
-      textDirection: TextDirection.rtl,
+      locale: const Locale('ar'),
     );
 
     expect(tester.takeException(), isNull);
+    expect(find.byType(ShopScreen), findsOneWidget);
+    expect(
+      Directionality.of(tester.element(find.byType(ShopScreen))),
+      TextDirection.rtl,
+    );
     expect(find.byType(ListView), findsOneWidget);
 
     await tester.drag(find.byType(ListView), const Offset(0, -1400));
