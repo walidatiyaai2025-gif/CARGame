@@ -232,6 +232,19 @@ A function is not done until all applicable conditions are met:
 - Next/Retry actions must use navigation guards.
 - Restarting a level must not re-grant consumed loadout boosters.
 
+## Latest verified APK retention
+
+The root folder `Last verified APK/` is the stable handoff location for the newest successfully verified Android release-mode APK from `main`.
+
+- `.github/workflows/latest_verified_apk.yml` is the only automation allowed to replace `Last verified APK/CARGame-latest-verified.apk` and `Last verified APK/LATEST.txt`.
+- Promotion may happen only after the source `main` commit completes `Flutter CI` successfully and the promotion workflow passes dependency advisory checks, release-input preflight, release APK compilation, and packaged-artifact security scanning.
+- A failed, cancelled, or stale run must leave the previous verified APK untouched.
+- `LATEST.txt` must identify the source commit, verification/promotion workflow runs, UTC generation time, byte size, SHA-256 checksum, signing mode, runtime-ad mode, and distribution status.
+- Never manually overwrite the retained APK or its generated metadata.
+- The retained APK is installable QA/release-mode evidence with ephemeral CI signing and runtime ads disabled. It is not a production/Play Store signed release.
+- `REL-007` must remain incomplete until real production signing plus install, launch, upgrade, and device smoke acceptance are verified.
+- Changes to CI, Android build configuration, signing, release scripts, or artifact security must preserve this retention contract.
+
 ## Required verification
 
 After every code task, run:
