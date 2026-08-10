@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "coverage": {
+    "minimum_line_percent": 35.0,
+    "target_line_percent": 60.0,
+    "include_path_prefixes": [
+      "lib/"
+    ],
+    "exclude_path_prefixes": [
+      "lib/l10n/"
+    ]
+  },
+  "flaky_tests": {
+    "default_retry_count": 0,
+    "max_quarantine_retry_count": 1,
+    "max_quarantine_days": 14,
+    "quarantines": []
+  }
+}
