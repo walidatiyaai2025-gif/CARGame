@@ -1,0 +1,47 @@
+name: AST-004 Main Reconcile
+
+on:
+  push:
+    branches:
+      - agent/ast-004-cache-policy
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/ast-004-cache-policy
+          fetch-depth: 0
+
+      - name: Merge current main
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git fetch origin main
+          git merge --no-edit origin/main
+
+      - name: Validate reconciled branch
+        run: |
+          python3 tool/verify_asset_cache_policy.py
+          python3 tool/test_asset_cache_policy.py
+          python3 tool/verify_dashboard_catalog.py
+          python3 tool/verify_ci_integrity.py
+          python3 tool/verify_test_quality.py
+          git diff --check
+
+      - name: Remove helper and push
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/ast004_main_reconcile.yml
+          git add .github/workflows/ast004_main_reconcile.yml
+          git commit -m "AST-004: finish main reconciliation"
+          git push origin HEAD:agent/ast-004-cache-policy
