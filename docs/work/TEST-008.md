@@ -2,7 +2,7 @@
 
 - Issue: #190
 - Branch: `agent/test-008-coverage-flaky-policy`
-- State: IN PROGRESS — implementation CI green; final merge/reconciliation pending
+- State: VERIFIED
 - Dependency: ENG-007 VERIFIED
 
 ## Objective
@@ -60,7 +60,7 @@ Make coverage and flaky-test handling explicit, versioned, and enforceable witho
 - [x] T47 Run the focused TEST-008 suite locally: 30/30 PASS.
 - [x] T48 Open and review TEST-008 pull request #191 against `main`.
 - [x] T49 Pass normal Flutter CI including Analyze, full tests, Debug APK, artifact security, and upload.
-- [ ] T50 Reconcile catalog/status with exact CI evidence, merge, and close issue #190.
+- [x] T50 Reconcile catalog/status with exact CI evidence, merge, and close issue #190.
 
 ## Policy summary
 
@@ -92,3 +92,10 @@ A synthetic 34% authored-line report is rejected below the 35% floor. Absolute G
 - TEST-007, TEST-010, privacy, security, dependency, formatting, whitespace, Analyze, and asset gates all remained green.
 
 No production gameplay, economy, persistence, navigation, ads, privacy, signing, package, or asset behavior is intentionally changed by TEST-008.
+
+## Exact-main verification evidence
+
+- PR #191 squash-merged as `87ab162c1fe1a73b962dd98370ac04aee7d15b90`; issue #190 is closed completed.
+- Flutter CI #836 / run `31406357471`: all gates PASSED on the exact merge SHA.
+- Full Flutter suite: 310 tests PASSED; authored-source coverage: 5,584 / 6,345 = 88.01%.
+- Debug artifact #9070055072: 80,633,605 bytes; SHA-256 `5b66f915d19184feda6ca2a061e73fdaaa6abed4ac6cc9b2c2002c3c33e9a476`.
