@@ -70,52 +70,48 @@ jobs:
           marker = '## TEST-010 dashboard/catalog parser validation — 2026-08-10\n'
           if text.count(marker) != 1:
               raise SystemExit('STATUS TEST-010 section anchor missing or duplicated')
-          section = '''## TEST-008 coverage thresholds and flaky-test policy — 2026-08-10
-
-- Issue #190 / branch `agent/test-008-coverage-flaky-policy` are the single active primary workstream after TEST-010.
-- `tool/test_quality_policy.json` defines a 35% enforced repository line-coverage floor, 60% improvement target, zero blanket retries, at most one temporary quarantine retry, a 14-day quarantine ceiling, and currently zero active quarantines.
-- `tool/verify_test_quality.py` validates policy shape, quarantine ownership/issue/reason/expiry, preserved TEST-007/TEST-010 workflow anchors, LCOV structure, generated-localization exclusion, and the enforced line-coverage floor.
-- `tool/test_test_quality.py` contains 10 focused policy/LCOV/workflow regressions; local execution passed 10/10 before CI wiring.
-- Normal Flutter CI will run policy/regression validation before package restore, generate LCOV from the full suite, and enforce the threshold before Debug APK packaging.
-- No gameplay, economy, persistence, navigation, ads, privacy, signing, package, or asset behavior is intentionally changed.
-
-'''
+          section = (
+              '## TEST-008 coverage thresholds and flaky-test policy — 2026-08-10\n\n'
+              '- Issue #190 / branch `agent/test-008-coverage-flaky-policy` are the single active primary workstream after TEST-010.\n'
+              '- `tool/test_quality_policy.json` defines a 35% enforced repository line-coverage floor, 60% improvement target, zero blanket retries, at most one temporary quarantine retry, a 14-day quarantine ceiling, and currently zero active quarantines.\n'
+              '- `tool/verify_test_quality.py` validates policy shape, quarantine ownership/issue/reason/expiry, preserved TEST-007/TEST-010 workflow anchors, LCOV structure, generated-localization exclusion, and the enforced line-coverage floor.\n'
+              '- `tool/test_test_quality.py` contains 10 focused policy/LCOV/workflow regressions; local execution passed 10/10 before CI wiring.\n'
+              '- Normal Flutter CI will run policy/regression validation before package restore, generate LCOV from the full suite, and enforce the threshold before Debug APK packaging.\n'
+              '- No gameplay, economy, persistence, navigation, ads, privacy, signing, package, or asset behavior is intentionally changed.\n\n'
+          )
           status.write_text(text.replace(marker, section + marker, 1), encoding='utf-8')
 
           ci = Path('.github/workflows/flutter_ci.yml')
           text = ci.read_text(encoding='utf-8')
-          before = '''      - name: Test TEST-010 dashboard catalog validator
-        run: python3 tool/test_dashboard_catalog.py
-
-      - name: Restore packages
-'''
-          after = '''      - name: Test TEST-010 dashboard catalog validator
-        run: python3 tool/test_dashboard_catalog.py
-
-      - name: Verify TEST-008 quality policy
-        run: python3 tool/verify_test_quality.py
-
-      - name: Test TEST-008 quality validator
-        run: python3 tool/test_test_quality.py
-
-      - name: Restore packages
-'''
+          before = (
+              '      - name: Test TEST-010 dashboard catalog validator\n'
+              '        run: python3 tool/test_dashboard_catalog.py\n\n'
+              '      - name: Restore packages\n'
+          )
+          after = (
+              '      - name: Test TEST-010 dashboard catalog validator\n'
+              '        run: python3 tool/test_dashboard_catalog.py\n\n'
+              '      - name: Verify TEST-008 quality policy\n'
+              '        run: python3 tool/verify_test_quality.py\n\n'
+              '      - name: Test TEST-008 quality validator\n'
+              '        run: python3 tool/test_test_quality.py\n\n'
+              '      - name: Restore packages\n'
+          )
           if text.count(before) != 1:
               raise SystemExit('Flutter CI pre-restore anchor missing or duplicated')
           text = text.replace(before, after, 1)
-          before = '''      - name: Run full test suite
-        run: flutter test
-
-      - name: Build debug APK
-'''
-          after = '''      - name: Run full test suite
-        run: flutter test --coverage
-
-      - name: Verify TEST-008 coverage threshold
-        run: python3 tool/verify_test_quality.py --coverage coverage/lcov.info
-
-      - name: Build debug APK
-'''
+          before = (
+              '      - name: Run full test suite\n'
+              '        run: flutter test\n\n'
+              '      - name: Build debug APK\n'
+          )
+          after = (
+              '      - name: Run full test suite\n'
+              '        run: flutter test --coverage\n\n'
+              '      - name: Verify TEST-008 coverage threshold\n'
+              '        run: python3 tool/verify_test_quality.py --coverage coverage/lcov.info\n\n'
+              '      - name: Build debug APK\n'
+          )
           if text.count(before) != 1:
               raise SystemExit('Flutter CI full-suite anchor missing or duplicated')
           ci.write_text(text.replace(before, after, 1), encoding='utf-8')
