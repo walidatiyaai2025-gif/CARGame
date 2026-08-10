@@ -70,6 +70,12 @@ jobs:
       - name: Verify core screen widget matrix
         run: python3 tool/verify_core_screen_widget_matrix.py
 
+      - name: Verify TEST-007 critical-path contract
+        run: python3 tool/verify_test_007_critical_path.py
+
+      - name: Test TEST-007 critical-path validator
+        run: python3 tool/test_test_007_critical_path.py
+
       - name: Restore packages
         shell: bash
         run: |
@@ -152,6 +158,9 @@ jobs:
           test/features/game/game_screen_responsive_test.dart
           test/features/game/game_result_responsive_test.dart
           test/features/shop/shop_responsive_test.dart
+
+      - name: Test TEST-007 critical path
+        run: flutter test test/integration/test_007_critical_path_test.dart
 
       - name: Test analytics schema and privacy gate
         run: >-
