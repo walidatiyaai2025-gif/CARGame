@@ -2,6 +2,7 @@ import 'package:cargo_sort_game/core/ads/ad_service.dart';
 import 'package:cargo_sort_game/core/storage/progress_store.dart';
 import 'package:cargo_sort_game/features/game/game_screen.dart';
 import 'package:cargo_sort_game/features/game/level_data.dart';
+import 'package:cargo_sort_game/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
@@ -29,9 +30,9 @@ Future<ProgressStore> _store() async {
 Future<void> _pumpGame(
   WidgetTester tester, {
   required Size size,
+  Locale locale = const Locale('en'),
   TextScaler textScaler = TextScaler.noScaling,
   EdgeInsets padding = EdgeInsets.zero,
-  TextDirection textDirection = TextDirection.ltr,
 }) async {
   await tester.binding.setSurfaceSize(size);
   addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -41,6 +42,9 @@ Future<void> _pumpGame(
 
   await tester.pumpWidget(
     MaterialApp(
+      locale: locale,
+      supportedLocales: AppLocalizations.supportedLocales,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
       home: MediaQuery(
         data: MediaQueryData(
           size: size,
@@ -48,13 +52,10 @@ Future<void> _pumpGame(
           viewPadding: padding,
           textScaler: textScaler,
         ),
-        child: Directionality(
-          textDirection: textDirection,
-          child: GameScreen(
-            level: levels.first,
-            store: store,
-            adService: _NoopAdService(),
-          ),
+        child: GameScreen(
+          level: levels.first,
+          store: store,
+          adService: _NoopAdService(),
         ),
       ),
     ),
@@ -86,11 +87,13 @@ void main() {
     expect(find.byType(GameScreen), findsOneWidget);
   });
 
-  testWidgets('gameplay preserves RTL layout on a tall phone', (tester) async {
+  testWidgets('gameplay derives RTL from the Arabic locale on a tall phone', (
+    tester,
+  ) async {
     await _pumpGame(
       tester,
       size: const Size(412, 915),
-      textDirection: TextDirection.rtl,
+      locale: const Locale('ar'),
     );
 
     expect(tester.takeException(), isNull);
