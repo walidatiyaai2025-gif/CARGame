@@ -3,6 +3,7 @@ import 'dart:collection';
 import 'package:flutter/widgets.dart';
 
 import 'game_asset_registry.dart';
+import 'game_image_memory_policy.dart';
 
 typedef GameAssetPrecacheLoader =
     Future<void> Function(AssetImage provider, BuildContext context);
@@ -43,6 +44,13 @@ final class GameAssetCacheSnapshot {
   int get failedCount => failedIds.length;
 }
 
+final class _CachedAsset {
+  const _CachedAsset({required this.provider, required this.decodeTarget});
+
+  final AssetImage provider;
+  final GameImageDecodeTarget decodeTarget;
+}
+
 /// Bounded, observable precache coordinator for manifest-backed 3D assets.
 ///
 /// Domain/gameplay truth never depends on this cache. Precache failures are isolated
@@ -52,18 +60,20 @@ final class GameAssetCacheSnapshot {
 final class GameAssetCachePolicy extends ChangeNotifier {
   GameAssetCachePolicy({
     this.maxEntries = 24,
+    this.memoryPolicy = GameImageMemoryPolicy.standard,
     GameAssetPrecacheLoader? precacheLoader,
     GameAssetEvictor? evictor,
   }) : assert(maxEntries > 0),
-       _precacheLoader = precacheLoader ?? _precacheWithFlutter,
-       _evictor = evictor ?? _evictWithFlutter;
+       _injectedPrecacheLoader = precacheLoader,
+       _injectedEvictor = evictor;
 
   final int maxEntries;
-  final GameAssetPrecacheLoader _precacheLoader;
-  final GameAssetEvictor _evictor;
+  final GameImageMemoryPolicy memoryPolicy;
+  final GameAssetPrecacheLoader? _injectedPrecacheLoader;
+  final GameAssetEvictor? _injectedEvictor;
 
-  final LinkedHashMap<String, AssetImage> _cached =
-      LinkedHashMap<String, AssetImage>();
+  final LinkedHashMap<String, _CachedAsset> _cached =
+      LinkedHashMap<String, _CachedAsset>();
   final LinkedHashMap<String, Future<bool>> _inFlight =
       LinkedHashMap<String, Future<bool>>();
   final LinkedHashSet<String> _failed = LinkedHashSet<String>();
@@ -129,6 +139,7 @@ final class GameAssetCachePolicy extends ChangeNotifier {
     final globalGeneration = _generation;
     final assetGeneration = _assetGenerations[assetId] ?? 0;
     final provider = AssetImage(descriptor.path);
+    final decodeTarget = memoryPolicy.targetForPrecache(descriptor.dimensions);
 
     late final Future<bool> operation;
     operation =
@@ -136,6 +147,7 @@ final class GameAssetCachePolicy extends ChangeNotifier {
           context,
           assetId,
           provider,
+          decodeTarget,
           globalGeneration: globalGeneration,
           assetGeneration: assetGeneration,
         ).whenComplete(() {
@@ -173,12 +185,12 @@ final class GameAssetCachePolicy extends ChangeNotifier {
 
   Future<void> forget(String assetId) async {
     _assetGenerations[assetId] = (_assetGenerations[assetId] ?? 0) + 1;
-    final provider = _cached.remove(assetId);
+    final cached = _cached.remove(assetId);
     final failedRemoved = _failed.remove(assetId);
-    if (provider != null) {
-      await _evictSafely(provider);
+    if (cached != null) {
+      await _evictSafely(cached);
     }
-    if (provider != null || failedRemoved || _inFlight.containsKey(assetId)) {
+    if (cached != null || failedRemoved || _inFlight.containsKey(assetId)) {
       notifyListeners();
     }
   }
@@ -186,11 +198,11 @@ final class GameAssetCachePolicy extends ChangeNotifier {
   Future<void> clear() async {
     if (_cached.isEmpty && _failed.isEmpty && _inFlight.isEmpty) return;
     _generation += 1;
-    final providers = List<AssetImage>.from(_cached.values);
+    final cachedAssets = List<_CachedAsset>.from(_cached.values);
     _cached.clear();
     _failed.clear();
-    for (final provider in providers) {
-      await _evictSafely(provider);
+    for (final cached in cachedAssets) {
+      await _evictSafely(cached);
     }
     notifyListeners();
   }
@@ -210,20 +222,25 @@ final class GameAssetCachePolicy extends ChangeNotifier {
   Future<bool> _loadAndCache(
     BuildContext context,
     String assetId,
-    AssetImage provider, {
+    AssetImage provider,
+    GameImageDecodeTarget decodeTarget, {
     required int globalGeneration,
     required int assetGeneration,
   }) async {
+    final cached = _CachedAsset(
+      provider: provider,
+      decodeTarget: decodeTarget,
+    );
     try {
-      await _precacheLoader(provider, context);
+      await _precache(cached, context);
       if (_isStale(assetId, globalGeneration, assetGeneration)) {
         _staleCompletionCount += 1;
-        await _evictSafely(provider);
+        await _evictSafely(cached);
         return false;
       }
 
       _failed.remove(assetId);
-      _cached[assetId] = provider;
+      _cached[assetId] = cached;
       _successfulLoadCount += 1;
       await _trimToBudget();
       return true;
@@ -234,6 +251,17 @@ final class GameAssetCachePolicy extends ChangeNotifier {
       }
       return false;
     }
+  }
+
+  Future<void> _precache(_CachedAsset cached, BuildContext context) {
+    final injected = _injectedPrecacheLoader;
+    if (injected != null) return injected(cached.provider, context);
+
+    final provider = memoryPolicy.resizeProvider(
+      cached.provider,
+      cached.decodeTarget,
+    );
+    return precacheImage(provider, context);
   }
 
   bool _isStale(String assetId, int globalGeneration, int assetGeneration) {
@@ -253,30 +281,28 @@ final class GameAssetCachePolicy extends ChangeNotifier {
   Future<void> _trimToBudget() async {
     while (_cached.length > maxEntries) {
       final evictedId = _cached.keys.first;
-      final provider = _cached.remove(evictedId);
-      if (provider != null) {
-        await _evictSafely(provider);
+      final cached = _cached.remove(evictedId);
+      if (cached != null) {
+        await _evictSafely(cached);
       }
     }
   }
 
-  Future<void> _evictSafely(AssetImage provider) async {
+  Future<void> _evictSafely(_CachedAsset cached) async {
     _evictionCount += 1;
     try {
-      await _evictor(provider);
+      final injected = _injectedEvictor;
+      if (injected != null) {
+        await injected(cached.provider);
+        return;
+      }
+      final provider = memoryPolicy.resizeProvider(
+        cached.provider,
+        cached.decodeTarget,
+      );
+      await provider.evict(cache: PaintingBinding.instance.imageCache);
     } catch (_) {
       _evictionFailureCount += 1;
     }
-  }
-
-  static Future<void> _precacheWithFlutter(
-    AssetImage provider,
-    BuildContext context,
-  ) {
-    return precacheImage(provider, context);
-  }
-
-  static Future<void> _evictWithFlutter(AssetImage provider) async {
-    await provider.evict(cache: PaintingBinding.instance.imageCache);
   }
 }
