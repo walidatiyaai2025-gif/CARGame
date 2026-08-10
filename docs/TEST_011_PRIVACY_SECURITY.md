@@ -22,7 +22,7 @@ This checkpoint does not invent production Google UMP configuration, production 
 | Play Data Safety | `docs/privacy/play_data_safety.json` | Disclosure mapping stays synchronized with the inventory and current runtime processors | CI-blocking disclosure gate |
 | First-party analytics | ENG-012 boundary | `ENABLE_ANALYTICS` defaults off; runtime privacy is fail-closed; no outward emitter/processor/queue/transport exists | Disabled by default |
 | Remote diagnostics | ENG-013 boundary | `ENABLE_REMOTE_DIAGNOSTICS` defaults off; runtime privacy is deny-all; no remote emitter/processor/queue/upload exists | Disabled by default |
-| Local export | `LocalDataController` | Schema-versioned first-party JSON export, redacted diagnostics, explicit `networkTransfer: false` | Implemented and tested |
+| Local export | `LocalDataController` | schema-versioned first-party JSON export, redacted diagnostics, explicit `networkTransfer: false` | Implemented and tested |
 | Local deletion | `LocalDataController` + Settings/app shell | Confirmed destructive action clears SharedPreferences + diagnostics, serializes concurrent deletes, rehydrates safe stores, removes stale route state | Implemented and tested |
 | Redaction | `SecretRedactor` / diagnostics gates | Secrets and sensitive local paths are redacted before retained/copied diagnostic output | CI protected |
 | Secrets | `tool/verify_secret_hygiene.dart` | Tracked source is scanned and release secrets stay external | CI blocking |

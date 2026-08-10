@@ -13,108 +13,108 @@ Make every repository-owned privacy, consent, local-data, diagnostics, secret, d
 ## 100-checkpoint execution contract
 
 ### A. Baseline and workstream selection
-- [ ] T001 Confirm PERF-002 final-head CI is green.
-- [ ] T002 Confirm PERF-002 is merged to main.
-- [ ] T003 Obtain a non-skipped full CI run against the merged PERF-002 runtime tree.
-- [ ] T004 Reconcile PERF-002 honestly as IMPLEMENTED, not VERIFIED, without device RSS/GPU claims.
-- [ ] T005 Confirm TEST-009 remains blocked on real PERF-001 device profiling.
-- [ ] T006 Confirm PRIV-001 is VERIFIED.
-- [ ] T007 Confirm SEC-001 is VERIFIED.
-- [ ] T008 Confirm SEC-002 and PRIV-003 repository gates are already present.
-- [ ] T009 Confirm no active TEST-011 implementation PR/branch exists.
-- [ ] T010 Mark TEST-011 as the only primary source-controlled workstream before implementation edits.
+- [x] T001 Confirm PERF-002 final-head CI is green.
+- [x] T002 Confirm PERF-002 is merged to main.
+- [x] T003 Obtain a non-skipped full CI run against the merged PERF-002 runtime tree.
+- [x] T004 Reconcile PERF-002 honestly as IMPLEMENTED, not VERIFIED, without device RSS/GPU claims.
+- [x] T005 Confirm TEST-009 remains blocked on real PERF-001 device profiling.
+- [x] T006 Confirm PRIV-001 is VERIFIED.
+- [x] T007 Confirm SEC-001 is VERIFIED.
+- [x] T008 Confirm SEC-002 and PRIV-003 repository gates are already present.
+- [x] T009 Confirm no active TEST-011 implementation PR/branch exists.
+- [x] T010 Mark TEST-011 as the only primary source-controlled workstream before implementation edits.
 
 ### B. Consent and ad-request gating verification
-- [ ] T011 Audit UMP consent-info refresh at launch.
-- [ ] T012 Audit required-form presentation handling.
-- [ ] T013 Audit `canRequestAds` as the ad eligibility authority.
-- [ ] T014 Audit fail-closed behavior before consent eligibility.
-- [ ] T015 Audit banner request gating.
-- [ ] T016 Audit rewarded request gating.
-- [ ] T017 Audit interstitial request gating.
-- [ ] T018 Audit runtime consent revocation/disposal behavior.
-- [ ] T019 Audit Settings privacy-options re-open path.
-- [ ] T020 Verify offline/core play remains non-blocking when UMP fails or is unavailable.
+- [x] T011 Audit UMP consent-info refresh at launch.
+- [x] T012 Audit required-form presentation handling.
+- [x] T013 Audit `canRequestAds` as the ad eligibility authority.
+- [x] T014 Audit fail-closed behavior before consent eligibility.
+- [x] T015 Audit banner request gating.
+- [x] T016 Audit rewarded request gating.
+- [x] T017 Audit interstitial request gating.
+- [x] T018 Audit runtime consent revocation/disposal behavior.
+- [x] T019 Audit Settings privacy-options re-open path.
+- [x] T020 Verify offline/core play remains non-blocking when UMP fails or is unavailable.
 
 ### C. Privacy inventory and data-minimization verification
-- [ ] T021 Re-run persisted-data inventory ownership checks.
-- [ ] T022 Verify every SharedPreferences family remains inventoried.
-- [ ] T023 Verify Google Mobile Ads remains the sole declared off-device processor.
-- [ ] T024 Verify no first-party analytics emitter is enabled by default.
-- [ ] T025 Verify analytics runtime privacy gate remains fail-closed.
-- [ ] T026 Verify remote diagnostics remains disabled by default.
-- [ ] T027 Verify crash/non-fatal reporting has no active remote emitter path.
-- [ ] T028 Verify data-safety mapping matches current processor inventory.
-- [ ] T029 Verify privacy disclosures retain local-only vs off-device distinctions.
-- [ ] T030 Verify no source-controlled production identifiers/credentials are introduced.
+- [x] T021 Re-run persisted-data inventory ownership checks.
+- [x] T022 Verify every SharedPreferences family remains inventoried.
+- [x] T023 Verify Google Mobile Ads remains the sole declared off-device processor.
+- [x] T024 Verify no first-party analytics emitter is enabled by default.
+- [x] T025 Verify analytics runtime privacy gate remains fail-closed.
+- [x] T026 Verify remote diagnostics remains disabled by default.
+- [x] T027 Verify crash/non-fatal reporting has no active remote emitter path.
+- [x] T028 Verify data-safety mapping matches current processor inventory.
+- [x] T029 Verify privacy disclosures retain local-only vs off-device distinctions.
+- [x] T030 Verify no source-controlled production identifiers/credentials are introduced.
 
 ### D. Local export and deletion verification
-- [ ] T031 Audit schema-versioned local-data export.
-- [ ] T032 Audit destructive-reset confirmation guard.
-- [ ] T033 Audit concurrent-delete serialization.
-- [ ] T034 Audit diagnostic-log clearing during deletion.
-- [ ] T035 Audit ProgressStore rehydration after reset.
-- [ ] T036 Audit AppSettingsStore rehydration after reset.
-- [ ] T037 Audit stale-route removal after reset.
-- [ ] T038 Verify unrelated runtime state is not silently reintroduced after deletion.
-- [ ] T039 Verify Settings exposes the local privacy controls.
-- [ ] T040 Add TEST-011 evidence linking export/deletion tests to the release matrix.
+- [x] T031 Audit schema-versioned local-data export.
+- [x] T032 Audit destructive-reset confirmation guard.
+- [x] T033 Audit concurrent-delete serialization.
+- [x] T034 Audit diagnostic-log clearing during deletion.
+- [x] T035 Audit ProgressStore rehydration after reset.
+- [x] T036 Audit AppSettingsStore rehydration after reset.
+- [x] T037 Audit stale-route removal after reset.
+- [x] T038 Verify unrelated runtime state is not silently reintroduced after deletion.
+- [x] T039 Verify Settings exposes the local privacy controls.
+- [x] T040 Add TEST-011 evidence linking export/deletion tests to the release matrix.
 
 ### E. Diagnostics, analytics, and redaction verification
-- [ ] T041 Verify diagnostics logging respects its runtime enable gate.
-- [ ] T042 Verify diagnostic payload size bounds remain enforced.
-- [ ] T043 Verify secret redaction remains applied to diagnostics.
-- [ ] T044 Verify path-sensitive diagnostic redaction remains applied.
-- [ ] T045 Verify analytics properties remain allowlisted/schema-versioned.
-- [ ] T046 Verify analytics cannot emit before runtime privacy permission.
-- [ ] T047 Verify analytics cannot reuse UMP ad consent as first-party analytics consent.
-- [ ] T048 Verify crash-reporting privacy contract remains isolated from ads consent.
-- [ ] T049 Verify no new telemetry persistence/network path exists outside inventory.
-- [ ] T050 Record machine-readable TEST-011 evidence for analytics/diagnostics gates.
+- [x] T041 Verify diagnostics logging respects its runtime enable gate.
+- [x] T042 Verify diagnostic payload size bounds remain enforced.
+- [x] T043 Verify secret redaction remains applied to diagnostics.
+- [x] T044 Verify path-sensitive diagnostic redaction remains applied.
+- [x] T045 Verify analytics properties remain allowlisted/schema-versioned.
+- [x] T046 Verify analytics cannot emit before runtime privacy permission.
+- [x] T047 Verify analytics cannot reuse UMP ad consent as first-party analytics consent.
+- [x] T048 Verify crash-reporting privacy contract remains isolated from ads consent.
+- [x] T049 Verify no new telemetry persistence/network path exists outside inventory.
+- [x] T050 Record machine-readable TEST-011 evidence for analytics/diagnostics gates.
 
 ### F. Secret, dependency, artifact, and network security verification
-- [ ] T051 Re-run tracked-secret policy contract.
-- [ ] T052 Re-run secret-scanner regression suite.
-- [ ] T053 Re-run dependency advisory enforcement.
-- [ ] T054 Re-run dependency-security regression suite.
-- [ ] T055 Verify lockfile enforcement remains blocking.
-- [ ] T056 Verify security advisory exceptions are explicit and bounded.
-- [ ] T057 Verify packaged APK secret/artifact scan remains mandatory.
-- [ ] T058 Verify security baseline trust-boundary/network-processor parity.
-- [ ] T059 Verify no undeclared network processor is present in repository-owned disclosures.
-- [ ] T060 Record the network-policy and artifact-security requirements in TEST-011 evidence.
+- [x] T051 Re-run tracked-secret policy contract.
+- [x] T052 Re-run secret-scanner regression suite.
+- [x] T053 Re-run dependency advisory enforcement.
+- [x] T054 Re-run dependency-security regression suite.
+- [x] T055 Verify lockfile enforcement remains blocking.
+- [x] T056 Verify security advisory exceptions are explicit and bounded.
+- [x] T057 Verify packaged APK secret/artifact scan remains mandatory.
+- [x] T058 Verify security baseline trust-boundary/network-processor parity.
+- [x] T059 Verify no undeclared network processor is present in repository-owned disclosures.
+- [x] T060 Record the network-policy and artifact-security requirements in TEST-011 evidence.
 
 ### G. Dedicated TEST-011 release evidence contract
-- [ ] T061 Add `docs/TEST_011_PRIVACY_SECURITY.md`.
-- [ ] T062 Separate repository-verifiable evidence from external/device evidence.
-- [ ] T063 Add repository status for consent integration.
-- [ ] T064 Add repository status for local export/deletion.
-- [ ] T065 Add repository status for redaction and diagnostics privacy.
-- [ ] T066 Add repository status for secret/dependency scanning.
-- [ ] T067 Add repository status for APK artifact security.
-- [ ] T068 Add repository status for processor/network-policy parity.
-- [ ] T069 Explicitly mark production UMP/privacy-message configuration as external pending evidence.
-- [ ] T070 Explicitly prohibit marking TEST-011 VERIFIED from CI-only evidence.
+- [x] T061 Add `docs/TEST_011_PRIVACY_SECURITY.md`.
+- [x] T062 Separate repository-verifiable evidence from external/device evidence.
+- [x] T063 Add repository status for consent integration.
+- [x] T064 Add repository status for local export/deletion.
+- [x] T065 Add repository status for redaction and diagnostics privacy.
+- [x] T066 Add repository status for secret/dependency scanning.
+- [x] T067 Add repository status for APK artifact security.
+- [x] T068 Add repository status for processor/network-policy parity.
+- [x] T069 Explicitly mark production UMP/privacy-message configuration as external pending evidence.
+- [x] T070 Explicitly prohibit marking TEST-011 VERIFIED from CI-only evidence.
 
 ### H. Machine validator and regressions
-- [ ] T071 Add `tool/verify_test_011_privacy_security.py`.
-- [ ] T072 Require the TEST-011 evidence document.
-- [ ] T073 Require existing privacy inventory/disclosure gates.
-- [ ] T074 Require analytics/crash privacy gates.
-- [ ] T075 Require secret and dependency-security gates.
-- [ ] T076 Require packaged artifact-security gate.
-- [ ] T077 Require local data controller/Settings privacy focused tests.
-- [ ] T078 Require consent/ad request focused tests.
-- [ ] T079 Reject any TEST-011 VERIFIED claim while external evidence is pending.
-- [ ] T080 Add `tool/test_test_011_privacy_security.py` with mutation-based regressions.
+- [x] T071 Add `tool/verify_test_011_privacy_security.py`.
+- [x] T072 Require the TEST-011 evidence document.
+- [x] T073 Require existing privacy inventory/disclosure gates.
+- [x] T074 Require analytics/crash privacy gates.
+- [x] T075 Require secret and dependency-security gates.
+- [x] T076 Require packaged artifact-security gate.
+- [x] T077 Require local data controller/Settings privacy focused tests.
+- [x] T078 Require consent/ad request focused tests.
+- [x] T079 Reject any TEST-011 VERIFIED claim while external evidence is pending.
+- [x] T080 Add `tool/test_test_011_privacy_security.py` with mutation-based regressions.
 
 ### I. CI integration and quality gates
-- [ ] T081 Add TEST-011 machine validator to normal Flutter CI.
-- [ ] T082 Add TEST-011 validator regressions to normal Flutter CI.
-- [ ] T083 Preserve TEST-007 critical-path gates.
-- [ ] T084 Preserve TEST-008 coverage/flaky policy gates.
-- [ ] T085 Preserve TEST-010 dashboard/catalog parity gates.
-- [ ] T086 Preserve AST-004/PERF-001/PERF-002 gates.
+- [x] T081 Add TEST-011 machine validator to normal Flutter CI.
+- [x] T082 Add TEST-011 validator regressions to normal Flutter CI.
+- [x] T083 Preserve TEST-007 critical-path gates.
+- [x] T084 Preserve TEST-008 coverage/flaky policy gates.
+- [x] T085 Preserve TEST-010 dashboard/catalog parity gates.
+- [x] T086 Preserve AST-004/PERF-001/PERF-002 gates.
 - [ ] T087 Run formatting and whitespace validation.
 - [ ] T088 Run Flutter Analyze.
 - [ ] T089 Run focused privacy/consent/security/local-data tests.

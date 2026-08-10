@@ -135,8 +135,14 @@ def validate(root: Path = ROOT) -> None:
         _require(local_tests, needle, "local data control regression")
 
     settings_local = _read(root, "test/features/settings/settings_local_data_test.dart")
-    for needle in ("export", "delete", "reset"):
-        _require(settings_local.lower(), needle, "Settings local-data regression coverage")
+    for needle, label in (
+        ("privacy-export-data-button", "Settings export control regression"),
+        ("delete requires confirmation and clears local first-party data", "Settings delete flow regression"),
+        ("privacy-delete-cancel-button", "Settings delete cancellation regression"),
+        ("privacy-delete-confirm-button", "Settings delete confirmation regression"),
+        ("rehydrateCalls", "Settings post-delete rehydration regression"),
+    ):
+        _require(settings_local, needle, label)
 
     analytics = _read(root, "lib/core/analytics/privacy_gated_analytics.dart")
     _require(analytics, "privacy", "analytics privacy boundary")

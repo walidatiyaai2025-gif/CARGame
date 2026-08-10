@@ -133,6 +133,15 @@ def test_rejects_missing_local_delete_regression() -> None:
     )
 
 
+def test_rejects_missing_settings_delete_confirmation_regression() -> None:
+    _mutated_failure(
+        "test/features/settings/settings_local_data_test.dart",
+        "privacy-delete-confirm-button",
+        "privacy-delete-confirmation-removed",
+        "Settings delete confirmation regression",
+    )
+
+
 def test_rejects_missing_external_pending_boundary() -> None:
     _mutated_failure(
         "docs/TEST_011_PRIVACY_SECURITY.md",
@@ -218,6 +227,7 @@ def main() -> None:
         test_rejects_missing_fail_closed_regression,
         test_rejects_missing_settings_privacy_regression,
         test_rejects_missing_local_delete_regression,
+        test_rejects_missing_settings_delete_confirmation_regression,
         test_rejects_missing_external_pending_boundary,
         test_rejects_false_verified_catalog_claim,
         test_rejects_missing_test011_ci_validator,

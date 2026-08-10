@@ -7,12 +7,21 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | Field | Value |
 |---|---|
 | Current phase | Android RC hardening — issue #79 |
-| Primary feature | `PERF-002` Memory and image budget — IN PROGRESS under issue #199 on `agent/perf-002-memory-image-budget`. |
-| Completed checkpoint | `PERF-001` frame performance budget — IMPLEMENTED on main as `f2b2c829755a5abdd3342dba731e1e669f42f57f`; exact-main Flutter CI #849 / run `31415750686` passed 332/332 tests, 88.21% authored-source coverage, Debug APK, artifact security and upload. |
-| Status | PERF-002 is active: Flutter ImageCache retention and manifest image decode sizes now have explicit source-controlled ceilings; display and precache paths use bounded resize targets while AST-004 race/LRU/failure behavior stays authoritative. No device RSS/GPU measurement is claimed yet. |
+| Primary feature | `TEST-011` Privacy, consent, and security verification — IN PROGRESS under issue #202 on `agent/test-011-privacy-security-verification`. |
+| Completed checkpoint | `PERF-002` memory and image budget — IMPLEMENTED; PR #200 merged as `5298d70218d8e33d766a54813d423bd7de090d16`, full merged-tree retrigger CI #853 passed, PR #201 merged as `27ddbe3e9d2e20b32e7b89dfc3f56c6c171153cb`, and exact-main Flutter CI #854 passed every normal gate. Physical-device RSS/GPU residency remains unclaimed. |
+| Status | TEST-011 is active: repository-owned UMP request gating, local privacy controls, analytics/diagnostics privacy, redaction, secret/dependency/network-policy checks, and APK security are being consolidated into one mutation-tested release contract. CI cannot satisfy the separate production UMP regulated-region/device evidence. |
 | Previous checkpoint | `TEST-008` coverage thresholds and flaky-test policy — VERIFIED and merged; exact-main Flutter CI #836 passed 310 tests and 88.01% authored-source coverage before AST-004. |
-| Next recommended feature | Finish PERF-002 focused/full CI and Debug APK verification, then reconcile source-controlled acceptance honestly; keep TEST-009 blocked until PERF-001 is physically VERIFIED. |
+| Next recommended feature | Finish TEST-011 source-controlled evidence/CI and reconcile as IMPLEMENTED if green; then run a fresh dependency-ready scan. TEST-009 remains blocked on PERF-001 physical-device profiling. |
 | Known blocker | `TEST-011` requires real production UMP/privacy-message/regulatory-device verification. `REL-007`/`REL-008` require real production AdMob/signing inputs and a production-signed candidate; final install/upgrade/device smoke requires an Android device or testing track. `TEST-009` remains dependency-blocked until selected next workstream `PERF-001` is VERIFIED. Visual Studio C++ components remain optional for Windows desktop only. |
+
+## TEST-011 privacy consent and security verification — 2026-08-11
+
+- Issue #202 owns a 100-checkpoint P0 verification sprint and is the single active source-controlled workstream.
+- Existing Google UMP integration refreshes consent information, handles required forms, exposes live `canRequestAds`, re-opens privacy options from Settings, and keeps first-party analytics consent separate.
+- Mobile Ads initialization plus banner/rewarded/interstitial request paths are fail-closed behind current consent eligibility; revocation disposes app-owned loaded ads and UMP failure does not block offline core play.
+- Existing PRIV-001/PRIV-002/PRIV-003 and SEC-001/SEC-002 controls cover inventory/Data Safety, local export/deletion, redaction, secrets, dependency advisories, trust boundaries, and packaged-artifact security.
+- `docs/TEST_011_PRIVACY_SECURITY.md`, `tool/verify_test_011_privacy_security.py`, and mutation regressions make the combined release assertion executable. Normal Flutter CI also runs a focused consent/privacy/security/local-data matrix.
+- Production AdMob Privacy & messaging configuration and regulated-region/device behavior are explicitly external evidence. TEST-011 may become IMPLEMENTED from repository CI but MUST NOT become VERIFIED while that evidence is pending.
 
 ## PERF-002 memory and image budget — 2026-08-10
 
