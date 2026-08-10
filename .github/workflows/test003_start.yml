@@ -1,0 +1,32 @@
+name: TEST-003 Start Reconciliation
+
+on:
+  push:
+    branches:
+      - agent/test-003-core-screen-widget-matrix
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/test-003-core-screen-widget-matrix
+      - name: Apply TEST-003 tracking
+        run: python3 tool/reconcile_test003_start.py
+      - name: Validate tracking
+        run: |
+          python3 tool/verify_ci_integrity.py
+          git diff --check
+      - name: Commit tracking and remove one-shot tooling
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/test003_start.yml tool/reconcile_test003_start.py
+          git add docs/FEATURE_CATALOG.md docs/STATUS.md docs/work/TEST-003.md
+          git commit -m 'TEST-003: mark widget matrix in progress'
+          git push origin HEAD:agent/test-003-core-screen-widget-matrix
