@@ -38,6 +38,14 @@ def _replace(root: Path, relative: str, old: str, new: str) -> None:
     path.write_text(text.replace(old, new, 1), encoding="utf-8")
 
 
+def _replace_all(root: Path, relative: str, old: str, new: str) -> None:
+    path = root / relative
+    text = path.read_text(encoding="utf-8")
+    count = text.count(old)
+    assert count > 0, (relative, old)
+    path.write_text(text.replace(old, new), encoding="utf-8")
+
+
 def test_valid_repository_contract() -> None:
     root = _fixture()
     try:
@@ -77,7 +85,7 @@ def test_rejects_unbounded_history_drift() -> None:
 def test_rejects_scheduler_cleanup_drift() -> None:
     root = _fixture()
     try:
-        _replace(
+        _replace_all(
             root,
             "lib/core/performance/frame_performance_scope.dart",
             "SchedulerBinding.instance.removeTimingsCallback",
