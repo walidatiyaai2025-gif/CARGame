@@ -21,6 +21,9 @@ jobs:
       - name: Apply TEST-011 tracking and CI contract
         run: python3 tool/bootstrap_test011.py
 
+      - name: Tighten TEST-011 Settings validator
+        run: python3 tool/test011_validator_fixup.py
+
       - name: Validate TEST-011 repository contract
         shell: bash
         run: |
@@ -45,6 +48,7 @@ jobs:
           set -euo pipefail
           rm .github/workflows/test011_bootstrap.yml
           rm tool/bootstrap_test011.py
+          rm tool/test011_validator_fixup.py
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add -A
