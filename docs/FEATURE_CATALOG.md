@@ -276,7 +276,7 @@ Codex must not mark a feature complete merely because UI code exists.
 | ID | Function | Priority | Status | Dependencies | Acceptance / evidence |
 |---|---|---:|---|---|---|
 | PERF-001 | Frame performance budget | P0 | IMPLEMENTED | MOT-001, AST-004 | Issue #196 / PR #197 implement the source-controlled 60 Hz/16.67 ms frame policy, bounded rolling FrameTiming evaluation, deterministic full/constrained/reduced visual-quality state machine, conservative recovery hysteresis, app-wide performance scope, shared-motion degradation, ambient ticker shedding, focused regressions and CI ownership gates. Final PR head `7ad6d67e0963de15d2b08c6ce7a734ee6980de1a` passed Flutter CI #848 / run `31414950411`; PR #197 squash-merged as `f2b2c829755a5abdd3342dba731e1e669f42f57f`, and exact-main Flutter CI #849 / run `31415750686` passed 332/332 tests, 88.21% authored-source coverage, Debug APK, artifact security and upload. Main debug artifact #9073641322 is 80,644,379 bytes with artifact ZIP SHA-256 `4d2726add801d28d517cc29461506e2d4580e57fb86b6b50e362847d0628f13b`. Latest-verified promotion #37 / run `31416602117` succeeded and committed `3e2fa6592e98c18216e7dff9a79888cc3e5e7dbc`; the QA release APK is 55,943,559 bytes with SHA-256 `358d38a81708fce2a667f9b78a00b6b1bd28ae2f68013cdb60266ecbc65da1a2`, ephemeral CI signing, ads disabled, and not production/Play Store signed. Source-controlled acceptance is IMPLEMENTED; VERIFIED still requires real Android device/profile frame measurements, so TEST-009 remains dependency-blocked. |
-| PERF-002 | Memory and image budget | P0 | PLANNED | AST-004 | No unbounded cache and large assets decode near display size. |
+| PERF-002 | Memory and image budget | P0 | IN PROGRESS | AST-004 | Issue #199 adds explicit Flutter ImageCache ceilings (96 entries / 48 MiB), a deterministic 6 MiB per-image decoded RGBA budget, 1536 px hard decode dimension, 1024 px layout-free precache target, DPR-aware near-display `cacheWidth`/`cacheHeight`, resize-aware production precache/eviction, focused regressions and CI ownership gates while preserving AST-004 race-safe behavior. Physical-device RSS/GPU memory profiling remains separate evidence before VERIFIED. |
 | PERF-003 | Pause off-screen animations | P1 | PLANNED | MOT-005 | TickerMode/lifecycle prevents hidden animation work. |
 | PERF-004 | Startup time budget | P0 | IMPLEMENTED | ENG-003 | Main UI opens with defaults when optional services are slow; profiling remains. |
 | PERF-005 | Low-end device mode | P2 | PLANNED | UI3D-007 | Particles, blur, shadows, and simultaneous animations reduce predictably. |
@@ -331,11 +331,11 @@ Codex must not mark a feature complete merely because UI code exists.
 
 ## IN PROGRESS
 
-- None. `PERF-001` source-controlled implementation is merged and exact-main CI is green; its remaining VERIFIED evidence is real Android device/profile frame measurement, not another source-code workstream.
+- `PERF-002` Memory and image budget — IN PROGRESS under issue #199 on `agent/perf-002-memory-image-budget`; no other primary source-controlled workstream should start until it is reconciled.
 
 ## NEXT READY
 
-- Run a fresh dependency-ready/team scan and select exactly one source-controlled workstream. Do not select `TEST-009` until `PERF-001` reaches VERIFIED with real device/profile evidence.
+- Finish PERF-002 source budgets, focused/full CI, Debug APK and reconciliation; keep TEST-009 blocked on PERF-001 physical-device verification.
 
 ## BLOCKED
 

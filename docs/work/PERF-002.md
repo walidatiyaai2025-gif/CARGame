@@ -64,8 +64,8 @@ Bound Flutter image-cache retention and manifest-backed decoded image memory whi
 - [x] T42 Add DPR/native/no-upsample sizing regressions.
 - [x] T43 Add fit/aspect/hard-cap/byte-cap sizing regressions.
 - [x] T44 Add `GameAssetView` ResizeImage widget regressions.
-- [ ] T45 Add PERF-002 machine ownership/drift validator and regressions.
-- [ ] T46 Add PERF-002 gates to normal Flutter CI and mark tracking IN PROGRESS.
+- [x] T45 Add PERF-002 machine ownership/drift validator and regressions.
+- [x] T46 Add PERF-002 gates to normal Flutter CI and mark tracking IN PROGRESS.
 - [ ] T47 Run formatting, Analyze, PERF-002 focused tests, and AST-004 regressions.
 - [ ] T48 Pass full Flutter suite and TEST-008 coverage floor/target.
 - [ ] T49 Build/security-scan/upload the Debug APK through normal CI.
