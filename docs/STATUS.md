@@ -7,11 +7,11 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | Field | Value |
 |---|---|
 | Current phase | Android RC hardening — issue #79 |
-| Primary feature | `TEST-007` Integration and end-to-end critical path — VERIFIED on Issue #181 / PR #184 pending merge. |
-| Completed checkpoint | `TEST-007` critical path — 50/50 release checkpoints VERIFIED by Flutter CI #810 / run `31379676066` on implementation head `4882ac1b9449fb399ea3456ce89fa460dcfbcb98`; debug artifact #9059551183 passed artifact-security and upload. |
-| Status | TEST-007 is VERIFIED at implementation head: the 50-checkpoint deterministic offline contract covers first run, guarded navigation, completion/reward idempotency, shop recovery, restart/restore, EN/AR RTL, responsive surfaces, and CI drift protection; PR #184 remains to be merged. |
+| Primary feature | None — `TEST-007` Integration and end-to-end critical path is VERIFIED and merged; run the dependency-ready scan before starting the next single primary workstream. |
+| Completed checkpoint | `TEST-007` critical path — 50/50 release checkpoints VERIFIED; final-head Flutter CI #816 / run `31380502193` passed all gates on `874fe658456723c5f0455e6c1935bd5b9dada8b5`, and PR #184 squash-merged as `b7f858f9cac6c1a8c5b0d1f9058be599f9ce792c`. |
+| Status | TEST-007 is VERIFIED and on `main`: the deterministic 50-checkpoint offline contract covers first run, guarded navigation, completion/reward idempotency, shop recovery, restart/restore, EN/AR RTL, responsive surfaces, and CI drift protection. |
 | Previous checkpoint | `TEST-003` Core screen widget matrix — VERIFIED by CI #803 and squash-merged via PR #180 as `4ca093a843ab685dfeef8df2c86e3950a13f482f`. |
-| Next recommended feature | Merge verified PR #184, then run the catalog dependency-ready scan and select exactly one next workstream. |
+| Next recommended feature | Run the catalog dependency-ready scan and select exactly one next workstream; preserve the verified TEST-007 gate in normal Flutter CI. |
 | Known blocker | `TEST-011` requires real production UMP/privacy-message/regulatory-device verification. `REL-007`/`REL-008` require real production AdMob/signing inputs and a production-signed candidate; final install/upgrade/device smoke requires an Android device or testing track. `TEST-009` also remains dependency-blocked while `PERF-001` is PLANNED. Visual Studio C++ components remain optional for Windows desktop only. |
 
 ## TEST-007 critical-path integration contract — 2026-08-10
@@ -22,7 +22,7 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 - `tool/verify_test_007_critical_path.py` requires T01..T50 exactly once, production journey/state anchors, the offline boundary, and blocking CI execution; six focused Python regressions protect the validator itself.
 - Flutter CI #810 / run `31379676066` passed all repository gates including formatting, Analyze, core screen matrix, focused TEST-007, full Flutter suite, Debug APK build, artifact security, and upload on implementation head `4882ac1b9449fb399ea3456ce89fa460dcfbcb98`.
 - Debug artifact #9059551183 is 80,633,604 bytes with SHA-256 `283bf954510ac7eec6cb78e36f58995157379b3afe923b2af524003d3a4b415b`.
-- Repository-owned TEST-007 acceptance is VERIFIED; PR #184 remains the only merge step before this checkpoint lands on `main`.
+- Repository-owned TEST-007 acceptance is VERIFIED. Final-head Flutter CI #816 / run `31380502193` passed all 43 workflow steps, including Debug APK build, artifact security, and upload; artifact #9059883319 is 80,633,608 bytes with SHA-256 `76756ff72098c353f676ffd18008e253a2c1532da88208d8f3730b19b92c3e70`. PR #184 squash-merged to `main` as `b7f858f9cac6c1a8c5b0d1f9058be599f9ce792c`, and Issue #181 closed completed.
 
 ## TEST-003 core screen widget matrix — 2026-08-10
 
