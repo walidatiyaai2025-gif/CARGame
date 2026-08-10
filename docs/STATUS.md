@@ -7,12 +7,22 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | Field | Value |
 |---|---|
 | Current phase | Android RC hardening — issue #79 |
-| Primary feature | None — `ENG-013` crash reporting and non-fatal diagnostics is VERIFIED on PR #178 pending merge. |
-| Completed checkpoint | `ENG-013` privacy-gated crash/non-fatal diagnostics boundary — VERIFIED after Flutter CI #796 / run `31342815876`. |
-| Status | ENG-013 is VERIFIED: local diagnostics obey `ENABLE_DIAGNOSTICS`; remote diagnostics defaults off and remains deny-all/no-emitter in production; crash payloads are redacted, bounded, and correlated to version/build/environment without account/device identifiers. |
-| Previous checkpoint | `ENG-012` analytics schema/privacy gate — VERIFIED and squash-merged via PR #176 as `d09f51d24c9ea6fc5e8e75e0bad6632d727ea9e3`. |
-| Next recommended feature | Run the dependency-ready scan after PR #178 merges; keep a single primary workstream. |
+| Primary feature | `TEST-003` Core screen widget tests — IN PROGRESS under Issue #179. |
+| Completed checkpoint | `ENG-013` privacy-gated crash/non-fatal diagnostics boundary — VERIFIED and squash-merged via PR #178 as `cdf57de2269d8ffb0356ba3ccdfe66dc2bb6e000`; final-head Flutter CI #801 / run `31343310250` was green. |
+| Status | TEST-003 is IN PROGRESS: preserve existing responsive tests, add the missing real Arabic locale/reference/tablet cases across the six critical screens, and enforce the matrix in CI without duplicating TEST-006 golden or TEST-007 E2E scope. |
+| Previous checkpoint | `ENG-013` crash reporting/non-fatal diagnostics — VERIFIED and merged as `cdf57de2269d8ffb0356ba3ccdfe66dc2bb6e000`. |
+| Next recommended feature | Complete TEST-003; once VERIFIED, P0 `TEST-007` becomes dependency-ready because TEST-001 is already VERIFIED. |
 | Known blocker | `TEST-011` requires real production UMP/privacy-message/regulatory-device verification. `REL-007`/`REL-008` require real production AdMob/signing inputs and a production-signed candidate; final install/upgrade/device smoke requires an Android device or testing track. `TEST-009` also remains dependency-blocked while `PERF-001` is PLANNED. Visual Studio C++ components remain optional for Windows desktop only. |
+
+## TEST-003 core screen widget matrix — 2026-08-10
+
+- Issue #179 / branch `agent/test-003-core-screen-widget-matrix` is the single active primary workstream.
+- Existing responsive tests already cover all six required surfaces, but locale/viewport coverage is uneven rather than an explicit release matrix.
+- World Map and Mission Briefing already prove compact English, Arabic RTL, and tablet behavior; they will be preserved rather than rewritten.
+- Home lacks Arabic locale coverage; Gameplay and Shop currently use manual RTL instead of a real Arabic locale; Result currently proves only the compact English loss state.
+- The checkpoint will add only those missing deterministic cases and a machine CI guard requiring the six screen families plus compact/reference/tablet and EN/AR coverage anchors.
+- No production UI behavior, assets, network services, golden snapshots, or TEST-007 full E2E flow are in scope.
+- VERIFIED TEST-003 will satisfy the final dependency blocking P0 TEST-007.
 
 ## ENG-013 crash reporting and non-fatal diagnostics — 2026-08-10
 
