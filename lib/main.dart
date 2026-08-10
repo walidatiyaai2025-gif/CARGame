@@ -1,11 +1,13 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/painting.dart';
 import 'package:flutter/services.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 import 'bootstrap/app_composition.dart';
 import 'bootstrap/cargo_sort_app.dart';
+import 'core/assets/game_image_memory_policy.dart';
 import 'core/logging/app_logger.dart';
 import 'core/motion/motion_lifecycle_scope.dart';
 import 'core/theme/app_theme.dart';
@@ -27,6 +29,9 @@ Future<void> _applyImmersiveFullscreen() async {
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  GameImageMemoryPolicy.standard.configureImageCache(
+    PaintingBinding.instance.imageCache,
+  );
   unawaited(_applyImmersiveFullscreen());
   SystemChrome.setSystemUIChangeCallback((systemOverlaysAreVisible) async {
     if (!systemOverlaysAreVisible) return;
@@ -262,194 +267,76 @@ class _BootstrapAppState extends State<BootstrapApp>
   }
 }
 
-class _PremiumSplash extends StatefulWidget {
+class _PremiumSplash extends StatelessWidget {
   const _PremiumSplash({required this.status});
+
   final String status;
-
-  @override
-  State<_PremiumSplash> createState() => _PremiumSplashState();
-}
-
-class _PremiumSplashState extends State<_PremiumSplash>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-  late final Animation<double> _scale;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1100),
-    )..repeat(reverse: true);
-    _scale = Tween<double>(
-      begin: .96,
-      end: 1.04,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF102C4C), Color(0xFF255B88), Color(0xFF112A45)],
-          ),
-        ),
-        child: SafeArea(
-          child: Stack(
-            children: [
-              const Positioned(
-                top: -70,
-                right: -55,
-                child: _GlowOrb(size: 210),
-              ),
-              const Positioned(
-                bottom: -90,
-                left: -70,
-                child: _GlowOrb(size: 250),
-              ),
-              Center(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(28),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      ScaleTransition(
-                        scale: _scale,
-                        child: Container(
-                          width: 146,
-                          height: 146,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(42),
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFFFFC447), Color(0xFFFF8A1F)],
-                            ),
-                            boxShadow: const [
-                              BoxShadow(
-                                color: Color(0x66FF9F1C),
-                                blurRadius: 34,
-                                offset: Offset(0, 18),
-                              ),
-                            ],
-                          ),
-                          child: const Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              Icon(
-                                Icons.warehouse_rounded,
-                                size: 88,
-                                color: Colors.white,
-                              ),
-                              Positioned(
-                                right: 18,
-                                bottom: 18,
-                                child: Icon(
-                                  Icons.inventory_2_rounded,
-                                  size: 42,
-                                  color: AppTheme.navy,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 28),
-                      const FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text(
-                          'CARGO SORT',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 38,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 1.8,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      const Text(
-                        'SORT • SHIP • CONQUER',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: AppTheme.yellow,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 2.4,
-                        ),
-                      ),
-                      const SizedBox(height: 34),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: const LinearProgressIndicator(
-                          minHeight: 9,
-                          backgroundColor: Colors.white24,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            AppTheme.yellow,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                      AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 250),
-                        child: Text(
-                          widget.status,
-                          key: ValueKey(widget.status),
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 36),
-                      const Text(
-                        'Version $appVersion ($appBuildNumber)',
-                        style: TextStyle(
-                          color: Colors.white60,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 5),
-                      const Text(
-                        appAuthor,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w800,
-                        ),
+        decoration: const BoxDecoration(gradient: AppTheme.skyGradient),
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(28),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 104,
+                  height: 104,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(28),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x22003366),
+                        blurRadius: 28,
+                        offset: Offset(0, 14),
                       ),
                     ],
                   ),
+                  child: const Icon(
+                    Icons.local_shipping_rounded,
+                    color: AppTheme.navy,
+                    size: 58,
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 24),
+                const Text(
+                  'CARGO SORT',
+                  style: TextStyle(
+                    color: AppTheme.navy,
+                    fontSize: 28,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  status,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: AppTheme.navy,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 22),
+                const SizedBox(
+                  width: 34,
+                  height: 34,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 3,
+                    color: AppTheme.gold,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
-}
-
-class _GlowOrb extends StatelessWidget {
-  const _GlowOrb({required this.size});
-  final double size;
-
-  @override
-  Widget build(BuildContext context) => Container(
-    width: size,
-    height: size,
-    decoration: BoxDecoration(
-      shape: BoxShape.circle,
-      color: Colors.white.withValues(alpha: .055),
-    ),
-  );
 }
