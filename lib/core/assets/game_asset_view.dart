@@ -61,7 +61,8 @@ final class GameAssetView extends StatelessWidget {
       return errorFallback ?? _placeholder(context);
     }
 
-    final dpr = MediaQuery.maybeOf(context)?.devicePixelRatio ??
+    final dpr =
+        MediaQuery.maybeOf(context)?.devicePixelRatio ??
         View.of(context).devicePixelRatio;
     final decodeTarget = memoryPolicy.targetForDisplay(
       native: descriptor.dimensions,

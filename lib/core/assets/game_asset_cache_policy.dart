@@ -227,10 +227,7 @@ final class GameAssetCachePolicy extends ChangeNotifier {
     required int globalGeneration,
     required int assetGeneration,
   }) async {
-    final cached = _CachedAsset(
-      provider: provider,
-      decodeTarget: decodeTarget,
-    );
+    final cached = _CachedAsset(provider: provider, decodeTarget: decodeTarget);
     try {
       await _precache(cached, context);
       if (_isStale(assetId, globalGeneration, assetGeneration)) {

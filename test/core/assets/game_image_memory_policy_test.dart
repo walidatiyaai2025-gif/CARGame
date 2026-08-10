@@ -46,22 +46,25 @@ void main() {
       expect(target.height, 128);
     });
 
-    test('cover requests enough pixels while preserving source aspect ratio', () {
-      const policy = GameImageMemoryPolicy.standard;
-      const native = GameAssetDimensions(width: 1200, height: 600);
+    test(
+      'cover requests enough pixels while preserving source aspect ratio',
+      () {
+        const policy = GameImageMemoryPolicy.standard;
+        const native = GameAssetDimensions(width: 1200, height: 600);
 
-      final target = policy.targetForDisplay(
-        native: native,
-        devicePixelRatio: 2,
-        logicalWidth: 100,
-        logicalHeight: 100,
-        fit: BoxFit.cover,
-      );
+        final target = policy.targetForDisplay(
+          native: native,
+          devicePixelRatio: 2,
+          logicalWidth: 100,
+          logicalHeight: 100,
+          fit: BoxFit.cover,
+        );
 
-      expect(target.width, 400);
-      expect(target.height, 200);
-      expect(target.width / target.height, closeTo(2, .001));
-    });
+        expect(target.width, 400);
+        expect(target.height, 200);
+        expect(target.width / target.height, closeTo(2, .001));
+      },
+    );
 
     test('contain fits within the physical display box', () {
       const policy = GameImageMemoryPolicy.standard;
@@ -87,7 +90,10 @@ void main() {
       expect(target.width, 1024);
       expect(target.height, 512);
       expect(target.width, lessThanOrEqualTo(policy.maxDecodeDimension));
-      expect(target.estimatedBytes, lessThanOrEqualTo(policy.maxDecodedImageBytes));
+      expect(
+        target.estimatedBytes,
+        lessThanOrEqualTo(policy.maxDecodedImageBytes),
+      );
     });
 
     test('hard dimension cap bounds extreme authored dimensions', () {

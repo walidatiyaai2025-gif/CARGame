@@ -102,8 +102,9 @@ final class GameImageMemoryPolicy {
         BoxFit.contain || BoxFit.scaleDown => math.min(widthScale, heightScale),
         BoxFit.fitWidth => widthScale,
         BoxFit.fitHeight => heightScale,
-        BoxFit.cover || BoxFit.fill || BoxFit.none =>
-          math.max(widthScale, heightScale),
+        BoxFit.cover ||
+        BoxFit.fill ||
+        BoxFit.none => math.max(widthScale, heightScale),
       };
     }
     if (physicalWidth != null) return physicalWidth / native.width;

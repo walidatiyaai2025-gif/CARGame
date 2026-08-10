@@ -4,34 +4,35 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('GameAssetView passes a near-display decode target to Image.asset', (
-    tester,
-  ) async {
-    final registry = GameAssetRegistry.fromJsonString(_manifest);
+  testWidgets(
+    'GameAssetView passes a near-display decode target to Image.asset',
+    (tester) async {
+      final registry = GameAssetRegistry.fromJsonString(_manifest);
 
-    await tester.pumpWidget(
-      MediaQuery(
-        data: const MediaQueryData(devicePixelRatio: 2),
-        child: MaterialApp(
-          home: Center(
-            child: GameAssetView(
-              assetId: 'ui.hero',
-              registry: registry,
-              width: 100,
-              height: 50,
+      await tester.pumpWidget(
+        MediaQuery(
+          data: const MediaQueryData(devicePixelRatio: 2),
+          child: MaterialApp(
+            home: Center(
+              child: GameAssetView(
+                assetId: 'ui.hero',
+                registry: registry,
+                width: 100,
+                height: 50,
+              ),
             ),
           ),
         ),
-      ),
-    );
+      );
 
-    final image = tester.widget<Image>(find.byType(Image));
-    expect(image.image, isA<ResizeImage>());
-    final provider = image.image as ResizeImage;
-    expect(provider.width, 200);
-    expect(provider.height, 100);
-    expect(provider.allowUpscaling, isFalse);
-  });
+      final image = tester.widget<Image>(find.byType(Image));
+      expect(image.image, isA<ResizeImage>());
+      final provider = image.image as ResizeImage;
+      expect(provider.width, 200);
+      expect(provider.height, 100);
+      expect(provider.allowUpscaling, isFalse);
+    },
+  );
 
   testWidgets('unbounded layout hints still use a bounded decode target', (
     tester,
@@ -43,10 +44,7 @@ void main() {
         data: const MediaQueryData(devicePixelRatio: 3),
         child: MaterialApp(
           home: Center(
-            child: GameAssetView(
-              assetId: 'world.hero',
-              registry: registry,
-            ),
+            child: GameAssetView(assetId: 'world.hero', registry: registry),
           ),
         ),
       ),
