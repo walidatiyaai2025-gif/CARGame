@@ -116,7 +116,7 @@ Codex must not mark a feature complete merely because UI code exists.
 | HOME-006 | Shop and progress navigation | P1 | IMPLEMENTED | SHOP-001, PROG-001 | Navigation exists and must adopt shared transitions. |
 | NAV-001 | Navigation guard framework | P0 | IMPLEMENTED | ENG-003 | Double push/pop and result action races are prevented; regression tests remain. |
 | NAV-002 | Unified animated route transitions | P1 | IMPLEMENTED | MOT-004 | Home/app-shell Journey, Shop, Progress, Logs, Settings, and runtime Log Viewer now use `GameNavigator` with stable names and duplicate-push guards; Mission Briefing→Gameplay also uses the shared named route. Result/back-guard regression coverage is present; broader device validation remains in RC-001. |
-| NAV-003 | Deep-link and notification route safety | P2 | PLANNED | NAV-001, RET-008 | External entry opens only allowed destinations and never duplicates navigation. |
+| NAV-003 | Deep-link and notification route safety | P2 | PLANNED | NAV-001 | External entry opens only allowed destinations and never duplicates navigation. |
 | HOME-007 | First-run onboarding and returning-player resume | P1 | PLANNED | GAME-013, ENG-008 | New players receive concise onboarding; returning players resume the correct journey safely. |
 
 # F. Worlds, cities, and level map
@@ -128,7 +128,7 @@ Codex must not mark a feature complete merely because UI code exists.
 | WORLD-003 | Locked/open/completed city states | P1 | IMPLEMENTED | WORLD-001 | States and star progress are visible. |
 | WORLD-004 | 3D city nodes | P1 | IMPLEMENTED | UI3D-002 | Procedural 3D-style nodes exist; production asset integration remains. |
 | WORLD-005 | Boss city presentation | P1 | IMPLEMENTED | WORLD-001 | Every 25th level has boss visual treatment. |
-| WORLD-006 | World unlock and completion flow | P1 | PLANNED | REW-003, MOT-009 | New world opens once with persistent state and animated reveal. |
+| WORLD-006 | World unlock and completion flow | P1 | PLANNED | REW-003 | New world opens once with persistent state and animated reveal. |
 | WORLD-007 | Preserve map scroll position | P2 | PLANNED | WORLD-002 | Returning from gameplay restores the relevant world/city position. |
 | WORLD-008 | World content versioning and migration | P1 | PLANNED | WORLD-001, ENG-008 | Updates can add/rebalance content without invalidating unlocked progress or rewards. |
 
@@ -188,7 +188,7 @@ Codex must not mark a feature complete merely because UI code exists.
 | REW-005 | Next City action | P0 | IMPLEMENTED | NAV-001 | Guarded action returns to updated map without navigation lock; device test remains. |
 | REW-006 | 3D reward animation | P1 | PLANNED | MOT-008, AST-009 | Chest, stars, coins, XP, and boosters animate coherently. |
 | REW-007 | Reward transaction ledger and reconciliation | P0 | VERIFIED | ENG-008, REW-001 | Issue #119 / PR #120 add stable gameplay/daily/mission/heart reward idempotency keys, a bounded completed ledger, a validated absolute-state pending journal, deterministic interruption recovery, durable-ledger-before-memory ordering, and best-effort stale-journal cleanup while preserving legacy saves. PR #120 squash-merged as `b915d95b938d459133a9a8b120f38815178b1852`; Flutter CI #623 passed formatting, Analyze, the full Flutter suite, Debug APK build and artifact upload. Debug artifact #9032765167 is 80,530,583 bytes with SHA-256 `534037a3cdd4fe75d54a53df6452f8188d4c81cdcc859040a51725315f20070b`. |
-| REW-008 | Reward table configuration and probability disclosure | P1 | PLANNED | REW-007, RET-005 | Reward tables are versioned, testable, and odds are disclosed where legally/product required. |
+| REW-008 | Reward table configuration and probability disclosure | P1 | PLANNED | REW-007 | Reward tables are versioned, testable, and odds are disclosed where legally/product required. |
 
 # K. Economy, progress, and shop
 
@@ -281,7 +281,7 @@ Codex must not mark a feature complete merely because UI code exists.
 | PERF-004 | Startup time budget | P0 | IMPLEMENTED | ENG-003 | Main UI opens with defaults when optional services are slow; profiling remains. |
 | PERF-005 | Low-end device mode | P2 | PLANNED | UI3D-007 | Particles, blur, shadows, and simultaneous animations reduce predictably. |
 | PERF-006 | Network and battery efficiency | P1 | PLANNED | ENG-014, RET-007 | Background work, retries, telemetry, ads, and downloads use bounded policies. |
-| PERF-007 | App size and asset delivery budget | P1 | PLANNED | AST-010, REL-008 | APK/AAB size, native libs, fonts, and assets meet documented thresholds. |
+| PERF-007 | App size and asset delivery budget | P1 | PLANNED | AST-010 | APK/AAB size, native libs, fonts, and assets meet documented thresholds. |
 | REL-001 | ADB/device scripts remain dynamic | P0 | VERIFIED | ENG-002 | `tool/verify_dynamic_android_targets.dart` rejects fixed emulator serials, literal AVD arguments/defaults, and fixed `adb -s` targets; Flutter CI #546 passed the dynamic-target gate across 38 scripts on the merged TEST-001 checkpoint. |
 | REL-002 | Kotlin incremental-cache recovery | P0 | IMPLEMENTED | ENG-002 | Shared build repair performs cleanup/retry; multi-machine verification remains. |
 | REL-003 | Runtime resilience and watchdog policy | P1 | PLANNED | ENG-004, ENG-014 | Recoverable failures surface actionable UI/logs without restart loops or data loss. |

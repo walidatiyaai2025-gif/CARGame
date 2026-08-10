@@ -37,7 +37,7 @@ const LABELS={'VERIFIED':'x'};
 const REQ='ABCDEFGHIJKLMNOPQRS'.split('');
 function parse(md){
   let h=l.match(/^#\s+([A-Z])\.\s+(.+)$/);
-  if(c.length<6||c[0]==='ID')continue;
+  if(c.length!==6||c[0]==='ID')continue;
 }
 let missingDeps=model.features.flatMap(x=>x);
 let active=count('IN PROGRESS');
@@ -86,6 +86,8 @@ VALID_FLUTTER_CI = "\n".join(
         "Verify secret hygiene",
         "Verify privacy data inventory",
         "Verify security baseline",
+        "Verify TEST-010 dashboard catalog parity",
+        "Test TEST-010 dashboard catalog validator",
         "Restore packages",
         "Verify dependency security advisories",
         "Test security scan policy",
