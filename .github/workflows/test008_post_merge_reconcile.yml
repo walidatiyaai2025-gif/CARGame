@@ -1,0 +1,129 @@
+name: TEST-008 Post-Merge Reconcile
+
+on:
+  push:
+    branches:
+      - agent/test-008-post-merge-reconcile
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout reconciliation branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/test-008-post-merge-reconcile
+          fetch-depth: 0
+
+      - name: Reconcile TEST-008 evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path: str, old: str, new: str) -> None:
+              p = Path(path)
+              text = p.read_text(encoding='utf-8')
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{path}: expected one anchor, found {count}: {old[:100]!r}')
+              p.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+          catalog = 'docs/FEATURE_CATALOG.md'
+          replace_once(
+              catalog,
+              '| TEST-008 | Coverage thresholds and flaky-test policy | P1 | IN PROGRESS | ENG-007 | Issue #190 adds a versioned coverage/flaky-test policy, LCOV validator, focused regressions, zero blanket retries, bounded owned quarantines, and CI threshold enforcement; full PR CI evidence is pending. |',
+              '| TEST-008 | Coverage thresholds and flaky-test policy | P1 | VERIFIED | ENG-007 | Issue #190 / PR #191 add a versioned authored-source coverage and flaky-test contract: strict LCOV parsing, 35% hard floor, 60% target, zero blanket retries, bounded owner/issue/expiry quarantines, and 30 focused regressions. Final clean PR head `456c762818e6b1e0746651ef6f9b3cefcbb32dea` passed Flutter CI #835 / run `31405428616`; PR #191 squash-merged as `87ab162c1fe1a73b962dd98370ac04aee7d15b90`, Issue #190 closed completed, and exact-merge main CI #836 / run `31406357471` passed all gates with debug artifact #9070055072 (80,633,605 bytes; artifact ZIP SHA-256 `5b66f915d19184feda6ca2a061e73fdaaa6abed4ac6cc9b2c2002c3c33e9a476`). The full suite passed 310 tests at 88.01% authored-source line coverage (5,584/6,345). Latest-verified promotion run `31407149670` committed the 55,878,023-byte QA release APK with SHA-256 `adf8907ad545b6c30113c17eabbd4d8a572c79d3821b05212cee0f562468f64a` as promotion commit `3945b6fad174ec913c381fabfc8788de4e5323d7`; ephemeral CI signing and ads disabled remain QA-only. |',
+          )
+          replace_once(
+              catalog,
+              '- `TEST-008` Coverage thresholds and flaky-test policy — IN PROGRESS under issue #190 on `agent/test-008-coverage-flaky-policy`; no other primary workstream should start until this checkpoint is reconciled.',
+              '- None. TEST-008 is VERIFIED and reconciled; run a fresh dependency-ready scan before selecting the next single primary workstream.',
+          )
+          replace_once(
+              catalog,
+              '- Complete TEST-008 CI verification and reconciliation, then run a fresh dependency-ready scan; preserve TEST-007, TEST-010, and latest-verified-APK gates.',
+              '- Run a fresh catalog dependency-ready scan and select exactly one next primary workstream; preserve TEST-007, TEST-008, TEST-010, and latest-verified-APK gates.',
+          )
+          recently = '## Recently verified\n\n'
+          verified_line = (
+              '- `TEST-008` Coverage thresholds and flaky-test policy — issue #190 / PR #191 completed the 50-checkpoint quality sprint. Clean-head CI #835 / run `31405428616` and exact-merge main CI #836 / run `31406357471` passed TEST-007/TEST-010, privacy/security/dependency, Analyze, 310 Flutter tests, 88.01% authored-source line coverage, Debug APK, artifact security, and upload; main debug artifact #9070055072 is 80,633,605 bytes with artifact ZIP SHA-256 `5b66f915d19184feda6ca2a061e73fdaaa6abed4ac6cc9b2c2002c3c33e9a476`. PR #191 squash-merged as `87ab162c1fe1a73b962dd98370ac04aee7d15b90`, Issue #190 closed completed, and latest-verified promotion run `31407149670` committed QA APK promotion `3945b6fad174ec913c381fabfc8788de4e5323d7` (55,878,023 bytes; SHA-256 `adf8907ad545b6c30113c17eabbd4d8a572c79d3821b05212cee0f562468f64a`).\n'
+          )
+          p = Path(catalog)
+          text = p.read_text(encoding='utf-8')
+          if text.count(recently) != 1:
+              raise SystemExit('catalog recently-verified anchor missing/duplicated')
+          p.write_text(text.replace(recently, recently + verified_line, 1), encoding='utf-8')
+
+          status = 'docs/STATUS.md'
+          replace_once(status, '| Primary feature | `TEST-008` Coverage thresholds and flaky-test policy — IN PROGRESS under issue #190. |', '| Primary feature | None — TEST-008 is VERIFIED and reconciled; run a fresh dependency-ready scan before starting the next single primary workstream. |')
+          replace_once(status, '| Completed checkpoint | `TEST-010` dashboard/catalog parser validation — VERIFIED and merged; final clean-head Flutter CI #827 / run `31385221550` passed 45/45 on `a7fd43118ec42852984aaf3f2b4f723534fad6b5`, PR #188 squash-merged as `d148ac820ee7dcfbacd0f88304a9cf168bc66b41`, and exact-merge main CI #828 / run `31385904664` also passed 45/45. |', '| Completed checkpoint | `TEST-008` coverage thresholds and flaky-test policy — 50/50 sprint VERIFIED; clean-head CI #835 and exact-merge main CI #836 passed all gates, PR #191 squash-merged as `87ab162c1fe1a73b962dd98370ac04aee7d15b90`, and Issue #190 closed completed. |')
+          replace_once(status, '| Status | TEST-008 implementation is active: repository-owned coverage/flaky policy, LCOV validation, focused regressions, and CI wiring are being added without changing game runtime behavior. TEST-007 and TEST-010 remain protected gates. |', '| Status | TEST-008 is VERIFIED on main: 310 Flutter tests passed at 88.01% authored-source line coverage; exact-merge main CI #836 / run `31406357471` uploaded debug artifact #9070055072, and promotion run `31407149670` updated the latest-verified QA APK. No game runtime behavior changed. |')
+          replace_once(status, '| Previous checkpoint | `TEST-007` critical path — 50/50 release checkpoints VERIFIED; final-head Flutter CI #816 / run `31380502193` passed all gates and PR #184 squash-merged as `b7f858f9cac6c1a8c5b0d1f9058be599f9ce792c`. |', '| Previous checkpoint | `TEST-010` dashboard/catalog parser validation — VERIFIED; PR #188 squash-merged as `d148ac820ee7dcfbacd0f88304a9cf168bc66b41`, exact-merge main CI #828 / run `31385904664` passed all gates. |')
+          replace_once(status, '| Next recommended feature | Finish TEST-008 normal-CI verification/reconciliation, then run a fresh dependency-ready scan before selecting the next single primary workstream. |', '| Next recommended feature | Run a fresh dependency-ready scan and select exactly one next primary workstream; preserve TEST-007, TEST-008, TEST-010, and latest-verified-APK gates. |')
+
+          p = Path(status)
+          text = p.read_text(encoding='utf-8')
+          start = '## TEST-008 coverage thresholds and flaky-test policy — 2026-08-10\n'
+          end = '## TEST-010 dashboard/catalog parser validation — 2026-08-10\n'
+          if text.count(start) != 1 or text.count(end) != 1:
+              raise SystemExit('STATUS TEST-008/010 section anchors missing or duplicated')
+          before, rest = text.split(start, 1)
+          _, after = rest.split(end, 1)
+          section = (
+              '## TEST-008 coverage thresholds and flaky-test policy — 2026-08-10\n\n'
+              '- Issue #190 is closed completed; PR #191 squash-merged as `87ab162c1fe1a73b962dd98370ac04aee7d15b90`.\n'
+              '- The 50-checkpoint sprint is complete: strict authored-source LCOV validation, 35% hard floor, 60% target, zero blanket retries, bounded owned/issue-linked quarantines, and 30 focused validator regressions are versioned and enforced.\n'
+              '- Final clean PR head `456c762818e6b1e0746651ef6f9b3cefcbb32dea` passed Flutter CI #835 / run `31405428616`; the full Flutter suite passed 310 tests at 88.01% line coverage (5,584/6,345 authored lines).\n'
+              '- Exact-merge main CI #836 / run `31406357471` passed all workflow gates and uploaded debug artifact #9070055072 (80,633,605 bytes; artifact ZIP SHA-256 `5b66f915d19184feda6ca2a061e73fdaaa6abed4ac6cc9b2c2002c3c33e9a476`).\n'
+              '- Maintain Latest Verified APK run `31407149670` passed release-mode QA build/security/current-main promotion and committed `3945b6fad174ec913c381fabfc8788de4e5323d7`; `Last verified APK` is 55,878,023 bytes with SHA-256 `adf8907ad545b6c30113c17eabbd4d8a572c79d3821b05212cee0f562468f64a`, ephemeral CI signing, ads disabled, and not production/Play Store signed.\n'
+              '- TEST-007 and TEST-010 remain blocking normal-CI gates. No gameplay, economy, persistence, navigation, ads, privacy runtime, signing policy, packages, or assets changed.\n\n'
+          )
+          p.write_text(before + section + end + after, encoding='utf-8')
+
+          work = 'docs/work/TEST-008.md'
+          replace_once(work, '- State: IN PROGRESS — implementation CI green; final merge/reconciliation pending', '- State: VERIFIED — merged, exact-main CI green, latest-verified QA APK promoted, and tracking reconciled')
+          replace_once(work, '- [ ] T50 Reconcile catalog/status with exact CI evidence, merge, and close issue #190.', '- [x] T50 Reconcile catalog/status with exact CI evidence, merge PR #191, close issue #190, and record exact-main/promotion evidence.')
+          p = Path(work)
+          text = p.read_text(encoding='utf-8')
+          anchor = '\nNo production gameplay, economy, persistence, navigation, ads, privacy, signing, package, or asset behavior is intentionally changed by TEST-008.\n'
+          final = (
+              '\n## Final merge and promotion evidence\n\n'
+              '- Final clean PR head: `456c762818e6b1e0746651ef6f9b3cefcbb32dea`; Flutter CI #835 / run `31405428616` passed all gates.\n'
+              '- PR #191 squash-merged as `87ab162c1fe1a73b962dd98370ac04aee7d15b90`; Issue #190 closed with state reason completed.\n'
+              '- Exact-merge main Flutter CI #836 / run `31406357471` passed all gates; debug artifact #9070055072 is 80,633,605 bytes with artifact ZIP SHA-256 `5b66f915d19184feda6ca2a061e73fdaaa6abed4ac6cc9b2c2002c3c33e9a476`.\n'
+              '- Latest-verified promotion run `31407149670` committed `3945b6fad174ec913c381fabfc8788de4e5323d7`; QA APK is 55,878,023 bytes with SHA-256 `adf8907ad545b6c30113c17eabbd4d8a572c79d3821b05212cee0f562468f64a`, ephemeral CI signing, ads disabled.\n'
+              '- TEST-008 is fully VERIFIED and its 50/50 execution sprint is complete.\n'
+          )
+          if text.count(anchor) != 1:
+              raise SystemExit('TEST-008 final paragraph anchor missing/duplicated')
+          p.write_text(text.replace(anchor, final + anchor, 1), encoding='utf-8')
+          PY
+
+      - name: Validate reconciliation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tool/verify_test_quality.py
+          python3 tool/test_test_quality.py
+          python3 tool/verify_dashboard_catalog.py
+          python3 tool/test_dashboard_catalog.py
+          python3 tool/verify_ci_integrity.py
+          python3 tool/test_ci_integrity.py
+          git diff --check
+
+      - name: Commit docs reconciliation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add docs/FEATURE_CATALOG.md docs/STATUS.md docs/work/TEST-008.md
+          git diff --cached --check
+          git commit -m "TEST-008: reconcile final verified evidence [skip ci]"
+          git push origin HEAD:agent/test-008-post-merge-reconcile
