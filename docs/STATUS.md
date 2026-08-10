@@ -7,23 +7,31 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | Field | Value |
 |---|---|
 | Current phase | Android RC hardening — issue #79 |
-| Primary feature | `TEST-003` Core screen widget tests — IN PROGRESS under Issue #179. |
-| Completed checkpoint | `ENG-013` privacy-gated crash/non-fatal diagnostics boundary — VERIFIED and squash-merged via PR #178 as `cdf57de2269d8ffb0356ba3ccdfe66dc2bb6e000`; final-head Flutter CI #801 / run `31343310250` was green. |
-| Status | TEST-003 is IN PROGRESS: preserve existing responsive tests, add the missing real Arabic locale/reference/tablet cases across the six critical screens, and enforce the matrix in CI without duplicating TEST-006 golden or TEST-007 E2E scope. |
-| Previous checkpoint | `ENG-013` crash reporting/non-fatal diagnostics — VERIFIED and merged as `cdf57de2269d8ffb0356ba3ccdfe66dc2bb6e000`. |
-| Next recommended feature | Complete TEST-003; once VERIFIED, P0 `TEST-007` becomes dependency-ready because TEST-001 is already VERIFIED. |
+| Primary feature | `TEST-007` Integration and end-to-end critical path — VERIFIED on Issue #181 / PR #184 pending merge. |
+| Completed checkpoint | `TEST-007` critical path — 50/50 release checkpoints VERIFIED by Flutter CI #810 / run `31379676066` on implementation head `4882ac1b9449fb399ea3456ce89fa460dcfbcb98`; debug artifact #9059551183 passed artifact-security and upload. |
+| Status | TEST-007 is VERIFIED at implementation head: the 50-checkpoint deterministic offline contract covers first run, guarded navigation, completion/reward idempotency, shop recovery, restart/restore, EN/AR RTL, responsive surfaces, and CI drift protection; PR #184 remains to be merged. |
+| Previous checkpoint | `TEST-003` Core screen widget matrix — VERIFIED by CI #803 and squash-merged via PR #180 as `4ca093a843ab685dfeef8df2c86e3950a13f482f`. |
+| Next recommended feature | Merge verified PR #184, then run the catalog dependency-ready scan and select exactly one next workstream. |
 | Known blocker | `TEST-011` requires real production UMP/privacy-message/regulatory-device verification. `REL-007`/`REL-008` require real production AdMob/signing inputs and a production-signed candidate; final install/upgrade/device smoke requires an Android device or testing track. `TEST-009` also remains dependency-blocked while `PERF-001` is PLANNED. Visual Studio C++ components remain optional for Windows desktop only. |
+
+## TEST-007 critical-path integration contract — 2026-08-10
+
+- Issue #181 / PR #184 implement exactly 50 named release checkpoints T01..T50 as one deterministic release contract.
+- The executable path covers fresh state, Home, World Map, Mission Briefing, Gameplay, completion/result, authoritative reward/XP, duplicate reward protection, Shop purchase/recovery, restart, and fresh-store restore.
+- EN/LTR and AR/RTL plus compact/reference/tablet surfaces are included; the test uses in-memory/local persistence and introduces no live network dependency, production identifier, balance change, or new package.
+- `tool/verify_test_007_critical_path.py` requires T01..T50 exactly once, production journey/state anchors, the offline boundary, and blocking CI execution; six focused Python regressions protect the validator itself.
+- Flutter CI #810 / run `31379676066` passed all repository gates including formatting, Analyze, core screen matrix, focused TEST-007, full Flutter suite, Debug APK build, artifact security, and upload on implementation head `4882ac1b9449fb399ea3456ce89fa460dcfbcb98`.
+- Debug artifact #9059551183 is 80,633,604 bytes with SHA-256 `283bf954510ac7eec6cb78e36f58995157379b3afe923b2af524003d3a4b415b`.
+- Repository-owned TEST-007 acceptance is VERIFIED; PR #184 remains the only merge step before this checkpoint lands on `main`.
 
 ## TEST-003 core screen widget matrix — 2026-08-10
 
-- Issue #179 / branch `agent/test-003-core-screen-widget-matrix` is the single active primary workstream.
-- Existing responsive tests already cover all six required surfaces, but locale/viewport coverage is uneven rather than an explicit release matrix.
-- World Map and Mission Briefing already prove compact English, Arabic RTL, and tablet behavior; they will be preserved rather than rewritten.
-- Home lacks Arabic locale coverage; Gameplay and Shop currently use manual RTL instead of a real Arabic locale; Result currently proves only the compact English loss state.
-- The checkpoint will add only those missing deterministic cases and a machine CI guard requiring the six screen families plus compact/reference/tablet and EN/AR coverage anchors.
-- No production UI behavior, assets, network services, golden snapshots, or TEST-007 full E2E flow are in scope.
-- VERIFIED TEST-003 will satisfy the final dependency blocking P0 TEST-007.
-
+- Issue #179 / PR #180 are completed and merged; the explicit release matrix covers Home, World Map, Mission Briefing, Gameplay, Result, and Shop across compact/reference/tablet classes and EN/AR behavior.
+- Missing locale/viewport gaps were closed without changing production UI behavior, adding golden snapshots, or introducing network dependencies.
+- `tool/verify_core_screen_widget_matrix.py` is a blocking CI guard for the six screen families and compact/reference/tablet plus EN/AR anchors.
+- Flutter CI #803 / run `31344139284` passed formatting, Analyze, focused matrix tests, full Flutter suite, Debug APK, privacy/security/dependency/catalog gates, artifact security, and upload on head `8d7c48fbde9dceffeb9fb6edb87a02bd941643ab`.
+- Debug artifact #9046841743 is 80,633,606 bytes with SHA-256 `f4f2b86d7dae9c44ecaf66042a91321a121356f8bd36f355dc38cf227e69e94f`.
+- PR #180 squash-merged as `4ca093a843ab685dfeef8df2c86e3950a13f482f`; TEST-003 is VERIFIED and its dependency on P0 TEST-007 is satisfied.
 ## ENG-013 crash reporting and non-fatal diagnostics — 2026-08-10
 
 - Issue #177 / PR #178 add schema-v1 `CrashReport`/`CrashReportContext` plus vendor-neutral reporting/privacy ports.

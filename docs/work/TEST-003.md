@@ -11,7 +11,7 @@ Establish an explicit, deterministic widget-test release contract for Home, Worl
 
 ## Current checkpoint
 
-`IN PROGRESS` — preserve existing responsive tests, close real locale/RTL and viewport gaps, and add a machine coverage guard without introducing golden snapshots or full E2E behavior owned by later testing tasks.
+`VERIFIED` — Issue #179 / PR #180 completed the explicit compact/reference/tablet plus EN/AR matrix and blocking CI guard without production UI redesign, golden snapshots, or live network dependency.
 
 ## Baseline audit
 
@@ -38,4 +38,4 @@ When VERIFIED, TEST-003 satisfies the final catalog dependency for P0 TEST-007 I
 
 ## Verification
 
-Pending implementation and GitHub Actions verification.
+Flutter CI #803 / run `31344139284` passed the matrix validator, formatting, Analyze, focused TEST-003 suite, full Flutter suite, Debug APK build, privacy/security/dependency/catalog gates, artifact security, and upload on head `8d7c48fbde9dceffeb9fb6edb87a02bd941643ab`. Debug artifact #9046841743 is 80,633,606 bytes with SHA-256 `f4f2b86d7dae9c44ecaf66042a91321a121356f8bd36f355dc38cf227e69e94f`. PR #180 squash-merged to `main` as `4ca093a843ab685dfeef8df2c86e3950a13f482f`; TEST-003 is VERIFIED and TEST-007 is dependency-ready.
