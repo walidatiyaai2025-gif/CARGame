@@ -66,11 +66,21 @@ Establish a deterministic 60 Hz frame-budget policy and bounded runtime adaptati
 - [x] T44 Add machine ownership/drift validator and its focused regressions.
 - [x] T45 Add PERF-001 validator and focused Flutter tests to normal CI.
 - [x] T46 Update FEATURE_CATALOG and STATUS to IN PROGRESS with honest verification boundary.
-- [ ] T47 Run formatting and Analyze.
-- [ ] T48 Pass focused PERF-001 tests plus full Flutter coverage suite and TEST-008 threshold.
-- [ ] T49 Build/security-scan/upload Debug APK through normal Flutter CI.
+- [x] T47 Run formatting and Analyze.
+- [x] T48 Pass focused PERF-001 tests plus full Flutter coverage suite and TEST-008 threshold.
+- [x] T49 Build/security-scan/upload Debug APK through normal Flutter CI.
 - [ ] T50 Merge only after final-head CI is green; run exact-main verification/promotion, then reconcile source-controlled PERF-001 evidence without inventing physical-device frame measurements.
 
 ## Safety boundary
 
 No gameplay, economy, persistence, ads, privacy, security, analytics, production identifiers, packages, or asset binaries are changed by this feature. Device-tier profiling remains external evidence under later compatibility/performance validation work.
+
+## Clean PR verification evidence
+
+- Clean implementation head `5ead71d5c204d30f25888f7dabd2b59d67a2cc8f` passed Flutter CI #847 / run `31414052377` end-to-end.
+- PERF-001 machine validator passed with 8/8 focused validator regressions; the focused Flutter performance/motion suite passed 15/15.
+- Formatting and whitespace gates passed; `flutter analyze --no-fatal-infos --no-fatal-warnings` completed with no fatal finding (one pre-existing non-fatal TEST-007 unused-local warning remains outside PERF-001 scope).
+- Full Flutter suite passed 332/332 tests. Authored-source coverage is 5,775 / 6,547 = 88.21%, above the TEST-008 35% floor and 60% target.
+- Debug APK build and packaged-artifact security passed. Artifact #9072989254 is 80,644,379 bytes with artifact ZIP SHA-256 `d2150f51c7ede40a889e0aa7a92f1db8586df73351ebef9b4d335bf073ca47bf`.
+- TEST-007, TEST-008, TEST-010, AST-004, privacy/security/dependency, dashboard/catalog, asset-pipeline and Debug APK gates all remained green.
+- The next gate is a full normal-CI run on this evidence-bearing final PR head before merge; device-tier profiling is still deliberately not claimed.
