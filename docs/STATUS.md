@@ -7,22 +7,25 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | Field | Value |
 |---|---|
 | Current phase | Android RC hardening — issue #79 |
-| Primary feature | `AST-004` Precache and memory policy — IN PROGRESS under issue #192. |
-| Completed checkpoint | `TEST-008` coverage thresholds and flaky-test policy — VERIFIED and merged; PR #191 squash-merged as `87ab162c1fe1a73b962dd98370ac04aee7d15b90` after final-head Flutter CI #835, and exact-main Flutter CI #836 / run `31406357471` passed the full 310-test suite, 88.01% authored-source coverage, Debug APK, artifact security, and upload. |
-| Status | AST-004 is active on current main: harden the existing bounded asset cache against in-flight clear/forget races, deduplicate concurrent loads, add observable counters and machine CI ownership guards while preserving fallback-safe zero-binary asset behavior. |
-| Previous checkpoint | `TEST-010` dashboard/catalog parser validation — VERIFIED and merged; exact-main Flutter CI #828 passed all gates before TEST-008. |
-| Next recommended feature | Finish AST-004 normal-CI verification/reconciliation; when VERIFIED, run a fresh dependency-ready scan with P0 PERF-001 expected to become dependency-ready. |
-| Known blocker | `TEST-011` requires real production UMP/privacy-message/regulatory-device verification. `REL-007`/`REL-008` require real production AdMob/signing inputs and a production-signed candidate; final install/upgrade/device smoke requires an Android device or testing track. `TEST-009` also remains dependency-blocked while `PERF-001` is PLANNED. Visual Studio C++ components remain optional for Windows desktop only. |
+| Primary feature | None — `AST-004` Precache and memory policy is VERIFIED after 100/100 checkpoints; `PERF-001` is selected next but not started. |
+| Completed checkpoint | `AST-004` bounded asset precache and memory policy — VERIFIED; issue #192 / PR #193 completed 100/100 checkpoints, PR #193 squash-merged as `22239a6cdd7af3770a03a4b9a86e8d32d078a01b`, and exact-main Flutter CI #840 / run `31409971405` passed all gates with 320 tests and 88.34% authored-source coverage. |
+| Status | AST-004 is VERIFIED: same-ID precache work is shared, clear/forget invalidation is race-safe, LRU/failure state is bounded, observability is immutable, raw precache bypasses are CI-blocked, and descriptor-only fallback behavior remains intact. Exact-main artifact #9071436511 is 80,633,603 bytes with artifact ZIP SHA-256 `b7150ca0969b0f32e3741ca4a47e9c51e7c8d6ce02880af9d47b5f1cfbfec562`; latest-verified promotion #28 / run `31410745473` produced the 55,878,023-byte QA APK with SHA-256 `df60e5bc0471cdf99ab66a3e01987cc7948fc52ba353da647070b29bcd137a72`. |
+| Previous checkpoint | `TEST-008` coverage thresholds and flaky-test policy — VERIFIED and merged; exact-main Flutter CI #836 passed 310 tests and 88.01% authored-source coverage before AST-004. |
+| Next recommended feature | `PERF-001` Frame performance budget — P0, now dependency-ready via MOT-001 + AST-004. Establish measurable frame targets and graceful fallback before TEST-009 device/API matrix work. |
+| Known blocker | `TEST-011` requires real production UMP/privacy-message/regulatory-device verification. `REL-007`/`REL-008` require real production AdMob/signing inputs and a production-signed candidate; final install/upgrade/device smoke requires an Android device or testing track. `TEST-009` remains dependency-blocked until selected next workstream `PERF-001` is VERIFIED. Visual Studio C++ components remain optional for Windows desktop only. |
 
 ## AST-004 bounded asset precache and memory policy — 2026-08-10
 
-- Issue #192 / branch `agent/ast-004-cache-policy` are the single active primary workstream after TEST-008 exact-main verification.
-- Current `GameAssetCachePolicy` already provides bounded LRU caching, injectable loader/evictor, failure history and sequential near-future precache; current-main focused coverage has four widget tests.
-- Audit found two concrete async safety gaps: `clear()` / `forget(id)` can be undone by a late in-flight completion, and concurrent same-ID callers do not share one deterministic load result.
-- The asset pipeline remains descriptor-only and fallback-safe: 9 manifest entries, 0 provenance records and 0 runtime WebP files on exact-main CI #836.
-- The 100-checkpoint contract in `docs/work/AST-004.md` covers in-flight deduplication, invalidation races, bounded LRU/failure behavior, observability, machine ownership validation, CI gates and final verification.
-- Historical asset-cache branches are 170+ commits stale and reference-only; current `main` is authoritative. No production asset binary, provenance claim, package, gameplay or saved-data change is in scope.
-
+- Issue #192 / PR #193 complete the 100-checkpoint AST-004 sprint; issue #192 is closed completed.
+- `GameAssetCachePolicy` shares concurrent same-ID load operations, permits independent different-ID loads, and uses global/per-ID generations so `clear()` or `forget(id)` cannot be reversed by stale async completion.
+- Completed cache state and failure history remain bounded; cache hits update LRU priority without reload; near-future work is sequential/deduplicated/budget-clamped and skips known failures unless retry is explicit.
+- Immutable snapshots expose hit/miss, joined request, successful load, load failure, eviction, stale completion, and eviction-failure counters; reset affects statistics only.
+- `tool/verify_asset_cache_policy.py` mechanically blocks raw production `precacheImage` bypasses and required CI/test drift; its regression suite passes 6/6. Focused cache widget coverage passes 14/14.
+- Final clean PR head `61c5741ba8340e0baafb2d2cea9989137b25a279` passed Flutter CI #839 / run `31408977215`: 320 Flutter tests, 88.34% authored-source coverage, Debug APK, artifact security and upload. Artifact #9071093253 is 80,633,602 bytes with SHA-256 `0e6da3e6d75212817f22c91592009e97532d838f4f395a4f4f1c9f488a59f5bb`.
+- PR #193 squash-merged as `22239a6cdd7af3770a03a4b9a86e8d32d078a01b`. Exact-main Flutter CI #840 / run `31409971405` passed all 51 gates, the full 320-test suite, 88.34% coverage, Debug APK, artifact security and upload; main artifact #9071436511 is 80,633,603 bytes with artifact ZIP SHA-256 `b7150ca0969b0f32e3741ca4a47e9c51e7c8d6ce02880af9d47b5f1cfbfec562`.
+- Latest-verified promotion run `31410745473` succeeded and committed `4379937b51309644a11bffc43d7375888e258823`; the QA release APK is 55,878,023 bytes with SHA-256 `df60e5bc0471cdf99ab66a3e01987cc7948fc52ba353da647070b29bcd137a72`, ephemeral CI signing, ads disabled, and is not production/Play Store signed.
+- Asset admission remains deliberately unchanged at 9 descriptors / 0 provenance records / 0 runtime WebP files; missing art remains fallback-safe. No gameplay, economy, persistence, ads, privacy runtime, production identifiers, signing, packages, or binary art changed.
+- Fresh dependency scan selects `PERF-001` as the next P0 workstream; AST-004 verification also satisfies the asset-cache dependency for PERF-002/AST-010.
 ## TEST-008 coverage thresholds and flaky-test policy — 2026-08-10
 
 - Issue #190 is closed completed; PR #191 squash-merged as `87ab162c1fe1a73b962dd98370ac04aee7d15b90`.
