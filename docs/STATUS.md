@@ -7,11 +7,11 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | Field | Value |
 |---|---|
 | Current phase | Android RC hardening — issue #79 |
-| Primary feature | `PERF-001` Frame performance budget — IN PROGRESS under issue #196 on `agent/perf-001-frame-budget`. |
-| Completed checkpoint | `AST-004` bounded asset precache and memory policy — VERIFIED and reconciled on main as `82fbc4ac9abeb12ebad6484def9860c71e2027ca`; PERF-001 is the new single primary workstream. |
-| Status | PERF-001 implementation is active: bounded rolling frame timing drives a presentation-only full/constrained/reduced quality state machine; sustained pressure sheds ambient motion and scales shared effects while reduced-motion accessibility remains authoritative. No gameplay/economy/persistence/ad/privacy truth is affected. |
+| Primary feature | None — `PERF-001` source-controlled implementation is merged; issue #196 remains open only for real Android device/profile verification. |
+| Completed checkpoint | `PERF-001` frame performance budget — IMPLEMENTED on main as `f2b2c829755a5abdd3342dba731e1e669f42f57f`; exact-main Flutter CI #849 / run `31415750686` passed 332/332 tests, 88.21% authored-source coverage, Debug APK, artifact security and upload. |
+| Status | PERF-001 source-controlled acceptance is IMPLEMENTED: bounded rolling frame timing drives a presentation-only full/constrained/reduced quality state machine; sustained pressure sheds ambient motion and scales shared effects while reduced-motion accessibility remains authoritative. Main debug artifact #9073641322 is 80,644,379 bytes with artifact ZIP SHA-256 `4d2726add801d28d517cc29461506e2d4580e57fb86b6b50e362847d0628f13b`. VERIFIED remains pending honest physical-device/profile frame evidence. |
 | Previous checkpoint | `TEST-008` coverage thresholds and flaky-test policy — VERIFIED and merged; exact-main Flutter CI #836 passed 310 tests and 88.01% authored-source coverage before AST-004. |
-| Next recommended feature | Finish PERF-001 focused/full CI and Debug APK verification; if source-controlled gates pass, reconcile as IMPLEMENTED pending real device-tier frame profiling, then rescan dependencies before TEST-009. |
+| Next recommended feature | After PERF-001 reconciliation, run a fresh dependency-ready/team scan and select exactly one source-controlled workstream; keep TEST-009 blocked until PERF-001 receives real device/profile evidence and becomes VERIFIED. |
 | Known blocker | `TEST-011` requires real production UMP/privacy-message/regulatory-device verification. `REL-007`/`REL-008` require real production AdMob/signing inputs and a production-signed candidate; final install/upgrade/device smoke requires an Android device or testing track. `TEST-009` remains dependency-blocked until selected next workstream `PERF-001` is VERIFIED. Visual Studio C++ components remain optional for Windows desktop only. |
 
 ## PERF-001 adaptive frame performance budget — 2026-08-10
@@ -22,6 +22,9 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 - `FramePerformanceScope` observes Flutter `FrameTiming` for the full app route tree. Shared motion shortens/scales nonessential effects under pressure, and ambient motion stops outside full quality; system reduced-motion remains the strongest override.
 - `FramePerformanceSnapshot` is local-only, bounded diagnostic state. PERF-001 adds no remote telemetry, persistence, packages, production identifiers, or gameplay/economy/ad/privacy changes.
 - `docs/PERFORMANCE_BUDGET.md` records the verification boundary: CI proves deterministic policy/integration/build safety, while actual device-tier frame measurements remain later device/profile evidence and must not be fabricated.
+- Final evidence-bearing PR head `7ad6d67e0963de15d2b08c6ce7a734ee6980de1a` passed Flutter CI #848 / run `31414950411`; PR #197 squash-merged as `f2b2c829755a5abdd3342dba731e1e669f42f57f`.
+- Exact-main Flutter CI #849 / run `31415750686` passed 332/332 tests, 88.21% authored-source coverage, Debug APK, artifact security and upload. Main artifact #9073641322 is 80,644,379 bytes with artifact ZIP SHA-256 `4d2726add801d28d517cc29461506e2d4580e57fb86b6b50e362847d0628f13b`.
+- PERF-001 is IMPLEMENTED, not VERIFIED: issue #196 remains open for real Android device/profile frame measurements, and TEST-009 stays dependency-blocked until that evidence exists.
 
 ## AST-004 bounded asset precache and memory policy — 2026-08-10
 

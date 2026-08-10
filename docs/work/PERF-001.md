@@ -2,7 +2,7 @@
 
 - Issue: #196
 - Branch: `agent/perf-001-frame-budget`
-- State: IN PROGRESS
+- State: IMPLEMENTED — real Android device/profile frame evidence still required before VERIFIED
 - Dependencies: MOT-001 IMPLEMENTED, AST-004 VERIFIED
 
 ## Objective
@@ -69,7 +69,7 @@ Establish a deterministic 60 Hz frame-budget policy and bounded runtime adaptati
 - [x] T47 Run formatting and Analyze.
 - [x] T48 Pass focused PERF-001 tests plus full Flutter coverage suite and TEST-008 threshold.
 - [x] T49 Build/security-scan/upload Debug APK through normal Flutter CI.
-- [ ] T50 Merge only after final-head CI is green; run exact-main verification/promotion, then reconcile source-controlled PERF-001 evidence without inventing physical-device frame measurements.
+- [x] T50 Merge only after final-head CI is green; run exact-main verification/promotion, then reconcile source-controlled PERF-001 evidence without inventing physical-device frame measurements.
 
 ## Safety boundary
 
@@ -83,4 +83,6 @@ No gameplay, economy, persistence, ads, privacy, security, analytics, production
 - Full Flutter suite passed 332/332 tests. Authored-source coverage is 5,775 / 6,547 = 88.21%, above the TEST-008 35% floor and 60% target.
 - Debug APK build and packaged-artifact security passed. Artifact #9072989254 is 80,644,379 bytes with artifact ZIP SHA-256 `d2150f51c7ede40a889e0aa7a92f1db8586df73351ebef9b4d335bf073ca47bf`.
 - TEST-007, TEST-008, TEST-010, AST-004, privacy/security/dependency, dashboard/catalog, asset-pipeline and Debug APK gates all remained green.
-- The next gate is a full normal-CI run on this evidence-bearing final PR head before merge; device-tier profiling is still deliberately not claimed.
+- Final evidence-bearing PR head `7ad6d67e0963de15d2b08c6ce7a734ee6980de1a` passed Flutter CI #848 / run `31414950411` end-to-end; PR #197 squash-merged as `f2b2c829755a5abdd3342dba731e1e669f42f57f`.
+- Exact-main Flutter CI #849 / run `31415750686` passed the same repository gates with 332/332 tests and 88.21% authored-source coverage. Main debug artifact #9073641322 is 80,644,379 bytes with artifact ZIP SHA-256 `4d2726add801d28d517cc29461506e2d4580e57fb86b6b50e362847d0628f13b`.
+- Source-controlled PERF-001 acceptance is IMPLEMENTED. Issue #196 remains open and VERIFIED is intentionally withheld until real Android device/profile frame measurements exist; TEST-009 remains blocked by that status.
