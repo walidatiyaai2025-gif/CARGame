@@ -1,0 +1,32 @@
+name: TEST-007 Post-merge Reconciliation
+
+on:
+  push:
+    branches:
+      - agent/test-007-post-merge-reconcile
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/test-007-post-merge-reconcile
+      - name: Reconcile final TEST-007 evidence
+        run: python3 tool/reconcile_test007_post_merge.py
+      - name: Remove one-shot helpers and commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/test007_post_merge_reconcile.yml
+          rm tool/reconcile_test007_post_merge.py
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/FEATURE_CATALOG.md docs/STATUS.md docs/work/TEST-007.md .github/workflows/test007_post_merge_reconcile.yml tool/reconcile_test007_post_merge.py
+          git diff --cached --check
+          git commit -m "TEST-007: reconcile merged checkpoint evidence"
+          git push origin HEAD:agent/test-007-post-merge-reconcile
