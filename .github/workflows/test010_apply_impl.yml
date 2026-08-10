@@ -1,0 +1,46 @@
+name: TEST-010 apply implementation
+
+on:
+  push:
+    branches:
+      - agent/test-010-dashboard-catalog-parity
+    paths:
+      - .github/workflows/test010_apply_impl.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/test-010-dashboard-catalog-parity
+          fetch-depth: 0
+
+      - name: Apply TEST-010 implementation
+        run: python3 tool/apply_test010_impl.py
+
+      - name: Run focused Python validation
+        run: |
+          python3 tool/verify_ci_integrity.py
+          python3 tool/test_ci_integrity.py
+          python3 tool/verify_dashboard_catalog.py
+          python3 tool/test_dashboard_catalog.py
+
+      - name: Remove one-shot implementation helpers
+        run: rm -f tool/apply_test010_impl.py .github/workflows/test010_apply_impl.yml
+
+      - name: Commit implementation
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/FEATURE_CATALOG.md docs/dashboard/index.html tool/verify_ci_integrity.py tool/test_ci_integrity.py tool/verify_dashboard_catalog.py tool/test_dashboard_catalog.py .github/workflows/flutter_ci.yml tool/apply_test010_impl.py .github/workflows/test010_apply_impl.yml
+          if git diff --cached --quiet; then
+            echo "No implementation changes required"
+            exit 0
+          fi
+          git commit -m "TEST-010: enforce dashboard catalog parity"
+          git push origin HEAD:agent/test-010-dashboard-catalog-parity
