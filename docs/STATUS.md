@@ -25,12 +25,12 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 
 ## TEST-008 coverage thresholds and flaky-test policy — 2026-08-10
 
-- Issue #190 / PR #191 are completed; the repository-owned policy enforces a 35% authored-source line-coverage floor, records a 60% improvement target, forbids blanket retries, and bounds temporary owned quarantines.
-- Strict LCOV parsing normalizes absolute paths, derives executable coverage from `DA` lines, validates `LF`/`LH`, excludes generated `lib/l10n/`, and rejects missing, malformed, duplicate or zero-measurable reports.
-- The focused TEST-008 validator suite contains 30 regressions. Final PR head `456c762818e6b1e0746651ef6f9b3cefcbb32dea` passed Flutter CI #835 / run `31405428616`.
-- PR #191 squash-merged as `87ab162c1fe1a73b962dd98370ac04aee7d15b90`; exact-main Flutter CI #836 / run `31406357471` then passed 310 Flutter tests and measured 5,584 / 6,345 authored lines = 88.01%.
-- Exact-main Debug APK, artifact security and upload passed; artifact #9070055072 is 80,633,605 bytes with SHA-256 `5b66f915d19184feda6ca2a061e73fdaaa6abed4ac6cc9b2c2002c3c33e9a476`.
-- TEST-008 is VERIFIED. No gameplay, economy, persistence, navigation, ads, privacy runtime, signing, package, or asset behavior changed.
+- Issue #190 is closed completed; PR #191 squash-merged as `87ab162c1fe1a73b962dd98370ac04aee7d15b90`.
+- The 50-checkpoint sprint is complete: strict authored-source LCOV validation, 35% hard floor, 60% target, zero blanket retries, bounded owned/issue-linked quarantines, and 30 focused validator regressions are versioned and enforced.
+- Final clean PR head `456c762818e6b1e0746651ef6f9b3cefcbb32dea` passed Flutter CI #835 / run `31405428616`; the full Flutter suite passed 310 tests at 88.01% line coverage (5,584/6,345 authored lines).
+- Exact-merge main CI #836 / run `31406357471` passed all workflow gates and uploaded debug artifact #9070055072 (80,633,605 bytes; artifact ZIP SHA-256 `5b66f915d19184feda6ca2a061e73fdaaa6abed4ac6cc9b2c2002c3c33e9a476`).
+- Maintain Latest Verified APK run `31407149670` passed release-mode QA build/security/current-main promotion and committed `3945b6fad174ec913c381fabfc8788de4e5323d7`; `Last verified APK` is 55,878,023 bytes with SHA-256 `adf8907ad545b6c30113c17eabbd4d8a572c79d3821b05212cee0f562468f64a`, ephemeral CI signing, ads disabled, and not production/Play Store signed.
+- TEST-007 and TEST-010 remain blocking normal-CI gates. No gameplay, economy, persistence, navigation, ads, privacy runtime, signing policy, packages, or assets changed.
 
 ## TEST-010 dashboard/catalog parser validation — 2026-08-10
 
