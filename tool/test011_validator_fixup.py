@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Tighten TEST-011 Settings local-data validation before bootstrap commit."""
+"""Tighten TEST-011 evidence validation before bootstrap commit."""
 
 from pathlib import Path
 
@@ -57,6 +57,12 @@ def test_rejects_missing_external_pending_boundary() -> None:
         test_rejects_missing_settings_delete_confirmation_regression,
         test_rejects_missing_external_pending_boundary,
 ''',
+    )
+
+    replace_once(
+        "docs/TEST_011_PRIVACY_SECURITY.md",
+        "Schema-versioned first-party JSON export",
+        "schema-versioned first-party JSON export",
     )
 
 
