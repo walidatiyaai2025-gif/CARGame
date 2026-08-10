@@ -57,5 +57,10 @@ replace_once(
     "| NAV-003 | Deep-link and notification route safety | P2 | PLANNED | NAV-001, RET-008 |",
     "| NAV-003 | Deep-link and notification route safety | P2 | PLANNED | NAV-001 |",
 )
+replace_once(
+    catalog,
+    "| WORLD-006 | World unlock and completion flow | P1 | PLANNED | REW-003, MOT-009 |",
+    "| WORLD-006 | World unlock and completion flow | P1 | PLANNED | REW-003 |",
+)
 
 print("Applied TEST-010 parser parity implementation patches")
