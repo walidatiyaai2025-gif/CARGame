@@ -298,7 +298,7 @@ Codex must not mark a feature complete merely because UI code exists.
 | TEST-005 | Missing asset tests | P1 | PLANNED | AST-003 | Missing/corrupt asset fallback remains visible and functional. |
 | TEST-006 | Golden visual tests | P2 | PLANNED | UI3D-004 | Critical screens have stable EN/AR snapshots at representative sizes. |
 | TEST-007 | Integration and end-to-end critical path | P0 | VERIFIED | TEST-001, TEST-003 | Issue #181 / PR #184 establish the executable 50-checkpoint release contract for first-run state, Home -> World Map -> Mission Briefing -> Gameplay, completion/result, reward idempotency, shop transaction recovery, restart/restore, EN/AR RTL, representative viewports, offline determinism, and CI drift protection. Implementation CI #810 / run `31379676066` passed the focused contract and full suite; final-head Flutter CI #816 / run `31380502193` passed all 43 steps on `874fe658456723c5f0455e6c1935bd5b9dada8b5`, including Debug APK build, artifact security, and upload. Final PR artifact #9059883319 is 80,633,608 bytes with SHA-256 `76756ff72098c353f676ffd18008e253a2c1532da88208d8f3730b19b92c3e70`. PR #184 squash-merged as `b7f858f9cac6c1a8c5b0d1f9058be599f9ce792c` and Issue #181 closed completed. |
-| TEST-008 | Coverage thresholds and flaky-test policy | P1 | PLANNED | ENG-007 | Coverage targets, retries, quarantine rules, and failure ownership are enforced. |
+| TEST-008 | Coverage thresholds and flaky-test policy | P1 | IN PROGRESS | ENG-007 | Issue #190 adds a versioned coverage/flaky-test policy, LCOV validator, focused regressions, zero blanket retries, bounded owned quarantines, and CI threshold enforcement; full PR CI evidence is pending. |
 | TEST-009 | Device/API compatibility matrix | P0 | PLANNED | ENG-002, PERF-001 | Supported Android API/ABI, phone/tablet, low/mid/high tiers, and physical-device smoke tests are recorded. |
 | TEST-010 | Dashboard/catalog parser validation | P1 | VERIFIED | ENG-007 | Issue #187 / PR #188 add a dedicated dashboard/catalog parity validator plus 9 focused regressions, strict six-column/feature-ID/priority/status parsing, exact seven-status vocabulary parity, acyclic dependency validation, and hard-coded aggregate rejection. The gate exposed and corrected four circular planning edges without changing runtime behavior. Final clean PR head `a7fd43118ec42852984aaf3f2b4f723534fad6b5` passed all 45 Flutter CI steps in #827 / run `31385221550`; PR #188 squash-merged as `d148ac820ee7dcfbacd0f88304a9cf168bc66b41` and Issue #187 closed completed. Main Flutter CI #828 / run `31385904664` then passed all 45 steps on the exact merge SHA, uploading debug artifact #9061890276 (80,633,607 bytes; SHA-256 `a2684e4697cf2e153ee75f471cc1bfeaaf0feb15638e43a788984c2bc585b173`). Latest-verified promotion run `31386487136` built and security-checked the release-mode QA APK, then committed it as `743356b2a8e66b699feadb09e1c9f5fa60b858a7`; `Last verified APK` is 55,878,023 bytes with SHA-256 `7b24570855c3e3f48007f53eac9770cde3a6a9fe0de519abff35fcb36925383f`, ephemeral CI signing, ads disabled, and is not production/Play Store signed. |
 | TEST-011 | Privacy, consent, and security verification | P0 | PLANNED | PRIV-001, SEC-001 | Consent, data deletion, redaction, secret scan, dependency scan, and network policy pass. |
@@ -331,11 +331,11 @@ Codex must not mark a feature complete merely because UI code exists.
 
 ## IN PROGRESS
 
-- None. TEST-010 is VERIFIED; select exactly one next workstream only after a fresh dependency-ready scan.
+- `TEST-008` Coverage thresholds and flaky-test policy — IN PROGRESS under issue #190 on `agent/test-008-coverage-flaky-policy`; no other primary workstream should start until this checkpoint is reconciled.
 
 ## NEXT READY
 
-- Run the catalog dependency-ready scan and select exactly one next primary workstream; preserve TEST-007, TEST-010, and latest-verified-APK gates.
+- Complete TEST-008 CI verification and reconciliation, then run a fresh dependency-ready scan; preserve TEST-007, TEST-010, and latest-verified-APK gates.
 
 ## BLOCKED
 

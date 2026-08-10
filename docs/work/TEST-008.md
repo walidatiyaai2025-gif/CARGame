@@ -21,10 +21,10 @@ Make coverage and flaky-test handling explicit, versioned, and enforceable witho
 - [x] Reject expired/duplicate/overlong/malformed quarantines.
 - [x] Add focused validator regressions.
 - [x] Document failure ownership and floor-ratcheting rules.
-- [ ] Wire policy validation into normal Flutter CI before package restore.
-- [ ] Generate LCOV from the full Flutter suite in CI.
-- [ ] Enforce the LCOV threshold after the full suite.
-- [ ] Preserve TEST-007 and TEST-010 blocking gates.
+- [x] Wire policy validation into normal Flutter CI before package restore.
+- [x] Generate LCOV from the full Flutter suite in CI.
+- [x] Enforce the LCOV threshold after the full suite.
+- [x] Preserve TEST-007 and TEST-010 blocking gates.
 - [ ] Pass normal Flutter CI, Analyze, full tests, Debug APK, artifact security, and upload.
 - [ ] Reconcile catalog/status and merge only with verified evidence.
 
