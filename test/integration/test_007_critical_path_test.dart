@@ -106,7 +106,10 @@ void main() {
   setUp(() {
     _resetPreferences();
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(SystemChannels.platform, (call) async => null);
+        .setMockMethodCallHandler(
+          SystemChannels.platform,
+          (call) async => null,
+        );
   });
 
   tearDown(() {
@@ -114,121 +117,122 @@ void main() {
         .setMockMethodCallHandler(SystemChannels.platform, null);
   });
 
-  testWidgets('first run reaches gameplay through the guarded offline UI path', (
-    tester,
-  ) async {
-    final store = ProgressStore();
-    final settings = AppSettingsStore();
-    await store.load();
-    await settings.load();
+  testWidgets(
+    'first run reaches gameplay through the guarded offline UI path',
+    (tester) async {
+      final store = ProgressStore();
+      final settings = AppSettingsStore();
+      await store.load();
+      await settings.load();
 
-    checkpoint('T01', store.coins >= 0, isTrue);
-    checkpoint(
-      'T02',
-      store.coins,
-      EconomyConfig.current.player.startingCoins,
-    );
-    checkpoint('T03', store.highestUnlockedLevel, 1);
-    checkpoint('T04', store.completedLevels, 0);
-    checkpoint('T05', store.starsForLevel(1), 0);
+      checkpoint('T01', store.coins >= 0, isTrue);
+      checkpoint(
+        'T02',
+        store.coins,
+        EconomyConfig.current.player.startingCoins,
+      );
+      checkpoint('T03', store.highestUnlockedLevel, 1);
+      checkpoint('T04', store.completedLevels, 0);
+      checkpoint('T05', store.starsForLevel(1), 0);
 
-    await tester.binding.setSurfaceSize(const Size(360, 640));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.binding.setSurfaceSize(const Size(360, 640));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
 
-    await tester.pumpWidget(CargoSortApp(store: store, settings: settings));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
+      await tester.pumpWidget(CargoSortApp(store: store, settings: settings));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
 
-    checkpoint('T06', find.byType(CargoSortApp), findsOneWidget);
-    checkpoint('T07', tester.takeException(), isNull);
-    checkpoint('T08', find.byType(GameButton), findsOneWidget);
-    checkpoint(
-      'T41',
-      Directionality.of(tester.element(find.byType(HomeScreen))),
-      TextDirection.ltr,
-    );
+      checkpoint('T06', find.byType(CargoSortApp), findsOneWidget);
+      checkpoint('T07', tester.takeException(), isNull);
+      checkpoint('T08', find.byType(GameButton), findsOneWidget);
+      checkpoint(
+        'T41',
+        Directionality.of(tester.element(find.byType(HomeScreen))),
+        TextDirection.ltr,
+      );
 
-    await tester.tap(find.byIcon(Icons.language_rounded));
-    await tester.pump(const Duration(milliseconds: 100));
-    checkpoint(
-      'T42',
-      Directionality.of(tester.element(find.byType(HomeScreen))),
-      TextDirection.rtl,
-    );
-    checkpoint('T43', tester.takeException(), isNull);
+      await tester.tap(find.byIcon(Icons.language_rounded));
+      await tester.pump(const Duration(milliseconds: 100));
+      checkpoint(
+        'T42',
+        Directionality.of(tester.element(find.byType(HomeScreen))),
+        TextDirection.rtl,
+      );
+      checkpoint('T43', tester.takeException(), isNull);
 
-    final startButton = tester.widget<GameButton>(find.byType(GameButton));
-    final firstStart = Future<void>.sync(() async {
-      await startButton.onPressed!.call();
-    });
-    final secondStart = Future<void>.sync(() async {
-      await startButton.onPressed!.call();
-    });
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 400));
+      final startButton = tester.widget<GameButton>(find.byType(GameButton));
+      final firstStart = Future<void>.sync(() async {
+        await startButton.onPressed!.call();
+      });
+      final secondStart = Future<void>.sync(() async {
+        await startButton.onPressed!.call();
+      });
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
 
-    checkpoint('T09', find.byType(LevelSelectScreen), findsOneWidget);
-    checkpoint('T10', find.byType(LevelSelectScreen), findsOneWidget);
+      checkpoint('T09', find.byType(LevelSelectScreen), findsOneWidget);
+      checkpoint('T10', find.byType(LevelSelectScreen), findsOneWidget);
 
-    final firstCity = find.text(levels.first.cityName).first;
-    await tester.ensureVisible(firstCity);
-    await tester.pump();
-    checkpoint('T11', firstCity, findsOneWidget);
+      final firstCity = find.text(levels.first.cityName).first;
+      await tester.ensureVisible(firstCity);
+      await tester.pump();
+      checkpoint('T11', firstCity, findsOneWidget);
 
-    final lockedCity = find.text(levels[1].cityName).first;
-    await tester.ensureVisible(lockedCity);
-    await tester.pump();
-    await tester.tap(lockedCity);
-    await tester.pump(const Duration(milliseconds: 350));
-    checkpoint('T12', find.byType(CityBriefingScreen), findsNothing);
+      final lockedCity = find.text(levels[1].cityName).first;
+      await tester.ensureVisible(lockedCity);
+      await tester.pump();
+      await tester.tap(lockedCity);
+      await tester.pump(const Duration(milliseconds: 350));
+      checkpoint('T12', find.byType(CityBriefingScreen), findsNothing);
 
-    await tester.ensureVisible(firstCity);
-    await tester.pump();
-    await tester.tap(firstCity);
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 350));
+      await tester.ensureVisible(firstCity);
+      await tester.pump();
+      await tester.tap(firstCity);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 350));
 
-    checkpoint('T13', find.byType(CityBriefingScreen), findsOneWidget);
-    final briefing = tester.widget<CityBriefingScreen>(
-      find.byType(CityBriefingScreen),
-    );
-    checkpoint('T14', briefing.level.number, 1);
+      checkpoint('T13', find.byType(CityBriefingScreen), findsOneWidget);
+      final briefing = tester.widget<CityBriefingScreen>(
+        find.byType(CityBriefingScreen),
+      );
+      checkpoint('T14', briefing.level.number, 1);
 
-    final missionButton = tester.widget<GameButton>(find.byType(GameButton));
-    final missionStart = Future<void>.sync(() async {
-      await missionButton.onPressed!.call();
-    });
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 400));
+      final missionButton = tester.widget<GameButton>(find.byType(GameButton));
+      final missionStart = Future<void>.sync(() async {
+        await missionButton.onPressed!.call();
+      });
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
 
-    checkpoint('T15', find.byType(GameScreen), findsOneWidget);
-    final game = tester.widget<GameScreen>(find.byType(GameScreen));
-    checkpoint('T16', game.level.number, levels.first.number);
-    checkpoint('T17', game.level.moves, levels.first.moves);
-    checkpoint('T18', store.completedLevels, 0);
-    checkpoint('T19', tester.takeException(), isNull);
-    checkpoint(
-      'T20',
-      Navigator.of(tester.element(find.byType(GameScreen))).canPop(),
-      isTrue,
-    );
+      checkpoint('T15', find.byType(GameScreen), findsOneWidget);
+      final game = tester.widget<GameScreen>(find.byType(GameScreen));
+      checkpoint('T16', game.level.number, levels.first.number);
+      checkpoint('T17', game.level.moves, levels.first.moves);
+      checkpoint('T18', store.completedLevels, 0);
+      checkpoint('T19', tester.takeException(), isNull);
+      checkpoint(
+        'T20',
+        Navigator.of(tester.element(find.byType(GameScreen))).canPop(),
+        isTrue,
+      );
 
-    await tester.binding.setSurfaceSize(const Size(412, 915));
-    await tester.pump(const Duration(milliseconds: 100));
-    checkpoint('T44', tester.takeException(), isNull);
-    checkpoint(
-      'T46',
-      SharedPreferencesAsyncPlatform.instance,
-      isA<InMemorySharedPreferencesAsync>(),
-    );
+      await tester.binding.setSurfaceSize(const Size(412, 915));
+      await tester.pump(const Duration(milliseconds: 100));
+      checkpoint('T44', tester.takeException(), isNull);
+      checkpoint(
+        'T46',
+        SharedPreferencesAsyncPlatform.instance,
+        isA<InMemorySharedPreferencesAsync>(),
+      );
 
-    Navigator.of(tester.element(find.byType(GameScreen))).pop();
-    await tester.pump(const Duration(milliseconds: 400));
-    await missionStart;
-    Navigator.of(tester.element(find.byType(LevelSelectScreen))).pop();
-    await tester.pump(const Duration(milliseconds: 400));
-    await Future.wait(<Future<void>>[firstStart, secondStart]);
-  });
+      Navigator.of(tester.element(find.byType(GameScreen))).pop();
+      await tester.pump(const Duration(milliseconds: 400));
+      await missionStart;
+      Navigator.of(tester.element(find.byType(LevelSelectScreen))).pop();
+      await tester.pump(const Duration(milliseconds: 400));
+      await Future.wait(<Future<void>>[firstStart, secondStart]);
+    },
+  );
 
   testWidgets('completion reward shop restart and restore remain idempotent', (
     tester,
@@ -295,16 +299,20 @@ void main() {
     );
     await tester.pump();
     checkpoint('T24', find.byType(GameplayResultDebrief), findsOneWidget);
-    final hasWinControl =
-        find.text('NEXT — RETURN TO ROUTE NETWORK').evaluate().isNotEmpty;
+    final hasWinControl = find
+        .text('NEXT — RETURN TO ROUTE NETWORK')
+        .evaluate()
+        .isNotEmpty;
 
     await tester.pumpWidget(
       _resultHarness(store: store, won: false, reward: reward, xp: xp),
     );
     await tester.pump();
     final hasRetryControl = find.text('RESTART MISSION').evaluate().isNotEmpty;
-    final hasRewardedControl =
-        find.text('QUICK CONTINUE — +5 MOVES').evaluate().isNotEmpty;
+    final hasRewardedControl = find
+        .text('QUICK CONTINUE — +5 MOVES')
+        .evaluate()
+        .isNotEmpty;
     checkpoint(
       'T25',
       hasWinControl && hasRetryControl && hasRewardedControl,
@@ -337,11 +345,7 @@ void main() {
       purchased && store.coins == beforePurchaseCoins - hintOffer.price,
       isTrue,
     );
-    checkpoint(
-      'T34',
-      store.freeHints,
-      beforePurchaseHints + hintOffer.amount,
-    );
+    checkpoint('T34', store.freeHints, beforePurchaseHints + hintOffer.amount);
 
     final prefs = SharedPreferencesAsync();
     const pendingPurchaseKey = 'pending_shop_purchase_v1';
