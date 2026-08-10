@@ -1,0 +1,180 @@
+name: AST-004 Start Reconcile
+
+on:
+  push:
+    branches:
+      - agent/ast-004-cache-policy
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/ast-004-cache-policy
+          fetch-depth: 0
+
+      - name: Reconcile TEST-008 and activate AST-004
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path: str, old: str, new: str) -> None:
+              p = Path(path)
+              text = p.read_text(encoding='utf-8')
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{path}: expected one anchor, found {count}: {old[:100]!r}')
+              p.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+          catalog = 'docs/FEATURE_CATALOG.md'
+          replace_once(
+              catalog,
+              '| AST-004 | Precache and memory policy | P1 | PLANNED | AST-002 | Only near-future assets are precached and caches are bounded/observable. |',
+              '| AST-004 | Precache and memory policy | P1 | IN PROGRESS | AST-002 | Issue #192 hardens the existing bounded LRU cache into a race-safe, observable near-future precache boundary with shared in-flight work, clear/forget invalidation, failure isolation, CI ownership guards, and focused regressions; implementation verification is pending. |',
+          )
+          replace_once(
+              catalog,
+              '| TEST-008 | Coverage thresholds and flaky-test policy | P1 | IN PROGRESS | ENG-007 | Issue #190 adds a versioned coverage/flaky-test policy, LCOV validator, focused regressions, zero blanket retries, bounded owned quarantines, and CI threshold enforcement; full PR CI evidence is pending. |',
+              '| TEST-008 | Coverage thresholds and flaky-test policy | P1 | VERIFIED | ENG-007 | Issue #190 / PR #191 add a versioned repository-owned coverage/flaky-test policy, strict LCOV validation, 30 focused regressions, zero blanket retries, bounded owned quarantines, and blocking normal-CI coverage enforcement. Final PR head `456c762818e6b1e0746651ef6f9b3cefcbb32dea` passed Flutter CI #835 / run `31405428616`; PR #191 squash-merged as `87ab162c1fe1a73b962dd98370ac04aee7d15b90`. Exact-main Flutter CI #836 / run `31406357471` passed 310 tests, 88.01% authored-source coverage (5,584/6,345), Debug APK build, artifact security, and upload. Artifact #9070055072 is 80,633,605 bytes with SHA-256 `5b66f915d19184feda6ca2a061e73fdaaa6abed4ac6cc9b2c2002c3c33e9a476`. |',
+          )
+          replace_once(
+              catalog,
+              '- `TEST-008` Coverage thresholds and flaky-test policy — IN PROGRESS under issue #190 on `agent/test-008-coverage-flaky-policy`; no other primary workstream should start until this checkpoint is reconciled.',
+              '- `AST-004` Precache and memory policy — IN PROGRESS under issue #192 on `agent/ast-004-cache-policy`; TEST-008 is VERIFIED and no other primary workstream should start until AST-004 is reconciled.',
+          )
+          replace_once(
+              catalog,
+              '- Complete TEST-008 CI verification and reconciliation, then run a fresh dependency-ready scan; preserve TEST-007, TEST-010, and latest-verified-APK gates.',
+              '- Finish AST-004 race-safety, observability, policy validation, full CI and reconciliation; if VERIFIED, run a fresh dependency-ready scan with PERF-001 newly unblocked.',
+          )
+
+          status = 'docs/STATUS.md'
+          replace_once(
+              status,
+              '| Primary feature | `TEST-008` Coverage thresholds and flaky-test policy — IN PROGRESS under issue #190. |',
+              '| Primary feature | `AST-004` Precache and memory policy — IN PROGRESS under issue #192. |',
+          )
+          replace_once(
+              status,
+              '| Completed checkpoint | `TEST-010` dashboard/catalog parser validation — VERIFIED and merged; final clean-head Flutter CI #827 / run `31385221550` passed 45/45 on `a7fd43118ec42852984aaf3f2b4f723534fad6b5`, PR #188 squash-merged as `d148ac820ee7dcfbacd0f88304a9cf168bc66b41`, and exact-merge main CI #828 / run `31385904664` also passed 45/45. |',
+              '| Completed checkpoint | `TEST-008` coverage thresholds and flaky-test policy — VERIFIED and merged; PR #191 squash-merged as `87ab162c1fe1a73b962dd98370ac04aee7d15b90` after final-head Flutter CI #835, and exact-main Flutter CI #836 / run `31406357471` passed the full 310-test suite, 88.01% authored-source coverage, Debug APK, artifact security, and upload. |',
+          )
+          replace_once(
+              status,
+              '| Status | TEST-008 implementation is active: repository-owned coverage/flaky policy, LCOV validation, focused regressions, and CI wiring are being added without changing game runtime behavior. TEST-007 and TEST-010 remain protected gates. |',
+              '| Status | AST-004 is active on current main: harden the existing bounded asset cache against in-flight clear/forget races, deduplicate concurrent loads, add observable counters and machine CI ownership guards while preserving fallback-safe zero-binary asset behavior. |',
+          )
+          replace_once(
+              status,
+              '| Previous checkpoint | `TEST-007` critical path — 50/50 release checkpoints VERIFIED; final-head Flutter CI #816 / run `31380502193` passed all gates and PR #184 squash-merged as `b7f858f9cac6c1a8c5b0d1f9058be599f9ce792c`. |',
+              '| Previous checkpoint | `TEST-010` dashboard/catalog parser validation — VERIFIED and merged; exact-main Flutter CI #828 passed all gates before TEST-008. |',
+          )
+          replace_once(
+              status,
+              '| Next recommended feature | Finish TEST-008 normal-CI verification/reconciliation, then run a fresh dependency-ready scan before selecting the next single primary workstream. |',
+              '| Next recommended feature | Finish AST-004 normal-CI verification/reconciliation; when VERIFIED, run a fresh dependency-ready scan with P0 PERF-001 expected to become dependency-ready. |',
+          )
+
+          p = Path(status)
+          text = p.read_text(encoding='utf-8')
+          marker = '## TEST-008 coverage thresholds and flaky-test policy — 2026-08-10\n'
+          if text.count(marker) != 1:
+              raise SystemExit('STATUS TEST-008 section anchor missing or duplicated')
+          ast = (
+              '## AST-004 bounded asset precache and memory policy — 2026-08-10\n\n'
+              '- Issue #192 / branch `agent/ast-004-cache-policy` are the single active primary workstream after TEST-008 exact-main verification.\n'
+              '- Current `GameAssetCachePolicy` already provides bounded LRU caching, injectable loader/evictor, failure history and sequential near-future precache; current-main focused coverage has four widget tests.\n'
+              '- Audit found two concrete async safety gaps: `clear()` / `forget(id)` can be undone by a late in-flight completion, and concurrent same-ID callers do not share one deterministic load result.\n'
+              '- The asset pipeline remains descriptor-only and fallback-safe: 9 manifest entries, 0 provenance records and 0 runtime WebP files on exact-main CI #836.\n'
+              '- The 100-checkpoint contract in `docs/work/AST-004.md` covers in-flight deduplication, invalidation races, bounded LRU/failure behavior, observability, machine ownership validation, CI gates and final verification.\n'
+              '- Historical asset-cache branches are 170+ commits stale and reference-only; current `main` is authoritative. No production asset binary, provenance claim, package, gameplay or saved-data change is in scope.\n\n'
+          )
+          text = text.replace(marker, ast + marker, 1)
+          old_section = (
+              '- Issue #190 / branch `agent/test-008-coverage-flaky-policy` are the single active primary workstream after TEST-010.\n'
+              '- `tool/test_quality_policy.json` defines a 35% enforced repository line-coverage floor, 60% improvement target, zero blanket retries, at most one temporary quarantine retry, a 14-day quarantine ceiling, and currently zero active quarantines.\n'
+              '- `tool/verify_test_quality.py` validates policy shape, quarantine ownership/issue/reason/expiry, preserved TEST-007/TEST-010 workflow anchors, LCOV structure, generated-localization exclusion, and the enforced line-coverage floor.\n'
+              '- `tool/test_test_quality.py` contains 10 focused policy/LCOV/workflow regressions; local execution passed 10/10 before CI wiring.\n'
+              '- Normal Flutter CI runs policy/regression validation before package restore, generates LCOV from the full suite, and enforces the threshold before Debug APK packaging.\n'
+              '- No gameplay, economy, persistence, navigation, ads, privacy, signing, package, or asset behavior is intentionally changed.\n'
+          )
+          new_section = (
+              '- Issue #190 / PR #191 are completed; the repository-owned policy enforces a 35% authored-source line-coverage floor, records a 60% improvement target, forbids blanket retries, and bounds temporary owned quarantines.\n'
+              '- Strict LCOV parsing normalizes absolute paths, derives executable coverage from `DA` lines, validates `LF`/`LH`, excludes generated `lib/l10n/`, and rejects missing, malformed, duplicate or zero-measurable reports.\n'
+              '- The focused TEST-008 validator suite contains 30 regressions. Final PR head `456c762818e6b1e0746651ef6f9b3cefcbb32dea` passed Flutter CI #835 / run `31405428616`.\n'
+              '- PR #191 squash-merged as `87ab162c1fe1a73b962dd98370ac04aee7d15b90`; exact-main Flutter CI #836 / run `31406357471` then passed 310 Flutter tests and measured 5,584 / 6,345 authored lines = 88.01%.\n'
+              '- Exact-main Debug APK, artifact security and upload passed; artifact #9070055072 is 80,633,605 bytes with SHA-256 `5b66f915d19184feda6ca2a061e73fdaaa6abed4ac6cc9b2c2002c3c33e9a476`.\n'
+              '- TEST-008 is VERIFIED. No gameplay, economy, persistence, navigation, ads, privacy runtime, signing, package, or asset behavior changed.\n'
+          )
+          if text.count(old_section) != 1:
+              raise SystemExit('STATUS TEST-008 body anchor missing or duplicated')
+          p.write_text(text.replace(old_section, new_section, 1), encoding='utf-8')
+
+          work = Path('docs/work/TEST-008.md')
+          text = work.read_text(encoding='utf-8')
+          text = text.replace(
+              '- State: IN PROGRESS — implementation CI green; final merge/reconciliation pending',
+              '- State: VERIFIED',
+              1,
+          )
+          text = text.replace(
+              '- [ ] T50 Reconcile catalog/status with exact CI evidence, merge, and close issue #190.',
+              '- [x] T50 Reconcile catalog/status with exact CI evidence, merge, and close issue #190.',
+              1,
+          )
+          if '## Exact-main verification evidence' not in text:
+              text += (
+                  '\n## Exact-main verification evidence\n\n'
+                  '- PR #191 squash-merged as `87ab162c1fe1a73b962dd98370ac04aee7d15b90`; issue #190 is closed completed.\n'
+                  '- Flutter CI #836 / run `31406357471`: all gates PASSED on the exact merge SHA.\n'
+                  '- Full Flutter suite: 310 tests PASSED; authored-source coverage: 5,584 / 6,345 = 88.01%.\n'
+                  '- Debug artifact #9070055072: 80,633,605 bytes; SHA-256 `5b66f915d19184feda6ca2a061e73fdaaa6abed4ac6cc9b2c2002c3c33e9a476`.\n'
+              )
+          work.write_text(text, encoding='utf-8')
+
+          work = Path('docs/work/AST-004.md')
+          text = work.read_text(encoding='utf-8')
+          text = text.replace(
+              '- State: QUEUED — TEST-008 exact-main verification is green; tracking reconciliation will activate AST-004 before production edits.',
+              '- State: IN PROGRESS',
+              1,
+          )
+          text = text.replace(
+              '- [ ] T010 Mark AST-004 as the only primary IN PROGRESS feature before code changes.',
+              '- [x] T010 Mark AST-004 as the only primary IN PROGRESS feature before code changes.',
+              1,
+          )
+          work.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Validate tracking handoff
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tool/verify_dashboard_catalog.py
+          python3 tool/test_dashboard_catalog.py
+          python3 tool/verify_ci_integrity.py
+          python3 tool/test_ci_integrity.py
+          python3 tool/verify_test_quality.py
+          python3 tool/test_test_quality.py
+          git diff --check
+
+      - name: Commit verified handoff
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/ast004_start_reconcile.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add docs/FEATURE_CATALOG.md docs/STATUS.md docs/work/TEST-008.md docs/work/AST-004.md .github/workflows/ast004_start_reconcile.yml
+          git diff --cached --check
+          git commit -m "AST-004: reconcile verified test quality handoff"
+          git push origin HEAD:agent/ast-004-cache-policy
