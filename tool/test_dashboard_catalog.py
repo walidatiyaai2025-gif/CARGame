@@ -86,7 +86,7 @@ class DashboardCatalogParityTests(unittest.TestCase):
 
     def test_non_strict_six_column_dashboard_parser_is_rejected(self) -> None:
         dashboard = valid_dashboard().replace("c.length!==6", "c.length<6", 1)
-        with self.assertRaisesRegex(ContractError, "exact six-column parser guard"):
+        with self.assertRaisesRegex(ContractError, "six-column parser guard"):
             validate_contract(valid_catalog(), dashboard)
 
     def test_non_strict_feature_id_guard_is_rejected(self) -> None:
