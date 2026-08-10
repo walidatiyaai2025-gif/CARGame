@@ -94,7 +94,7 @@ Codex must not mark a feature complete merely because UI code exists.
 | AST-001 | Asset folder taxonomy and naming standard | P0 | VERIFIED | ENG-001 | `docs/ASSET_CATALOG.md` and `assets/3d/README.md` define runtime/source/provenance paths, stable filename/ID grammar, four locked camera profiles, upper-left lighting/material rules, WebP export budgets, accessibility and provenance handoff; mechanical standard/dashboard checks passed 2026-08-07. |
 | AST-002 | Asset manifest and typed registry | P0 | IMPLEMENTED | AST-001 | `GameAsset`, `game_asset_manifest.dart`, and `GameAssetRegistry` provide typed stable IDs, runtime path, category, semantics, fallback, dimensions, rarity, world, and render profile metadata; focused manifest/registry tests are present. |
 | AST-003 | Missing-asset fallback | P0 | IMPLEMENTED | AST-002 | `GameAssetView` and `GameManifestAssetView` provide visible runtime fallbacks for missing/corrupt assets, with focused widget tests covering the fallback path. Full release/device validation remains before VERIFIED. |
-| AST-004 | Precache and memory policy | P1 | PLANNED | AST-002 | Only near-future assets are precached and caches are bounded/observable. |
+| AST-004 | Precache and memory policy | P1 | IN PROGRESS | AST-002 | Issue #192 hardens the existing bounded LRU cache into a race-safe, observable near-future precache boundary with shared in-flight work, clear/forget invalidation, failure isolation, CI ownership guards, and focused regressions; implementation verification is pending. |
 | AST-005 | 3D UI resource asset pack | P1 | PLANNED | AST-001 | Production heart, coin, star, XP, chest, gift, lock, and badge assets meet style/size rules. |
 | AST-006 | 3D booster asset pack | P1 | PLANNED | AST-001 | Hint, moves, shield, and future boosters use one visual direction. |
 | AST-007 | 100+ 3D cargo product pack | P1 | PLANNED | AST-002 | At least 100 distinct products across documented categories are used in real levels. |
@@ -331,11 +331,11 @@ Codex must not mark a feature complete merely because UI code exists.
 
 ## IN PROGRESS
 
-- None. TEST-008 is VERIFIED and reconciled; run a fresh dependency-ready scan before selecting the next single primary workstream.
+- `AST-004` Precache and memory policy — IN PROGRESS under issue #192 on `agent/ast-004-cache-policy`; TEST-008 is VERIFIED and no other primary workstream should start until AST-004 is reconciled.
 
 ## NEXT READY
 
-- Run a fresh catalog dependency-ready scan and select exactly one next primary workstream; preserve TEST-007, TEST-008, TEST-010, and latest-verified-APK gates.
+- Finish AST-004 race-safety, observability, policy validation, full CI and reconciliation; if VERIFIED, run a fresh dependency-ready scan with PERF-001 newly unblocked.
 
 ## BLOCKED
 

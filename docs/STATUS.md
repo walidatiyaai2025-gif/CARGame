@@ -7,12 +7,21 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | Field | Value |
 |---|---|
 | Current phase | Android RC hardening — issue #79 |
-| Primary feature | None — TEST-008 is VERIFIED and reconciled; run a fresh dependency-ready scan before starting the next single primary workstream. |
-| Completed checkpoint | `TEST-008` coverage thresholds and flaky-test policy — 50/50 sprint VERIFIED; clean-head CI #835 and exact-merge main CI #836 passed all gates, PR #191 squash-merged as `87ab162c1fe1a73b962dd98370ac04aee7d15b90`, and Issue #190 closed completed. |
-| Status | TEST-008 is VERIFIED on main: 310 Flutter tests passed at 88.01% authored-source line coverage; exact-merge main CI #836 / run `31406357471` uploaded debug artifact #9070055072, and promotion run `31407149670` updated the latest-verified QA APK. No game runtime behavior changed. |
-| Previous checkpoint | `TEST-010` dashboard/catalog parser validation — VERIFIED; PR #188 squash-merged as `d148ac820ee7dcfbacd0f88304a9cf168bc66b41`, exact-merge main CI #828 / run `31385904664` passed all gates. |
-| Next recommended feature | Run a fresh dependency-ready scan and select exactly one next primary workstream; preserve TEST-007, TEST-008, TEST-010, and latest-verified-APK gates. |
+| Primary feature | `AST-004` Precache and memory policy — IN PROGRESS under issue #192. |
+| Completed checkpoint | `TEST-008` coverage thresholds and flaky-test policy — VERIFIED and merged; PR #191 squash-merged as `87ab162c1fe1a73b962dd98370ac04aee7d15b90` after final-head Flutter CI #835, and exact-main Flutter CI #836 / run `31406357471` passed the full 310-test suite, 88.01% authored-source coverage, Debug APK, artifact security, and upload. |
+| Status | AST-004 is active on current main: harden the existing bounded asset cache against in-flight clear/forget races, deduplicate concurrent loads, add observable counters and machine CI ownership guards while preserving fallback-safe zero-binary asset behavior. |
+| Previous checkpoint | `TEST-010` dashboard/catalog parser validation — VERIFIED and merged; exact-main Flutter CI #828 passed all gates before TEST-008. |
+| Next recommended feature | Finish AST-004 normal-CI verification/reconciliation; when VERIFIED, run a fresh dependency-ready scan with P0 PERF-001 expected to become dependency-ready. |
 | Known blocker | `TEST-011` requires real production UMP/privacy-message/regulatory-device verification. `REL-007`/`REL-008` require real production AdMob/signing inputs and a production-signed candidate; final install/upgrade/device smoke requires an Android device or testing track. `TEST-009` also remains dependency-blocked while `PERF-001` is PLANNED. Visual Studio C++ components remain optional for Windows desktop only. |
+
+## AST-004 bounded asset precache and memory policy — 2026-08-10
+
+- Issue #192 / branch `agent/ast-004-cache-policy` are the single active primary workstream after TEST-008 exact-main verification.
+- Current `GameAssetCachePolicy` already provides bounded LRU caching, injectable loader/evictor, failure history and sequential near-future precache; current-main focused coverage has four widget tests.
+- Audit found two concrete async safety gaps: `clear()` / `forget(id)` can be undone by a late in-flight completion, and concurrent same-ID callers do not share one deterministic load result.
+- The asset pipeline remains descriptor-only and fallback-safe: 9 manifest entries, 0 provenance records and 0 runtime WebP files on exact-main CI #836.
+- The 100-checkpoint contract in `docs/work/AST-004.md` covers in-flight deduplication, invalidation races, bounded LRU/failure behavior, observability, machine ownership validation, CI gates and final verification.
+- Historical asset-cache branches are 170+ commits stale and reference-only; current `main` is authoritative. No production asset binary, provenance claim, package, gameplay or saved-data change is in scope.
 
 ## TEST-008 coverage thresholds and flaky-test policy — 2026-08-10
 
