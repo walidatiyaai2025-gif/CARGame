@@ -39,13 +39,13 @@ void main() {
     final registry = GameAssetRegistry.fromJsonString(_manifest);
 
     await tester.pumpWidget(
-      const MediaQuery(
-        data: MediaQueryData(devicePixelRatio: 3),
+      MediaQuery(
+        data: const MediaQueryData(devicePixelRatio: 3),
         child: MaterialApp(
           home: Center(
             child: GameAssetView(
               assetId: 'world.hero',
-              registry: _RegistryHolder.registry,
+              registry: registry,
             ),
           ),
         ),
@@ -57,11 +57,6 @@ void main() {
     expect(provider.width, 1024);
     expect(provider.height, 512);
   });
-}
-
-final class _RegistryHolder {
-  static final GameAssetRegistry registry =
-      GameAssetRegistry.fromJsonString(_manifest);
 }
 
 const _manifest = '''
