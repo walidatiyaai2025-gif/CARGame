@@ -82,6 +82,12 @@ jobs:
       - name: Test TEST-010 dashboard catalog validator
         run: python3 tool/test_dashboard_catalog.py
 
+      - name: Verify TEST-008 quality policy
+        run: python3 tool/verify_test_quality.py
+
+      - name: Test TEST-008 quality validator
+        run: python3 tool/test_test_quality.py
+
       - name: Restore packages
         shell: bash
         run: |
@@ -196,7 +202,10 @@ jobs:
         run: flutter test test/core/widgets/game_button_test.dart
 
       - name: Run full test suite
-        run: flutter test
+        run: flutter test --coverage
+
+      - name: Verify TEST-008 coverage threshold
+        run: python3 tool/verify_test_quality.py --coverage coverage/lcov.info
 
       - name: Build debug APK
         run: flutter build apk --debug --no-pub
