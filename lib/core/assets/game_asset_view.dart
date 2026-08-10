@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'game_asset.dart';
 import 'game_asset_registry.dart';
+import 'game_image_memory_policy.dart';
 
 final class GameAssetView extends StatelessWidget {
   const GameAssetView({
@@ -13,6 +14,7 @@ final class GameAssetView extends StatelessWidget {
     this.fit = BoxFit.contain,
     this.semanticLabel,
     this.errorFallback,
+    this.memoryPolicy = GameImageMemoryPolicy.standard,
   });
 
   final String assetId;
@@ -22,6 +24,7 @@ final class GameAssetView extends StatelessWidget {
   final BoxFit fit;
   final String? semanticLabel;
   final Widget? errorFallback;
+  final GameImageMemoryPolicy memoryPolicy;
 
   @override
   Widget build(BuildContext context) {
@@ -58,11 +61,23 @@ final class GameAssetView extends StatelessWidget {
       return errorFallback ?? _placeholder(context);
     }
 
+    final dpr = MediaQuery.maybeOf(context)?.devicePixelRatio ??
+        View.of(context).devicePixelRatio;
+    final decodeTarget = memoryPolicy.targetForDisplay(
+      native: descriptor.dimensions,
+      devicePixelRatio: dpr,
+      logicalWidth: width,
+      logicalHeight: height,
+      fit: fit,
+    );
+
     return Image.asset(
       descriptor.path,
       width: width,
       height: height,
       fit: fit,
+      cacheWidth: decodeTarget.width,
+      cacheHeight: decodeTarget.height,
       excludeFromSemantics: true,
       errorBuilder: (context, error, stackTrace) {
         return errorFallback ?? _fallbackFor(context, descriptor, visited);
