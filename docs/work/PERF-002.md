@@ -2,7 +2,7 @@
 
 - Issue: #199
 - Branch: `agent/perf-002-memory-image-budget`
-- State: IN PROGRESS
+- State: IMPLEMENTED
 - Dependency: AST-004 VERIFIED
 
 ## Objective
@@ -69,7 +69,7 @@ Bound Flutter image-cache retention and manifest-backed decoded image memory whi
 - [x] T47 Run formatting, Analyze, PERF-002 focused tests, and AST-004 regressions.
 - [x] T48 Pass full Flutter suite and TEST-008 coverage floor/target.
 - [x] T49 Build/security-scan/upload the Debug APK through normal Flutter CI.
-- [ ] T50 Merge only after final-head CI is green; run exact-main verification/promotion and reconcile honestly without inventing device RSS/GPU measurements.
+- [x] T50 Merge only after final-head CI is green; run exact-main verification/promotion and reconcile honestly without inventing device RSS/GPU measurements.
 
 ## Safety boundary
 
@@ -84,3 +84,9 @@ No gameplay, economy, persistence, ads, consent/privacy, analytics, navigation i
 - Debug APK build and packaged-artifact security passed. Artifact #9074950206 is 80,650,504 bytes with artifact ZIP SHA-256 `760003d5c5cca8c151c15a8aaf562f946aad803cc231df31c64bab78976a43c1`.
 - TEST-007, TEST-008, TEST-010, AST-004, PERF-001, privacy/security/dependency, dashboard/catalog, asset-pipeline, full coverage and Debug APK gates all remained green.
 - The next gate is a full normal-CI run on this evidence-bearing final PR head before merge. Physical-device process RSS/GPU residency is still deliberately not claimed.
+
+## Final source-controlled reconciliation
+
+- Final PR head `d8e1fa2d315406173a180b751a7601670dcc484e` passed Flutter CI #852 and PR #200 squash-merged as `5298d70218d8e33d766a54813d423bd7de090d16`.
+- Historical skip markers inherited into that squash message prevented the normal main push workflow. Docs-only PR #201 therefore re-ran the merged runtime tree in Flutter CI #853, which passed all normal gates, and merged as `27ddbe3e9d2e20b32e7b89dfc3f56c6c171153cb` without a skip directive.
+- Exact-main Flutter CI #854 passed every normal gate against that main SHA. PERF-002 source-controlled acceptance is IMPLEMENTED. No physical-device process RSS/GPU residency measurement is claimed; issue #199 remains the place for later VERIFIED evidence.

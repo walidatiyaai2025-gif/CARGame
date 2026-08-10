@@ -106,6 +106,12 @@ jobs:
       - name: Test PERF-002 memory budget validator
         run: python3 tool/test_memory_image_budget.py
 
+      - name: Verify TEST-011 privacy consent and security contract
+        run: python3 tool/verify_test_011_privacy_security.py
+
+      - name: Test TEST-011 privacy consent and security validator
+        run: python3 tool/test_test_011_privacy_security.py
+
       - name: Restore packages
         shell: bash
         run: |
@@ -195,6 +201,19 @@ jobs:
           test/core/assets/game_image_memory_policy_test.dart
           test/core/assets/game_asset_view_memory_test.dart
           test/core/assets/game_asset_cache_policy_test.dart
+
+      - name: Test TEST-011 privacy consent and security matrix
+        run: >-
+          flutter test
+          test/core/ads/ad_consent_controller_test.dart
+          test/core/ads/ad_request_gate_test.dart
+          test/features/settings/settings_privacy_consent_test.dart
+          test/core/privacy/local_data_controller_test.dart
+          test/features/settings/settings_local_data_test.dart
+          test/core/analytics/privacy_gated_analytics_test.dart
+          test/core/diagnostics/privacy_gated_crash_reporting_test.dart
+          test/core/logging/app_logger_gate_test.dart
+          test/core/security/secret_redactor_test.dart
 
       - name: Test core screen widget matrix
         run: >-
