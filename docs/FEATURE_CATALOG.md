@@ -275,7 +275,7 @@ Codex must not mark a feature complete merely because UI code exists.
 
 | ID | Function | Priority | Status | Dependencies | Acceptance / evidence |
 |---|---|---:|---|---|---|
-| PERF-001 | Frame performance budget | P0 | IN PROGRESS | MOT-001, AST-004 | Issue #196 adds the source-controlled 60 Hz/16.67 ms frame policy, bounded rolling FrameTiming evaluation, deterministic full/constrained/reduced visual-quality state machine, conservative recovery hysteresis, app-wide performance scope, shared-motion degradation, ambient ticker shedding, focused regressions and CI ownership gates. Physical-device frame-time proof remains intentionally external before VERIFIED. |
+| PERF-001 | Frame performance budget | P0 | IMPLEMENTED | MOT-001, AST-004 | Issue #196 / PR #197 implement the source-controlled 60 Hz/16.67 ms frame policy, bounded rolling FrameTiming evaluation, deterministic full/constrained/reduced visual-quality state machine, conservative recovery hysteresis, app-wide performance scope, shared-motion degradation, ambient ticker shedding, focused regressions and CI ownership gates. Final PR head `7ad6d67e0963de15d2b08c6ce7a734ee6980de1a` passed Flutter CI #848 / run `31414950411`; PR #197 squash-merged as `f2b2c829755a5abdd3342dba731e1e669f42f57f`, and exact-main Flutter CI #849 / run `31415750686` passed 332/332 tests, 88.21% authored-source coverage, Debug APK, artifact security and upload. Main debug artifact #9073641322 is 80,644,379 bytes with artifact ZIP SHA-256 `4d2726add801d28d517cc29461506e2d4580e57fb86b6b50e362847d0628f13b`. Latest-verified promotion #37 / run `31416602117` succeeded and committed `3e2fa6592e98c18216e7dff9a79888cc3e5e7dbc`; the QA release APK is 55,943,559 bytes with SHA-256 `358d38a81708fce2a667f9b78a00b6b1bd28ae2f68013cdb60266ecbc65da1a2`, ephemeral CI signing, ads disabled, and not production/Play Store signed. Source-controlled acceptance is IMPLEMENTED; VERIFIED still requires real Android device/profile frame measurements, so TEST-009 remains dependency-blocked. |
 | PERF-002 | Memory and image budget | P0 | PLANNED | AST-004 | No unbounded cache and large assets decode near display size. |
 | PERF-003 | Pause off-screen animations | P1 | PLANNED | MOT-005 | TickerMode/lifecycle prevents hidden animation work. |
 | PERF-004 | Startup time budget | P0 | IMPLEMENTED | ENG-003 | Main UI opens with defaults when optional services are slow; profiling remains. |
@@ -331,11 +331,11 @@ Codex must not mark a feature complete merely because UI code exists.
 
 ## IN PROGRESS
 
-- None. `AST-004` is VERIFIED after its 100/100 checkpoint sprint and exact-main CI #840; start exactly one next primary workstream only after the recorded dependency-ready selection.
+- None. `PERF-001` source-controlled implementation is merged and exact-main CI is green; its remaining VERIFIED evidence is real Android device/profile frame measurement, not another source-code workstream.
 
 ## NEXT READY
 
-- `PERF-001` Frame performance budget — P0 and dependency-ready now that MOT-001 is IMPLEMENTED and AST-004 is VERIFIED. It is the selected next primary workstream and must be marked IN PROGRESS only when implementation begins; completing it unlocks TEST-009 device/API compatibility work.
+- Run a fresh dependency-ready/team scan and select exactly one source-controlled workstream. Do not select `TEST-009` until `PERF-001` reaches VERIFIED with real device/profile evidence.
 
 ## BLOCKED
 
@@ -370,6 +370,7 @@ Codex must not mark a feature complete merely because UI code exists.
 
 ## Recently implemented
 
+- `PERF-001` Frame performance budget — issue #196 / PR #197 implement the bounded 60 Hz frame policy and adaptive visual-quality fallback. Final PR-head CI #848 and exact-main CI #849 passed 332 tests, 88.21% authored-source coverage, Debug APK, artifact security and upload; main artifact #9073641322 is 80,644,379 bytes with artifact ZIP SHA-256 `4d2726add801d28d517cc29461506e2d4580e57fb86b6b50e362847d0628f13b`. Latest-verified promotion #37 / run `31416602117` succeeded and committed `3e2fa6592e98c18216e7dff9a79888cc3e5e7dbc`; the QA release APK is 55,943,559 bytes with SHA-256 `358d38a81708fce2a667f9b78a00b6b1bd28ae2f68013cdb60266ecbc65da1a2`, ephemeral CI signing, ads disabled, and not production/Play Store signed. Physical-device frame measurements remain required before VERIFIED; issue #196 stays open and TEST-009 remains blocked.
 - `PRIV-002` Privacy policy and Play Data Safety mapping — issue #169 / PR #170 add a publish-ready draft policy, inventory-bound machine disclosure mapping, executable drift validation, 12 regressions, and blocking CI gates. Flutter CI #746 passed full repository verification and Debug APK artifact security/upload; publication URL/contact/audience/production AdMob and Play Console evidence remain before VERIFIED.
 - `ADS-007` Consent/privacy integration — issue #166 / PR #167 add UMP consent refresh, fail-closed Mobile Ads request gating, runtime privacy-option changes, responsive Settings privacy controls, and executable privacy/security source contracts. Flutter CI #742 passed full tests and Debug APK artifact scanning; production AdMob Privacy & messaging configuration and regulated-region/device evidence remain before VERIFIED.
 - `NAV-002` Shared route adoption — Home/app-shell and Mission Briefing→Gameplay use the guarded navigator with stable route names; result/back-guard regression coverage is present, while device-wide RC validation remains under #79.
