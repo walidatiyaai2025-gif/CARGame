@@ -88,6 +88,12 @@ jobs:
       - name: Test TEST-008 quality validator
         run: python3 tool/test_test_quality.py
 
+      - name: Verify AST-004 asset cache policy
+        run: python3 tool/verify_asset_cache_policy.py
+
+      - name: Test AST-004 cache policy validator
+        run: python3 tool/test_asset_cache_policy.py
+
       - name: Restore packages
         shell: bash
         run: |
@@ -160,6 +166,9 @@ jobs:
 
       - name: Analyze
         run: flutter analyze --no-fatal-infos --no-fatal-warnings
+
+      - name: Test AST-004 asset cache policy
+        run: flutter test test/core/assets/game_asset_cache_policy_test.dart
 
       - name: Test core screen widget matrix
         run: >-
