@@ -109,14 +109,13 @@ jobs:
 
           # TEST-008 work log should be byte-for-byte the reconciled main version.
           git checkout origin/main -- docs/work/TEST-008.md
+          git add docs/FEATURE_CATALOG.md docs/STATUS.md docs/work/TEST-008.md
 
           if git diff --name-only --diff-filter=U | grep -q .; then
             echo 'Unresolved conflicts remain' >&2
             git diff --name-only --diff-filter=U >&2
             exit 1
           fi
-
-          git add docs/FEATURE_CATALOG.md docs/STATUS.md docs/work/TEST-008.md
 
       - name: Validate reconciled contracts
         shell: bash
