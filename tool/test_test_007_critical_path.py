@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import unittest
 
-from tool.verify_test_007_critical_path import (
+from verify_test_007_critical_path import (
     EXPECTED_IDS,
     REQUIRED_CI_TOKENS,
     REQUIRED_TEST_TOKENS,
