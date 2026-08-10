@@ -5,6 +5,7 @@ import 'package:cargo_sort_game/core/settings/app_settings_store.dart';
 import 'package:cargo_sort_game/core/storage/progress_store.dart';
 import 'package:cargo_sort_game/core/theme/game_skin.dart';
 import 'package:cargo_sort_game/core/widgets/game_button.dart';
+import 'package:cargo_sort_game/features/game/city_catalog.dart';
 import 'package:cargo_sort_game/features/game/game_screen.dart';
 import 'package:cargo_sort_game/features/game/gameplay_result_debrief.dart';
 import 'package:cargo_sort_game/features/game/level_data.dart';
@@ -194,7 +195,9 @@ void main() {
     checkpoint('T14', briefing.level.number, 1);
 
     final missionButton = tester.widget<GameButton>(find.byType(GameButton));
-    await missionButton.onPressed!.call();
+    final missionStart = Future<void>.sync(() async {
+      await missionButton.onPressed!.call();
+    });
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
 
@@ -221,6 +224,7 @@ void main() {
 
     Navigator.of(tester.element(find.byType(GameScreen))).pop();
     await tester.pump(const Duration(milliseconds: 400));
+    await missionStart;
     Navigator.of(tester.element(find.byType(LevelSelectScreen))).pop();
     await tester.pump(const Duration(milliseconds: 400));
     await Future.wait(<Future<void>>[firstStart, secondStart]);
@@ -268,9 +272,7 @@ void main() {
     checkpoint('T27', store.playerXp, xp);
     checkpoint(
       'T28',
-      store.completedRewardTransactions.contains(
-        'level:1:$transactionId',
-      ),
+      store.completedRewardTransactions.contains('level:1:$transactionId'),
       isTrue,
     );
 
@@ -361,13 +363,14 @@ void main() {
     await recovered.load();
     final restored = ProgressStore();
     await restored.load();
+    final pendingPurchaseCleared = !await prefs.containsKey(pendingPurchaseKey);
     checkpoint(
       'T35',
       recovered.coins == finalCoins &&
           recovered.freeHints == finalHints &&
           restored.coins == finalCoins &&
           restored.freeHints == finalHints &&
-          !await prefs.containsKey(pendingPurchaseKey),
+          pendingPurchaseCleared,
       isTrue,
     );
     checkpoint('T36', restored.coins, finalCoins);
@@ -388,7 +391,8 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
     checkpoint(
       'T45',
-      tester.takeException() == null && find.byType(HomeScreen).evaluate().isNotEmpty,
+      tester.takeException() == null &&
+          find.byType(HomeScreen).evaluate().isNotEmpty,
       isTrue,
     );
   });
