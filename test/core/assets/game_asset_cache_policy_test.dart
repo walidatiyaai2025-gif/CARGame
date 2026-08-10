@@ -80,42 +80,41 @@ void main() {
     final policy = GameAssetCachePolicy(maxEntries: 2);
     final context = await _pumpContext(tester);
 
-    await policy.precacheNearFuture(
-      context,
-      registry,
-      const ['', 'missing.a', 'missing.a', 'missing.b', 'missing.c'],
-      limit: 99,
-    );
+    await policy.precacheNearFuture(context, registry, const [
+      '',
+      'missing.a',
+      'missing.a',
+      'missing.b',
+      'missing.c',
+    ], limit: 99);
 
     expect(policy.snapshot.failedIds, ['missing.a', 'missing.b']);
     expect(policy.snapshot.missCount, 2);
   });
 
-  testWidgets('automatic batches skip known failures unless retry is explicit', (
-    tester,
-  ) async {
-    final registry = GameAssetRegistry.fromJsonString(_manifest);
-    var loadCount = 0;
-    final policy = GameAssetCachePolicy(
-      precacheLoader: (_, _) async {
-        loadCount += 1;
-        throw StateError('decode failed');
-      },
-    );
-    final context = await _pumpContext(tester);
+  testWidgets(
+    'automatic batches skip known failures unless retry is explicit',
+    (tester) async {
+      final registry = GameAssetRegistry.fromJsonString(_manifest);
+      var loadCount = 0;
+      final policy = GameAssetCachePolicy(
+        precacheLoader: (_, _) async {
+          loadCount += 1;
+          throw StateError('decode failed');
+        },
+      );
+      final context = await _pumpContext(tester);
 
-    expect(await policy.precache(context, registry, 'ui.heart'), isFalse);
-    await policy.precacheNearFuture(context, registry, const ['ui.heart']);
-    expect(loadCount, 1);
+      expect(await policy.precache(context, registry, 'ui.heart'), isFalse);
+      await policy.precacheNearFuture(context, registry, const ['ui.heart']);
+      expect(loadCount, 1);
 
-    await policy.precacheNearFuture(
-      context,
-      registry,
-      const ['ui.heart'],
-      retryFailed: true,
-    );
-    expect(loadCount, 2);
-  });
+      await policy.precacheNearFuture(context, registry, const [
+        'ui.heart',
+      ], retryFailed: true);
+      expect(loadCount, 2);
+    },
+  );
 
   testWidgets('precache loader failures stay isolated and manually retryable', (
     tester,
@@ -140,7 +139,9 @@ void main() {
     expect(policy.snapshot.loadFailureCount, 1);
   });
 
-  testWidgets('concurrent same-ID callers share one load result', (tester) async {
+  testWidgets('concurrent same-ID callers share one load result', (
+    tester,
+  ) async {
     final registry = GameAssetRegistry.fromJsonString(_manifest);
     final gate = Completer<void>();
     var loadCount = 0;
@@ -194,7 +195,9 @@ void main() {
     expect(policy.snapshot.cachedCount, 2);
   });
 
-  testWidgets('clear during load prevents late cache resurrection', (tester) async {
+  testWidgets('clear during load prevents late cache resurrection', (
+    tester,
+  ) async {
     final registry = GameAssetRegistry.fromJsonString(_manifest);
     final gate = Completer<void>();
     final evicted = <String>[];
@@ -336,7 +339,8 @@ Future<BuildContext> _pumpContext(WidgetTester tester) async {
   return context;
 }
 
-const _manifest = '''
+const _manifest =
+    '''
 {
   "schemaVersion": 1,
   "assets": [

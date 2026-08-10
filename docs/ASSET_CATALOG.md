@@ -205,6 +205,36 @@ Export rules:
 - Sprite sheets require a measured memory advantage and are registered as one asset
   with explicit frame metadata under `AST-002`.
 
+## Runtime precache and memory policy
+
+`AST-004` owns one application-wide boundary for manifest-backed image precaching.
+The cache is an optimization only: gameplay, navigation, rewards, progression, and
+fallback rendering must remain correct when no runtime 3D binary can be loaded.
+
+- `GameAssetCachePolicy` is the only production owner of Flutter `precacheImage`;
+  direct production call sites are rejected by CI.
+- Completed cached entries use a bounded least-recently-used policy. A cache hit
+  promotes the stable asset ID to most-recently-used without decoding it again.
+- Near-future precache is sequential, deduplicated, blank-ID safe, and clamped to
+  the configured cache-entry budget so one route cannot create an unbounded decode
+  burst. Known failed assets are skipped automatically unless a caller explicitly
+  requests a retry.
+- Concurrent requests for the same stable asset ID share one in-flight operation.
+  Different IDs may load independently. In-flight work does not consume the
+  completed-cache entry budget.
+- `clear()` and `forget(id)` invalidate pending work by generation. A late load may
+  finish, but it is evicted and cannot resurrect invalidated cache state or failure
+  history. A new load starts only after the stale operation settles.
+- Loader and image-cache eviction failures are isolated from the user flow. Failure
+  history is bounded to the same entry budget and remains diagnostic state only.
+- Immutable snapshots expose cached/in-flight/failed IDs plus hit, miss/load-start,
+  joined-request, successful-load, load-failure, eviction, stale-completion, and
+  eviction-failure counters. Runtime counters can be reset without clearing cache
+  state.
+- Missing descriptor binaries remain normal during the current descriptor-only
+  asset phase. Fallback widgets remain the release-safe path until provenance and
+  runtime admission gates approve real binaries.
+
 ## Accessibility and localization handoff
 
 Every meaningful asset handoff must provide an English semantic concept, Arabic

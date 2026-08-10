@@ -131,18 +131,19 @@ final class GameAssetCachePolicy extends ChangeNotifier {
     final provider = AssetImage(descriptor.path);
 
     late final Future<bool> operation;
-    operation = _loadAndCache(
-      context,
-      assetId,
-      provider,
-      globalGeneration: globalGeneration,
-      assetGeneration: assetGeneration,
-    ).whenComplete(() {
-      if (identical(_inFlight[assetId], operation)) {
-        _inFlight.remove(assetId);
-        notifyListeners();
-      }
-    });
+    operation =
+        _loadAndCache(
+          context,
+          assetId,
+          provider,
+          globalGeneration: globalGeneration,
+          assetGeneration: assetGeneration,
+        ).whenComplete(() {
+          if (identical(_inFlight[assetId], operation)) {
+            _inFlight.remove(assetId);
+            notifyListeners();
+          }
+        });
 
     _inFlight[assetId] = operation;
     notifyListeners();
@@ -235,11 +236,7 @@ final class GameAssetCachePolicy extends ChangeNotifier {
     }
   }
 
-  bool _isStale(
-    String assetId,
-    int globalGeneration,
-    int assetGeneration,
-  ) {
+  bool _isStale(String assetId, int globalGeneration, int assetGeneration) {
     return globalGeneration != _generation ||
         assetGeneration != (_assetGenerations[assetId] ?? 0);
   }
