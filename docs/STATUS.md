@@ -7,12 +7,22 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | Field | Value |
 |---|---|
 | Current phase | Android RC hardening — issue #79 |
-| Primary feature | `TEST-010` Dashboard/catalog parser validation — IN PROGRESS on issue #187 / `agent/test-010-dashboard-catalog-parity`. |
-| Completed checkpoint | `TEST-007` critical path — 50/50 release checkpoints VERIFIED; final-head Flutter CI #816 / run `31380502193` passed all gates on `874fe658456723c5f0455e6c1935bd5b9dada8b5`, and PR #184 squash-merged as `b7f858f9cac6c1a8c5b0d1f9058be599f9ce792c`. |
-| Status | Dependency-ready scan selected TEST-010 as the next source-contained P1 gate; implementation is adding parser parity, dependency-cycle rejection, complete status-vocabulary coverage, and dashboard aggregate-drift protection without touching runtime behavior. |
-| Previous checkpoint | `TEST-003` Core screen widget matrix — VERIFIED by CI #803 and squash-merged via PR #180 as `4ca093a843ab685dfeef8df2c86e3950a13f482f`. |
-| Next recommended feature | Finish TEST-010 focused validator/regressions, run normal Flutter CI, reconcile evidence, then select the next single dependency-ready workstream. |
+| Primary feature | None — TEST-010 Dashboard/catalog parser validation is VERIFIED; run the dependency-ready scan before starting the next single primary workstream. |
+| Completed checkpoint | `TEST-010` dashboard/catalog parser validation — VERIFIED; Flutter CI #822 / run `31384332431` passed all 45 workflow steps on `fc560c2668fcf6eef8aded139e13b1aa329a467d`, including the dedicated parity validator/regressions, full Flutter suite, Debug APK, artifact security, and upload. |
+| Status | TEST-010 repository-owned acceptance is VERIFIED: the catalog/dashboard contract now enforces strict parser parity, complete status vocabulary, an acyclic dependency graph, and no maintained hard-coded aggregate totals; no game runtime behavior changed. |
+| Previous checkpoint | `TEST-007` critical path — 50/50 release checkpoints VERIFIED; final-head Flutter CI #816 / run `31380502193` passed all gates and PR #184 squash-merged as `b7f858f9cac6c1a8c5b0d1f9058be599f9ce792c`. |
+| Next recommended feature | Run the catalog dependency-ready scan and select exactly one next primary workstream; preserve the verified TEST-007 and TEST-010 CI gates. |
 | Known blocker | `TEST-011` requires real production UMP/privacy-message/regulatory-device verification. `REL-007`/`REL-008` require real production AdMob/signing inputs and a production-signed candidate; final install/upgrade/device smoke requires an Android device or testing track. `TEST-009` also remains dependency-blocked while `PERF-001` is PLANNED. Visual Studio C++ components remain optional for Windows desktop only. |
+
+## TEST-010 dashboard/catalog parser validation — 2026-08-10
+
+- Issue #187 / PR #188 establish a dedicated release-quality parser-parity contract on top of ENG-007 without creating a second feature-catalog source of truth.
+- `tool/verify_dashboard_catalog.py` independently models dashboard Markdown identity parsing, requires exact A-S phase and feature identity parity, exact seven-status vocabulary coverage, strict parser guards, and runtime fetch/audit/render anchors.
+- The dependency graph validator rejects missing, self, and strongly connected cyclic dependencies; the first full-catalog run exposed four circular planning edges, which were corrected at NAV-003/RET-008, WORLD-006/MOT-009, REW-008/RET-005, and PERF-007/REL-008 without changing production code.
+- `tool/test_dashboard_catalog.py` provides 9 focused regressions; the existing CI integrity suite remains 15/15 green. TEST-010 is a blocking normal-CI gate before package restore and preserves TEST-007.
+- Flutter CI #822 / run `31384332431` passed all 45 workflow steps on implementation head `fc560c2668fcf6eef8aded139e13b1aa329a467d`, including privacy/security/dependency gates, TEST-007, TEST-010, formatting, Analyze, widget/integration tests, full Flutter suite, Debug APK, artifact security, and upload.
+- Debug artifact #9061312211 is 80,633,603 bytes with SHA-256 `d5d370e02469ba47db3f773e1de88e97293f394df5d904f5f881cf450275028a`.
+- No gameplay, economy, persistence, navigation runtime, ads, privacy runtime, signing, production identifiers, packages, or assets changed. Repository-owned TEST-010 acceptance is VERIFIED.
 
 ## TEST-007 critical-path integration contract — 2026-08-10
 
