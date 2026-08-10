@@ -1,0 +1,97 @@
+name: AST-004 Focused Verify
+
+on:
+  push:
+    branches:
+      - agent/ast-004-cache-policy
+
+permissions:
+  contents: write
+
+jobs:
+  verify:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/ast-004-cache-policy
+          fetch-depth: 0
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.44.8
+          cache: true
+
+      - name: Format AST-004 Dart
+        run: dart format lib/core/assets/game_asset_cache_policy.dart test/core/assets/game_asset_cache_policy_test.dart
+
+      - name: Verify AST-004 machine policy
+        run: |
+          python3 tool/verify_asset_cache_policy.py
+          python3 tool/test_asset_cache_policy.py
+          python3 tool/verify_test_quality.py
+          python3 tool/test_test_quality.py
+
+      - name: Restore packages
+        run: flutter pub get --enforce-lockfile
+
+      - name: Analyze
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+
+      - name: Test AST-004 cache policy
+        run: flutter test test/core/assets/game_asset_cache_policy_test.dart
+
+      - name: Update AST-004 documentation and checkpoints
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          catalog = Path('docs/ASSET_CATALOG.md')
+          text = catalog.read_text(encoding='utf-8')
+          marker = '## Accessibility and localization handoff\n'
+          if text.count(marker) != 1:
+              raise SystemExit('ASSET_CATALOG accessibility anchor missing or duplicated')
+          section = '''## Runtime precache and memory policy\n\n`AST-004` owns one application-wide boundary for manifest-backed image precaching.\nThe cache is an optimization only: gameplay, navigation, rewards, progression, and\nfallback rendering must remain correct when no runtime 3D binary can be loaded.\n\n- `GameAssetCachePolicy` is the only production owner of Flutter `precacheImage`;\n  direct production call sites are rejected by CI.\n- Completed cached entries use a bounded least-recently-used policy. A cache hit\n  promotes the stable asset ID to most-recently-used without decoding it again.\n- Near-future precache is sequential, deduplicated, blank-ID safe, and clamped to\n  the configured cache-entry budget so one route cannot create an unbounded decode\n  burst. Known failed assets are skipped automatically unless a caller explicitly\n  requests a retry.\n- Concurrent requests for the same stable asset ID share one in-flight operation.\n  Different IDs may load independently. In-flight work does not consume the\n  completed-cache entry budget.\n- `clear()` and `forget(id)` invalidate pending work by generation. A late load may\n  finish, but it is evicted and cannot resurrect invalidated cache state or failure\n  history. A new load starts only after the stale operation settles.\n- Loader and image-cache eviction failures are isolated from the user flow. Failure\n  history is bounded to the same entry budget and remains diagnostic state only.\n- Immutable snapshots expose cached/in-flight/failed IDs plus hit, miss/load-start,\n  joined-request, successful-load, load-failure, eviction, stale-completion, and\n  eviction-failure counters. Runtime counters can be reset without clearing cache\n  state.\n- Missing descriptor binaries remain normal during the current descriptor-only\n  asset phase. Fallback widgets remain the release-safe path until provenance and\n  runtime admission gates approve real binaries.\n\n'''
+          if '## Runtime precache and memory policy\n' not in text:
+              catalog.write_text(text.replace(marker, section + marker, 1), encoding='utf-8')
+
+          work = Path('docs/work/AST-004.md')
+          text = work.read_text(encoding='utf-8')
+          for number in range(11, 97):
+              pattern = rf'- \[ \] T{number:03d} '
+              text, count = re.subn(pattern, f'- [x] T{number:03d} ', text, count=1)
+              if count != 1:
+                  raise SystemExit(f'AST-004 checkpoint T{number:03d} missing or already changed')
+          text += '''\n## Focused implementation evidence\n\n- `GameAssetCachePolicy` now shares concurrent same-ID operations, invalidates late clear/forget completions, keeps LRU/failure state bounded, isolates eviction failures, and exposes immutable runtime counters.\n- Focused widget coverage expands the original four cache tests to race, deduplication, retry, LRU, statistics, eviction-failure, immutable-snapshot, and near-future policy scenarios.\n- `tool/verify_asset_cache_policy.py` owns the machine contract and rejects raw production `precacheImage` bypasses or AST-004 CI drift; `tool/test_asset_cache_policy.py` provides focused validator regressions.\n- Normal Flutter CI runs AST-004 machine gates before package restore and the focused widget suite after Analyze while retaining TEST-007, TEST-008, TEST-010, full coverage, Debug APK, and artifact-security gates.\n- Full normal-PR CI evidence remains required for T097-T100.\n'''
+          work.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Validate repository contracts after documentation update
+        run: |
+          python3 tool/verify_asset_cache_policy.py
+          python3 tool/test_asset_cache_policy.py
+          python3 tool/verify_dashboard_catalog.py
+          python3 tool/test_dashboard_catalog.py
+          python3 tool/verify_ci_integrity.py
+          python3 tool/test_ci_integrity.py
+          git diff --check
+
+      - name: Commit focused verified checkpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/ast004_focused_verify.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add lib/core/assets/game_asset_cache_policy.dart test/core/assets/game_asset_cache_policy_test.dart tool/verify_asset_cache_policy.py tool/test_asset_cache_policy.py .github/workflows/flutter_ci.yml docs/ASSET_CATALOG.md docs/work/AST-004.md .github/workflows/ast004_focused_verify.yml
+          git diff --cached --check
+          git commit -m "AST-004: verify bounded asset cache policy"
+          git push origin HEAD:agent/ast-004-cache-policy
