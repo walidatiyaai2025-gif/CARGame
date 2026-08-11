@@ -1,0 +1,70 @@
+name: UI3D-007 Bootstrap
+
+on:
+  push:
+    branches:
+      - agent/ui3d-007-adaptive-visual-effects
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ui3d-007-bootstrap
+  cancel-in-progress: true
+
+jobs:
+  implement:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: agent/ui3d-007-adaptive-visual-effects
+          fetch-depth: 0
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.44.8
+          cache: true
+
+      - name: Apply UI3D-007 source patch
+        run: python3 tool/bootstrap_ui3d_007.py
+
+      - name: Format Dart
+        run: dart format lib test
+
+      - name: Restore packages
+        run: flutter pub get
+
+      - name: Validate UI3D-007 ownership
+        run: |
+          python3 tool/verify_ui3d_007_visual_effects.py
+          python3 tool/test_ui3d_007_visual_effects.py
+          git diff --check
+
+      - name: Run focused UI3D-007 tests
+        run: |
+          flutter test test/core/settings/game_visual_effects_preference_test.dart
+          flutter test test/core/settings/visual_effects_preference_scope_test.dart
+          flutter test test/core/settings/app_settings_store_test.dart
+          flutter test test/core/motion/game_motion_test.dart test/core/motion/ui3d_007_visual_effects_test.dart test/core/motion/game_route_test.dart
+          flutter test test/features/settings/visual_effects_settings_test.dart
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Commit validated implementation
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm tool/bootstrap_ui3d_007.py
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git diff --cached --check
+          git commit -m "UI3D-007: implement adaptive visual effects"
+          git push origin HEAD:agent/ui3d-007-adaptive-visual-effects
