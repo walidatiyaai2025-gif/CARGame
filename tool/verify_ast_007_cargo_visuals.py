@@ -5,9 +5,13 @@ import json
 import re
 from pathlib import Path
 
+import verify_ast_007_batch_01 as batch_01_verifier
+
 EXPECTED_CARGO_COUNT = 124
 REQUIRED_FILES = [
     'assets/3d/manifest.json',
+    'assets/3d/provenance/catalog.json',
+    'assets/3d/source/cargo/batch_01/spec.json',
     'lib/core/assets/game_asset_intake_plan.dart',
     'lib/features/game/cargo_visual_catalog.dart',
     'lib/features/game/cargo_visual_asset.dart',
@@ -18,8 +22,11 @@ REQUIRED_FILES = [
     'test/features/game/cargo_visual_catalog_test.dart',
     'test/features/game/cargo_visual_asset_test.dart',
     'tool/plan_ast_007_asset_intake.dart',
+    'tool/verify_ast_007_batch_01.py',
+    'tool/test_ast_007_batch_01.py',
     'docs/FEATURE_CATALOG.md',
     'docs/work/AST-007.md',
+    'docs/work/AST-007-BATCH-01.md',
     '.github/workflows/flutter_ci.yml',
 ]
 
@@ -145,6 +152,15 @@ def validate(root: Path = Path('.')) -> None:
         if token not in work_doc:
             raise ValidationError(f'AST-007 work note missing production truth: {token}')
 
+    batch_doc = _read(root, 'docs/work/AST-007-BATCH-01.md')
+    for token in [
+        'Runtime binary status: `NOT_CREATED`',
+        'Provenance status: `NOT_CREATED`',
+        '12 deterministic cargo assets',
+    ]:
+        if token not in batch_doc:
+            raise ValidationError(f'AST-007 batch 01 work note missing truth boundary: {token}')
+
     catalog_doc = _read(root, 'docs/FEATURE_CATALOG.md')
     if '| AST-007 | 100+ 3D cargo product pack | P1 | IN PROGRESS |' not in catalog_doc and \
        '| AST-007 | 100+ 3D cargo product pack | P1 | IMPLEMENTED |' not in catalog_doc:
@@ -159,7 +175,12 @@ def validate(root: Path = Path('.')) -> None:
         if token not in ci:
             raise ValidationError(f'normal Flutter CI missing AST-007 gate: {token}')
 
+    try:
+        batch_01_verifier.validate(root)
+    except batch_01_verifier.ValidationError as error:
+        raise ValidationError(f'AST-007 batch 01 contract failed: {error}') from error
+
 
 if __name__ == '__main__':
     validate()
-    print('AST-007 CARGO VISUAL CONTRACT PASSED (124 descriptors / 18 archetypes)')
+    print('AST-007 CARGO VISUAL CONTRACT PASSED (124 descriptors / 18 archetypes / batch 01 bound)')
