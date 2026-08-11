@@ -30,8 +30,9 @@ class _AmbientMotionBackgroundState extends State<AmbientMotionBackground>
     super.didChangeDependencies();
     final profile = GameMotion.of(context);
     const intent = GameMotionIntent.nonessential;
+    final ambientMotionDisabled = !GameMotion.of(context).allowAmbientMotion;
     final shouldAnimate =
-        profile.allowAmbientMotion && profile.shouldUseTicker(intent);
+        !ambientMotionDisabled && profile.shouldUseTicker(intent);
     _ambientMotionDisabled = !shouldAnimate;
 
     if (!shouldAnimate) {
