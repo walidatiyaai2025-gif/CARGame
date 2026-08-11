@@ -18,6 +18,7 @@ checks = [
     'Future.delayed(',
     'Verify A11Y-003 reduced motion',
     'Test A11Y-003 reduced motion matrix',
+    'test/features/home/home_ambient_background_test.dart',
     'A11Y-003 catalog status',
 ]
 
