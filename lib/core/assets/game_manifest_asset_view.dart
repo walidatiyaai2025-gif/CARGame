@@ -29,7 +29,11 @@ final class GameManifestAssetView extends StatelessWidget {
 
   static Future<GameAssetRegistry>? _registryFuture;
 
-  static Future<GameAssetRegistry> _loadRegistry() =>
+  /// Starts (or joins) the one process-wide manifest load.
+  ///
+  /// Callers that need a deterministic ready boundary, such as startup warmup
+  /// or widget tests, can await this without causing a second bundle read.
+  static Future<GameAssetRegistry> preloadRegistry() =>
       _registryFuture ??= GameAssetManifest.load();
 
   @visibleForTesting
@@ -40,7 +44,7 @@ final class GameManifestAssetView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<GameAssetRegistry>(
-      future: _loadRegistry(),
+      future: preloadRegistry(),
       builder: (context, snapshot) {
         final registry = snapshot.data;
         if (registry == null || !registry.contains(assetId)) {
