@@ -71,7 +71,7 @@
       "runtimePath": "assets/3d/runtime/cargo/toys/cg_cargo_action_figure_box_pcargo_v01.webp",
       "runtimeBinaryStatus": "NOT_CREATED",
       "provenanceStatus": "NOT_CREATED",
-      "prompt": "Single generic action-figure package silhouette with an original non-branded toy form and optional clear shell cue, stylized mobile-game 3D render, no character IP, no logo, no readable title."
+      "prompt": "Single generic action-figure package silhouette with an original non-branded toy form and optional clear shell cue, stylized mobile-game 3D render, no character IP, no logo, no readable text or title."
     },
     {
       "assetId": "cargo.apparel_box",
@@ -135,7 +135,7 @@
       "runtimePath": "assets/3d/runtime/cargo/toys/cg_cargo_board_game_box_pcargo_v01.webp",
       "runtimeBinaryStatus": "NOT_CREATED",
       "provenanceStatus": "NOT_CREATED",
-      "prompt": "Single colorful generic tabletop game box with abstract original pieces and dice cues, stylized premium mobile-game 3D render, no existing game IP, no readable title, no logo."
+      "prompt": "Single colorful generic tabletop game box with abstract original pieces and dice cues, stylized premium mobile-game 3D render, no existing game IP, no readable text or title, no logo."
     },
     {
       "assetId": "cargo.boot_carton",
