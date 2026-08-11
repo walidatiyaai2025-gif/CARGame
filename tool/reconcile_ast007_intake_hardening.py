@@ -23,10 +23,10 @@ def update_hardening() -> None:
     )
     new_state = (
         'COMPLETE — H001-H100 source-controlled intake-hardening checkpoints are '
-        'complete and exact-main verified. Parent AST-007 remains IN PROGRESS because '
-        'production truth is still 124 cargo descriptors, 0 approved provenance '
-        'records, and 0 runtime cargo WebP binaries; no art, licensing, checksums, '
-        'approvals, or device evidence is fabricated.'
+        'complete and exact-main verified. Parent AST-007 remains IN PROGRESS. '
+        'Production truth remains 124 cargo descriptors, 0 approved provenance records, '
+        'and 0 runtime cargo WebP binaries. No art, licensing, checksums, approvals, '
+        'or device evidence is fabricated.'
     )
     if old_state not in text:
         raise SystemExit('hardening state anchor missing')
