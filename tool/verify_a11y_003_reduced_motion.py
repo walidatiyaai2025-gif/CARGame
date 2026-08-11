@@ -110,6 +110,11 @@ require(
     'skips decorative cinematic effects',
     'وتخطي المؤثرات السينمائية الزخرفية',
 )
+require(
+    'test/features/home/home_ambient_background_test.dart',
+    'reduced motion uses a static animation without a ticker',
+    'isNot(isA<AnimationController>())',
+)
 
 baseline_path = Path('docs/accessibility/a11y_003_motion_audit.json')
 if not baseline_path.is_file():
@@ -128,6 +133,7 @@ if actual != expected:
 for path in [
     'test/core/motion/a11y_003_motion_policy_test.dart',
     'test/core/motion/game_cinematic_gate_test.dart',
+    'test/features/home/home_ambient_background_test.dart',
     'docs/A11Y_REDUCED_MOTION_AUDIT.md',
 ]:
     if not Path(path).is_file():
@@ -138,6 +144,7 @@ for token in [
     'Verify A11Y-003 reduced motion',
     'Test A11Y-003 reduced-motion validator',
     'Test A11Y-003 reduced motion matrix',
+    'test/features/home/home_ambient_background_test.dart',
 ]:
     if token not in ci:
         raise SystemExit(f'normal Flutter CI is missing A11Y-003 gate: {token}')
