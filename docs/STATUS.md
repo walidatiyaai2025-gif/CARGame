@@ -8,20 +8,24 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 |---|---|
 | Current phase | Android RC hardening — issue #79 |
 | Primary feature | `AST-007` 100+ cargo visual pack — IN PROGRESS on issue #210 / `agent/ast-007-cargo-visual-pack`. |
-| Completed checkpoint | `A11Y-003` reduced-motion accessibility — IMPLEMENTED; issue #208 / PR #209 completed 100/100 source-controlled checkpoints, PR #209 merged as `996bebf50e9f5b150e10a9f6455a27015a67355f`, and exact-main Flutter CI #873 / run `31473003490` passed all gates. |
-| Status | A11Y-003 source-controlled acceptance is IMPLEMENTED: shared motion intent classification, deterministic no-ticker reduced paths, cinematic skip semantics, direct-motion audit, EN/AR Settings copy, validator regressions, focused/full tests, coverage, Debug APK security/upload and exact-main verification are green. Main artifact #9094321792 (80,659,593 bytes; sha256:ee95a99a8460d1824a28fb9512d12454d3e9f69648a9e0bd5506e34ccf2be98d). Physical assistive-technology/device observation is separate evidence and is not claimed. |
-| Previous checkpoint | `UI3D-007` reduced motion and adaptive visual effects — IMPLEMENTED with 100/100 source-controlled checkpoints and exact-main verification. |
+| Completed checkpoint | `AST-007` source integration checkpoint — merged as `132c0cff75057e21a8bdea50550b6b8bcd7e04f6` with 124 stable cargo visual identities and exact-main Flutter CI #893 / run `31478580634` green; production WebP/provenance admission remains open, so AST-007 stays IN PROGRESS. |
+| Status | AST-007 source checkpoint is merged and exact-main verified: 18 gameplay IDs remain stable, 124 deterministic `cargo.*` visual identities are reachable across the existing 150-level catalog, Cargo Bay/Sorting Docks/flight use the shared manifest bridge with legacy fallbacks, and manifest readiness no longer flashes stale fallback after preload. PR CI #892 and exact-main CI #893 passed full suite/coverage/Debug APK/security/upload; main artifact #9096533997 (80,673,119 bytes; SHA-256 `73c77fd51540696d1327141856ba9d62570adffbb75f54e61803adce9439fbbb`). Current production-art admission is still 0 provenance / 0 runtime WebP, so the feature remains IN PROGRESS. |
+| Previous checkpoint | `A11Y-003` reduced-motion accessibility — IMPLEMENTED with 100/100 source-controlled checkpoints and exact-main verification. |
 | Next recommended feature | AST-007 is the active primary; no second source-controlled feature should start until its checkpoint is reconciled. |
 | Known blocker | `TEST-011` VERIFIED still requires real production AdMob Privacy & messaging/UMP regulated-region/device evidence. `TEST-009` remains blocked on PERF-001 physical-device frame profiling. `REL-007`/`REL-008` require real production AdMob/signing inputs and a production-signed candidate; final install/upgrade/device smoke requires an Android device/testing track. |
 
 ## AST-007 cargo visual pack — 2026-08-11
 
-- Issue #210 is the single active source-controlled workstream after A11Y-003 reconciliation.
-- Baseline gameplay truth remains 18 stable `CargoItem` archetype IDs across the deterministic 150-level catalog; matching, moves, difficulty, rewards and persisted progress must not change.
-- The implementation target is a separate typed visual layer with 124 stable `cargo.*` identities, deterministic level/archetype selection, and consistent source/warehouse/flight visuals.
-- Cargo descriptors use the existing `pcargo` 384x384 manifest contract and `assets/3d/runtime/cargo/...` taxonomy.
-- Missing binaries stay fallback-safe. No WebP, license, creator, prompt, checksum or provenance approval is invented; AST-011 remains the admission authority.
-- Source work can establish the catalog/resolver/UI bridge/tests/CI while actual production-art admission remains evidence-dependent.
+- Issue #210 remains the single active source-controlled/product-art workstream; PR #213 completed and merged the first source integration checkpoint.
+- The 18 stable `CargoItem` gameplay archetype IDs remain the matching/save/reward authority. The 150-level generator seed, item IDs, moves and difficulty truth are unchanged.
+- `CargoVisualCatalog` adds 124 stable `cargo.*` identities across all 18 archetypes. Deterministic level/archetype resolution reaches at least 100 distinct identities across the real 150-level catalog while keeping duplicate cargo, its sorting target and travel flight visually coherent.
+- `assets/3d/manifest.json` now contains 133 descriptors total: 9 existing + 124 descriptor-only cargo records using `pcargo` / 384x384 and `assets/3d/runtime/cargo/...` taxonomy. Approved provenance remains 0 and runtime WebP remains 0.
+- `CargoVisualAsset` routes Cargo Bay, Sorting Docks and travel flight through `GameManifestAssetView`; with no admitted binaries, exact legacy fallbacks remain visible.
+- Full-suite verification exposed and fixed a real manifest-readiness regression: root-bundle diagnostics proved all 133 descriptors parsed; `GameManifestAssetView` now caches both the in-flight Future and resolved registry so post-preload widgets resolve synchronously rather than flashing legacy fallback.
+- Final PR head `0330458b3b3becaa9248a694d56fe3b9f8261fd5` passed Flutter CI #892 / run `31477806852` all 69 gates, including AST-007 validator/regressions, full suite, coverage, Debug APK, artifact security and upload; PR artifact #9096224674 (80,673,122 bytes; SHA-256 `e45405e154f209d106c5758852457c45f0d7a8b9c3ec11ab46098ccd500172c3`).
+- PR #213 squash-merged as `132c0cff75057e21a8bdea50550b6b8bcd7e04f6`. Exact-main Flutter CI #893 / run `31478580634` passed all 69 gates; main artifact #9096533997 (80,673,119 bytes; SHA-256 `73c77fd51540696d1327141856ba9d62570adffbb75f54e61803adce9439fbbb`).
+- Latest Verified APK promotion run `31479328315` initially hit a transient Maven Central HTTP 403 while resolving Kotlin artifacts; rerunning the same failed job without code/config changes passed release build, artifact security and promotion. Promotion commit `a80b987bdc0a533958b381506f46012eaa2ae6f3` retained a 56,044,747-byte QA APK with SHA-256 `62177e3056dba6f303f68e32f426142ed0bff461300049a77610cbaba2312d61`, ephemeral CI signing and runtime ads disabled.
+- AST-007 remains IN PROGRESS. The next checkpoint is admission of real commercial-use cargo WebP assets with complete AST-011 provenance; no second primary feature should start and GAME-012 remains blocked until that evidence exists.
 
 ## A11Y-003 reduced-motion accessibility — 2026-08-11
 
