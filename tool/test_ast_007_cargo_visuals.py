@@ -50,7 +50,11 @@ def test_rejects_missing_descriptor() -> None:
     try:
         path = root / 'assets/3d/manifest.json'
         data = json.loads(path.read_text(encoding='utf-8'))
-        data['assets'] = [item for item in data['assets'] if item.get('id') != 'cargo.premium_parcel']
+        data['assets'] = [
+            item
+            for item in data['assets']
+            if item.get('id') != 'cargo.premium_parcel'
+        ]
         path.write_text(json.dumps(data), encoding='utf-8')
         expect_failure(root, 'expected 124 cargo descriptors')
     finally:
@@ -60,7 +64,12 @@ def test_rejects_missing_descriptor() -> None:
 def test_rejects_wrong_profile() -> None:
     root = fixture()
     try:
-        replace(root, 'assets/3d/manifest.json', '"profile": "pcargo"', '"profile": "pui"')
+        replace(
+            root,
+            'assets/3d/manifest.json',
+            '"profile": "pcargo"',
+            '"profile": "pui"',
+        )
         expect_failure(root, 'must use pcargo')
     finally:
         shutil.rmtree(root)
@@ -69,7 +78,12 @@ def test_rejects_wrong_profile() -> None:
 def test_rejects_catalog_manifest_drift() -> None:
     root = fixture()
     try:
-        replace(root, 'lib/features/game/cargo_visual_catalog.dart', "'premium_parcel'", "'premium_parcel_changed'")
+        replace(
+            root,
+            'lib/features/game/cargo_visual_catalog.dart',
+            "'premium_parcel'",
+            "'premium_parcel_changed'",
+        )
         expect_failure(root, 'typed catalog and manifest cargo IDs')
     finally:
         shutil.rmtree(root)
@@ -87,15 +101,30 @@ def test_rejects_gameplay_id_drift() -> None:
 def test_rejects_missing_ui_bridge() -> None:
     root = fixture()
     try:
-        replace(root, 'lib/features/game/gameplay_operations_deck.dart', 'CargoVisualAsset(', 'SizedBox(')
-        replace(root, 'lib/features/game/gameplay_operations_deck.dart', 'CargoVisualAsset(', 'SizedBox(')
-        replace(root, 'lib/features/game/gameplay_operations_deck.dart', 'CargoVisualAsset(', 'SizedBox(')
+        replace(
+            root,
+            'lib/features/game/gameplay_operations_deck.dart',
+            'CargoVisualAsset(',
+            'SizedBox(',
+        )
+        replace(
+            root,
+            'lib/features/game/gameplay_operations_deck.dart',
+            'CargoVisualAsset(',
+            'SizedBox(',
+        )
+        replace(
+            root,
+            'lib/features/game/gameplay_operations_deck.dart',
+            'CargoVisualAsset(',
+            'SizedBox(',
+        )
         expect_failure(root, 'cargo bay, warehouse and flight')
     finally:
         shutil.rmtree(root)
 
 
-def test_rejects_intake_planner_drift() -> None:
+def test_rejects_intake_provenance_validation_drift() -> None:
     root = fixture()
     try:
         replace(
@@ -109,14 +138,84 @@ def test_rejects_intake_planner_drift() -> None:
         shutil.rmtree(root)
 
 
-def test_rejects_intake_cli_drift() -> None:
+def test_rejects_intake_summary_drift() -> None:
+    root = fixture()
+    try:
+        replace(
+            root,
+            'lib/core/assets/game_asset_intake_plan.dart',
+            'final class GameAssetIntakeSummary',
+            'final class RemovedIntakeSummary',
+        )
+        expect_failure(root, 'AST-007 intake planner missing contract')
+    finally:
+        shutil.rmtree(root)
+
+
+def test_rejects_orphan_runtime_contract_drift() -> None:
+    root = fixture()
+    try:
+        replace(
+            root,
+            'lib/core/assets/game_asset_intake_plan.dart',
+            'orphanRuntimeBinaryPaths',
+            'ignoredRuntimeBinaryPaths',
+        )
+        expect_failure(root, 'AST-007 intake planner missing contract')
+    finally:
+        shutil.rmtree(root)
+
+
+def test_rejects_offset_filter_contract_drift() -> None:
+    root = fixture()
+    try:
+        replace(
+            root,
+            'lib/core/assets/game_asset_intake_plan.dart',
+            'int offset = 0',
+            'int page = 0',
+        )
+        expect_failure(root, 'AST-007 intake planner missing contract')
+    finally:
+        shutil.rmtree(root)
+
+
+def test_rejects_cli_format_contract_drift() -> None:
     root = fixture()
     try:
         replace(
             root,
             'tool/plan_ast_007_asset_intake.dart',
-            "const prefix = '--limit=';",
-            "const prefix = '--batch=';",
+            '_OutputFormat { human, json, csv }',
+            '_OutputFormat { human, json }',
+        )
+        expect_failure(root, 'AST-007 intake CLI missing contract')
+    finally:
+        shutil.rmtree(root)
+
+
+def test_rejects_cli_strict_contract_drift() -> None:
+    root = fixture()
+    try:
+        replace(
+            root,
+            'tool/plan_ast_007_asset_intake.dart',
+            'options.strict && !plan.isComplete',
+            'false',
+        )
+        expect_failure(root, 'AST-007 intake CLI missing contract')
+    finally:
+        shutil.rmtree(root)
+
+
+def test_rejects_unknown_option_guard_drift() -> None:
+    root = fixture()
+    try:
+        replace(
+            root,
+            'tool/plan_ast_007_asset_intake.dart',
+            "throw FormatException('Unknown option: $argument')",
+            'continue',
         )
         expect_failure(root, 'AST-007 intake CLI missing contract')
     finally:
@@ -137,10 +236,43 @@ def test_rejects_production_truth_drift() -> None:
         shutil.rmtree(root)
 
 
-def test_rejects_ci_drift() -> None:
+def test_rejects_hardening_tracking_drift() -> None:
     root = fixture()
     try:
-        replace(root, '.github/workflows/flutter_ci.yml', 'Verify AST-007 cargo visual pack', 'Verify removed cargo visual pack')
+        replace(
+            root,
+            'docs/work/AST-007-INTAKE-HARDENING-100.md',
+            'H100',
+            'H099-END',
+        )
+        expect_failure(root, 'AST-007 hardening note missing contract')
+    finally:
+        shutil.rmtree(root)
+
+
+def test_rejects_runbook_safety_drift() -> None:
+    root = fixture()
+    try:
+        replace(
+            root,
+            'docs/ASSET_INTAKE_RUNBOOK.md',
+            'Never synthesize',
+            'Automatically synthesize',
+        )
+        expect_failure(root, 'AST-007 intake runbook missing contract')
+    finally:
+        shutil.rmtree(root)
+
+
+def test_rejects_ci_smoke_drift() -> None:
+    root = fixture()
+    try:
+        replace(
+            root,
+            '.github/workflows/flutter_ci.yml',
+            'Smoke AST-007 intake handoff',
+            'Removed AST-007 intake smoke',
+        )
         expect_failure(root, 'normal Flutter CI missing AST-007 gate')
     finally:
         shutil.rmtree(root)
@@ -154,10 +286,17 @@ def main() -> None:
         test_rejects_catalog_manifest_drift,
         test_rejects_gameplay_id_drift,
         test_rejects_missing_ui_bridge,
-        test_rejects_intake_planner_drift,
-        test_rejects_intake_cli_drift,
+        test_rejects_intake_provenance_validation_drift,
+        test_rejects_intake_summary_drift,
+        test_rejects_orphan_runtime_contract_drift,
+        test_rejects_offset_filter_contract_drift,
+        test_rejects_cli_format_contract_drift,
+        test_rejects_cli_strict_contract_drift,
+        test_rejects_unknown_option_guard_drift,
         test_rejects_production_truth_drift,
-        test_rejects_ci_drift,
+        test_rejects_hardening_tracking_drift,
+        test_rejects_runbook_safety_drift,
+        test_rejects_ci_smoke_drift,
     ]
     for test in tests:
         test()
