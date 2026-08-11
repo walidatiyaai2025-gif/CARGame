@@ -1,0 +1,44 @@
+name: AST-007 Format Once
+
+on:
+  push:
+    branches:
+      - agent/ast-007-intake-hardening-100
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/ast-007-intake-hardening-100
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.44.8
+          cache: true
+      - name: Format AST-007 Dart files
+        run: |
+          dart format \
+            lib/core/assets/game_asset_intake_plan.dart \
+            test/core/assets/game_asset_intake_plan_test.dart \
+            tool/plan_ast_007_asset_intake.dart
+          git diff --check
+      - name: Commit formatting
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add \
+            lib/core/assets/game_asset_intake_plan.dart \
+            test/core/assets/game_asset_intake_plan_test.dart \
+            tool/plan_ast_007_asset_intake.dart
+          if git diff --cached --quiet; then
+            echo 'Already formatted.'
+            exit 0
+          fi
+          git commit -m 'AST-007: format intake hardening Dart files'
+          git push origin HEAD:agent/ast-007-intake-hardening-100
