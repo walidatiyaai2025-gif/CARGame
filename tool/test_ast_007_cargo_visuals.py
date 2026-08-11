@@ -243,8 +243,8 @@ def test_rejects_hardening_tracking_drift() -> None:
         replace(
             root,
             'docs/work/AST-007-INTAKE-HARDENING-100.md',
-            'H100',
-            'H099-END',
+            'H100 Reconcile evidence while keeping AST-007 IN PROGRESS until real provenance-backed WebP admission occurs.',
+            'H099-END Reconcile evidence while keeping AST-007 IN PROGRESS until real provenance-backed WebP admission occurs.',
         )
         expect_failure(root, 'AST-007 hardening note missing contract')
     finally:
