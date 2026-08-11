@@ -1,0 +1,44 @@
+name: AST-007 Start Once
+
+on:
+  push:
+    branches:
+      - agent/ast-007-cargo-visual-pack
+
+permissions:
+  contents: write
+
+jobs:
+  start:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: agent/ast-007-cargo-visual-pack
+
+      - name: Apply AST-007 tracking
+        run: python3 tool/start_ast_007_once.py
+
+      - name: Verify dashboard/catalog parity
+        run: python3 tool/verify_dashboard_catalog.py
+
+      - name: Verify CI integrity
+        run: python3 tool/verify_ci_integrity.py
+
+      - name: Verify whitespace
+        run: git diff --check
+
+      - name: Remove one-shot tooling
+        run: |
+          rm .github/workflows/ast_007_start_once.yml
+          rm tool/start_ast_007_once.py
+
+      - name: Commit tracking start
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/FEATURE_CATALOG.md docs/STATUS.md docs/work/AST-007.md .github/workflows/ast_007_start_once.yml tool/start_ast_007_once.py
+          git commit -m "AST-007: start cargo visual pack workstream"
+          git push origin HEAD:agent/ast-007-cargo-visual-pack
