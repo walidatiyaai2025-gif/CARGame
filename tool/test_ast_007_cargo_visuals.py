@@ -6,6 +6,7 @@ import shutil
 import tempfile
 from pathlib import Path
 
+import test_ast_007_batch_01 as batch_01_tests
 import verify_ast_007_cargo_visuals as verifier
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -163,6 +164,7 @@ def main() -> None:
         test()
         print(f'PASS: {test.__name__}')
     print(f'AST-007 validator regressions: {len(tests)}/{len(tests)} PASS')
+    batch_01_tests.main()
 
 
 if __name__ == '__main__':
