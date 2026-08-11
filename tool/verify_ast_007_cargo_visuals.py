@@ -182,7 +182,7 @@ def validate(root: Path = Path('.')) -> None:
     for token in [
         'Production truth remains 124 cargo descriptors, 0 approved provenance records, and 0 runtime cargo WebP binaries.',
         'H001',
-        'H100',
+        'H100 Reconcile evidence while keeping AST-007 IN PROGRESS until real provenance-backed WebP admission occurs.',
         'does **not** complete the production art pack by itself',
     ]:
         if token not in hardening_doc:
