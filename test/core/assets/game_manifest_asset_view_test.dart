@@ -8,6 +8,8 @@ void main() {
   testWidgets('registered missing runtime asset resolves to manifest fallback', (
     tester,
   ) async {
+    await tester.runAsync(() => GameManifestAssetView.preloadRegistry());
+
     await tester.pumpWidget(
       const MaterialApp(
         home: Scaffold(
@@ -31,6 +33,8 @@ void main() {
   testWidgets('unregistered ID keeps the existing safe UI fallback', (
     tester,
   ) async {
+    await tester.runAsync(() => GameManifestAssetView.preloadRegistry());
+
     await tester.pumpWidget(
       const MaterialApp(
         home: Scaffold(
