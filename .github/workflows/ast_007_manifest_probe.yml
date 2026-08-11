@@ -59,7 +59,7 @@ jobs:
                 // ignore: avoid_print
                 print('AST007_DIRECT_REGISTRY_COUNT=${registry.assets.length}');
                 // ignore: avoid_print
-                print('AST007_HAS_UI_HEART=${registry.findById('ui.heart') != null}');
+                print('AST007_HAS_UI_HEART=${registry.find('ui.heart') != null}');
               } catch (error, stack) {
                 // ignore: avoid_print
                 print('AST007_DIRECT_PARSE_ERROR=$error');
@@ -73,7 +73,7 @@ jobs:
                 // ignore: avoid_print
                 print('AST007_MANIFEST_LOAD_COUNT=${registry.assets.length}');
                 // ignore: avoid_print
-                print('AST007_MANIFEST_HAS_UI_HEART=${registry.findById('ui.heart') != null}');
+                print('AST007_MANIFEST_HAS_UI_HEART=${registry.find('ui.heart') != null}');
               } catch (error, stack) {
                 // ignore: avoid_print
                 print('AST007_MANIFEST_LOAD_ERROR=$error');
