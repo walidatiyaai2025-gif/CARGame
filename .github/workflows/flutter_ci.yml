@@ -249,6 +249,7 @@ jobs:
           test/core/motion/game_action_feedback_test.dart
           test/core/motion/motion_lifecycle_scope_test.dart
           test/core/widgets/game_button_test.dart
+          test/features/home/home_ambient_background_test.dart
           test/features/settings/visual_effects_settings_test.dart
 
       - name: Test core screen widget matrix
