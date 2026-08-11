@@ -65,14 +65,14 @@ def main() -> None:
     run_case(drift_min_sdk, 'minSdk drifted')
 
     def remove_ci_gate(root: Path) -> None:
-        path = root / '.github/workflows/flutter_ci.yml'
+        path = root / '.github/workflows/rt3d_002_contract.yml'
         text = path.read_text(encoding='utf-8').replace(
             'Verify RT3D-002 production 3D contract',
             'Verify production 3D contract',
         )
         path.write_text(text, encoding='utf-8')
 
-    run_case(remove_ci_gate, 'Flutter CI missing RT3D-002 gate')
+    run_case(remove_ci_gate, 'RT3D-002 CI missing required gate')
     print('RT3D-002 VALIDATOR MUTATION TESTS PASSED')
 
 
