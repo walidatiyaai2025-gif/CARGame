@@ -118,6 +118,12 @@ jobs:
       - name: Test UI3D-007 visual-effects validator
         run: python3 tool/test_ui3d_007_visual_effects.py
 
+      - name: Verify A11Y-003 reduced motion
+        run: python3 tool/verify_a11y_003_reduced_motion.py
+
+      - name: Test A11Y-003 reduced-motion validator
+        run: python3 tool/test_a11y_003_reduced_motion.py
+
       - name: Restore packages
         shell: bash
         run: |
@@ -230,6 +236,19 @@ jobs:
           test/core/motion/game_motion_test.dart
           test/core/motion/ui3d_007_visual_effects_test.dart
           test/core/motion/game_route_test.dart
+          test/features/settings/visual_effects_settings_test.dart
+
+      - name: Test A11Y-003 reduced motion matrix
+        run: >-
+          flutter test
+          test/core/motion/a11y_003_motion_policy_test.dart
+          test/core/motion/game_cinematic_gate_test.dart
+          test/core/motion/game_motion_test.dart
+          test/core/motion/game_route_test.dart
+          test/core/motion/game_travel_motion_test.dart
+          test/core/motion/game_action_feedback_test.dart
+          test/core/motion/motion_lifecycle_scope_test.dart
+          test/core/widgets/game_button_test.dart
           test/features/settings/visual_effects_settings_test.dart
 
       - name: Test core screen widget matrix
