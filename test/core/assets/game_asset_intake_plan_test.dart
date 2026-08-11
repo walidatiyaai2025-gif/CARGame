@@ -159,10 +159,7 @@ void main() {
       GameAssetIntakeState.missingBinaryAndProvenance,
     );
     expect(missingBoth, hasLength(4));
-    expect(
-      () => missingBoth.add(missingBoth.first),
-      throwsUnsupportedError,
-    );
+    expect(() => missingBoth.add(missingBoth.first), throwsUnsupportedError);
   });
 
   test('item and summary JSON expose deterministic handoff fields', () {

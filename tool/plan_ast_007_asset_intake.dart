@@ -90,11 +90,17 @@ void _writeHuman(
   stdout.writeln('Completion             : ${summary.completionPercent}%');
   stdout.writeln('Missing runtime binary : ${summary.binaryMissingCount}');
   stdout.writeln('Missing provenance     : ${summary.provenanceMissingCount}');
-  stdout.writeln('Missing both           : ${summary.missingBinaryAndProvenanceCount}');
-  stdout.writeln('Orphan runtime WebP    : ${summary.orphanRuntimeBinaryCount}');
+  stdout.writeln(
+    'Missing both           : ${summary.missingBinaryAndProvenanceCount}',
+  );
+  stdout.writeln(
+    'Orphan runtime WebP    : ${summary.orphanRuntimeBinaryCount}',
+  );
   stdout.writeln('Orphan provenance      : ${summary.orphanProvenanceCount}');
   stdout.writeln('Batch offset           : ${options.offset}');
-  stdout.writeln('State filter           : ${options.state?.wireName ?? 'any'}');
+  stdout.writeln(
+    'State filter           : ${options.state?.wireName ?? 'any'}',
+  );
   stdout.writeln('Next production batch  : ${batch.length}');
 
   if (plan.orphanRuntimeBinaryPaths.isNotEmpty) {
@@ -248,11 +254,13 @@ final class _CliOptions {
         if (wireName == 'any') {
           state = null;
         } else {
-          state = GameAssetIntakeState.values.where(
-            (value) =>
-                value != GameAssetIntakeState.admitted &&
-                value.wireName == wireName,
-          ).firstOrNull;
+          state = GameAssetIntakeState.values
+              .where(
+                (value) =>
+                    value != GameAssetIntakeState.admitted &&
+                    value.wireName == wireName,
+              )
+              .firstOrNull;
           if (state == null) {
             throw FormatException(
               '--state must be any, missing_provenance, missing_binary, '
@@ -279,7 +287,9 @@ final class _CliOptions {
 
     if (legacyJson) {
       if (format != _OutputFormat.human && format != _OutputFormat.json) {
-        throw const FormatException('--json cannot be combined with --format=csv');
+        throw const FormatException(
+          '--json cannot be combined with --format=csv',
+        );
       }
       format = _OutputFormat.json;
     }

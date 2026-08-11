@@ -74,7 +74,8 @@ final class GameAssetIntakeSummary {
       orphanRuntimeBinaryCount == 0 &&
       orphanProvenanceCount == 0;
 
-  double get completionRatio => totalCount == 0 ? 1 : admittedCount / totalCount;
+  double get completionRatio =>
+      totalCount == 0 ? 1 : admittedCount / totalCount;
 
   int get completionPercent => (completionRatio * 100).round();
 
@@ -122,7 +123,9 @@ final class GameAssetIntakePlan {
     final descriptorPaths = descriptors
         .map((descriptor) => _normalizeRuntimePath(descriptor.path))
         .toSet();
-    final descriptorIds = descriptors.map((descriptor) => descriptor.id).toSet();
+    final descriptorIds = descriptors
+        .map((descriptor) => descriptor.id)
+        .toSet();
 
     final items = <GameAssetIntakeItem>[];
     for (final descriptor in descriptors) {
@@ -152,26 +155,28 @@ final class GameAssetIntakePlan {
     });
 
     final runtimePrefix = 'assets/3d/runtime/${category.wireName}/';
-    final orphanRuntimeBinaryPaths = runtimePaths
-        .where(
-          (path) =>
-              path.startsWith(runtimePrefix) &&
-              path.toLowerCase().endsWith('.webp') &&
-              !descriptorPaths.contains(path),
-        )
-        .toList()
-      ..sort();
+    final orphanRuntimeBinaryPaths =
+        runtimePaths
+            .where(
+              (path) =>
+                  path.startsWith(runtimePrefix) &&
+                  path.toLowerCase().endsWith('.webp') &&
+                  !descriptorPaths.contains(path),
+            )
+            .toList()
+          ..sort();
 
     final assetIdPrefix = '${category.wireName}.';
-    final orphanProvenanceAssetIds = provenance.records
-        .where(
-          (record) =>
-              record.assetId.startsWith(assetIdPrefix) &&
-              !descriptorIds.contains(record.assetId),
-        )
-        .map((record) => record.assetId)
-        .toList()
-      ..sort();
+    final orphanProvenanceAssetIds =
+        provenance.records
+            .where(
+              (record) =>
+                  record.assetId.startsWith(assetIdPrefix) &&
+                  !descriptorIds.contains(record.assetId),
+            )
+            .map((record) => record.assetId)
+            .toList()
+          ..sort();
 
     return GameAssetIntakePlan._(
       items: items,
