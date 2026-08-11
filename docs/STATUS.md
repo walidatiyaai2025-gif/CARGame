@@ -7,12 +7,23 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | Field | Value |
 |---|---|
 | Current phase | Android RC hardening — issue #79 |
-| Primary feature | `A11Y-003` Reduced motion — IN PROGRESS on issue #208 / `agent/a11y-003-reduced-motion-enforcement`. |
-| Completed checkpoint | `UI3D-007` reduced motion and adaptive visual effects — IMPLEMENTED; issue #205 / PR #206 completed 100/100 source-controlled checkpoints, PR #206 merged as `a342b3befed9259326fa769735f327e6916d1a5a`, and exact-main Flutter CI #863 / run `31466188761` passed all 63 gates. |
-| Status | UI3D-007 source-controlled acceptance is IMPLEMENTED: persistent Automatic/Reduced visual effects, app-wide accessibility/performance policy, shared effect budgets, EN/AR live Settings control, privacy inventory, 13/13 validator regressions, focused Flutter coverage, full suite/coverage, Debug APK build/security/upload, and exact-main verification are green. Physical-device visual/performance observation remains separate evidence and is not claimed. |
-| Previous checkpoint | `TEST-011` privacy, consent, and security verification — IMPLEMENTED with 100/100 repository checkpoints; external production UMP regulated-region/device evidence remains pending. |
-| Next recommended feature | A11Y-003 is the active primary; no second source-controlled feature should start until merge/reconciliation completes. |
+| Primary feature | None — `A11Y-003` source-controlled work is complete and reconciled as IMPLEMENTED; `AST-007` issue #210 is selected next but not started. |
+| Completed checkpoint | `A11Y-003` reduced-motion accessibility — IMPLEMENTED; issue #208 / PR #209 completed 100/100 source-controlled checkpoints, PR #209 merged as `996bebf50e9f5b150e10a9f6455a27015a67355f`, and exact-main Flutter CI #873 / run `31473003490` passed all gates. |
+| Status | A11Y-003 source-controlled acceptance is IMPLEMENTED: shared motion intent classification, deterministic no-ticker reduced paths, cinematic skip semantics, direct-motion audit, EN/AR Settings copy, validator regressions, focused/full tests, coverage, Debug APK security/upload and exact-main verification are green. Main artifact #9094321792 (80,659,593 bytes; sha256:ee95a99a8460d1824a28fb9512d12454d3e9f69648a9e0bd5506e34ccf2be98d). Physical assistive-technology/device observation is separate evidence and is not claimed. |
+| Previous checkpoint | `UI3D-007` reduced motion and adaptive visual effects — IMPLEMENTED with 100/100 source-controlled checkpoints and exact-main verification. |
+| Next recommended feature | `AST-007` 100+ cargo visual variants — P1, dependency-ready via AST-002 and selected as issue #210 because it unblocks the P0 `GAME-012` production 3D board/products path while preserving stable gameplay IDs. |
 | Known blocker | `TEST-011` VERIFIED still requires real production AdMob Privacy & messaging/UMP regulated-region/device evidence. `TEST-009` remains blocked on PERF-001 physical-device frame profiling. `REL-007`/`REL-008` require real production AdMob/signing inputs and a production-signed candidate; final install/upgrade/device smoke requires an Android device/testing track. |
+
+## A11Y-003 reduced-motion accessibility — 2026-08-11
+
+- Issue #208 / PR #209 complete the 100-checkpoint source-controlled accessibility sprint; repository status is IMPLEMENTED.
+- Shared motion is explicitly classified as essential, nonessential or cinematic. Effective reduced motion removes spatial/decorative motion while preserving semantic, gameplay, reward, callback and navigation completion.
+- `GameCinematicGate`, cargo travel, ambient motion and action feedback have deterministic no-ticker reduced paths. GameButton and route motion consume the intent-aware shared policy.
+- The checked-in direct-motion audit covers the current primitive inventory and the machine validator blocks unclassified source drift.
+- Final PR head `04abd449451e0fb44f5a95eca6f74af263a35665` passed Flutter CI #872 / run `31472254901` through full tests/coverage, Debug APK, artifact security and upload; PR artifact #9094044902 (80,659,591 bytes; sha256:bfa4d84edc21eaf6efdd376dcdc04b0101a5e21efc7de555dda18fae09709d3c).
+- PR #209 squash-merged as `996bebf50e9f5b150e10a9f6455a27015a67355f`. Exact-main Flutter CI #873 / run `31473003490` then passed all gates; main Debug artifact #9094321792 (80,659,593 bytes; sha256:ee95a99a8460d1824a28fb9512d12454d3e9f69648a9e0bd5506e34ccf2be98d).
+- No physical assistive-technology/device observation is invented; that broader evidence remains separate.
+- Fresh dependency-ready/product-risk scan selects `AST-007` issue #210 next: introduce 100+ stable cargo visual variants without changing the 18 gameplay archetype IDs or existing 150-level gameplay truth.
 
 ## UI3D-007 reduced motion and adaptive visual effects — 2026-08-11
 
