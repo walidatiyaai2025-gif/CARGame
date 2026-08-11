@@ -25,7 +25,34 @@ jobs:
           fetch-depth: 0
 
       - name: Apply reconciliation
-        run: python3 tool/reconcile_ast007_intake_hardening.py
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tool/reconcile_ast007_intake_hardening.py
+          python3 - <<'PY'
+          from pathlib import Path
+
+          checkpoint = 'H100 Reconcile evidence while keeping AST-007 IN PROGRESS until real provenance-backed WebP admission occurs.'
+
+          verify = Path('tool/verify_ast_007_cargo_visuals.py')
+          verify_text = verify.read_text(encoding='utf-8')
+          old_verify = "        'H100',\n"
+          new_verify = f"        '{checkpoint}',\n"
+          if old_verify not in verify_text:
+              raise SystemExit('H100 validator token anchor missing')
+          verify.write_text(verify_text.replace(old_verify, new_verify, 1), encoding='utf-8')
+
+          test = Path('tool/test_ast_007_cargo_visuals.py')
+          test_text = test.read_text(encoding='utf-8')
+          old_test = "            'H100',\n            'H099-END',\n"
+          new_test = (
+              f"            '{checkpoint}',\n"
+              "            'H099-END Reconcile evidence while keeping AST-007 IN PROGRESS until real provenance-backed WebP admission occurs.',\n"
+          )
+          if old_test not in test_text:
+              raise SystemExit('H100 mutation anchor missing')
+          test.write_text(test_text.replace(old_test, new_test, 1), encoding='utf-8')
+          PY
 
       - name: Validate tracking and AST-007 contracts
         shell: bash
@@ -51,7 +78,14 @@ jobs:
           rm tool/reconcile_ast007_intake_hardening.py
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add docs/FEATURE_CATALOG.md docs/STATUS.md docs/work/AST-007.md docs/work/AST-007-INTAKE-HARDENING-100.md tool/reconcile_ast007_intake_hardening.py
+          git add \
+            docs/FEATURE_CATALOG.md \
+            docs/STATUS.md \
+            docs/work/AST-007.md \
+            docs/work/AST-007-INTAKE-HARDENING-100.md \
+            tool/verify_ast_007_cargo_visuals.py \
+            tool/test_ast_007_cargo_visuals.py \
+            tool/reconcile_ast007_intake_hardening.py
           git diff --cached --check
           git commit -m "AST-007: reconcile intake hardening 100 checkpoint completion"
           git push origin HEAD:agent/ast-007-intake-hardening-reconcile
