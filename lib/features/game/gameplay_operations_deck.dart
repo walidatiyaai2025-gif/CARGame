@@ -659,7 +659,7 @@ class GameplayWarehouseBoard extends StatelessWidget {
                                   width: compact ? 30 : 40,
                                   height: compact ? 30 : 40,
                                   fallback: Icon(
-                                    item.icon,
+                                    Icons.warehouse_rounded,
                                     color: item.color,
                                     size: compact ? 27 : 37,
                                   ),
