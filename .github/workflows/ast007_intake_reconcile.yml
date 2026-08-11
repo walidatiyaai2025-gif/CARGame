@@ -1,0 +1,57 @@
+name: AST-007 Intake Hardening Reconcile
+
+on:
+  push:
+    branches:
+      - agent/ast-007-intake-hardening-reconcile
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ast007-intake-hardening-reconcile
+  cancel-in-progress: true
+
+jobs:
+  reconcile:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: agent/ast-007-intake-hardening-reconcile
+          fetch-depth: 0
+
+      - name: Apply reconciliation
+        run: python3 tool/reconcile_ast007_intake_hardening.py
+
+      - name: Validate tracking and AST-007 contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tool/verify_ast_007_cargo_visuals.py
+          python3 tool/test_ast_007_cargo_visuals.py
+          python3 tool/verify_ast_007_batch_01.py
+          python3 tool/test_ast_007_batch_01.py
+          python3 tool/verify_dashboard_catalog.py
+          python3 tool/test_dashboard_catalog.py
+          python3 tool/verify_ci_integrity.py
+          python3 tool/test_ci_integrity.py
+          python3 tool/verify_test_quality.py
+          python3 tool/test_test_quality.py
+          python3 tool/verify_privacy_inventory.py
+          git diff --check
+
+      - name: Commit reconciled tracking
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm tool/reconcile_ast007_intake_hardening.py
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add docs/FEATURE_CATALOG.md docs/STATUS.md docs/work/AST-007.md docs/work/AST-007-INTAKE-HARDENING-100.md tool/reconcile_ast007_intake_hardening.py
+          git diff --cached --check
+          git commit -m "AST-007: reconcile intake hardening 100 checkpoint completion"
+          git push origin HEAD:agent/ast-007-intake-hardening-reconcile
