@@ -73,10 +73,14 @@ jobs:
       - name: Verify whitespace
         run: git diff --check
 
-      - name: Remove one-shot tooling
+      - name: Restore protected normal CI workflow
+        run: git checkout HEAD -- .github/workflows/flutter_ci.yml
+
+      - name: Remove one-shot tooling and transient caches
         run: |
           rm .github/workflows/ast_007_apply_once.yml
           rm tool/apply_ast_007_once.py
+          rm -rf tool/__pycache__
 
       - name: Commit implementation candidate
         run: |
