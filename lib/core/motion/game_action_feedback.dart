@@ -133,6 +133,9 @@ class _GameActionFeedbackState extends State<GameActionFeedback>
     final profile = GameMotion.of(context);
     final correct = widget.kind == GameActionFeedbackKind.correct;
     final accent = correct ? const Color(0xFF2FD17B) : const Color(0xFFFF5364);
+    final sparkleCount = profile.particleCount(8);
+    final shadowBlur = profile.shadow(28);
+    final shadowSpread = profile.shadow(4);
 
     return Positioned.fill(
       child: IgnorePointer(
@@ -145,13 +148,15 @@ class _GameActionFeedbackState extends State<GameActionFeedback>
               animation: _controller,
               builder: (context, _) {
                 final value = _controller.value;
-                final entrance = Curves.easeOutBack.transform(
-                  math.min(1, value / .38),
-                );
+                final entrance = profile
+                    .curve(GameMotionCurves.emphasized)
+                    .transform(math.min(1, value / .38));
                 final fade = value < .72 ? 1.0 : 1 - ((value - .72) / .28);
                 final recoil = correct
                     ? 0.0
-                    : math.sin(value * math.pi * 7) * (1 - value) * 16;
+                    : math.sin(value * math.pi * 7) *
+                          (1 - value) *
+                          profile.distance(16);
                 final scale = profile.reducedMotion
                     ? 1.0
                     : .72 + entrance * (.28 + _cappedCombo * .012);
@@ -159,11 +164,12 @@ class _GameActionFeedbackState extends State<GameActionFeedback>
                 return Stack(
                   alignment: Alignment.center,
                   children: [
-                    if (correct && !profile.reducedMotion)
-                      for (var index = 0; index < 8; index++)
+                    if (correct && sparkleCount > 0)
+                      for (var index = 0; index < sparkleCount; index++)
                         _Sparkle(
                           progress: value,
                           index: index,
+                          total: sparkleCount,
                           intensity: 1 + _cappedCombo * .08,
                           color: accent,
                         ),
@@ -186,13 +192,17 @@ class _GameActionFeedbackState extends State<GameActionFeedback>
                               color: accent.withValues(alpha: .94),
                               borderRadius: BorderRadius.circular(28),
                               border: Border.all(color: Colors.white, width: 3),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: accent.withValues(alpha: .42),
-                                  blurRadius: 28,
-                                  spreadRadius: 4,
-                                ),
-                              ],
+                              boxShadow: shadowBlur <= 0
+                                  ? const []
+                                  : [
+                                      BoxShadow(
+                                        color: accent.withValues(
+                                          alpha: .42 * profile.effectsScale,
+                                        ),
+                                        blurRadius: shadowBlur,
+                                        spreadRadius: shadowSpread,
+                                      ),
+                                    ],
                             ),
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
@@ -234,18 +244,20 @@ class _Sparkle extends StatelessWidget {
   const _Sparkle({
     required this.progress,
     required this.index,
+    required this.total,
     required this.intensity,
     required this.color,
   });
 
   final double progress;
   final int index;
+  final int total;
   final double intensity;
   final Color color;
 
   @override
   Widget build(BuildContext context) {
-    final angle = index / 8 * math.pi * 2;
+    final angle = index / total * math.pi * 2;
     final distance = Curves.easeOut.transform(progress) * 92 * intensity;
     final opacity = (1 - progress).clamp(0, 1).toDouble();
     return Transform.translate(

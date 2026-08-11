@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-08-10",
+  "updatedAt": "2026-08-11",
   "principles": {
     "offlineFirst": true,
     "analyticsEnabled": false,
@@ -128,14 +128,16 @@
       "examples": [
         "sound enabled",
         "music enabled",
-        "vibration enabled"
+        "vibration enabled",
+        "visual effects mode (automatic or reduced)"
       ],
       "storageKeys": [
         "settings_sound",
         "settings_music",
-        "settings_vibration"
+        "settings_vibration",
+        "settings_visual_effects"
       ],
-      "purpose": "Remember user-selected game settings",
+      "purpose": "Remember user-selected local game and accessibility presentation settings",
       "processor": "local-device",
       "storage": "SharedPreferences",
       "network": false,

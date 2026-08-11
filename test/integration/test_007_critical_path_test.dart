@@ -273,6 +273,7 @@ void main() {
     checkpoint('T22', store.starsForLevel(1), stars);
     checkpoint('T23', store.highestUnlockedLevel, 2);
     checkpoint('T26', store.coins, initialCoins + reward);
+    expect(store.freeHints, initialHints);
     checkpoint('T27', store.playerXp, xp);
     checkpoint(
       'T28',
