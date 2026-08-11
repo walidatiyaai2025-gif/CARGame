@@ -5,20 +5,23 @@ void main() {
   group('Realtime3dRendererAdmissionPolicy', () {
     const policy = Realtime3dRendererAdmissionPolicy();
 
-    test('admits a native renderer with the complete production capability set', () {
-      final candidate = Realtime3dRendererCandidate(
-        id: 'native-test-renderer',
-        kind: Realtime3dRendererKind.nativeGpu,
-        capabilities: Realtime3dRendererAdmissionPolicy.requiredCapabilities,
-        requiredAndroidMinSdk: 23,
-      );
+    test(
+      'admits a native renderer with the complete production capability set',
+      () {
+        final candidate = Realtime3dRendererCandidate(
+          id: 'native-test-renderer',
+          kind: Realtime3dRendererKind.nativeGpu,
+          capabilities: Realtime3dRendererAdmissionPolicy.requiredCapabilities,
+          requiredAndroidMinSdk: 23,
+        );
 
-      final decision = policy.evaluate(candidate);
+        final decision = policy.evaluate(candidate);
 
-      expect(decision.admitted, isTrue);
-      expect(decision.missingCapabilities, isEmpty);
-      expect(decision.reasons, isEmpty);
-    });
+        expect(decision.admitted, isTrue);
+        expect(decision.missingCapabilities, isEmpty);
+        expect(decision.reasons, isEmpty);
+      },
+    );
 
     test('rejects WebView-backed renderers for production gameplay', () {
       final candidate = Realtime3dRendererCandidate(

@@ -151,7 +151,9 @@ final class Realtime3dProductionSceneSlice {
         assetsById[asset.assetId] = asset;
       }
       if (!asset.usesLocalRuntimePath) {
-        errors.add('asset must use the governed local runtime path: ${asset.assetId}');
+        errors.add(
+          'asset must use the governed local runtime path: ${asset.assetId}',
+        );
       }
       if (!asset.extensionMatchesFormat) {
         errors.add('asset format/path mismatch: ${asset.assetId}');
@@ -194,7 +196,9 @@ final class Realtime3dProductionSceneSlice {
       errors.add('camera preset is outside the production bounds');
     }
     if (!lighting.isValid) {
-      errors.add('lighting preset must include bounded key/ambient light and shadows');
+      errors.add(
+        'lighting preset must include bounded key/ambient light and shadows',
+      );
     }
     if (!budget.isPositive ||
         !budget.fitsWithin(Realtime3dMobileRenderBudget.productionCeiling)) {

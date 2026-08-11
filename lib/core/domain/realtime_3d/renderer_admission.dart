@@ -37,8 +37,9 @@ final class Realtime3dRendererAdmissionDecision {
     required this.admitted,
     required Iterable<Realtime3dRendererCapability> missingCapabilities,
     required Iterable<String> reasons,
-  }) : missingCapabilities =
-           Set<Realtime3dRendererCapability>.unmodifiable(missingCapabilities),
+  }) : missingCapabilities = Set<Realtime3dRendererCapability>.unmodifiable(
+         missingCapabilities,
+       ),
        reasons = List<String>.unmodifiable(reasons);
 
   final bool admitted;

@@ -130,10 +130,7 @@ void main() {
       provenanceRef: '',
     );
     final slice = Realtime3dProductionSceneSlice(
-      assets: <Realtime3dModelAsset>[
-        invalidAsset,
-        ...source.assets.skip(1),
-      ],
+      assets: <Realtime3dModelAsset>[invalidAsset, ...source.assets.skip(1)],
       nodes: source.nodes,
       camera: source.camera,
       lighting: source.lighting,
@@ -180,47 +177,50 @@ void main() {
     );
 
     final errors = slice.validate().errors;
-    expect(
-      errors,
-      contains('asset format/path mismatch: environment.road'),
-    );
+    expect(errors, contains('asset format/path mismatch: environment.road'));
     expect(errors, contains('scene node references unknown asset: ghost'));
   });
 
-  test('rejects camera, lighting and render budgets outside production bounds', () {
-    final source = validSlice();
-    final slice = Realtime3dProductionSceneSlice(
-      assets: source.assets,
-      nodes: source.nodes,
-      camera: const Realtime3dCameraPreset(
-        fieldOfViewDegrees: 90,
-        orbitDistance: 0,
-        minPitchDegrees: 50,
-        maxPitchDegrees: 20,
-      ),
-      lighting: const Realtime3dLightingPreset(
-        keyLightIntensity: 0,
-        ambientIntensity: 2,
-        shadowsEnabled: false,
-      ),
-      budget: const Realtime3dMobileRenderBudget(
-        maxTriangles: 300000,
-        maxDrawCalls: 150,
-        maxTextureMegabytes: 128,
-      ),
-    );
+  test(
+    'rejects camera, lighting and render budgets outside production bounds',
+    () {
+      final source = validSlice();
+      final slice = Realtime3dProductionSceneSlice(
+        assets: source.assets,
+        nodes: source.nodes,
+        camera: const Realtime3dCameraPreset(
+          fieldOfViewDegrees: 90,
+          orbitDistance: 0,
+          minPitchDegrees: 50,
+          maxPitchDegrees: 20,
+        ),
+        lighting: const Realtime3dLightingPreset(
+          keyLightIntensity: 0,
+          ambientIntensity: 2,
+          shadowsEnabled: false,
+        ),
+        budget: const Realtime3dMobileRenderBudget(
+          maxTriangles: 300000,
+          maxDrawCalls: 150,
+          maxTextureMegabytes: 128,
+        ),
+      );
 
-    final errors = slice.validate().errors;
-    expect(errors, contains('camera preset is outside the production bounds'));
-    expect(
-      errors,
-      contains(
-        'lighting preset must include bounded key/ambient light and shadows',
-      ),
-    );
-    expect(
-      errors,
-      contains('mobile render budget exceeds the production ceiling'),
-    );
-  });
+      final errors = slice.validate().errors;
+      expect(
+        errors,
+        contains('camera preset is outside the production bounds'),
+      );
+      expect(
+        errors,
+        contains(
+          'lighting preset must include bounded key/ambient light and shadows',
+        ),
+      );
+      expect(
+        errors,
+        contains('mobile render budget exceeds the production ceiling'),
+      );
+    },
+  );
 }
