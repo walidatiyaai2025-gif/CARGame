@@ -28,38 +28,68 @@ final class GameManifestAssetView extends StatelessWidget {
   final Widget? errorFallback;
 
   static Future<GameAssetRegistry>? _registryFuture;
+  static GameAssetRegistry? _registry;
 
   /// Starts (or joins) the one process-wide manifest load.
   ///
   /// Callers that need a deterministic ready boundary, such as startup warmup
   /// or widget tests, can await this without causing a second bundle read.
-  static Future<GameAssetRegistry> preloadRegistry() =>
-      _registryFuture ??= GameAssetManifest.load();
+  static Future<GameAssetRegistry> preloadRegistry() {
+    final registry = _registry;
+    if (registry != null) {
+      return Future<GameAssetRegistry>.value(registry);
+    }
+
+    final inFlight = _registryFuture;
+    if (inFlight != null) {
+      return inFlight;
+    }
+
+    final load = GameAssetManifest.load().then((loaded) {
+      _registry = loaded;
+      return loaded;
+    });
+    _registryFuture = load;
+    return load;
+  }
 
   @visibleForTesting
   static void resetRegistryCache() {
     _registryFuture = null;
+    _registry = null;
+  }
+
+  Widget _buildResolved(GameAssetRegistry registry) {
+    if (!registry.contains(assetId)) {
+      return fallback;
+    }
+
+    return GameAssetView(
+      assetId: assetId,
+      registry: registry,
+      width: width,
+      height: height,
+      fit: fit,
+      semanticLabel: semanticLabel,
+      errorFallback: errorFallback,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final registry = _registry;
+    if (registry != null) {
+      return _buildResolved(registry);
+    }
+
     return FutureBuilder<GameAssetRegistry>(
       future: preloadRegistry(),
       builder: (context, snapshot) {
-        final registry = snapshot.data;
-        if (registry == null || !registry.contains(assetId)) {
+        final loaded = snapshot.data;
+        if (loaded == null) {
           return fallback;
         }
-
-        return GameAssetView(
-          assetId: assetId,
-          registry: registry,
-          width: width,
-          height: height,
-          fit: fit,
-          semanticLabel: semanticLabel,
-          errorFallback: errorFallback,
-        );
+        return _buildResolved(loaded);
       },
     );
   }
