@@ -37,4 +37,13 @@ settings = settings.replace(
     1,
 )
 settings_path.write_text(settings, encoding='utf-8')
-print('UI3D-007 focused visual policy and Settings tests fixed')
+
+critical_path = Path('test/integration/test_007_critical_path_test.dart')
+critical = critical_path.read_text(encoding='utf-8')
+old = "    checkpoint('T26', store.coins, initialCoins + reward);\n    checkpoint('T27', store.playerXp, xp);\n"
+new = "    checkpoint('T26', store.coins, initialCoins + reward);\n    expect(store.freeHints, initialHints);\n    checkpoint('T27', store.playerXp, xp);\n"
+if critical.count(old) != 1:
+    raise SystemExit('TEST-007 analyze guard insertion point changed')
+critical_path.write_text(critical.replace(old, new, 1), encoding='utf-8')
+
+print('UI3D-007 focused tests and baseline Analyze guard fixed')
