@@ -161,6 +161,33 @@ jobs:
       - name: Validate 3D asset registry and provenance
         run: dart run tool/validate_asset_pipeline.dart
 
+      - name: Smoke AST-007 intake handoff
+        shell: bash
+        run: |
+          set -euo pipefail
+          dart run tool/plan_ast_007_asset_intake.dart --format=json --limit=3 > /tmp/ast007-intake.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          data = json.loads(Path('/tmp/ast007-intake.json').read_text())
+          assert data['summary']['total'] == 124
+          assert 0 <= data['summary']['admitted'] <= 124
+          assert data['summary']['remaining'] == 124 - data['summary']['admitted']
+          assert len(data['batch']) <= 3
+          assert data['batchOffset'] == 0
+          PY
+          dart run tool/plan_ast_007_asset_intake.dart --format=csv --limit=3 > /tmp/ast007-intake.csv
+          grep -q '^assetId,concept,runtimePath,profile,width,height,state,needsRuntimeBinary,needsProvenance$' /tmp/ast007-intake.csv
+          dart run tool/plan_ast_007_asset_intake.dart --summary-only > /tmp/ast007-summary.txt
+          set +e
+          dart run tool/plan_ast_007_asset_intake.dart --summary-only --strict > /tmp/ast007-strict.txt 2>&1
+          strict_code=$?
+          set -e
+          if [[ "$strict_code" -ne 0 && "$strict_code" -ne 2 ]]; then
+            cat /tmp/ast007-strict.txt
+            exit "$strict_code"
+          fi
+
       - name: Generate localization
         run: flutter gen-l10n
 
@@ -206,6 +233,7 @@ jobs:
       - name: Test AST-007 cargo visual pack
         run: >-
           flutter test
+          test/core/assets/game_asset_intake_plan_test.dart
           test/features/game/cargo_visual_catalog_test.dart
           test/features/game/cargo_visual_asset_test.dart
 
