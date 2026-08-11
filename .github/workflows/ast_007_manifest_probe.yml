@@ -1,0 +1,35 @@
+name: AST-007 Manifest View Probe
+
+on:
+  push:
+    branches:
+      - agent/ast-007-cargo-visual-pack
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: agent/ast-007-cargo-visual-pack
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.44.8
+          cache: true
+      - name: Restore packages
+        run: flutter pub get --enforce-lockfile
+      - name: Repeat manifest view test
+        shell: bash
+        run: |
+          set -euo pipefail
+          for i in 1 2 3 4 5; do
+            echo "--- manifest view probe iteration $i ---"
+            flutter test test/core/assets/game_manifest_asset_view_test.dart
+          done
