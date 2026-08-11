@@ -5,9 +5,13 @@ import json
 import re
 from pathlib import Path
 
+import verify_ast_007_batch_01 as batch_01_verifier
+
 EXPECTED_CARGO_COUNT = 124
 REQUIRED_FILES = [
     'assets/3d/manifest.json',
+    'assets/3d/provenance/catalog.json',
+    'assets/3d/source/cargo/batch_01/spec.json',
     'lib/core/assets/game_asset_intake_plan.dart',
     'lib/features/game/cargo_visual_catalog.dart',
     'lib/features/game/cargo_visual_asset.dart',
@@ -18,9 +22,12 @@ REQUIRED_FILES = [
     'test/features/game/cargo_visual_catalog_test.dart',
     'test/features/game/cargo_visual_asset_test.dart',
     'tool/plan_ast_007_asset_intake.dart',
+    'tool/verify_ast_007_batch_01.py',
+    'tool/test_ast_007_batch_01.py',
     'docs/ASSET_INTAKE_RUNBOOK.md',
     'docs/FEATURE_CATALOG.md',
     'docs/work/AST-007.md',
+    'docs/work/AST-007-BATCH-01.md',
     'docs/work/AST-007-INTAKE-HARDENING-100.md',
     '.github/workflows/flutter_ci.yml',
 ]
@@ -162,6 +169,15 @@ def validate(root: Path = Path('.')) -> None:
         if token not in work_doc:
             raise ValidationError(f'AST-007 work note missing production truth: {token}')
 
+    batch_doc = _read(root, 'docs/work/AST-007-BATCH-01.md')
+    for token in [
+        'Runtime binary status: `NOT_CREATED`',
+        'Provenance status: `NOT_CREATED`',
+        '12 deterministic cargo assets',
+    ]:
+        if token not in batch_doc:
+            raise ValidationError(f'AST-007 batch 01 work note missing truth boundary: {token}')
+
     hardening_doc = _read(root, 'docs/work/AST-007-INTAKE-HARDENING-100.md')
     for token in [
         'Production truth remains 124 cargo descriptors, 0 approved provenance records, and 0 runtime cargo WebP binaries.',
@@ -199,7 +215,12 @@ def validate(root: Path = Path('.')) -> None:
         if token not in ci:
             raise ValidationError(f'normal Flutter CI missing AST-007 gate: {token}')
 
+    try:
+        batch_01_verifier.validate(root)
+    except batch_01_verifier.ValidationError as error:
+        raise ValidationError(f'AST-007 batch 01 contract failed: {error}') from error
+
 
 if __name__ == '__main__':
     validate()
-    print('AST-007 CARGO VISUAL CONTRACT PASSED (124 descriptors / hardened intake)')
+    print('AST-007 CARGO VISUAL CONTRACT PASSED (124 descriptors / batch 01 / hardened intake)')
