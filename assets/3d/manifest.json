@@ -10,8 +10,14 @@
         "localizationKey": "hearts",
         "decorative": false
       },
-      "fallback": {"kind": "icon", "token": "favorite"},
-      "dimensions": {"width": 256, "height": 256},
+      "fallback": {
+        "kind": "icon",
+        "token": "favorite"
+      },
+      "dimensions": {
+        "width": 256,
+        "height": 256
+      },
       "rarity": "common",
       "world": null,
       "profile": "pui"
@@ -25,8 +31,14 @@
         "localizationKey": "coins",
         "decorative": false
       },
-      "fallback": {"kind": "icon", "token": "paid"},
-      "dimensions": {"width": 256, "height": 256},
+      "fallback": {
+        "kind": "icon",
+        "token": "paid"
+      },
+      "dimensions": {
+        "width": 256,
+        "height": 256
+      },
       "rarity": "common",
       "world": null,
       "profile": "pui"
@@ -40,8 +52,14 @@
         "localizationKey": "stars",
         "decorative": false
       },
-      "fallback": {"kind": "icon", "token": "star"},
-      "dimensions": {"width": 256, "height": 256},
+      "fallback": {
+        "kind": "icon",
+        "token": "star"
+      },
+      "dimensions": {
+        "width": 256,
+        "height": 256
+      },
       "rarity": "common",
       "world": null,
       "profile": "pui"
@@ -55,8 +73,14 @@
         "localizationKey": "dailyReward",
         "decorative": false
       },
-      "fallback": {"kind": "icon", "token": "redeem"},
-      "dimensions": {"width": 256, "height": 256},
+      "fallback": {
+        "kind": "icon",
+        "token": "redeem"
+      },
+      "dimensions": {
+        "width": 256,
+        "height": 256
+      },
       "rarity": "special",
       "world": null,
       "profile": "pui"
@@ -70,8 +94,14 @@
         "localizationKey": "hint",
         "decorative": false
       },
-      "fallback": {"kind": "icon", "token": "bolt"},
-      "dimensions": {"width": 384, "height": 384},
+      "fallback": {
+        "kind": "icon",
+        "token": "bolt"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
       "rarity": "uncommon",
       "world": null,
       "profile": "pui"
@@ -85,8 +115,14 @@
         "localizationKey": "extraMoves",
         "decorative": false
       },
-      "fallback": {"kind": "text", "token": "+5"},
-      "dimensions": {"width": 384, "height": 384},
+      "fallback": {
+        "kind": "text",
+        "token": "+5"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
       "rarity": "uncommon",
       "world": null,
       "profile": "pui"
@@ -100,8 +136,14 @@
         "localizationKey": "comboShield",
         "decorative": false
       },
-      "fallback": {"kind": "icon", "token": "inventory_2"},
-      "dimensions": {"width": 384, "height": 384},
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
       "rarity": "rare",
       "world": null,
       "profile": "pui"
@@ -115,8 +157,14 @@
         "localizationKey": "reward",
         "decorative": false
       },
-      "fallback": {"kind": "icon", "token": "inventory_2"},
-      "dimensions": {"width": 384, "height": 384},
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
       "rarity": "rare",
       "world": null,
       "profile": "pui"
@@ -130,11 +178,2621 @@
         "localizationKey": "bossReward",
         "decorative": false
       },
-      "fallback": {"kind": "icon", "token": "inventory_2"},
-      "dimensions": {"width": 512, "height": 512},
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 512,
+        "height": 512
+      },
       "rarity": "legendary",
       "world": null,
       "profile": "pcity"
+    },
+    {
+      "id": "cargo.premium_parcel",
+      "path": "assets/3d/runtime/cargo/special/cg_cargo_premium_parcel_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Premium Parcel",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.courier_carton",
+      "path": "assets/3d/runtime/cargo/special/cg_cargo_courier_carton_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Courier Carton",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.sealed_box",
+      "path": "assets/3d/runtime/cargo/special/cg_cargo_sealed_box_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Sealed Box",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.express_crate",
+      "path": "assets/3d/runtime/cargo/special/cg_cargo_express_crate_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Express Crate",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.document_case",
+      "path": "assets/3d/runtime/cargo/special/cg_cargo_document_case_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Document Case",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.eco_mailer",
+      "path": "assets/3d/runtime/cargo/special/cg_cargo_eco_mailer_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Eco Mailer",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.fragile_parcel",
+      "path": "assets/3d/runtime/cargo/special/cg_cargo_fragile_parcel_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Fragile Parcel",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.insulated_mailer",
+      "path": "assets/3d/runtime/cargo/special/cg_cargo_insulated_mailer_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Insulated Mailer",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.hard_shell_suitcase",
+      "path": "assets/3d/runtime/cargo/travel/cg_cargo_hard_shell_suitcase_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Hard Shell Suitcase",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.cabin_case",
+      "path": "assets/3d/runtime/cargo/travel/cg_cargo_cabin_case_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Cabin Case",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.duffel_bag",
+      "path": "assets/3d/runtime/cargo/travel/cg_cargo_duffel_bag_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Duffel Bag",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.travel_backpack",
+      "path": "assets/3d/runtime/cargo/travel/cg_cargo_travel_backpack_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Travel Backpack",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.garment_case",
+      "path": "assets/3d/runtime/cargo/travel/cg_cargo_garment_case_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Garment Case",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.passport_pouch",
+      "path": "assets/3d/runtime/cargo/travel/cg_cargo_passport_pouch_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Passport Pouch",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.rolling_trunk",
+      "path": "assets/3d/runtime/cargo/travel/cg_cargo_rolling_trunk_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Rolling Trunk",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.weekend_case",
+      "path": "assets/3d/runtime/cargo/travel/cg_cargo_weekend_case_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Weekend Case",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.apple_crate",
+      "path": "assets/3d/runtime/cargo/food/cg_cargo_apple_crate_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Apple Crate",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.citrus_box",
+      "path": "assets/3d/runtime/cargo/food/cg_cargo_citrus_box_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Citrus Box",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.vegetable_basket",
+      "path": "assets/3d/runtime/cargo/food/cg_cargo_vegetable_basket_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Vegetable Basket",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.bakery_box",
+      "path": "assets/3d/runtime/cargo/food/cg_cargo_bakery_box_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Bakery Box",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.grocery_tote",
+      "path": "assets/3d/runtime/cargo/food/cg_cargo_grocery_tote_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Grocery Tote",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.pantry_case",
+      "path": "assets/3d/runtime/cargo/food/cg_cargo_pantry_case_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Pantry Case",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.fruit_basket",
+      "path": "assets/3d/runtime/cargo/food/cg_cargo_fruit_basket_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Fruit Basket",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.dairy_cooler",
+      "path": "assets/3d/runtime/cargo/food/cg_cargo_dairy_cooler_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Dairy Cooler",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.smartphone_box",
+      "path": "assets/3d/runtime/cargo/electronics/cg_cargo_smartphone_box_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Smartphone Box",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.tablet_case",
+      "path": "assets/3d/runtime/cargo/electronics/cg_cargo_tablet_case_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Tablet Case",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.laptop_carton",
+      "path": "assets/3d/runtime/cargo/electronics/cg_cargo_laptop_carton_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Laptop Carton",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.camera_case",
+      "path": "assets/3d/runtime/cargo/electronics/cg_cargo_camera_case_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Camera Case",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.headphone_box",
+      "path": "assets/3d/runtime/cargo/electronics/cg_cargo_headphone_box_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Headphone Box",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.console_package",
+      "path": "assets/3d/runtime/cargo/electronics/cg_cargo_console_package_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Console Package",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.speaker_box",
+      "path": "assets/3d/runtime/cargo/electronics/cg_cargo_speaker_box_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Speaker Box",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.wearable_case",
+      "path": "assets/3d/runtime/cargo/electronics/cg_cargo_wearable_case_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Wearable Case",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.apparel_box",
+      "path": "assets/3d/runtime/cargo/fashion/cg_cargo_apparel_box_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Apparel Box",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.folded_shirt_case",
+      "path": "assets/3d/runtime/cargo/fashion/cg_cargo_folded_shirt_case_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Folded Shirt Case",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.jacket_bag",
+      "path": "assets/3d/runtime/cargo/fashion/cg_cargo_jacket_bag_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Jacket Bag",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.accessory_box",
+      "path": "assets/3d/runtime/cargo/fashion/cg_cargo_accessory_box_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Accessory Box",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.handbag_case",
+      "path": "assets/3d/runtime/cargo/fashion/cg_cargo_handbag_case_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Handbag Case",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.boutique_carton",
+      "path": "assets/3d/runtime/cargo/fashion/cg_cargo_boutique_carton_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Boutique Carton",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.hat_box",
+      "path": "assets/3d/runtime/cargo/fashion/cg_cargo_hat_box_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Hat Box",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.textile_pack",
+      "path": "assets/3d/runtime/cargo/fashion/cg_cargo_textile_pack_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Textile Pack",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.basketball_bag",
+      "path": "assets/3d/runtime/cargo/sports/cg_cargo_basketball_bag_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Basketball Bag",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.football_kit",
+      "path": "assets/3d/runtime/cargo/sports/cg_cargo_football_kit_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Football Kit",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.tennis_case",
+      "path": "assets/3d/runtime/cargo/sports/cg_cargo_tennis_case_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Tennis Case",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.training_bag",
+      "path": "assets/3d/runtime/cargo/sports/cg_cargo_training_bag_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Training Bag",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.helmet_box",
+      "path": "assets/3d/runtime/cargo/sports/cg_cargo_helmet_box_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Helmet Box",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.fitness_gear",
+      "path": "assets/3d/runtime/cargo/sports/cg_cargo_fitness_gear_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Fitness Gear",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.golf_case",
+      "path": "assets/3d/runtime/cargo/sports/cg_cargo_golf_case_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Golf Case",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.cycling_kit",
+      "path": "assets/3d/runtime/cargo/sports/cg_cargo_cycling_kit_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Cycling Kit",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.hardcover_crate",
+      "path": "assets/3d/runtime/cargo/office/cg_cargo_hardcover_crate_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Hardcover Crate",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.textbook_box",
+      "path": "assets/3d/runtime/cargo/office/cg_cargo_textbook_box_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Textbook Box",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.magazine_bundle",
+      "path": "assets/3d/runtime/cargo/office/cg_cargo_magazine_bundle_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Magazine Bundle",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.comic_case",
+      "path": "assets/3d/runtime/cargo/office/cg_cargo_comic_case_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Comic Case",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.library_carton",
+      "path": "assets/3d/runtime/cargo/office/cg_cargo_library_carton_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Library Carton",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.journal_pack",
+      "path": "assets/3d/runtime/cargo/office/cg_cargo_journal_pack_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Journal Pack",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.archive_box",
+      "path": "assets/3d/runtime/cargo/office/cg_cargo_archive_box_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Archive Box",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.stationery_bundle",
+      "path": "assets/3d/runtime/cargo/office/cg_cargo_stationery_bundle_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Stationery Bundle",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.building_blocks",
+      "path": "assets/3d/runtime/cargo/toys/cg_cargo_building_blocks_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Building Blocks",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.toy_robot_box",
+      "path": "assets/3d/runtime/cargo/toys/cg_cargo_toy_robot_box_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Toy Robot Box",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.puzzle_case",
+      "path": "assets/3d/runtime/cargo/toys/cg_cargo_puzzle_case_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Puzzle Case",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.plush_crate",
+      "path": "assets/3d/runtime/cargo/toys/cg_cargo_plush_crate_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Plush Crate",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.board_game_box",
+      "path": "assets/3d/runtime/cargo/toys/cg_cargo_board_game_box_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Board Game Box",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.model_kit",
+      "path": "assets/3d/runtime/cargo/toys/cg_cargo_model_kit_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Model Kit",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.action_figure_box",
+      "path": "assets/3d/runtime/cargo/toys/cg_cargo_action_figure_box_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Action Figure Box",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.craft_kit",
+      "path": "assets/3d/runtime/cargo/toys/cg_cargo_craft_kit_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Craft Kit",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.skincare_case",
+      "path": "assets/3d/runtime/cargo/household/cg_cargo_skincare_case_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Skincare Case",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.perfume_box",
+      "path": "assets/3d/runtime/cargo/household/cg_cargo_perfume_box_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Perfume Box",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.cosmetics_bag",
+      "path": "assets/3d/runtime/cargo/household/cg_cargo_cosmetics_bag_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Cosmetics Bag",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.haircare_pack",
+      "path": "assets/3d/runtime/cargo/household/cg_cargo_haircare_pack_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Haircare Pack",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.spa_kit",
+      "path": "assets/3d/runtime/cargo/household/cg_cargo_spa_kit_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Spa Kit",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.grooming_case",
+      "path": "assets/3d/runtime/cargo/household/cg_cargo_grooming_case_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Grooming Case",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.wrench_case",
+      "path": "assets/3d/runtime/cargo/household/cg_cargo_wrench_case_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Wrench Case",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.drill_box",
+      "path": "assets/3d/runtime/cargo/household/cg_cargo_drill_box_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Drill Box",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.hand_tool_crate",
+      "path": "assets/3d/runtime/cargo/household/cg_cargo_hand_tool_crate_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Hand Tool Crate",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.measuring_kit",
+      "path": "assets/3d/runtime/cargo/household/cg_cargo_measuring_kit_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Measuring Kit",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.workshop_case",
+      "path": "assets/3d/runtime/cargo/household/cg_cargo_workshop_case_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Workshop Case",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.hardware_pack",
+      "path": "assets/3d/runtime/cargo/household/cg_cargo_hardware_pack_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Hardware Pack",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.water_pack",
+      "path": "assets/3d/runtime/cargo/beverage/cg_cargo_water_pack_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Water Pack",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.juice_crate",
+      "path": "assets/3d/runtime/cargo/beverage/cg_cargo_juice_crate_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Juice Crate",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.soda_case",
+      "path": "assets/3d/runtime/cargo/beverage/cg_cargo_soda_case_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Soda Case",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.coffee_box",
+      "path": "assets/3d/runtime/cargo/beverage/cg_cargo_coffee_box_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Coffee Box",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.tea_case",
+      "path": "assets/3d/runtime/cargo/beverage/cg_cargo_tea_case_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Tea Case",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.energy_drink_pack",
+      "path": "assets/3d/runtime/cargo/beverage/cg_cargo_energy_drink_pack_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Energy Drink Pack",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.ribbon_gift_box",
+      "path": "assets/3d/runtime/cargo/special/cg_cargo_ribbon_gift_box_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Ribbon Gift Box",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.celebration_bag",
+      "path": "assets/3d/runtime/cargo/special/cg_cargo_celebration_bag_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Celebration Bag",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.premium_hamper",
+      "path": "assets/3d/runtime/cargo/special/cg_cargo_premium_hamper_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Premium Hamper",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.surprise_crate",
+      "path": "assets/3d/runtime/cargo/special/cg_cargo_surprise_crate_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Surprise Crate",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.floral_gift_case",
+      "path": "assets/3d/runtime/cargo/special/cg_cargo_floral_gift_case_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Floral Gift Case",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.holiday_box",
+      "path": "assets/3d/runtime/cargo/special/cg_cargo_holiday_box_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Holiday Box",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.lamp_box",
+      "path": "assets/3d/runtime/cargo/household/cg_cargo_lamp_box_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Lamp Box",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.cushion_pack",
+      "path": "assets/3d/runtime/cargo/household/cg_cargo_cushion_pack_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Cushion Pack",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.kitchenware_crate",
+      "path": "assets/3d/runtime/cargo/household/cg_cargo_kitchenware_crate_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Kitchenware Crate",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.decor_vase_case",
+      "path": "assets/3d/runtime/cargo/household/cg_cargo_decor_vase_case_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Decor Vase Case",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.storage_basket",
+      "path": "assets/3d/runtime/cargo/household/cg_cargo_storage_basket_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Storage Basket",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.linen_box",
+      "path": "assets/3d/runtime/cargo/household/cg_cargo_linen_box_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Linen Box",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.sneaker_box",
+      "path": "assets/3d/runtime/cargo/fashion/cg_cargo_sneaker_box_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Sneaker Box",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.boot_carton",
+      "path": "assets/3d/runtime/cargo/fashion/cg_cargo_boot_carton_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Boot Carton",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.running_shoe_case",
+      "path": "assets/3d/runtime/cargo/fashion/cg_cargo_running_shoe_case_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Running Shoe Case",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.formal_shoe_box",
+      "path": "assets/3d/runtime/cargo/fashion/cg_cargo_formal_shoe_box_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Formal Shoe Box",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.sandal_pack",
+      "path": "assets/3d/runtime/cargo/fashion/cg_cargo_sandal_pack_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Sandal Pack",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.hiking_shoe_case",
+      "path": "assets/3d/runtime/cargo/fashion/cg_cargo_hiking_shoe_case_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Hiking Shoe Case",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.pet_food_bag",
+      "path": "assets/3d/runtime/cargo/household/cg_cargo_pet_food_bag_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Pet Food Bag",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.pet_toy_pack",
+      "path": "assets/3d/runtime/cargo/household/cg_cargo_pet_toy_pack_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Pet Toy Pack",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.carrier_box",
+      "path": "assets/3d/runtime/cargo/household/cg_cargo_carrier_box_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Carrier Box",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.pet_grooming_kit",
+      "path": "assets/3d/runtime/cargo/household/cg_cargo_pet_grooming_kit_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Pet Grooming Kit",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.bowl_set",
+      "path": "assets/3d/runtime/cargo/household/cg_cargo_bowl_set_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Bowl Set",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.collar_case",
+      "path": "assets/3d/runtime/cargo/household/cg_cargo_collar_case_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Collar Case",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.first_aid_case",
+      "path": "assets/3d/runtime/cargo/special/cg_cargo_first_aid_case_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "First Aid Case",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.medicine_box",
+      "path": "assets/3d/runtime/cargo/special/cg_cargo_medicine_box_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Medicine Box",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.wellness_pack",
+      "path": "assets/3d/runtime/cargo/special/cg_cargo_wellness_pack_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Wellness Pack",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.clinic_crate",
+      "path": "assets/3d/runtime/cargo/special/cg_cargo_clinic_crate_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Clinic Crate",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.care_kit",
+      "path": "assets/3d/runtime/cargo/special/cg_cargo_care_kit_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Care Kit",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.medical_supply_case",
+      "path": "assets/3d/runtime/cargo/special/cg_cargo_medical_supply_case_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Medical Supply Case",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.brake_parts_box",
+      "path": "assets/3d/runtime/cargo/special/cg_cargo_brake_parts_box_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Brake Parts Box",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.filter_case",
+      "path": "assets/3d/runtime/cargo/special/cg_cargo_filter_case_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Filter Case",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.battery_pack",
+      "path": "assets/3d/runtime/cargo/special/cg_cargo_battery_pack_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Battery Pack",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.auto_part_crate",
+      "path": "assets/3d/runtime/cargo/special/cg_cargo_auto_part_crate_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Auto Part Crate",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.light_assembly_box",
+      "path": "assets/3d/runtime/cargo/special/cg_cargo_light_assembly_box_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Light Assembly Box",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.accessory_carton",
+      "path": "assets/3d/runtime/cargo/special/cg_cargo_accessory_carton_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Accessory Carton",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.jewelry_case",
+      "path": "assets/3d/runtime/cargo/special/cg_cargo_jewelry_case_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Jewelry Case",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.luxury_watch_box",
+      "path": "assets/3d/runtime/cargo/special/cg_cargo_luxury_watch_box_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Luxury Watch Box",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.designer_case",
+      "path": "assets/3d/runtime/cargo/special/cg_cargo_designer_case_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Designer Case",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.collector_crate",
+      "path": "assets/3d/runtime/cargo/special/cg_cargo_collector_crate_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Collector Crate",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.gold_package",
+      "path": "assets/3d/runtime/cargo/special/cg_cargo_gold_package_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Gold Package",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
+    },
+    {
+      "id": "cargo.premium_vault_box",
+      "path": "assets/3d/runtime/cargo/special/cg_cargo_premium_vault_box_pcargo_v01.webp",
+      "category": "cargo",
+      "semantics": {
+        "englishConcept": "Premium Vault Box",
+        "localizationKey": "cargo",
+        "decorative": false
+      },
+      "fallback": {
+        "kind": "icon",
+        "token": "inventory_2"
+      },
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "rarity": "common",
+      "world": null,
+      "profile": "pcargo"
     }
   ]
 }
