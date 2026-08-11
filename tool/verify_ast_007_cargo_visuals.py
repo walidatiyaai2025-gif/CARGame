@@ -18,8 +18,10 @@ REQUIRED_FILES = [
     'test/features/game/cargo_visual_catalog_test.dart',
     'test/features/game/cargo_visual_asset_test.dart',
     'tool/plan_ast_007_asset_intake.dart',
+    'docs/ASSET_INTAKE_RUNBOOK.md',
     'docs/FEATURE_CATALOG.md',
     'docs/work/AST-007.md',
+    'docs/work/AST-007-INTAKE-HARDENING-100.md',
     '.github/workflows/flutter_ci.yml',
 ]
 
@@ -117,10 +119,17 @@ def validate(root: Path = Path('.')) -> None:
 
     intake = _read(root, 'lib/core/assets/game_asset_intake_plan.dart')
     for token in [
+        'final class GameAssetIntakeSummary',
         'GameAssetIntakeState.missingBinaryAndProvenance',
         'provenanceRecord?.validateAgainst(descriptor)',
-        'nextBatch({int limit = 12})',
-        "path.replaceAll('\\\\', '/')",
+        'orphanRuntimeBinaryPaths',
+        'orphanProvenanceAssetIds',
+        'int offset = 0',
+        'Set<GameAssetIntakeState>? states',
+        '_normalizeRuntimePath',
+        "path.startsWith(runtimePrefix)",
+        "record.assetId.startsWith(assetIdPrefix)",
+        "'completionPercent': completionPercent",
     ]:
         if token not in intake:
             raise ValidationError(f'AST-007 intake planner missing contract: {token}')
@@ -128,9 +137,17 @@ def validate(root: Path = Path('.')) -> None:
     intake_cli = _read(root, 'tool/plan_ast_007_asset_intake.dart')
     for token in [
         'GameAssetIntakePlan.build(',
-        "arguments.contains('--json')",
-        "const prefix = '--limit='",
-        'batch.map((item) => item.toJson())',
+        "argument == '--json'",
+        "argument.startsWith('--limit=')",
+        "argument.startsWith('--offset=')",
+        "argument.startsWith('--state=')",
+        "argument.startsWith('--format=')",
+        "argument == '--summary-only'",
+        "argument == '--strict'",
+        '_OutputFormat { human, json, csv }',
+        '_writeCsv(batch)',
+        'options.strict && !plan.isComplete',
+        "throw FormatException('Unknown option: $argument')",
     ]:
         if token not in intake_cli:
             raise ValidationError(f'AST-007 intake CLI missing contract: {token}')
@@ -145,6 +162,27 @@ def validate(root: Path = Path('.')) -> None:
         if token not in work_doc:
             raise ValidationError(f'AST-007 work note missing production truth: {token}')
 
+    hardening_doc = _read(root, 'docs/work/AST-007-INTAKE-HARDENING-100.md')
+    for token in [
+        'Production truth remains 124 cargo descriptors, 0 approved provenance records, and 0 runtime cargo WebP binaries.',
+        'H001',
+        'H100',
+        'does **not** complete the production art pack by itself',
+    ]:
+        if token not in hardening_doc:
+            raise ValidationError(f'AST-007 hardening note missing contract: {token}')
+
+    runbook = _read(root, 'docs/ASSET_INTAKE_RUNBOOK.md')
+    for token in [
+        'dart run tool/plan_ast_007_asset_intake.dart',
+        '--strict',
+        'commercial-use provenance',
+        'Never synthesize',
+        'orphan',
+    ]:
+        if token not in runbook:
+            raise ValidationError(f'AST-007 intake runbook missing contract: {token}')
+
     catalog_doc = _read(root, 'docs/FEATURE_CATALOG.md')
     if '| AST-007 | 100+ 3D cargo product pack | P1 | IN PROGRESS |' not in catalog_doc and \
        '| AST-007 | 100+ 3D cargo product pack | P1 | IMPLEMENTED |' not in catalog_doc:
@@ -154,7 +192,9 @@ def validate(root: Path = Path('.')) -> None:
     for token in [
         'Verify AST-007 cargo visual pack',
         'Test AST-007 cargo visual validator',
+        'Smoke AST-007 intake handoff',
         'Test AST-007 cargo visual pack',
+        'test/core/assets/game_asset_intake_plan_test.dart',
     ]:
         if token not in ci:
             raise ValidationError(f'normal Flutter CI missing AST-007 gate: {token}')
@@ -162,4 +202,4 @@ def validate(root: Path = Path('.')) -> None:
 
 if __name__ == '__main__':
     validate()
-    print('AST-007 CARGO VISUAL CONTRACT PASSED (124 descriptors / 18 archetypes)')
+    print('AST-007 CARGO VISUAL CONTRACT PASSED (124 descriptors / hardened intake)')
