@@ -95,6 +95,48 @@ def test_rejects_missing_ui_bridge() -> None:
         shutil.rmtree(root)
 
 
+def test_rejects_intake_planner_drift() -> None:
+    root = fixture()
+    try:
+        replace(
+            root,
+            'lib/core/assets/game_asset_intake_plan.dart',
+            'provenanceRecord?.validateAgainst(descriptor);',
+            '// provenance validation removed',
+        )
+        expect_failure(root, 'AST-007 intake planner missing contract')
+    finally:
+        shutil.rmtree(root)
+
+
+def test_rejects_intake_cli_drift() -> None:
+    root = fixture()
+    try:
+        replace(
+            root,
+            'tool/plan_ast_007_asset_intake.dart',
+            "const prefix = '--limit=';",
+            "const prefix = '--batch=';",
+        )
+        expect_failure(root, 'AST-007 intake CLI missing contract')
+    finally:
+        shutil.rmtree(root)
+
+
+def test_rejects_production_truth_drift() -> None:
+    root = fixture()
+    try:
+        replace(
+            root,
+            'docs/work/AST-007.md',
+            'Approved provenance records: 0.',
+            'Approved provenance records: 124.',
+        )
+        expect_failure(root, 'AST-007 work note missing production truth')
+    finally:
+        shutil.rmtree(root)
+
+
 def test_rejects_ci_drift() -> None:
     root = fixture()
     try:
@@ -112,6 +154,9 @@ def main() -> None:
         test_rejects_catalog_manifest_drift,
         test_rejects_gameplay_id_drift,
         test_rejects_missing_ui_bridge,
+        test_rejects_intake_planner_drift,
+        test_rejects_intake_cli_drift,
+        test_rejects_production_truth_drift,
         test_rejects_ci_drift,
     ]
     for test in tests:

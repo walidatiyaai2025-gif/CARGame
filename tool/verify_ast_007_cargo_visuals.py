@@ -8,14 +8,18 @@ from pathlib import Path
 EXPECTED_CARGO_COUNT = 124
 REQUIRED_FILES = [
     'assets/3d/manifest.json',
+    'lib/core/assets/game_asset_intake_plan.dart',
     'lib/features/game/cargo_visual_catalog.dart',
     'lib/features/game/cargo_visual_asset.dart',
     'lib/features/game/gameplay_operations_deck.dart',
     'lib/features/game/game_screen.dart',
     'lib/features/game/level_data.dart',
+    'test/core/assets/game_asset_intake_plan_test.dart',
     'test/features/game/cargo_visual_catalog_test.dart',
     'test/features/game/cargo_visual_asset_test.dart',
+    'tool/plan_ast_007_asset_intake.dart',
     'docs/FEATURE_CATALOG.md',
+    'docs/work/AST-007.md',
     '.github/workflows/flutter_ci.yml',
 ]
 
@@ -110,6 +114,36 @@ def validate(root: Path = Path('.')) -> None:
     game = _read(root, 'lib/features/game/game_screen.dart')
     if game.count('levelNumber: widget.level.number') < 3:
         raise ValidationError('game screen must pass level identity to all cargo visual surfaces')
+
+    intake = _read(root, 'lib/core/assets/game_asset_intake_plan.dart')
+    for token in [
+        'GameAssetIntakeState.missingBinaryAndProvenance',
+        'provenanceRecord?.validateAgainst(descriptor)',
+        'nextBatch({int limit = 12})',
+        "path.replaceAll('\\\\', '/')",
+    ]:
+        if token not in intake:
+            raise ValidationError(f'AST-007 intake planner missing contract: {token}')
+
+    intake_cli = _read(root, 'tool/plan_ast_007_asset_intake.dart')
+    for token in [
+        'GameAssetIntakePlan.build(',
+        "arguments.contains('--json')",
+        "const prefix = '--limit='",
+        'batch.map((item) => item.toJson())',
+    ]:
+        if token not in intake_cli:
+            raise ValidationError(f'AST-007 intake CLI missing contract: {token}')
+
+    work_doc = _read(root, 'docs/work/AST-007.md')
+    for token in [
+        '133 descriptors: 9 non-cargo + 124 cargo',
+        'Approved provenance records: 0.',
+        'Runtime WebP binaries: 0.',
+        'The planner does not invent or auto-approve provenance.',
+    ]:
+        if token not in work_doc:
+            raise ValidationError(f'AST-007 work note missing production truth: {token}')
 
     catalog_doc = _read(root, 'docs/FEATURE_CATALOG.md')
     if '| AST-007 | 100+ 3D cargo product pack | P1 | IN PROGRESS |' not in catalog_doc and \
