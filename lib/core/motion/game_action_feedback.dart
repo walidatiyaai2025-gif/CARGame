@@ -42,19 +42,12 @@ class GameActionFeedback extends StatefulWidget {
 
 class _GameActionFeedbackState extends State<GameActionFeedback>
     with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
+  AnimationController? _controller;
   Timer? _reducedMotionTimer;
   bool _started = false;
   bool _completed = false;
 
   int get _cappedCombo => GameActionFeedback.comboIntensityFor(widget.combo);
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(vsync: this)
-      ..addStatusListener(_handleStatus);
-  }
 
   @override
   void didChangeDependencies() {
@@ -65,8 +58,8 @@ class _GameActionFeedbackState extends State<GameActionFeedback>
     unawaited(_dispatchFeedback());
 
     final profile = GameMotion.of(context);
-    if (profile.reducedMotion) {
-      _controller.value = .5;
+    const intent = GameMotionIntent.nonessential;
+    if (!profile.shouldUseTicker(intent)) {
       _reducedMotionTimer = Timer(
         profile.duration(GameMotionDurations.standard),
         _finishOnce,
@@ -74,8 +67,12 @@ class _GameActionFeedbackState extends State<GameActionFeedback>
       return;
     }
 
-    _controller.duration = profile.duration(GameMotionDurations.reward);
-    _controller.forward();
+    final controller = AnimationController(
+      vsync: this,
+      duration: profile.durationFor(intent, GameMotionDurations.reward),
+    )..addStatusListener(_handleStatus);
+    _controller = controller;
+    controller.forward();
   }
 
   Future<void> _dispatchFeedback() async {
@@ -123,7 +120,7 @@ class _GameActionFeedbackState extends State<GameActionFeedback>
   void dispose() {
     _reducedMotionTimer?.cancel();
     _controller
-      ..removeStatusListener(_handleStatus)
+      ?..removeStatusListener(_handleStatus)
       ..dispose();
     super.dispose();
   }
@@ -137,6 +134,8 @@ class _GameActionFeedbackState extends State<GameActionFeedback>
     final shadowBlur = profile.shadow(28);
     final shadowSpread = profile.shadow(4);
 
+    final animation = _controller ?? const AlwaysStoppedAnimation<double>(0.5);
+
     return Positioned.fill(
       child: IgnorePointer(
         child: Semantics(
@@ -145,9 +144,9 @@ class _GameActionFeedbackState extends State<GameActionFeedback>
           label: widget.semanticLabel,
           child: ExcludeSemantics(
             child: AnimatedBuilder(
-              animation: _controller,
+              animation: animation,
               builder: (context, _) {
-                final value = _controller.value;
+                final value = animation.value;
                 final entrance = profile
                     .curve(GameMotionCurves.emphasized)
                     .transform(math.min(1, value / .38));

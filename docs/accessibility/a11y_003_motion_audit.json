@@ -1,0 +1,263 @@
+{
+  "schema": 1,
+  "entries": [
+    {
+      "path": "lib/core/logging/log_viewer_screen.dart",
+      "primitive": "AnimatedBuilder(",
+      "count": 1,
+      "classification": "audited-local-motion"
+    },
+    {
+      "path": "lib/core/motion/ambient_motion_background.dart",
+      "primitive": "AnimationController(",
+      "count": 1,
+      "classification": "shared-policy-consumer"
+    },
+    {
+      "path": "lib/core/motion/ambient_motion_background.dart",
+      "primitive": "AnimatedBuilder(",
+      "count": 1,
+      "classification": "shared-policy-consumer"
+    },
+    {
+      "path": "lib/core/motion/game_action_feedback.dart",
+      "primitive": "AnimationController(",
+      "count": 1,
+      "classification": "shared-policy-consumer"
+    },
+    {
+      "path": "lib/core/motion/game_action_feedback.dart",
+      "primitive": "AnimatedBuilder(",
+      "count": 1,
+      "classification": "shared-policy-consumer"
+    },
+    {
+      "path": "lib/core/motion/game_action_feedback.dart",
+      "primitive": "Timer(",
+      "count": 1,
+      "classification": "shared-policy-consumer"
+    },
+    {
+      "path": "lib/core/motion/game_cinematic_gate.dart",
+      "primitive": "AnimationController(",
+      "count": 1,
+      "classification": "shared-policy-consumer"
+    },
+    {
+      "path": "lib/core/motion/game_route.dart",
+      "primitive": "PageRouteBuilder",
+      "count": 1,
+      "classification": "shared-policy-consumer"
+    },
+    {
+      "path": "lib/core/motion/game_route.dart",
+      "primitive": "FadeTransition(",
+      "count": 2,
+      "classification": "shared-policy-consumer"
+    },
+    {
+      "path": "lib/core/motion/game_route.dart",
+      "primitive": "SlideTransition(",
+      "count": 1,
+      "classification": "shared-policy-consumer"
+    },
+    {
+      "path": "lib/core/motion/game_travel_motion.dart",
+      "primitive": "AnimationController(",
+      "count": 1,
+      "classification": "shared-policy-consumer"
+    },
+    {
+      "path": "lib/core/motion/game_travel_motion.dart",
+      "primitive": "AnimatedBuilder(",
+      "count": 1,
+      "classification": "shared-policy-consumer"
+    },
+    {
+      "path": "lib/core/navigation/game_navigator.dart",
+      "primitive": "PageRouteBuilder",
+      "count": 1,
+      "classification": "audited-local-motion"
+    },
+    {
+      "path": "lib/core/theme/three_d_game_icon.dart",
+      "primitive": "AnimationController(",
+      "count": 1,
+      "classification": "audited-local-motion"
+    },
+    {
+      "path": "lib/core/theme/three_d_game_icon.dart",
+      "primitive": "AnimatedBuilder(",
+      "count": 1,
+      "classification": "audited-local-motion"
+    },
+    {
+      "path": "lib/core/widgets/game_button.dart",
+      "primitive": "AnimatedContainer(",
+      "count": 1,
+      "classification": "shared-policy-consumer"
+    },
+    {
+      "path": "lib/core/widgets/game_button.dart",
+      "primitive": "AnimatedScale(",
+      "count": 1,
+      "classification": "shared-policy-consumer"
+    },
+    {
+      "path": "lib/core/widgets/game_button.dart",
+      "primitive": "AnimatedSlide(",
+      "count": 1,
+      "classification": "shared-policy-consumer"
+    },
+    {
+      "path": "lib/core/widgets/game_button.dart",
+      "primitive": "AnimatedSwitcher(",
+      "count": 1,
+      "classification": "shared-policy-consumer"
+    },
+    {
+      "path": "lib/core/widgets/game_panel.dart",
+      "primitive": "AnimationController(",
+      "count": 1,
+      "classification": "audited-local-motion"
+    },
+    {
+      "path": "lib/core/widgets/game_panel.dart",
+      "primitive": "AnimatedBuilder(",
+      "count": 1,
+      "classification": "audited-local-motion"
+    },
+    {
+      "path": "lib/core/widgets/game_panel.dart",
+      "primitive": "AnimatedContainer(",
+      "count": 1,
+      "classification": "audited-local-motion"
+    },
+    {
+      "path": "lib/core/widgets/game_panel.dart",
+      "primitive": "AnimatedScale(",
+      "count": 1,
+      "classification": "audited-local-motion"
+    },
+    {
+      "path": "lib/core/widgets/game_panel.dart",
+      "primitive": "AnimatedSlide(",
+      "count": 1,
+      "classification": "audited-local-motion"
+    },
+    {
+      "path": "lib/features/game/cargo_motion_tile.dart",
+      "primitive": "AnimatedOpacity(",
+      "count": 1,
+      "classification": "audited-local-motion"
+    },
+    {
+      "path": "lib/features/game/cargo_motion_tile.dart",
+      "primitive": "AnimatedScale(",
+      "count": 2,
+      "classification": "audited-local-motion"
+    },
+    {
+      "path": "lib/features/game/cargo_motion_tile.dart",
+      "primitive": "AnimatedSlide(",
+      "count": 1,
+      "classification": "audited-local-motion"
+    },
+    {
+      "path": "lib/features/game/gameplay_operations_deck.dart",
+      "primitive": "AnimatedContainer(",
+      "count": 1,
+      "classification": "audited-local-motion"
+    },
+    {
+      "path": "lib/features/game/gameplay_result_debrief.dart",
+      "primitive": "Hero(",
+      "count": 2,
+      "classification": "audited-local-motion"
+    },
+    {
+      "path": "lib/features/home/home_screen.dart",
+      "primitive": "AnimatedBuilder(",
+      "count": 1,
+      "classification": "audited-local-motion"
+    },
+    {
+      "path": "lib/features/home/home_screen.dart",
+      "primitive": "Hero(",
+      "count": 2,
+      "classification": "audited-local-motion"
+    },
+    {
+      "path": "lib/features/home/home_screen.dart",
+      "primitive": "Timer(",
+      "count": 2,
+      "classification": "audited-local-motion"
+    },
+    {
+      "path": "lib/features/levels/city_briefing_screen.dart",
+      "primitive": "AnimatedContainer(",
+      "count": 1,
+      "classification": "audited-local-motion"
+    },
+    {
+      "path": "lib/features/levels/city_briefing_screen.dart",
+      "primitive": "Hero(",
+      "count": 2,
+      "classification": "audited-local-motion"
+    },
+    {
+      "path": "lib/features/levels/level_select_screen.dart",
+      "primitive": "AnimatedBuilder(",
+      "count": 1,
+      "classification": "audited-local-motion"
+    },
+    {
+      "path": "lib/features/progress/progress_hub_screen.dart",
+      "primitive": "AnimatedBuilder(",
+      "count": 1,
+      "classification": "audited-local-motion"
+    },
+    {
+      "path": "lib/features/progress/progress_hub_screen.dart",
+      "primitive": "Hero(",
+      "count": 2,
+      "classification": "audited-local-motion"
+    },
+    {
+      "path": "lib/features/progress/progress_hub_screen.dart",
+      "primitive": "Timer(",
+      "count": 2,
+      "classification": "audited-local-motion"
+    },
+    {
+      "path": "lib/features/settings/settings_screen.dart",
+      "primitive": "AnimatedBuilder(",
+      "count": 2,
+      "classification": "state-listener-not-motion"
+    },
+    {
+      "path": "lib/features/shop/shop_screen.dart",
+      "primitive": "AnimatedBuilder(",
+      "count": 1,
+      "classification": "audited-local-motion"
+    },
+    {
+      "path": "lib/main.dart",
+      "primitive": "AnimationController(",
+      "count": 1,
+      "classification": "audited-local-motion"
+    },
+    {
+      "path": "lib/main.dart",
+      "primitive": "AnimatedSwitcher(",
+      "count": 1,
+      "classification": "audited-local-motion"
+    },
+    {
+      "path": "lib/main.dart",
+      "primitive": "ScaleTransition(",
+      "count": 1,
+      "classification": "audited-local-motion"
+    }
+  ]
+}

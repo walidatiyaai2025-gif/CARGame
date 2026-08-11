@@ -7,11 +7,11 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | Field | Value |
 |---|---|
 | Current phase | Android RC hardening — issue #79 |
-| Primary feature | None — `UI3D-007` completed 100/100 source-controlled checkpoints as IMPLEMENTED; `A11Y-003` is selected next but not started. |
+| Primary feature | `A11Y-003` Reduced motion — IN PROGRESS on issue #208 / `agent/a11y-003-reduced-motion-enforcement`. |
 | Completed checkpoint | `UI3D-007` reduced motion and adaptive visual effects — IMPLEMENTED; issue #205 / PR #206 completed 100/100 source-controlled checkpoints, PR #206 merged as `a342b3befed9259326fa769735f327e6916d1a5a`, and exact-main Flutter CI #863 / run `31466188761` passed all 63 gates. |
 | Status | UI3D-007 source-controlled acceptance is IMPLEMENTED: persistent Automatic/Reduced visual effects, app-wide accessibility/performance policy, shared effect budgets, EN/AR live Settings control, privacy inventory, 13/13 validator regressions, focused Flutter coverage, full suite/coverage, Debug APK build/security/upload, and exact-main verification are green. Physical-device visual/performance observation remains separate evidence and is not claimed. |
 | Previous checkpoint | `TEST-011` privacy, consent, and security verification — IMPLEMENTED with 100/100 repository checkpoints; external production UMP regulated-region/device evidence remains pending. |
-| Next recommended feature | `A11Y-003` Reduced motion — P1, dependency-ready now that UI3D-007 is implemented; selected next but not started. |
+| Next recommended feature | A11Y-003 is the active primary; no second source-controlled feature should start until merge/reconciliation completes. |
 | Known blocker | `TEST-011` VERIFIED still requires real production AdMob Privacy & messaging/UMP regulated-region/device evidence. `TEST-009` remains blocked on PERF-001 physical-device frame profiling. `REL-007`/`REL-008` require real production AdMob/signing inputs and a production-signed candidate; final install/upgrade/device smoke requires an Android device/testing track. |
 
 ## UI3D-007 reduced motion and adaptive visual effects — 2026-08-11
