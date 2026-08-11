@@ -7,11 +7,11 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | Field | Value |
 |---|---|
 | Current phase | Android RC hardening — issue #79 |
-| Primary feature | None — `TEST-011` completed 100/100 source-controlled checkpoints as IMPLEMENTED; `UI3D-007` is selected next but not started. |
+| Primary feature | `UI3D-007` Reduced motion and adaptive visual effects — IN PROGRESS on issue #205 / `agent/ui3d-007-adaptive-visual-effects`. |
 | Completed checkpoint | `TEST-011` privacy, consent, and security verification — IMPLEMENTED; issue #202 / PR #203 completed 100/100 repository checkpoints, PR #203 merged as `eb3f4df464173dab6729bfb6ed4ccf7289747057`, and exact-main Flutter CI #857 / run `31440863970` passed all 60 gates. |
 | Status | TEST-011 repository-owned acceptance is IMPLEMENTED: 17/17 mutation regressions, 38 focused privacy/consent/security tests, 345 full-suite tests, 88.22% authored-source coverage, Debug APK build/security/upload, and exact-main verification are green. External production UMP/privacy-message regulated-region/device evidence remains PENDING, so VERIFIED is intentionally blocked. |
 | Previous checkpoint | `PERF-002` memory and image budget — IMPLEMENTED with final PR CI #852, merged-runtime CI #853, and exact-main CI #854; physical-device RSS/GPU residency remains unclaimed. |
-| Next recommended feature | `UI3D-007` Reduced motion and low-performance visual mode — P1, dependency-ready via MOT-001. Start fresh from current `main`; stale `agent/ui3d-007-world-map-refresh` is reference-only. |
+| Next recommended feature | UI3D-007 is the active primary; no second source-controlled feature should start until its merge/reconciliation completes. |
 | Known blocker | `TEST-011` VERIFIED still requires real production AdMob Privacy & messaging/UMP regulated-region/device evidence. `TEST-009` remains blocked on PERF-001 physical-device frame profiling. `REL-007`/`REL-008` require real production AdMob/signing inputs and a production-signed candidate; final install/upgrade/device smoke requires an Android device/testing track. |
 
 ## TEST-011 privacy consent and security verification — 2026-08-11

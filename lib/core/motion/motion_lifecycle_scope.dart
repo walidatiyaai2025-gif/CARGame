@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'game_motion.dart';
+
 /// Disables descendant tickers whenever the app is not resumed, the subtree is
 /// hidden by an ancestor [TickerMode], or the platform requests reduced motion.
 class MotionLifecycleScope extends StatefulWidget {
@@ -44,8 +46,7 @@ class _MotionLifecycleScopeState extends State<MotionLifecycleScope>
   @override
   Widget build(BuildContext context) {
     final ancestorEnabled = TickerMode.valuesOf(context).enabled;
-    final reducedMotion =
-        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    final reducedMotion = GameMotion.of(context).reducedMotion;
     final active =
         widget.enabled &&
         ancestorEnabled &&

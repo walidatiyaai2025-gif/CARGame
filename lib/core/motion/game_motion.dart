@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../performance/frame_performance_budget.dart';
 import '../performance/frame_performance_scope.dart';
+import '../settings/visual_effects_preference_scope.dart';
 
 abstract final class GameMotionDurations {
   static const Duration tap = Duration(milliseconds: 90);
@@ -45,6 +46,12 @@ class GameMotionProfile {
   bool get allowAmbientMotion =>
       !reducedMotion && performanceQuality == GameVisualQuality.full;
 
+  bool get allowDecorativeEffects =>
+      !reducedMotion && performanceQuality != GameVisualQuality.reduced;
+
+  bool get allowExpensiveEffects =>
+      !reducedMotion && performanceQuality == GameVisualQuality.full;
+
   double get effectsScale {
     if (reducedMotion) return 0;
     return switch (performanceQuality) {
@@ -75,6 +82,27 @@ class GameMotionProfile {
 
   double distance(double value) => reducedMotion ? 0 : value * effectsScale;
 
+  double blur(double value) => reducedMotion ? 0 : value * effectsScale;
+
+  double shadow(double value) => reducedMotion ? 0 : value * effectsScale;
+
+  double intensity(double value) => reducedMotion ? 0 : value * effectsScale;
+
+  int particleCount(int requested) {
+    if (requested <= 0 || reducedMotion) return 0;
+    return (requested * effectsScale).ceil().clamp(1, requested);
+  }
+
+  int simultaneousEffectsLimit(int requested) {
+    if (requested <= 0 || reducedMotion) return 0;
+    final limit = switch (performanceQuality) {
+      GameVisualQuality.full => requested,
+      GameVisualQuality.constrained => 2,
+      GameVisualQuality.reduced => 1,
+    };
+    return limit.clamp(1, requested);
+  }
+
   double scale(double value) {
     if (reducedMotion) return 1;
     final delta = value - 1;
@@ -91,8 +119,15 @@ class GameMotionProfile {
 }
 
 abstract final class GameMotion {
-  static GameMotionProfile of(BuildContext context) => GameMotionProfile(
-    reducedMotion: MediaQuery.maybeOf(context)?.disableAnimations ?? false,
-    performanceQuality: FramePerformanceScope.qualityOf(context),
-  );
+  static GameMotionProfile of(BuildContext context) {
+    final systemReduced =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    final userReduced = VisualEffectsPreferenceScope.userReducedEffectsOf(
+      context,
+    );
+    return GameMotionProfile(
+      reducedMotion: systemReduced || userReduced,
+      performanceQuality: FramePerformanceScope.qualityOf(context),
+    );
+  }
 }

@@ -28,4 +28,42 @@ void main() {
     expect(await prefs.containsKey('settings_sound'), isFalse);
     expect(await prefs.getString(RecoveringPreferences.backupKey), isNotNull);
   });
+
+  test('visual effects default automatic and persist reduced mode', () async {
+    final first = AppSettingsStore();
+    await first.load();
+    expect(first.reducedVisualEffects, isFalse);
+
+    await first.setReducedVisualEffects(true);
+    expect(first.reducedVisualEffects, isTrue);
+
+    final second = AppSettingsStore();
+    await second.load();
+    expect(second.reducedVisualEffects, isTrue);
+  });
+
+  test('unknown visual effects value falls back to automatic', () async {
+    final prefs = SharedPreferencesAsync();
+    await prefs.setString('settings_visual_effects', 'future-mode');
+
+    final settings = AppSettingsStore();
+    await settings.load();
+
+    expect(settings.reducedVisualEffects, isFalse);
+  });
+
+  test('setting the current visual mode is a notifier no-op', () async {
+    final settings = AppSettingsStore();
+    var notifications = 0;
+    settings.addListener(() => notifications++);
+
+    await settings.setReducedVisualEffects(false);
+    expect(notifications, 0);
+
+    await settings.setReducedVisualEffects(true);
+    expect(notifications, 1);
+
+    await settings.setReducedVisualEffects(true);
+    expect(notifications, 1);
+  });
 }

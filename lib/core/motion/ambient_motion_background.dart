@@ -60,6 +60,7 @@ class _AmbientMotionBackgroundState extends State<AmbientMotionBackground>
 
   @override
   Widget build(BuildContext context) {
+    final profile = GameMotion.of(context);
     return RepaintBoundary(
       child: AnimatedBuilder(
         animation: _controller,
@@ -69,6 +70,8 @@ class _AmbientMotionBackgroundState extends State<AmbientMotionBackground>
             startColor: widget.startColor,
             endColor: widget.endColor,
             reducedMotion: _ambientMotionDisabled,
+            effectsScale: profile.effectsScale,
+            decorativeCount: profile.particleCount(4),
           ),
           child: const SizedBox.expand(),
         ),
@@ -83,12 +86,16 @@ class _AmbientMotionPainter extends CustomPainter {
     required this.startColor,
     required this.endColor,
     required this.reducedMotion,
+    required this.effectsScale,
+    required this.decorativeCount,
   });
 
   final double progress;
   final Color startColor;
   final Color endColor;
   final bool reducedMotion;
+  final double effectsScale;
+  final int decorativeCount;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -105,21 +112,24 @@ class _AmbientMotionPainter extends CustomPainter {
     canvas.drawRect(Offset.zero & size, background);
 
     final phase = reducedMotion ? 0.0 : progress * math.pi * 2;
-    _drawGlow(
-      canvas,
-      Offset(size.width * (.16 + math.sin(phase) * .025), size.height * .14),
-      size.shortestSide * .34,
-      startColor.withValues(alpha: .13),
-    );
-    _drawGlow(
-      canvas,
-      Offset(size.width * (.84 + math.cos(phase) * .02), size.height * .34),
-      size.shortestSide * .28,
-      endColor.withValues(alpha: .10),
-    );
+    if (effectsScale > 0) {
+      _drawGlow(
+        canvas,
+        Offset(size.width * (.16 + math.sin(phase) * .025), size.height * .14),
+        size.shortestSide * .34,
+        startColor.withValues(alpha: .13 * effectsScale),
+      );
+      _drawGlow(
+        canvas,
+        Offset(size.width * (.84 + math.cos(phase) * .02), size.height * .34),
+        size.shortestSide * .28,
+        endColor.withValues(alpha: .10 * effectsScale),
+      );
+    }
 
-    final cloudPaint = Paint()..color = Colors.white.withValues(alpha: .34);
-    for (var index = 0; index < 4; index++) {
+    final cloudPaint = Paint()
+      ..color = Colors.white.withValues(alpha: .34 * effectsScale);
+    for (var index = 0; index < decorativeCount; index++) {
       final base = (index * .29 + progress * .08) % 1.25 - .12;
       final x = size.width * base;
       final y = size.height * (.08 + index * .075);
@@ -162,5 +172,7 @@ class _AmbientMotionPainter extends CustomPainter {
       oldDelegate.progress != progress ||
       oldDelegate.startColor != startColor ||
       oldDelegate.endColor != endColor ||
-      oldDelegate.reducedMotion != reducedMotion;
+      oldDelegate.reducedMotion != reducedMotion ||
+      oldDelegate.effectsScale != effectsScale ||
+      oldDelegate.decorativeCount != decorativeCount;
 }

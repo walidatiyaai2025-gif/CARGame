@@ -13,6 +13,7 @@ import '../core/navigation/game_route_names.dart';
 import '../core/performance/frame_performance_scope.dart';
 import '../core/privacy/local_data_controller.dart';
 import '../core/settings/app_settings_store.dart';
+import '../core/settings/visual_effects_preference_scope.dart';
 import '../core/storage/progress_store.dart';
 import '../core/theme/app_theme.dart';
 import '../features/home/home_screen.dart';
@@ -169,48 +170,51 @@ class _CargoSortAppState extends State<CargoSortApp>
   @override
   Widget build(BuildContext context) {
     return FramePerformanceScope(
-      child: MaterialApp(
-        navigatorKey: _navigatorKey,
-        debugShowCheckedModeBanner: false,
-        title: 'Cargo Sort',
-        locale: _locale,
-        supportedLocales: const [Locale('en'), Locale('ar')],
-        localizationsDelegates: const [
-          AppLocalizations.delegate,
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
-        theme: AppTheme.light,
-        home: MotionLifecycleScope(
-          child: Stack(
-            children: [
-              HomeScreen(
-                store: _activeStore,
-                settings: _activeSettings,
-                onToggleLanguage: _toggleLanguage,
-                adConsentState: widget.adConsentController?.state,
-              ),
-              PositionedDirectional(
-                top: 66,
-                end: 16,
-                child: SafeArea(
-                  child: Material(
-                    color: Colors.white,
-                    elevation: 5,
-                    shape: const CircleBorder(),
-                    child: IconButton(
-                      tooltip: 'Settings',
-                      onPressed: _openSettings,
-                      icon: const Icon(
-                        Icons.settings_rounded,
-                        color: AppTheme.navy,
+      child: VisualEffectsPreferenceScope(
+        settings: _activeSettings,
+        child: MaterialApp(
+          navigatorKey: _navigatorKey,
+          debugShowCheckedModeBanner: false,
+          title: 'Cargo Sort',
+          locale: _locale,
+          supportedLocales: const [Locale('en'), Locale('ar')],
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          theme: AppTheme.light,
+          home: MotionLifecycleScope(
+            child: Stack(
+              children: [
+                HomeScreen(
+                  store: _activeStore,
+                  settings: _activeSettings,
+                  onToggleLanguage: _toggleLanguage,
+                  adConsentState: widget.adConsentController?.state,
+                ),
+                PositionedDirectional(
+                  top: 66,
+                  end: 16,
+                  child: SafeArea(
+                    child: Material(
+                      color: Colors.white,
+                      elevation: 5,
+                      shape: const CircleBorder(),
+                      child: IconButton(
+                        tooltip: 'Settings',
+                        onPressed: _openSettings,
+                        icon: const Icon(
+                          Icons.settings_rounded,
+                          color: AppTheme.navy,
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

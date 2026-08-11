@@ -80,6 +80,26 @@ class SettingsScreen extends StatelessWidget {
                         value: settings.vibrationEnabled,
                         onChanged: settings.setVibration,
                       ),
+                      _SwitchTile(
+                        key: const ValueKey('visual-effects-switch'),
+                        icon: Icons.auto_awesome_motion_rounded,
+                        title: ar
+                            ? settings.reducedVisualEffects
+                                  ? 'المؤثرات المرئية: مخفضة'
+                                  : 'المؤثرات المرئية: تلقائية'
+                            : settings.reducedVisualEffects
+                            ? 'Visual effects: Reduced'
+                            : 'Visual effects: Automatic',
+                        subtitle: ar
+                            ? settings.reducedVisualEffects
+                                  ? 'تقليل الحركة والتمويه والجسيمات والظلال غير الضرورية'
+                                  : 'تتكيف الحركة والمؤثرات تلقائيًا مع ضغط الإطارات'
+                            : settings.reducedVisualEffects
+                            ? 'Minimizes nonessential motion, blur, particles and shadows'
+                            : 'Adapts motion and effects automatically to frame pressure',
+                        value: settings.reducedVisualEffects,
+                        onChanged: settings.setReducedVisualEffects,
+                      ),
                     ],
                   ),
                   const SizedBox(height: 10),
@@ -503,6 +523,7 @@ class _SettingsCard extends StatelessWidget {
 
 class _SwitchTile extends StatelessWidget {
   const _SwitchTile({
+    super.key,
     required this.icon,
     required this.title,
     required this.subtitle,
