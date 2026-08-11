@@ -112,6 +112,12 @@ jobs:
       - name: Test TEST-011 privacy consent and security validator
         run: python3 tool/test_test_011_privacy_security.py
 
+      - name: Verify UI3D-007 adaptive visual effects
+        run: python3 tool/verify_ui3d_007_visual_effects.py
+
+      - name: Test UI3D-007 visual-effects validator
+        run: python3 tool/test_ui3d_007_visual_effects.py
+
       - name: Restore packages
         shell: bash
         run: |
@@ -214,6 +220,17 @@ jobs:
           test/core/diagnostics/privacy_gated_crash_reporting_test.dart
           test/core/logging/app_logger_gate_test.dart
           test/core/security/secret_redactor_test.dart
+
+      - name: Test UI3D-007 adaptive visual effects
+        run: >-
+          flutter test
+          test/core/settings/game_visual_effects_preference_test.dart
+          test/core/settings/visual_effects_preference_scope_test.dart
+          test/core/settings/app_settings_store_test.dart
+          test/core/motion/game_motion_test.dart
+          test/core/motion/ui3d_007_visual_effects_test.dart
+          test/core/motion/game_route_test.dart
+          test/features/settings/visual_effects_settings_test.dart
 
       - name: Test core screen widget matrix
         run: >-
