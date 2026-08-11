@@ -1,0 +1,47 @@
+name: RT3D Restore Dependency Lock Once
+
+on:
+  push:
+    branches: [agent/rt3d-002-slice-01]
+    paths:
+      - 'pubspec.yaml'
+      - '.github/workflows/rt3d_restore_lock_once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  restore-lock:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/rt3d-002-slice-01
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.44.8
+          cache: true
+
+      - name: Restore baseline dependency lock
+        run: flutter pub get
+
+      - name: Commit restored lockfile when needed
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- pubspec.lock; then
+            echo "Dependency lock already matches the rejected-candidate rollback."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add pubspec.lock
+          git commit -m "chore(rt3d): restore baseline dependency lock [skip ci]"
+          git push origin HEAD:agent/rt3d-002-slice-01
