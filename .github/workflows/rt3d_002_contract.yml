@@ -57,6 +57,14 @@ jobs:
           flutter-version: 3.44.8
           cache: true
 
+      - name: Verify RT3D-002 Dart formatting
+        run: >-
+          dart format --output=none --set-exit-if-changed
+          lib/core/domain/realtime_3d/renderer_admission.dart
+          lib/core/domain/realtime_3d/production_scene_slice.dart
+          test/core/domain/realtime_3d_renderer_admission_test.dart
+          test/core/domain/realtime_3d_production_scene_slice_test.dart
+
       - name: Restore packages
         run: flutter pub get --enforce-lockfile
 
