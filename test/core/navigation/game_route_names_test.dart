@@ -10,9 +10,10 @@ void main() {
       GameRouteNames.progress,
       GameRouteNames.settings,
       GameRouteNames.logs,
+      GameRouteNames.realtime3dLab,
     };
 
-    expect(names, hasLength(6));
+    expect(names, hasLength(7));
     expect(names.every((name) => name.startsWith('/')), isTrue);
   });
 
@@ -21,5 +22,6 @@ void main() {
     expect(GameRouteNames.game(25), '/game/level/25');
     expect(GameRouteNames.result(25), '/result/level/25');
     expect(GameRouteNames.guard(GameRouteNames.shop), 'route:/shop');
+    expect(GameRouteNames.realtime3dLab, '/realtime-3d-lab');
   });
 }

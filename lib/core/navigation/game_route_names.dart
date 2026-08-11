@@ -9,6 +9,7 @@ abstract final class GameRouteNames {
   static const progress = '/progress';
   static const settings = '/settings';
   static const logs = '/logs';
+  static const realtime3dLab = '/realtime-3d-lab';
 
   static String briefing(int level) => '/briefing/level/$level';
   static String game(int level) => '/game/level/$level';
