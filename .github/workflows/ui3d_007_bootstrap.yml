@@ -32,13 +32,31 @@ jobs:
           cache: true
 
       - name: Apply UI3D-007 source patch
-        run: python3 tool/bootstrap_ui3d_007.py
-
-      - name: Format Dart
-        run: dart format lib test
+        run: |
+          python3 tool/bootstrap_ui3d_007.py
+          python3 tool/bootstrap_ui3d_007_fix.py
 
       - name: Restore packages
         run: flutter pub get
+
+      - name: Format UI3D-007 Dart files
+        run: |
+          dart format \
+            lib/bootstrap/cargo_sort_app.dart \
+            lib/core/settings/app_settings_store.dart \
+            lib/core/settings/game_visual_effects_preference.dart \
+            lib/core/settings/visual_effects_preference_scope.dart \
+            lib/core/motion/game_motion.dart \
+            lib/core/motion/game_route.dart \
+            lib/core/motion/motion_lifecycle_scope.dart \
+            lib/core/motion/ambient_motion_background.dart \
+            lib/core/motion/game_action_feedback.dart \
+            lib/features/settings/settings_screen.dart \
+            test/core/settings/app_settings_store_test.dart \
+            test/core/settings/game_visual_effects_preference_test.dart \
+            test/core/settings/visual_effects_preference_scope_test.dart \
+            test/core/motion/ui3d_007_visual_effects_test.dart \
+            test/features/settings/visual_effects_settings_test.dart
 
       - name: Validate UI3D-007 ownership
         run: |
@@ -61,7 +79,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          rm tool/bootstrap_ui3d_007.py
+          rm tool/bootstrap_ui3d_007.py tool/bootstrap_ui3d_007_fix.py
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add -A
