@@ -7,12 +7,25 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | Field | Value |
 |---|---|
 | Current phase | Android RC hardening — issue #79 |
-| Primary feature | `UI3D-007` Reduced motion and adaptive visual effects — IN PROGRESS on issue #205 / `agent/ui3d-007-adaptive-visual-effects`. |
-| Completed checkpoint | `TEST-011` privacy, consent, and security verification — IMPLEMENTED; issue #202 / PR #203 completed 100/100 repository checkpoints, PR #203 merged as `eb3f4df464173dab6729bfb6ed4ccf7289747057`, and exact-main Flutter CI #857 / run `31440863970` passed all 60 gates. |
-| Status | TEST-011 repository-owned acceptance is IMPLEMENTED: 17/17 mutation regressions, 38 focused privacy/consent/security tests, 345 full-suite tests, 88.22% authored-source coverage, Debug APK build/security/upload, and exact-main verification are green. External production UMP/privacy-message regulated-region/device evidence remains PENDING, so VERIFIED is intentionally blocked. |
-| Previous checkpoint | `PERF-002` memory and image budget — IMPLEMENTED with final PR CI #852, merged-runtime CI #853, and exact-main CI #854; physical-device RSS/GPU residency remains unclaimed. |
-| Next recommended feature | UI3D-007 is the active primary; no second source-controlled feature should start until its merge/reconciliation completes. |
+| Primary feature | None — `UI3D-007` completed 100/100 source-controlled checkpoints as IMPLEMENTED; `A11Y-003` is selected next but not started. |
+| Completed checkpoint | `UI3D-007` reduced motion and adaptive visual effects — IMPLEMENTED; issue #205 / PR #206 completed 100/100 source-controlled checkpoints, PR #206 merged as `a342b3befed9259326fa769735f327e6916d1a5a`, and exact-main Flutter CI #863 / run `31466188761` passed all 63 gates. |
+| Status | UI3D-007 source-controlled acceptance is IMPLEMENTED: persistent Automatic/Reduced visual effects, app-wide accessibility/performance policy, shared effect budgets, EN/AR live Settings control, privacy inventory, 13/13 validator regressions, focused Flutter coverage, full suite/coverage, Debug APK build/security/upload, and exact-main verification are green. Physical-device visual/performance observation remains separate evidence and is not claimed. |
+| Previous checkpoint | `TEST-011` privacy, consent, and security verification — IMPLEMENTED with 100/100 repository checkpoints; external production UMP regulated-region/device evidence remains pending. |
+| Next recommended feature | `A11Y-003` Reduced motion — P1, dependency-ready now that UI3D-007 is implemented; selected next but not started. |
 | Known blocker | `TEST-011` VERIFIED still requires real production AdMob Privacy & messaging/UMP regulated-region/device evidence. `TEST-009` remains blocked on PERF-001 physical-device frame profiling. `REL-007`/`REL-008` require real production AdMob/signing inputs and a production-signed candidate; final install/upgrade/device smoke requires an Android device/testing track. |
+
+## UI3D-007 reduced motion and adaptive visual effects — 2026-08-11
+
+- Issue #205 / PR #206 complete the 100-checkpoint source-controlled sprint. Repository status is IMPLEMENTED.
+- The persistent local setting offers Automatic (default) and Reduced effects; unknown persisted values fail safely to Automatic and the setting applies live without restart.
+- System Reduce Motion remains authoritative. PERF-001 remains the automatic performance-pressure authority beneath accessibility/user reduction.
+- Shared `GameMotion` policy now governs duration, distance, scale, curves, blur, shadows, particles, intensity, decorative/expensive effects and simultaneous-effect budgets; lifecycle tickers, ambient visuals, routes and action feedback consume the effective profile.
+- Settings exposes the control in English and Arabic. The new `settings_visual_effects` key is declared as local-only in the privacy inventory and follows the existing local reset/deletion contract.
+- UI3D-007 machine validation and 13/13 validator regressions are permanent normal-CI gates. The focused UI3D matrix, TEST-007/TEST-011 regressions, Full Flutter Suite and coverage gate all pass.
+- Final PR head `2c0eb9f9983125d23a9d65d878ba142484d24975` passed Flutter CI #862 / run `31465635259` all 63 gates. Debug artifact #9091564070 is 80,656,826 bytes with SHA-256 `4932211b4269edc245d008ded40011f4bce83edd37d1cef672ac1a8744b945c2`.
+- PR #206 squash-merged as `a342b3befed9259326fa769735f327e6916d1a5a`. Exact-main Flutter CI #863 / run `31466188761` passed all 63 gates. Main debug artifact #9091803001 is 80,656,824 bytes with SHA-256 `8064cd7b0b1941db47b5df614e38666865972a5995020731baff4323bb9e5922`.
+- No physical-device frame/visual result is invented. That broader observation remains separate from source-controlled acceptance.
+- Fresh dependency-ready scan selects exactly one next source-controlled workstream: `A11Y-003` Reduced motion (P1), now unblocked by UI3D-007. It is selected but not started.
 
 ## TEST-011 privacy consent and security verification — 2026-08-11
 
