@@ -1,0 +1,54 @@
+name: AST-007 Source Reconcile Once
+
+on:
+  push:
+    branches:
+      - agent/ast-007-source-checkpoint-reconcile
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: agent/ast-007-source-checkpoint-reconcile
+
+      - name: Apply reconciliation
+        run: python3 tool/reconcile_ast_007_source_once.py
+
+      - name: Verify AST-007 contract
+        run: python3 tool/verify_ast_007_cargo_visuals.py
+
+      - name: Test AST-007 validator regressions
+        run: python3 tool/test_ast_007_cargo_visuals.py
+
+      - name: Verify dashboard/catalog parity
+        run: python3 tool/verify_dashboard_catalog.py
+
+      - name: Verify CI integrity
+        run: python3 tool/verify_ci_integrity.py
+
+      - name: Verify asset admission pipeline
+        run: dart run tool/validate_asset_pipeline.dart
+
+      - name: Verify whitespace
+        run: git diff --check
+
+      - name: Remove one-shot tooling
+        run: |
+          rm .github/workflows/ast_007_source_reconcile_once.yml
+          rm tool/reconcile_ast_007_source_once.py
+
+      - name: Commit reconciled source checkpoint
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "AST-007: reconcile merged source checkpoint"
+          git push origin HEAD:agent/ast-007-source-checkpoint-reconcile
