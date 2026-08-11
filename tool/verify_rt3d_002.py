@@ -10,7 +10,7 @@ REQUIRED_FILES = (
     'test/core/domain/realtime_3d_renderer_admission_test.dart',
     'test/core/domain/realtime_3d_production_scene_slice_test.dart',
     'docs/work/RT3D-002.md',
-    '.github/workflows/flutter_ci.yml',
+    '.github/workflows/rt3d_002_contract.yml',
     'android/app/build.gradle.kts',
 )
 
@@ -73,7 +73,7 @@ def verify(root: Path) -> list[str]:
     if 'minSdk = 23' not in gradle:
         errors.append('Android project minSdk drifted from RT3D-002 admission baseline')
 
-    workflow = _read(root, '.github/workflows/flutter_ci.yml')
+    workflow = _read(root, '.github/workflows/rt3d_002_contract.yml')
     for marker in (
         'Verify RT3D-002 production 3D contract',
         'python3 tool/verify_rt3d_002.py',
@@ -82,9 +82,11 @@ def verify(root: Path) -> list[str]:
         'Test RT3D-002 domain contracts',
         'test/core/domain/realtime_3d_renderer_admission_test.dart',
         'test/core/domain/realtime_3d_production_scene_slice_test.dart',
+        'flutter-version: 3.44.8',
+        'flutter pub get --enforce-lockfile',
     ):
         if marker not in workflow:
-            errors.append(f'Flutter CI missing RT3D-002 gate: {marker}')
+            errors.append(f'RT3D-002 CI missing required gate: {marker}')
 
     work = _read(root, 'docs/work/RT3D-002.md')
     task_ids = re.findall(r'^- \[x\] (RT3D2-T\d{3}):', work, re.MULTILINE)
