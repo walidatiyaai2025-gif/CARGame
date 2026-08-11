@@ -158,8 +158,8 @@ def test_rejects_orphan_runtime_contract_drift() -> None:
         replace(
             root,
             'lib/core/assets/game_asset_intake_plan.dart',
-            'orphanRuntimeBinaryPaths',
-            'ignoredRuntimeBinaryPaths',
+            'path.startsWith(runtimePrefix)',
+            "path.startsWith('ignored/runtime/')",
         )
         expect_failure(root, 'AST-007 intake planner missing contract')
     finally:
