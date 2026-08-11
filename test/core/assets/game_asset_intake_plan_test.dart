@@ -46,7 +46,7 @@ void main() {
     final plan = GameAssetIntakePlan.build(
       registry: registry,
       provenance: provenance,
-      runtimeBinaryPaths: <String>[_pathFor('delta').replaceAll('/', r'\')],
+      runtimeBinaryPaths: <String>[_pathFor('delta').replaceAll('/', '\\')],
     );
 
     final delta = plan.items.singleWhere(
@@ -130,8 +130,8 @@ String _provenanceCatalog(List<String> assetIds) {
   "creationDate":"2026-08-11",
   "commercialUseReference":"Test fixture only",
   "generation":null,
-  "sourceSha256":"${'a' * 64}",
-  "exportSha256":"${'b' * 64}",
+  "sourceSha256":"${_digest('a')}",
+  "exportSha256":"${_digest('b')}",
   "profile":"pcargo",
   "revision":1,
   "dimensions":{"width":384,"height":384},
@@ -146,6 +146,8 @@ String _provenanceCatalog(List<String> assetIds) {
   }).join(',');
   return '{"schemaVersion":1,"records":[$records]}';
 }
+
+String _digest(String value) => List<String>.filled(64, value).join();
 
 String _pathFor(String slug) =>
     'assets/3d/runtime/cargo/test/cg_cargo_${slug}_pcargo_v01.webp';
