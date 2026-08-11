@@ -25,11 +25,66 @@ jobs:
           cache: true
       - name: Restore packages
         run: flutter pub get --enforce-lockfile
-      - name: Repeat manifest view test
+      - name: Create rootBundle diagnostic test
         shell: bash
         run: |
-          set -euo pipefail
-          for i in 1 2 3 4 5; do
-            echo "--- manifest view probe iteration $i ---"
-            flutter test test/core/assets/game_manifest_asset_view_test.dart
-          done
+          cat > test/_ast007_manifest_rootbundle_probe_test.dart <<'DART'
+          import 'dart:convert';
+
+          import 'package:cargo_sort_game/core/assets/game_asset_manifest.dart';
+          import 'package:cargo_sort_game/core/assets/game_asset_registry.dart';
+          import 'package:flutter/services.dart';
+          import 'package:flutter_test/flutter_test.dart';
+
+          void main() {
+            TestWidgetsFlutterBinding.ensureInitialized();
+
+            test('AST-007 rootBundle manifest diagnostics', () async {
+              String content;
+              try {
+                content = await rootBundle.loadString(GameAssetManifest.assetPath);
+                // ignore: avoid_print
+                print('AST007_ROOT_BUNDLE_BYTES=${content.length}');
+              } catch (error, stack) {
+                // ignore: avoid_print
+                print('AST007_ROOT_BUNDLE_LOAD_ERROR=$error');
+                // ignore: avoid_print
+                print(stack);
+                rethrow;
+              }
+
+              try {
+                final decoded = jsonDecode(content);
+                final registry = GameAssetRegistry.fromJson(decoded);
+                // ignore: avoid_print
+                print('AST007_DIRECT_REGISTRY_COUNT=${registry.assets.length}');
+                // ignore: avoid_print
+                print('AST007_HAS_UI_HEART=${registry.findById('ui.heart') != null}');
+              } catch (error, stack) {
+                // ignore: avoid_print
+                print('AST007_DIRECT_PARSE_ERROR=$error');
+                // ignore: avoid_print
+                print(stack);
+                rethrow;
+              }
+
+              try {
+                final registry = await GameAssetManifest.load();
+                // ignore: avoid_print
+                print('AST007_MANIFEST_LOAD_COUNT=${registry.assets.length}');
+                // ignore: avoid_print
+                print('AST007_MANIFEST_HAS_UI_HEART=${registry.findById('ui.heart') != null}');
+              } catch (error, stack) {
+                // ignore: avoid_print
+                print('AST007_MANIFEST_LOAD_ERROR=$error');
+                // ignore: avoid_print
+                print(stack);
+                rethrow;
+              }
+            });
+          }
+          DART
+      - name: Run rootBundle diagnostic test
+        run: flutter test test/_ast007_manifest_rootbundle_probe_test.dart --reporter expanded
+      - name: Run original manifest view test
+        run: flutter test test/core/assets/game_manifest_asset_view_test.dart --reporter expanded
