@@ -10,7 +10,6 @@ permissions:
 
 jobs:
   resolve-lock:
-    if: ${{ !contains(github.event.head_commit.message, 'chore(rt3d): resolve Thermion dependency lock') }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
