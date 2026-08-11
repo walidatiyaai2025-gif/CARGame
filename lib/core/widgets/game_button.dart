@@ -104,6 +104,7 @@ class _GameButtonState extends State<GameButton> {
         defaultTargetPlatform == TargetPlatform.linux ||
         defaultTargetPlatform == TargetPlatform.macOS;
     final motion = GameMotion.of(context);
+    const motionIntent = GameMotionIntent.essential;
     final translateY = motion.distance(
       _pressed ? 5.0 : (_hovered && hoverSupported ? -2.0 : 0.0),
     );
@@ -121,7 +122,11 @@ class _GameButtonState extends State<GameButton> {
     );
 
     final content = AnimatedContainer(
-      duration: motion.duration(GameMotionDurations.fast),
+      duration: motion.durationFor(
+        motionIntent,
+        GameMotionDurations.fast,
+        allowReducedTemporalFeedback: true,
+      ),
       curve: motion.curve(GameMotionCurves.enter),
       constraints: widget.height == null
           ? null
@@ -152,7 +157,11 @@ class _GameButtonState extends State<GameButton> {
         ],
       ),
       child: AnimatedSwitcher(
-        duration: motion.duration(GameMotionDurations.standard),
+        duration: motion.durationFor(
+          motionIntent,
+          GameMotionDurations.standard,
+          allowReducedTemporalFeedback: true,
+        ),
         child: showLoading
             ? SizedBox(
                 key: const ValueKey('loading'),
@@ -191,17 +200,29 @@ class _GameButtonState extends State<GameButton> {
         },
         child: AnimatedScale(
           scale: scale,
-          duration: motion.duration(
-            _pressed ? GameMotionDurations.tap : GameMotionDurations.standard,
-          ),
+          duration: motion.shouldUseSpatialMotion(motionIntent)
+              ? motion.durationFor(
+                  motionIntent,
+                  _pressed
+                      ? GameMotionDurations.tap
+                      : GameMotionDurations.standard,
+                  allowReducedTemporalFeedback: true,
+                )
+              : Duration.zero,
           curve: motion.curve(
             _pressed ? GameMotionCurves.enter : GameMotionCurves.springRelease,
           ),
           child: AnimatedSlide(
             offset: Offset(0, translateY / 70),
-            duration: motion.duration(
-              _pressed ? GameMotionDurations.tap : GameMotionDurations.standard,
-            ),
+            duration: motion.shouldUseSpatialMotion(motionIntent)
+                ? motion.durationFor(
+                    motionIntent,
+                    _pressed
+                        ? GameMotionDurations.tap
+                        : GameMotionDurations.standard,
+                    allowReducedTemporalFeedback: true,
+                  )
+                : Duration.zero,
             curve: motion.curve(
               _pressed
                   ? GameMotionCurves.enter

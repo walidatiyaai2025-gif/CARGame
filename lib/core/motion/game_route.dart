@@ -15,19 +15,19 @@ final class GameRoute {
   }) {
     final direction = Directionality.maybeOf(context) ?? TextDirection.ltr;
     final profile = GameMotion.of(context);
-    final reducedMotion = profile.reducedMotion;
+    const intent = GameMotionIntent.essential;
     final horizontalOffset =
         (direction == TextDirection.rtl ? -0.065 : 0.065) *
         profile.effectsScale;
 
     return PageRouteBuilder<T>(
       settings: RouteSettings(name: name),
-      transitionDuration: reducedMotion
+      transitionDuration: profile.reducedMotion
           ? const Duration(milliseconds: 120)
-          : profile.duration(forwardDuration),
-      reverseTransitionDuration: reducedMotion
+          : profile.durationFor(intent, forwardDuration),
+      reverseTransitionDuration: profile.reducedMotion
           ? const Duration(milliseconds: 100)
-          : profile.duration(reverseDuration),
+          : profile.durationFor(intent, reverseDuration),
       pageBuilder: (context, animation, secondaryAnimation) => builder(context),
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
         final fade = CurvedAnimation(
@@ -36,7 +36,7 @@ final class GameRoute {
           reverseCurve: profile.curve(Curves.easeInCubic),
         );
 
-        if (reducedMotion) {
+        if (!profile.shouldUseSpatialMotion(intent)) {
           return FadeTransition(opacity: fade, child: child);
         }
 

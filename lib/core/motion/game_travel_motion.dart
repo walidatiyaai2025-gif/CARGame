@@ -28,56 +28,81 @@ class GameTravelMotion extends StatefulWidget {
 
 class _GameTravelMotionState extends State<GameTravelMotion>
     with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-  bool _started = false;
+  AnimationController? _controller;
+  bool _completionScheduled = false;
   bool _completed = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(vsync: this)
-      ..addStatusListener(_handleStatus);
-  }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (_started) return;
-    _started = true;
+    if (_completed) return;
+
     final profile = GameMotion.of(context);
-    if (profile.reducedMotion) {
-      _completed = true;
-      _controller.value = 1;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) widget.onCompleted();
-      });
+    const intent = GameMotionIntent.essential;
+    final shouldTravel =
+        profile.shouldUseTicker(intent) &&
+        profile.shouldUseSpatialMotion(intent);
+
+    if (!shouldTravel) {
+      _disposeController();
+      _scheduleCompletion();
       return;
     }
-    _controller.duration = profile.duration(GameMotionDurations.standard);
-    _controller.forward();
+
+    if (_controller != null) return;
+    final controller = AnimationController(
+      vsync: this,
+      duration: profile.durationFor(intent, GameMotionDurations.standard),
+    )..addStatusListener(_handleStatus);
+    _controller = controller;
+    controller.forward();
   }
 
   void _handleStatus(AnimationStatus status) {
-    if (status != AnimationStatus.completed || _completed) return;
+    if (status == AnimationStatus.completed) _finishOnce();
+  }
+
+  void _scheduleCompletion() {
+    if (_completionScheduled || _completed) return;
+    _completionScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _completionScheduled = false;
+      if (mounted) _finishOnce();
+    });
+  }
+
+  void _finishOnce() {
+    if (_completed || !mounted) return;
     _completed = true;
     widget.onCompleted();
   }
 
-  @override
-  void dispose() {
-    _controller
+  void _disposeController() {
+    final controller = _controller;
+    if (controller == null) return;
+    controller
       ..removeStatusListener(_handleStatus)
       ..dispose();
+    _controller = null;
+  }
+
+  @override
+  void dispose() {
+    _disposeController();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final profile = GameMotion.of(context);
+    final controller = _controller;
+    final animation = controller ?? const AlwaysStoppedAnimation<double>(1);
+    final reduced = controller == null;
+
     return Positioned.fill(
       child: IgnorePointer(
         child: AnimatedBuilder(
-          animation: _controller,
+          animation: animation,
           child: ExcludeSemantics(
             child: RepaintBoundary(
               child: SizedBox.square(
@@ -89,22 +114,15 @@ class _GameTravelMotionState extends State<GameTravelMotion>
           builder: (context, child) {
             final progress = profile
                 .curve(GameMotionCurves.enter)
-                .transform(_controller.value);
-            final point = profile.reducedMotion
-                ? widget.end
-                : _quadraticPoint(progress);
-            final scale = profile.reducedMotion
-                ? 1.0
-                : _pickupAndSettleScale(progress);
+                .transform(animation.value);
+            final point = reduced ? widget.end : _quadraticPoint(progress);
+            final scale = reduced ? 1.0 : _pickupAndSettleScale(progress);
 
             return Align(
               alignment: Alignment.topLeft,
               child: Transform.translate(
                 offset: point - Offset(widget.size / 2, widget.size / 2),
-                child: Opacity(
-                  opacity: profile.reducedMotion ? progress : 1,
-                  child: Transform.scale(scale: scale, child: child),
-                ),
+                child: Transform.scale(scale: scale, child: child),
               ),
             );
           },

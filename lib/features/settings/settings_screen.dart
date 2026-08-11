@@ -92,10 +92,10 @@ class SettingsScreen extends StatelessWidget {
                             : 'Visual effects: Automatic',
                         subtitle: ar
                             ? settings.reducedVisualEffects
-                                  ? 'تقليل الحركة والتمويه والجسيمات والظلال غير الضرورية'
+                                  ? 'تقليل الحركة غير الضرورية وتخطي المؤثرات السينمائية الزخرفية'
                                   : 'تتكيف الحركة والمؤثرات تلقائيًا مع ضغط الإطارات'
                             : settings.reducedVisualEffects
-                            ? 'Minimizes nonessential motion, blur, particles and shadows'
+                            ? 'Minimizes nonessential motion and skips decorative cinematic effects'
                             : 'Adapts motion and effects automatically to frame pressure',
                         value: settings.reducedVisualEffects,
                         onChanged: settings.setReducedVisualEffects,

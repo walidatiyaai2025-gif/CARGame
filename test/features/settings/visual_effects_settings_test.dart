@@ -59,4 +59,40 @@ void main() {
       },
     );
   }
+  testWidgets(
+    'reduced effects copy explains cinematic skipping in English and Arabic',
+    (tester) async {
+      final settings = AppSettingsStore();
+      await settings.setReducedVisualEffects(true);
+
+      Future<void> pump(Locale locale) => tester.pumpWidget(
+        MaterialApp(
+          locale: locale,
+          supportedLocales: const [Locale('en'), Locale('ar')],
+          localizationsDelegates: const [
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          home: SettingsScreen(settings: settings, onToggleLanguage: () {}),
+        ),
+      );
+
+      await pump(const Locale('en'));
+      expect(
+        find.text(
+          'Minimizes nonessential motion and skips decorative cinematic effects',
+        ),
+        findsOneWidget,
+      );
+
+      await pump(const Locale('ar'));
+      expect(
+        find.text(
+          'تقليل الحركة غير الضرورية وتخطي المؤثرات السينمائية الزخرفية',
+        ),
+        findsOneWidget,
+      );
+    },
+  );
 }

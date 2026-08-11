@@ -267,7 +267,7 @@ Codex must not mark a feature complete merely because UI code exists.
 |---|---|---:|---|---|---|
 | A11Y-001 | Semantic labels for 3D assets | P1 | PLANNED | AST-002, LOC-003 | Interactive/meaningful assets have localized semantics and decorative assets are excluded. |
 | A11Y-002 | Large text and screen-reader validation | P1 | PLANNED | UI3D-006 | Core flow has no overflow at supported scaling and is operable with screen reader. |
-| A11Y-003 | Reduced motion | P1 | PLANNED | UI3D-007 | Setting affects all shared animation primitives and skips nonessential cinematics. |
+| A11Y-003 | Reduced motion | P1 | IN PROGRESS | UI3D-007 | Issue #208 / branch `agent/a11y-003-reduced-motion-enforcement` enforce typed motion intent, no-ticker reduced paths for shared primitives, deterministic nonessential cinematic skipping, repository-wide direct-motion audit, focused tests and permanent CI ownership. Final merge/build evidence pending. |
 | A11Y-004 | Contrast, touch targets, focus, and non-color cues | P1 | PLANNED | UI3D-001 | Text/controls meet target contrast, touch targets, focus order, and state is never color-only. |
 | A11Y-005 | Accessibility test matrix and statement | P2 | PLANNED | A11Y-001, A11Y-004 | Manual/automated matrix and known limitations are documented for release. |
 

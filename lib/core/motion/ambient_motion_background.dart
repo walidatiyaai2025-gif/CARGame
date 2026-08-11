@@ -21,52 +21,49 @@ class AmbientMotionBackground extends StatefulWidget {
 }
 
 class _AmbientMotionBackgroundState extends State<AmbientMotionBackground>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-  bool _ambientMotionDisabled = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: GameMotionDurations.idle,
-    );
-  }
+    with TickerProviderStateMixin {
+  AnimationController? _controller;
+  bool _ambientMotionDisabled = true;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    final profile = GameMotion.of(context);
+    const intent = GameMotionIntent.nonessential;
     final ambientMotionDisabled = !GameMotion.of(context).allowAmbientMotion;
-    if (_ambientMotionDisabled == ambientMotionDisabled &&
-        _controller.isAnimating) {
+    final shouldAnimate =
+        !ambientMotionDisabled && profile.shouldUseTicker(intent);
+    _ambientMotionDisabled = !shouldAnimate;
+
+    if (!shouldAnimate) {
+      _controller?.dispose();
+      _controller = null;
       return;
     }
-    _ambientMotionDisabled = ambientMotionDisabled;
-    if (ambientMotionDisabled) {
-      _controller
-        ..stop()
-        ..value = 0;
-    } else if (!_controller.isAnimating) {
-      _controller.repeat();
-    }
+
+    if (_controller != null) return;
+    _controller = AnimationController(
+      vsync: this,
+      duration: GameMotionDurations.idle,
+    )..repeat();
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _controller?.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final profile = GameMotion.of(context);
+    final animation = _controller ?? const AlwaysStoppedAnimation<double>(0);
     return RepaintBoundary(
       child: AnimatedBuilder(
-        animation: _controller,
+        animation: animation,
         builder: (context, _) => CustomPaint(
           painter: _AmbientMotionPainter(
-            progress: _controller.value,
+            progress: animation.value,
             startColor: widget.startColor,
             endColor: widget.endColor,
             reducedMotion: _ambientMotionDisabled,

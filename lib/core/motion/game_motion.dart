@@ -34,6 +34,8 @@ abstract final class GameMotionSprings {
   );
 }
 
+enum GameMotionIntent { essential, nonessential, cinematic }
+
 class GameMotionProfile {
   const GameMotionProfile({
     required this.reducedMotion,
@@ -42,6 +44,42 @@ class GameMotionProfile {
 
   final bool reducedMotion;
   final GameVisualQuality performanceQuality;
+
+  bool shouldAnimate(
+    GameMotionIntent intent, {
+    bool allowReducedTemporalFeedback = false,
+  }) {
+    if (!reducedMotion) return true;
+    return intent == GameMotionIntent.essential && allowReducedTemporalFeedback;
+  }
+
+  bool shouldUseTicker(
+    GameMotionIntent intent, {
+    bool allowReducedTemporalFeedback = false,
+  }) => shouldAnimate(
+    intent,
+    allowReducedTemporalFeedback: allowReducedTemporalFeedback,
+  );
+
+  bool shouldUseSpatialMotion(GameMotionIntent intent) =>
+      !reducedMotion && shouldAnimate(intent);
+
+  bool shouldSkipCinematic() =>
+      reducedMotion && !shouldAnimate(GameMotionIntent.cinematic);
+
+  Duration durationFor(
+    GameMotionIntent intent,
+    Duration value, {
+    bool allowReducedTemporalFeedback = false,
+  }) {
+    if (!shouldAnimate(
+      intent,
+      allowReducedTemporalFeedback: allowReducedTemporalFeedback,
+    )) {
+      return Duration.zero;
+    }
+    return duration(value);
+  }
 
   bool get allowAmbientMotion =>
       !reducedMotion && performanceQuality == GameVisualQuality.full;

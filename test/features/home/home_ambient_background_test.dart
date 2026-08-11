@@ -30,7 +30,9 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('supports reduced motion', (tester) async {
+  testWidgets('reduced motion uses a static animation without a ticker', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       const MaterialApp(
         home: MediaQuery(
@@ -49,9 +51,9 @@ void main() {
         matching: find.byType(AnimatedBuilder),
       ),
     );
-    final controller = animatedBuilder.animation as AnimationController;
-    expect(controller.isAnimating, isFalse);
-    expect(controller.value, 0);
+    expect(animatedBuilder.animation, isNot(isA<AnimationController>()));
+    expect(animatedBuilder.animation, isA<Animation<double>>());
+    expect((animatedBuilder.animation as Animation<double>).value, 0);
     expect(tester.takeException(), isNull);
   });
 }
