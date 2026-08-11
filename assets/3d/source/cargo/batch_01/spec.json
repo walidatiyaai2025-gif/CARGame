@@ -1,0 +1,149 @@
+{
+  "schemaVersion": 1,
+  "batchId": "AST-007-BATCH-01",
+  "featureId": "AST-007",
+  "issue": 210,
+  "purpose": "Production handoff specification only. This file does not constitute provenance, commercial-use approval, or runtime admission.",
+  "globalContract": {
+    "profile": "pcargo",
+    "canvas": {"width": 384, "height": 384},
+    "maxEncodedBytes": 122880,
+    "format": "webp",
+    "colorSpace": "sRGB",
+    "bitDepth": 8,
+    "alphaRequired": true,
+    "camera": {
+      "projection": "perspective",
+      "focalLengthEquivalentMm": 50,
+      "yawDegrees": -30,
+      "elevationDegrees": 18,
+      "rollDegrees": 0
+    },
+    "composition": {
+      "pivot": "bottom-center",
+      "subjectOccupancyPercentMin": 78,
+      "subjectOccupancyPercentMax": 86,
+      "transparentSafetyPaddingPercent": 7
+    },
+    "lighting": {
+      "key": "soft upper-left key, horizontal 35-45 degrees and downward 35-50 degrees",
+      "fill": "low-intensity cool fill from lower-right",
+      "rim": "restrained rim light",
+      "contactShadow": "soft neutral contact shadow fully inside safety padding"
+    },
+    "materialDirection": "clean stylized premium mobile-game 3D render, saturated rounded materials, broad metal highlights, soft plastic response, readable glass, soft local AO, no grime",
+    "background": "transparent",
+    "prohibitedVisualContent": [
+      "logos",
+      "trademarks",
+      "readable text",
+      "numbers",
+      "currency",
+      "locale-specific marks",
+      "team marks",
+      "manufacturer branding",
+      "baked UI panels",
+      "baked screen blur"
+    ],
+    "runtimeBinaryStatus": "NOT_CREATED",
+    "provenanceStatus": "NOT_CREATED"
+  },
+  "assets": [
+    {
+      "assetId": "cargo.accessory_box",
+      "concept": "Accessory Box",
+      "runtimePath": "assets/3d/runtime/cargo/fashion/cg_cargo_accessory_box_pcargo_v01.webp",
+      "runtimeBinaryStatus": "NOT_CREATED",
+      "provenanceStatus": "NOT_CREATED",
+      "prompt": "Single compact premium accessories gift/storage box with subtle compartment and ribbon-form cues, clean stylized mobile-game 3D product render, no logo, no text, no trademark."
+    },
+    {
+      "assetId": "cargo.accessory_carton",
+      "concept": "Accessory Carton",
+      "runtimePath": "assets/3d/runtime/cargo/special/cg_cargo_accessory_carton_pcargo_v01.webp",
+      "runtimeBinaryStatus": "NOT_CREATED",
+      "provenanceStatus": "NOT_CREATED",
+      "prompt": "Single sturdy specialty accessories shipping carton with geometric reinforcement and premium clean edges, stylized mobile-game 3D render, no shipping labels, no logo, no text."
+    },
+    {
+      "assetId": "cargo.action_figure_box",
+      "concept": "Action Figure Box",
+      "runtimePath": "assets/3d/runtime/cargo/toys/cg_cargo_action_figure_box_pcargo_v01.webp",
+      "runtimeBinaryStatus": "NOT_CREATED",
+      "provenanceStatus": "NOT_CREATED",
+      "prompt": "Single generic action-figure package silhouette with an original non-branded toy form and optional clear shell cue, stylized mobile-game 3D render, no character IP, no logo, no readable title."
+    },
+    {
+      "assetId": "cargo.apparel_box",
+      "concept": "Apparel Box",
+      "runtimePath": "assets/3d/runtime/cargo/fashion/cg_cargo_apparel_box_pcargo_v01.webp",
+      "runtimeBinaryStatus": "NOT_CREATED",
+      "provenanceStatus": "NOT_CREATED",
+      "prompt": "Single premium folded-clothing apparel box with a small clean fabric peek, rounded stylized materials, mobile-game 3D product render, no fashion logo, no text."
+    },
+    {
+      "assetId": "cargo.apple_crate",
+      "concept": "Apple Crate",
+      "runtimePath": "assets/3d/runtime/cargo/food/cg_cargo_apple_crate_pcargo_v01.webp",
+      "runtimeBinaryStatus": "NOT_CREATED",
+      "provenanceStatus": "NOT_CREATED",
+      "prompt": "Single clean produce crate containing bright generic red and green apples, stylized premium mobile-game 3D render, tidy geometry, no farm branding, no labels, no text."
+    },
+    {
+      "assetId": "cargo.archive_box",
+      "concept": "Archive Box",
+      "runtimePath": "assets/3d/runtime/cargo/office/cg_cargo_archive_box_pcargo_v01.webp",
+      "runtimeBinaryStatus": "NOT_CREATED",
+      "provenanceStatus": "NOT_CREATED",
+      "prompt": "Single office archive storage box with a blank tab area and practical handle cutout, clean stylized mobile-game 3D render, no written labels, no logo, no text."
+    },
+    {
+      "assetId": "cargo.auto_part_crate",
+      "concept": "Auto Part Crate",
+      "runtimePath": "assets/3d/runtime/cargo/special/cg_cargo_auto_part_crate_pcargo_v01.webp",
+      "runtimeBinaryStatus": "NOT_CREATED",
+      "provenanceStatus": "NOT_CREATED",
+      "prompt": "Single reinforced shipping crate containing a clearly generic stylized automotive mechanical part, premium mobile-game 3D render, no manufacturer branding, no model marks, no text."
+    },
+    {
+      "assetId": "cargo.bakery_box",
+      "concept": "Bakery Box",
+      "runtimePath": "assets/3d/runtime/cargo/food/cg_cargo_bakery_box_pcargo_v01.webp",
+      "runtimeBinaryStatus": "NOT_CREATED",
+      "provenanceStatus": "NOT_CREATED",
+      "prompt": "Single clean bakery carry box with a visible generic croissant or bread cue, warm stylized premium mobile-game 3D render, no bakery logo, no label, no text."
+    },
+    {
+      "assetId": "cargo.basketball_bag",
+      "concept": "Basketball Bag",
+      "runtimePath": "assets/3d/runtime/cargo/sports/cg_cargo_basketball_bag_pcargo_v01.webp",
+      "runtimeBinaryStatus": "NOT_CREATED",
+      "provenanceStatus": "NOT_CREATED",
+      "prompt": "Single generic sports duffel or mesh equipment bag with one original non-branded basketball visible, stylized mobile-game 3D render, no team marks, no logos, no text."
+    },
+    {
+      "assetId": "cargo.battery_pack",
+      "concept": "Battery Pack",
+      "runtimePath": "assets/3d/runtime/cargo/special/cg_cargo_battery_pack_pcargo_v01.webp",
+      "runtimeBinaryStatus": "NOT_CREATED",
+      "provenanceStatus": "NOT_CREATED",
+      "prompt": "Single generic sealed multipack of clearly distinguishable power cells, clean stylized mobile-game 3D render, no brand, no electrical label copy, no warning text, no numbers."
+    },
+    {
+      "assetId": "cargo.board_game_box",
+      "concept": "Board Game Box",
+      "runtimePath": "assets/3d/runtime/cargo/toys/cg_cargo_board_game_box_pcargo_v01.webp",
+      "runtimeBinaryStatus": "NOT_CREATED",
+      "provenanceStatus": "NOT_CREATED",
+      "prompt": "Single colorful generic tabletop game box with abstract original pieces and dice cues, stylized premium mobile-game 3D render, no existing game IP, no readable title, no logo."
+    },
+    {
+      "assetId": "cargo.boot_carton",
+      "concept": "Boot Carton",
+      "runtimePath": "assets/3d/runtime/cargo/fashion/cg_cargo_boot_carton_pcargo_v01.webp",
+      "runtimeBinaryStatus": "NOT_CREATED",
+      "provenanceStatus": "NOT_CREATED",
+      "prompt": "Single clean footwear carton with an original generic stylized boot partially visible, premium mobile-game 3D render, no brand marks, no shoe logo, no text."
+    }
+  ]
+}
