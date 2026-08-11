@@ -124,6 +124,12 @@ jobs:
       - name: Test A11Y-003 reduced-motion validator
         run: python3 tool/test_a11y_003_reduced_motion.py
 
+      - name: Verify AST-007 cargo visual pack
+        run: python3 tool/verify_ast_007_cargo_visuals.py
+
+      - name: Test AST-007 cargo visual validator
+        run: python3 tool/test_ast_007_cargo_visuals.py
+
       - name: Restore packages
         shell: bash
         run: |
@@ -196,6 +202,12 @@ jobs:
 
       - name: Analyze
         run: flutter analyze --no-fatal-infos --no-fatal-warnings
+
+      - name: Test AST-007 cargo visual pack
+        run: >-
+          flutter test
+          test/features/game/cargo_visual_catalog_test.dart
+          test/features/game/cargo_visual_asset_test.dart
 
       - name: Test AST-004 asset cache policy
         run: flutter test test/core/assets/game_asset_cache_policy_test.dart
