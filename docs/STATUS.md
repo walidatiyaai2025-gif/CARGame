@@ -7,12 +7,25 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | Field | Value |
 |---|---|
 | Current phase | Android RC hardening — issue #79 |
-| Primary feature | `A11Y-003` Reduced motion — IN PROGRESS on issue #208 / `agent/a11y-003-reduced-motion-enforcement`. |
-| Completed checkpoint | `UI3D-007` reduced motion and adaptive visual effects — IMPLEMENTED; issue #205 / PR #206 completed 100/100 source-controlled checkpoints, PR #206 merged as `a342b3befed9259326fa769735f327e6916d1a5a`, and exact-main Flutter CI #863 / run `31466188761` passed all 63 gates. |
-| Status | UI3D-007 source-controlled acceptance is IMPLEMENTED: persistent Automatic/Reduced visual effects, app-wide accessibility/performance policy, shared effect budgets, EN/AR live Settings control, privacy inventory, 13/13 validator regressions, focused Flutter coverage, full suite/coverage, Debug APK build/security/upload, and exact-main verification are green. Physical-device visual/performance observation remains separate evidence and is not claimed. |
-| Previous checkpoint | `TEST-011` privacy, consent, and security verification — IMPLEMENTED with 100/100 repository checkpoints; external production UMP regulated-region/device evidence remains pending. |
-| Next recommended feature | A11Y-003 is the active primary; no second source-controlled feature should start until merge/reconciliation completes. |
+| Primary feature | None — `A11Y-003` completed 100/100 source-controlled checkpoints as IMPLEMENTED; `A11Y-002` is selected next but not started. |
+| Completed checkpoint | `A11Y-003` Reduced motion — IMPLEMENTED; issue #208 / PR #209 completed 100/100 source-controlled checkpoints, PR #209 merged as `996bebf50e9f5b150e10a9f6455a27015a67355f`, and exact-main Flutter CI #873 / run `31473003490` passed all 66 gates. |
+| Status | A11Y-003 source-controlled acceptance is IMPLEMENTED: typed motion intent, deterministic cinematic skip, no-ticker reduced paths, 43-record direct-motion audit, 16/16 validator regressions, focused motion/ambient regression coverage, full suite/coverage, Debug APK security/upload and exact-main verification are green. Physical screen-reader/device observation remains separate and is not claimed. |
+| Previous checkpoint | `UI3D-007` reduced motion and adaptive visual effects — IMPLEMENTED with 100/100 source-controlled checkpoints and exact-main CI. |
+| Next recommended feature | `A11Y-002` Large text and screen-reader validation — P1, dependency-ready through VERIFIED UI3D-006; selected next but not started. |
 | Known blocker | `TEST-011` VERIFIED still requires real production AdMob Privacy & messaging/UMP regulated-region/device evidence. `TEST-009` remains blocked on PERF-001 physical-device frame profiling. `REL-007`/`REL-008` require real production AdMob/signing inputs and a production-signed candidate; final install/upgrade/device smoke requires an Android device/testing track. |
+
+## A11Y-003 reduced motion accessibility enforcement — 2026-08-11
+
+- Issue #208 / PR #209 complete the 100-checkpoint source-controlled sprint. Repository status is IMPLEMENTED.
+- `GameMotionIntent` classifies essential, nonessential and cinematic motion while keeping PERF-001 performance pressure separate from accessibility intent.
+- `GameCinematicGate` skips nonessential cinematic motion under effective reduced motion without allocating a ticker and reports an explicit exact-once completion reason.
+- Shared ambient, cargo-travel and action-feedback reduced paths no longer allocate AnimationControllers; GameButton and route motion consume intent-aware shared policy while preserving semantics, taps, navigation completion and the established reduced route timing contract.
+- The checked-in direct-motion audit owns 43 current `lib/` primitive records and normal CI rejects unreviewed AnimationController/Animated*/Hero/PageRouteBuilder/transition/timer/delay drift.
+- A11Y-003 machine validation passes with 16/16 validator ownership regressions. The focused matrix includes the ambient no-ticker regression that was promoted after the first full-suite discovery.
+- Final PR head `04abd449451e0fb44f5a95eca6f74af263a35665` passed Flutter CI #872 / run `31472254901` all 66 gates. Debug artifact #9094044902 is 80,659,591 bytes with SHA-256 `bfa4d84edc21eaf6efdd376dcdc04b0101a5e21efc7de555dda18fae09709d3c`.
+- PR #209 merged as `996bebf50e9f5b150e10a9f6455a27015a67355f`. Exact-main Flutter CI #873 / run `31473003490` passed all 66 gates. Main debug artifact #9094321792 is 80,659,593 bytes with SHA-256 `ee95a99a8460d1824a28fb9512d12454d3e9f69648a9e0bd5506e34ccf2be98d`.
+- No physical screen-reader, assistive-technology or device observation is invented. Those remain separate verification evidence.
+- Fresh dependency-ready scan selects exactly one next source-controlled workstream: `A11Y-002` Large text and screen-reader validation (P1), now dependency-ready through VERIFIED UI3D-006. It is selected but not started.
 
 ## UI3D-007 reduced motion and adaptive visual effects — 2026-08-11
 
