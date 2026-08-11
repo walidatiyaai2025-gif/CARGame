@@ -19,6 +19,13 @@ jobs:
           fetch-depth: 0
           ref: agent/ast-007-source-checkpoint-reconcile
 
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.44.8
+          cache: true
+
       - name: Apply reconciliation
         run: python3 tool/reconcile_ast_007_source_once.py
 
