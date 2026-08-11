@@ -14,10 +14,7 @@ enum GameAssetIntakeState {
 }
 
 final class GameAssetIntakeItem {
-  const GameAssetIntakeItem({
-    required this.descriptor,
-    required this.state,
-  });
+  const GameAssetIntakeItem({required this.descriptor, required this.state});
 
   final GameAssetDescriptor descriptor;
   final GameAssetIntakeState state;
@@ -79,9 +76,9 @@ final class GameAssetIntakePlan {
     }
 
     items.sort((left, right) {
-      final priority = _statePriority(left.state).compareTo(
-        _statePriority(right.state),
-      );
+      final priority = _statePriority(
+        left.state,
+      ).compareTo(_statePriority(right.state));
       if (priority != 0) return priority;
       return left.descriptor.id.compareTo(right.descriptor.id);
     });

@@ -13,10 +13,7 @@ void main() {
     final plan = GameAssetIntakePlan.build(
       registry: registry,
       provenance: provenance,
-      runtimeBinaryPaths: <String>[
-        _pathFor('alpha'),
-        _pathFor('delta'),
-      ],
+      runtimeBinaryPaths: <String>[_pathFor('alpha'), _pathFor('delta')],
     );
 
     expect(plan.items, hasLength(4));
@@ -25,16 +22,14 @@ void main() {
     expect(plan.provenanceMissingCount, 2);
 
     final batch = plan.nextBatch(limit: 3);
-    expect(
-      batch.map((item) => item.descriptor.id),
-      <String>['cargo.alpha', 'cargo.bravo', 'cargo.charlie'],
-    );
+    expect(batch.map((item) => item.descriptor.id), <String>[
+      'cargo.alpha',
+      'cargo.bravo',
+      'cargo.charlie',
+    ]);
     expect(batch[0].state, GameAssetIntakeState.missingProvenance);
     expect(batch[1].state, GameAssetIntakeState.missingBinary);
-    expect(
-      batch[2].state,
-      GameAssetIntakeState.missingBinaryAndProvenance,
-    );
+    expect(batch[2].state, GameAssetIntakeState.missingBinaryAndProvenance);
   });
 
   test('normalizes Windows runtime paths before admission matching', () {
@@ -70,12 +65,11 @@ void main() {
 
   test('validates registered provenance against its descriptor', () {
     final registry = GameAssetRegistry.fromJsonString(_manifest());
-    final invalidProvenance = _provenanceCatalog(
-      <String>['cargo.bravo'],
-    ).replaceFirst(
-      '"runtimePath":"${_pathFor('bravo')}"',
-      '"runtimePath":"${_pathFor('alpha')}"',
-    );
+    final invalidProvenance = _provenanceCatalog(<String>['cargo.bravo'])
+        .replaceFirst(
+          '"runtimePath":"${_pathFor('bravo')}"',
+          '"runtimePath":"${_pathFor('alpha')}"',
+        );
 
     expect(
       () => GameAssetIntakePlan.build(
@@ -100,7 +94,8 @@ String _manifest() {
   return '{"schemaVersion":1,"assets":[$assets]}';
 }
 
-String _assetJson(String slug, String concept) => '''
+String _assetJson(String slug, String concept) =>
+    '''
 {
   "id":"cargo.$slug",
   "path":"${_pathFor(slug)}",
@@ -119,9 +114,10 @@ String _assetJson(String slug, String concept) => '''
 ''';
 
 String _provenanceCatalog(List<String> assetIds) {
-  final records = assetIds.map((assetId) {
-    final slug = assetId.substring('cargo.'.length);
-    return '''
+  final records = assetIds
+      .map((assetId) {
+        final slug = assetId.substring('cargo.'.length);
+        return '''
 {
   "assetId":"$assetId",
   "runtimePath":"${_pathFor(slug)}",
@@ -143,7 +139,8 @@ String _provenanceCatalog(List<String> assetIds) {
   "prohibitedUse":""
 }
 ''';
-  }).join(',');
+      })
+      .join(',');
   return '{"schemaVersion":1,"records":[$records]}';
 }
 
