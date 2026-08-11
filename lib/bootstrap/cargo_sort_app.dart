@@ -17,6 +17,7 @@ import '../core/settings/visual_effects_preference_scope.dart';
 import '../core/storage/progress_store.dart';
 import '../core/theme/app_theme.dart';
 import '../features/home/home_screen.dart';
+import '../features/realtime_3d/realtime_3d_preview_screen.dart';
 import '../features/settings/settings_screen.dart';
 import '../l10n/app_localizations.dart';
 
@@ -91,6 +92,18 @@ class _CargoSortAppState extends State<CargoSortApp>
           localDataController: _localDataController,
           onLocalDataDeleted: _rehydrateAfterLocalDataDeletion,
         ),
+      ),
+    );
+  }
+
+  void _openRealtime3dLab() {
+    final context = _navigatorKey.currentContext;
+    if (context == null) return;
+    unawaited(
+      GameNavigator.pushNamed<void>(
+        context,
+        name: GameRouteNames.realtime3dLab,
+        builder: (_) => const Realtime3dPreviewScreen(),
       ),
     );
   }
@@ -208,6 +221,41 @@ class _CargoSortAppState extends State<CargoSortApp>
                         icon: const Icon(
                           Icons.settings_rounded,
                           color: AppTheme.navy,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                PositionedDirectional(
+                  top: 122,
+                  end: 16,
+                  child: SafeArea(
+                    child: Tooltip(
+                      message: 'Open 3D visual checkpoint',
+                      child: Material(
+                        color: AppTheme.navy,
+                        elevation: 7,
+                        shape: const CircleBorder(),
+                        clipBehavior: Clip.antiAlias,
+                        child: InkWell(
+                          onTap: _openRealtime3dLab,
+                          customBorder: const CircleBorder(),
+                          child: const SizedBox(
+                            key: Key('open-realtime-3d-lab'),
+                            width: 48,
+                            height: 48,
+                            child: Center(
+                              child: Text(
+                                '3D',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 0.4,
+                                ),
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                     ),

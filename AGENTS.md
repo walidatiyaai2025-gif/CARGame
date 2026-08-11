@@ -3,7 +3,8 @@
 ## Mission
 
 Develop CARGame into a production-quality Flutter cargo sorting game with a
-consistent premium 3D-rendered visual style and responsive, polished animation.
+consistent premium real-time 3D interactive visual style and responsive, polished
+animation.
 
 The game contains 150 levels, 6 worlds, and 25 cities per world.
 
@@ -108,28 +109,33 @@ maintained copy of feature statuses.
 
 ## Product requirements
 
-- Flutter and Dart remain the primary stack.
+- Flutter and Dart remain the primary stack and application shell.
 - Android is the primary platform.
 - Support Arabic RTL and English LTR.
 - The game must remain usable offline.
-- All primary visual elements must use a unified 3D-rendered style.
+- Primary world, city, cargo, building, vehicle, and gameplay visuals must use a unified real-time 3D stylized language.
+- Do not introduce new flat-card gameplay or world-map presentation as the destination architecture.
+- Flutter overlays remain allowed for accessibility, system controls, settings, dialogs, and non-world HUD where they improve usability.
 - Do not use emojis as production assets.
 - Avoid Material icons for primary gameplay, rewards, products, cities, resources, boosters, or navigation destinations.
 - Material icons are allowed only for minor system actions when no 3D asset is appropriate.
-- Every image asset must have a fallback and semantic label.
+- Every image or 3D asset must have a fallback and semantic label where applicable.
 - The interface must support small phones, large phones, tablets, display scaling, safe areas, and large text.
 - Avoid fixed heights where content can vary.
 - Prevent RenderFlex overflows.
 - Prevent repeated taps, duplicate rewards, and overlapping navigation.
 
-## 3D visual direction
+## Real-time 3D visual direction
 
-- Use premium stylized 3D-rendered visuals, not a real-time 3D engine.
+- Use premium stylized real-time 3D visuals for the globe, countries, cities, gameplay spaces, cargo, buildings, and vehicles.
+- The canonical architecture is documented in `docs/REALTIME_3D_ARCHITECTURE.md`.
+- Keep renderer-specific APIs behind outward adapters; domain and application layers remain pure Dart.
+- Runtime asset target is GLB/glTF with stable semantic entity/node identities and low-cost interaction proxies where needed.
+- Existing pre-rendered transparent WebP assets remain valid only as transitional references, UI/fallback assets, or compatibility content; do not treat WebP-only gameplay rendering as the final destination.
 - Lighting direction: upper-left.
 - Use soft ambient shadows, rim highlights, rounded geometry, and clean saturated materials.
 - Maintain consistent camera angle, perspective, saturation, and shadow density.
-- Prefer transparent WebP assets.
-- UI animations should be short and responsive.
+- UI and world interactions should be short and responsive.
 - Avoid excessive continuous animation.
 - Respect reduced-motion settings when available.
 
@@ -156,8 +162,8 @@ Required motion families:
    - Locked item shake on invalid tap.
 
 2. Screen transitions
-   - Shared-axis or fade-through navigation.
-   - Hero transitions for city, chest, reward, and selected product.
+   - Shared-axis or fade-through navigation where the transition is still a Flutter overlay/route.
+   - Camera flights and scene transitions for country, city, warehouse, and gameplay navigation.
    - No abrupt route replacement unless recovering from failure.
 
 3. Gameplay motion
@@ -171,7 +177,7 @@ Required motion families:
    - City unlock, boss gate opening, chest opening.
 
 5. Ambient life
-   - Slow parallax in hero backgrounds.
+   - Slow parallax or bounded camera/environment motion in hero scenes.
    - Floating particles at low density.
    - Gentle light sweeps on premium assets.
    - Small environment motion per world.
@@ -191,8 +197,8 @@ Motion budgets:
 
 ## Architecture
 
-- Keep business logic outside widgets.
-- Separate presentation, domain, application, storage, motion, and asset concerns.
+- Keep business logic outside widgets and renderer adapters.
+- Separate presentation, domain, application, storage, motion, 3D rendering, and asset concerns.
 - Reuse shared UI and animation components.
 - Keep files focused and reasonably sized.
 - Avoid global mutable state.
@@ -209,7 +215,7 @@ A function is not done until all applicable conditions are met:
 - Repeated taps and asynchronous race conditions are guarded.
 - Arabic/English and RTL/LTR implications are checked.
 - Responsive behavior is checked for narrow and large screens.
-- Animation controllers, subscriptions, and resources are disposed.
+- Animation controllers, subscriptions, renderer resources, and scene resources are disposed.
 - Existing saved data remains readable.
 - Unit/widget/regression tests are added where practical.
 - Formatting and analysis pass.
@@ -298,6 +304,7 @@ Maintain:
 - docs/ROADMAP.md
 - docs/FEATURE_CATALOG.md
 - docs/ARCHITECTURE.md
+- docs/REALTIME_3D_ARCHITECTURE.md
 - docs/DESIGN_SYSTEM_3D.md
 - docs/MOTION_SYSTEM.md
 - docs/ASSET_CATALOG.md
