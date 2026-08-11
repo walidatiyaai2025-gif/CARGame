@@ -7,12 +7,21 @@ This document is the operational summary. Detailed tracking remains in `docs/FEA
 | Field | Value |
 |---|---|
 | Current phase | Android RC hardening — issue #79 |
-| Primary feature | None — `A11Y-003` source-controlled work is complete and reconciled as IMPLEMENTED; `AST-007` issue #210 is selected next but not started. |
+| Primary feature | `AST-007` 100+ cargo visual pack — IN PROGRESS on issue #210 / `agent/ast-007-cargo-visual-pack`. |
 | Completed checkpoint | `A11Y-003` reduced-motion accessibility — IMPLEMENTED; issue #208 / PR #209 completed 100/100 source-controlled checkpoints, PR #209 merged as `996bebf50e9f5b150e10a9f6455a27015a67355f`, and exact-main Flutter CI #873 / run `31473003490` passed all gates. |
 | Status | A11Y-003 source-controlled acceptance is IMPLEMENTED: shared motion intent classification, deterministic no-ticker reduced paths, cinematic skip semantics, direct-motion audit, EN/AR Settings copy, validator regressions, focused/full tests, coverage, Debug APK security/upload and exact-main verification are green. Main artifact #9094321792 (80,659,593 bytes; sha256:ee95a99a8460d1824a28fb9512d12454d3e9f69648a9e0bd5506e34ccf2be98d). Physical assistive-technology/device observation is separate evidence and is not claimed. |
 | Previous checkpoint | `UI3D-007` reduced motion and adaptive visual effects — IMPLEMENTED with 100/100 source-controlled checkpoints and exact-main verification. |
-| Next recommended feature | `AST-007` 100+ cargo visual variants — P1, dependency-ready via AST-002 and selected as issue #210 because it unblocks the P0 `GAME-012` production 3D board/products path while preserving stable gameplay IDs. |
+| Next recommended feature | AST-007 is the active primary; no second source-controlled feature should start until its checkpoint is reconciled. |
 | Known blocker | `TEST-011` VERIFIED still requires real production AdMob Privacy & messaging/UMP regulated-region/device evidence. `TEST-009` remains blocked on PERF-001 physical-device frame profiling. `REL-007`/`REL-008` require real production AdMob/signing inputs and a production-signed candidate; final install/upgrade/device smoke requires an Android device/testing track. |
+
+## AST-007 cargo visual pack — 2026-08-11
+
+- Issue #210 is the single active source-controlled workstream after A11Y-003 reconciliation.
+- Baseline gameplay truth remains 18 stable `CargoItem` archetype IDs across the deterministic 150-level catalog; matching, moves, difficulty, rewards and persisted progress must not change.
+- The implementation target is a separate typed visual layer with 124 stable `cargo.*` identities, deterministic level/archetype selection, and consistent source/warehouse/flight visuals.
+- Cargo descriptors use the existing `pcargo` 384x384 manifest contract and `assets/3d/runtime/cargo/...` taxonomy.
+- Missing binaries stay fallback-safe. No WebP, license, creator, prompt, checksum or provenance approval is invented; AST-011 remains the admission authority.
+- Source work can establish the catalog/resolver/UI bridge/tests/CI while actual production-art admission remains evidence-dependent.
 
 ## A11Y-003 reduced-motion accessibility — 2026-08-11
 

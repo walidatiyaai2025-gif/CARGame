@@ -1,0 +1,131 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import json
+import re
+from pathlib import Path
+
+EXPECTED_CARGO_COUNT = 124
+REQUIRED_FILES = [
+    'assets/3d/manifest.json',
+    'lib/features/game/cargo_visual_catalog.dart',
+    'lib/features/game/cargo_visual_asset.dart',
+    'lib/features/game/gameplay_operations_deck.dart',
+    'lib/features/game/game_screen.dart',
+    'lib/features/game/level_data.dart',
+    'test/features/game/cargo_visual_catalog_test.dart',
+    'test/features/game/cargo_visual_asset_test.dart',
+    'docs/FEATURE_CATALOG.md',
+    '.github/workflows/flutter_ci.yml',
+]
+
+
+class ValidationError(RuntimeError):
+    pass
+
+
+def _read(root: Path, relative: str) -> str:
+    path = root / relative
+    if not path.is_file():
+        raise ValidationError(f'missing AST-007 file: {relative}')
+    return path.read_text(encoding='utf-8')
+
+
+def validate(root: Path = Path('.')) -> None:
+    for relative in REQUIRED_FILES:
+        if not (root / relative).is_file():
+            raise ValidationError(f'missing AST-007 file: {relative}')
+
+    manifest = json.loads(_read(root, 'assets/3d/manifest.json'))
+    assets = manifest.get('assets')
+    if not isinstance(assets, list):
+        raise ValidationError('manifest assets must be a list')
+    cargo = [item for item in assets if item.get('category') == 'cargo']
+    if len(cargo) != EXPECTED_CARGO_COUNT:
+        raise ValidationError(
+            f'expected {EXPECTED_CARGO_COUNT} cargo descriptors, found {len(cargo)}'
+        )
+    cargo_ids = [item.get('id') for item in cargo]
+    if len(set(cargo_ids)) != EXPECTED_CARGO_COUNT:
+        raise ValidationError('cargo descriptor IDs must be unique')
+
+    path_pattern = re.compile(
+        r'^assets/3d/runtime/cargo/[a-z0-9_]+/cg_cargo_[a-z0-9_]+_pcargo_v01\.webp$'
+    )
+    for item in cargo:
+        if not isinstance(item.get('id'), str) or not item['id'].startswith('cargo.'):
+            raise ValidationError('cargo descriptor ID must use cargo.* namespace')
+        if item.get('profile') != 'pcargo':
+            raise ValidationError(f"cargo descriptor {item.get('id')} must use pcargo")
+        if item.get('dimensions') != {'width': 384, 'height': 384}:
+            raise ValidationError(f"cargo descriptor {item.get('id')} must be 384x384")
+        if not isinstance(item.get('path'), str) or not path_pattern.match(item['path']):
+            raise ValidationError(f"cargo descriptor {item.get('id')} has invalid runtime path")
+
+    catalog = _read(root, 'lib/features/game/cargo_visual_catalog.dart')
+    families = re.findall(r'_CargoVisualFamily\(\s*archetypeId:\s*(\d+),', catalog)
+    if sorted(map(int, families)) != list(range(1, 19)):
+        raise ValidationError('typed catalog must define archetypes 1..18 exactly once')
+    slugs = re.findall(r"^\s+'([a-z0-9_]+)',?$", catalog, flags=re.M)
+    if len(slugs) != EXPECTED_CARGO_COUNT or len(set(slugs)) != EXPECTED_CARGO_COUNT:
+        raise ValidationError('typed catalog must own 124 unique subject slugs')
+    if {f'cargo.{slug}' for slug in slugs} != set(cargo_ids):
+        raise ValidationError('typed catalog and manifest cargo IDs must match exactly')
+    for token in [
+        'expectedVariantCount = 124',
+        'required int levelNumber',
+        'required int archetypeId',
+        "'assets/3d/runtime/cargo/",
+        'GameAssetProfile.pcargo',
+    ]:
+        if token not in catalog:
+            raise ValidationError(f'cargo visual catalog missing contract: {token}')
+
+    level_data = _read(root, 'lib/features/game/level_data.dart')
+    archetype_ids = [
+        int(value)
+        for value in re.findall(r'CargoItem\(\s*id:\s*(\d+),', level_data)
+    ]
+    if archetype_ids != list(range(1, 19)):
+        raise ValidationError('gameplay CargoItem IDs must remain exactly 1..18')
+    if 'Random(number * 7919 + 2026)' not in level_data:
+        raise ValidationError('deterministic level generator seed changed')
+
+    bridge = _read(root, 'lib/features/game/cargo_visual_asset.dart')
+    for token in [
+        'CargoVisualCatalog.resolve(',
+        'GameManifestAssetView(',
+        'errorFallback: fallback',
+        "'cargo-visual-${visual.assetId}'",
+    ]:
+        if token not in bridge:
+            raise ValidationError(f'cargo visual bridge missing contract: {token}')
+
+    deck = _read(root, 'lib/features/game/gameplay_operations_deck.dart')
+    if deck.count('CargoVisualAsset(') < 3:
+        raise ValidationError('cargo bay, warehouse and flight must all use CargoVisualAsset')
+    if "import 'cargo_visual_asset.dart';" not in deck:
+        raise ValidationError('gameplay deck missing cargo visual bridge import')
+
+    game = _read(root, 'lib/features/game/game_screen.dart')
+    if game.count('levelNumber: widget.level.number') < 3:
+        raise ValidationError('game screen must pass level identity to all cargo visual surfaces')
+
+    catalog_doc = _read(root, 'docs/FEATURE_CATALOG.md')
+    if '| AST-007 | 100+ 3D cargo product pack | P1 | IN PROGRESS |' not in catalog_doc and \
+       '| AST-007 | 100+ 3D cargo product pack | P1 | IMPLEMENTED |' not in catalog_doc:
+        raise ValidationError('AST-007 catalog tracking is not owned by this workstream')
+
+    ci = _read(root, '.github/workflows/flutter_ci.yml')
+    for token in [
+        'Verify AST-007 cargo visual pack',
+        'Test AST-007 cargo visual validator',
+        'Test AST-007 cargo visual pack',
+    ]:
+        if token not in ci:
+            raise ValidationError(f'normal Flutter CI missing AST-007 gate: {token}')
+
+
+if __name__ == '__main__':
+    validate()
+    print('AST-007 CARGO VISUAL CONTRACT PASSED (124 descriptors / 18 archetypes)')

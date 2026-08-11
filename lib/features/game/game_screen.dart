@@ -552,6 +552,7 @@ class _GameScreenState extends State<GameScreen> {
                         Expanded(
                           flex: 3,
                           child: GameplayCargoBoard(
+                            levelNumber: widget.level.number,
                             items: _remaining,
                             selectedIndex: _selectedIndex,
                             travellingIndex: _resolving ? _selectedIndex : null,
@@ -565,6 +566,7 @@ class _GameScreenState extends State<GameScreen> {
                         Expanded(
                           flex: 2,
                           child: GameplayWarehouseBoard(
+                            levelNumber: widget.level.number,
                             warehouses: _warehouses,
                             activeWarehouseId: flight?.warehouse.id,
                             activeCargoId: flight?.item.id,
@@ -626,7 +628,10 @@ class _GameScreenState extends State<GameScreen> {
                 end: flight.end,
                 size: 58,
                 onCompleted: () => unawaited(_completeFlight(flight)),
-                child: GameplayFlightCargo(item: flight.item),
+                child: GameplayFlightCargo(
+                  item: flight.item,
+                  levelNumber: widget.level.number,
+                ),
               ),
             if (_feedbackKind case final feedbackKind?)
               GameActionFeedback(

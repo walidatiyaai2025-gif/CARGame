@@ -7,6 +7,7 @@ import '../../core/theme/game_skin.dart';
 import '../../core/theme/three_d_game_icon.dart';
 import '../../core/widgets/game_button.dart';
 import 'cargo_motion_tile.dart';
+import 'cargo_visual_asset.dart';
 import 'level_data.dart';
 
 typedef GameplayCargoTap =
@@ -385,6 +386,7 @@ class GameplayCargoBoard extends StatelessWidget {
     required this.compact,
     required this.isArabic,
     required this.accent,
+    this.levelNumber = 1,
   });
 
   final List<CargoItem> items;
@@ -394,6 +396,7 @@ class GameplayCargoBoard extends StatelessWidget {
   final bool compact;
   final bool isArabic;
   final Color accent;
+  final int levelNumber;
 
   @override
   Widget build(BuildContext context) => Container(
@@ -488,10 +491,16 @@ class GameplayCargoBoard extends StatelessWidget {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(
-                              item.icon,
-                              color: Colors.white,
-                              size: compact ? 25 : 33,
+                            CargoVisualAsset(
+                              item: item,
+                              levelNumber: levelNumber,
+                              width: compact ? 28 : 36,
+                              height: compact ? 28 : 36,
+                              fallback: Icon(
+                                item.icon,
+                                color: Colors.white,
+                                size: compact ? 25 : 33,
+                              ),
                             ),
                             const SizedBox(height: 3),
                             Text(
@@ -543,6 +552,7 @@ class GameplayWarehouseBoard extends StatelessWidget {
     required this.compact,
     required this.isArabic,
     required this.accent,
+    this.levelNumber = 1,
   });
 
   final List<CargoItem> warehouses;
@@ -552,6 +562,7 @@ class GameplayWarehouseBoard extends StatelessWidget {
   final bool compact;
   final bool isArabic;
   final Color accent;
+  final int levelNumber;
 
   @override
   Widget build(BuildContext context) => Container(
@@ -642,10 +653,16 @@ class GameplayWarehouseBoard extends StatelessWidget {
                             Stack(
                               alignment: Alignment.center,
                               children: [
-                                Icon(
-                                  Icons.warehouse_rounded,
-                                  color: item.color,
-                                  size: compact ? 27 : 37,
+                                CargoVisualAsset(
+                                  item: item,
+                                  levelNumber: levelNumber,
+                                  width: compact ? 30 : 40,
+                                  height: compact ? 30 : 40,
+                                  fallback: Icon(
+                                    Icons.warehouse_rounded,
+                                    color: item.color,
+                                    size: compact ? 27 : 37,
+                                  ),
                                 ),
                                 if (active)
                                   Icon(
@@ -911,9 +928,14 @@ class _Metric extends StatelessWidget {
 }
 
 class GameplayFlightCargo extends StatelessWidget {
-  const GameplayFlightCargo({super.key, required this.item});
+  const GameplayFlightCargo({
+    super.key,
+    required this.item,
+    this.levelNumber = 1,
+  });
 
   final CargoItem item;
+  final int levelNumber;
 
   @override
   Widget build(BuildContext context) => DecoratedBox(
@@ -929,7 +951,13 @@ class GameplayFlightCargo extends StatelessWidget {
         ),
       ],
     ),
-    child: Icon(item.icon, color: Colors.white, size: 32),
+    child: CargoVisualAsset(
+      item: item,
+      levelNumber: levelNumber,
+      width: 42,
+      height: 42,
+      fallback: Icon(item.icon, color: Colors.white, size: 32),
+    ),
   );
 }
 
