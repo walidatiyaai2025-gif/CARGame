@@ -1,0 +1,75 @@
+name: RT3D-002 Production 3D Contract
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'lib/core/domain/realtime_3d/**'
+      - 'lib/core/application/realtime_3d/**'
+      - 'lib/features/realtime_3d/**'
+      - 'assets/3d/**'
+      - 'test/core/domain/realtime_3d_*'
+      - 'tool/verify_rt3d_002.py'
+      - 'tool/test_rt3d_002.py'
+      - 'docs/work/RT3D-002.md'
+      - 'android/app/build.gradle.kts'
+      - '.github/workflows/rt3d_002_contract.yml'
+  pull_request:
+    paths:
+      - 'lib/core/domain/realtime_3d/**'
+      - 'lib/core/application/realtime_3d/**'
+      - 'lib/features/realtime_3d/**'
+      - 'assets/3d/**'
+      - 'test/core/domain/realtime_3d_*'
+      - 'tool/verify_rt3d_002.py'
+      - 'tool/test_rt3d_002.py'
+      - 'docs/work/RT3D-002.md'
+      - 'android/app/build.gradle.kts'
+      - '.github/workflows/rt3d_002_contract.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rt3d-002-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify RT3D-002 production 3D contract
+        run: python3 tool/verify_rt3d_002.py
+
+      - name: Test RT3D-002 contract validator
+        run: python3 tool/test_rt3d_002.py
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.44.8
+          cache: true
+
+      - name: Verify RT3D-002 Dart formatting
+        run: >-
+          dart format --output=none --set-exit-if-changed
+          lib/core/domain/realtime_3d/renderer_admission.dart
+          lib/core/domain/realtime_3d/production_scene_slice.dart
+          test/core/domain/realtime_3d_renderer_admission_test.dart
+          test/core/domain/realtime_3d_production_scene_slice_test.dart
+
+      - name: Restore packages
+        run: flutter pub get --enforce-lockfile
+
+      - name: Test RT3D-002 domain contracts
+        run: >-
+          flutter test
+          test/core/domain/realtime_3d_renderer_admission_test.dart
+          test/core/domain/realtime_3d_production_scene_slice_test.dart
