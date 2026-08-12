@@ -9,6 +9,8 @@ Branch: `agent/rt3d-002-visual-polish-slice-03`
 
 Make the already-admitted Android Filament scene materially richer and easier to read at a glance without changing gameplay/save/economy truth or introducing external art/licensing dependencies. This checkpoint remains owner-visible: it is not handed off until the exact successful main source is promoted into `Last verified APK/CARGame-latest-verified.apk`.
 
+Runner regeneration checkpoint: PASSED — generated GLB is byte-for-byte aligned with the pinned digest before PR verification.
+
 ## 20 visual tasks
 
 - [x] RT3D2-T061: Start from the exact retained-APK main head after native Filament handoff.
