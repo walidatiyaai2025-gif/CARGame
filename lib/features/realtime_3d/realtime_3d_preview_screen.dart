@@ -82,7 +82,9 @@ class _Realtime3dPreviewScreenState extends State<Realtime3dPreviewScreen> {
   Future<void> _flushDragUpdates() async {
     _dragUpdateInFlight = true;
     try {
-      while (_queuedDragPoint case final point?) {
+      while (true) {
+        final point = _queuedDragPoint;
+        if (point == null) break;
         _queuedDragPoint = null;
         await _dragController.updateDrag(point);
       }
