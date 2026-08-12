@@ -6,7 +6,6 @@ import android.view.SurfaceView
 import android.view.View
 import android.widget.FrameLayout
 import android.widget.TextView
-import com.google.android.filament.Engine
 import com.google.android.filament.View.AntiAliasing
 import com.google.android.filament.utils.ModelViewer
 import com.google.android.filament.utils.Utils
@@ -47,6 +46,8 @@ class NativeFilamentSceneView(
     private val baseTransforms = mutableMapOf<String, FloatArray>()
     private var disposed = false
     private var rendering = false
+    private var surfaceEverAttached = false
+    private var viewerDestroyedByDetach = false
     private var yaw = 0.82
     private var cameraHeight = 8.7
 
@@ -77,6 +78,20 @@ class NativeFilamentSceneView(
                 FrameLayout.LayoutParams.WRAP_CONTENT,
                 FrameLayout.LayoutParams.WRAP_CONTENT,
             ),
+        )
+
+        surfaceView.addOnAttachStateChangeListener(
+            object : View.OnAttachStateChangeListener {
+                override fun onViewAttachedToWindow(view: View) {
+                    surfaceEverAttached = true
+                }
+
+                override fun onViewDetachedFromWindow(view: View) {
+                    // ModelViewer installs its own detach listener and destroys its
+                    // engine/resources when the SurfaceView leaves the window.
+                    viewerDestroyedByDetach = true
+                }
+            },
         )
 
         channel.setMethodCallHandler(this)
@@ -134,7 +149,7 @@ class NativeFilamentSceneView(
     }
 
     private fun startRendering() {
-        if (rendering || disposed) return
+        if (rendering || disposed || viewerDestroyedByDetach) return
         rendering = true
         Choreographer.getInstance().postFrameCallback(frameCallback)
     }
@@ -268,7 +283,18 @@ class NativeFilamentSceneView(
         disposed = true
         stopRendering()
         channel.setMethodCallHandler(null)
-        modelViewer.destroyModel()
-        Engine.destroy(modelViewer.engine)
+
+        if (!viewerDestroyedByDetach) {
+            if (surfaceView.isAttachedToWindow) {
+                // Removing the SurfaceView triggers ModelViewer's own detach
+                // listener, which performs complete engine/resource teardown.
+                root.removeView(surfaceView)
+            } else if (!surfaceEverAttached) {
+                // A PlatformView that never reached the window cannot receive a
+                // detach callback, so release it explicitly exactly once.
+                modelViewer.destroy()
+                viewerDestroyedByDetach = true
+            }
+        }
     }
 }
