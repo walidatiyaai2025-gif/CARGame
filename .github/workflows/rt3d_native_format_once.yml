@@ -1,0 +1,41 @@
+name: RT3D Native Format Once
+
+on:
+  push:
+    branches:
+      - agent/rt3d-002-native-visual-slice
+
+permissions:
+  contents: write
+
+concurrency:
+  group: rt3d-native-format-once
+  cancel-in-progress: true
+
+jobs:
+  format-once:
+    if: ${{ !contains(github.event.head_commit.message, 'RT3D-002: apply canonical Dart format') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/rt3d-002-native-visual-slice
+          fetch-depth: 0
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.44.8
+          cache: true
+      - name: Format changed native visual Dart
+        run: dart format lib/features/realtime_3d/realtime_3d_preview_screen.dart lib/features/realtime_3d/three_js_realtime_3d_scene.dart lib/features/realtime_3d/three_js_realtime_3d_screen.dart test/features/realtime_3d/realtime_3d_preview_screen_test.dart
+      - name: Commit canonical format and remove helper
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/rt3d_native_format_once.yml
+          git add lib/features/realtime_3d/realtime_3d_preview_screen.dart lib/features/realtime_3d/three_js_realtime_3d_scene.dart lib/features/realtime_3d/three_js_realtime_3d_screen.dart test/features/realtime_3d/realtime_3d_preview_screen_test.dart
+          git commit -m 'RT3D-002: apply canonical Dart format'
+          git push origin HEAD:agent/rt3d-002-native-visual-slice
