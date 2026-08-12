@@ -12,7 +12,9 @@ void main() {
 
     expect(find.byKey(const Key('rt3d-preview-scene')), findsOneWidget);
     expect(find.byKey(const Key('rt3d-preview-status')), findsOneWidget);
+    expect(find.byKey(const Key('open-native-3d')), findsOneWidget);
     expect(find.text('3D VISUAL LAB'), findsOneWidget);
+    expect(find.text('GPU'), findsOneWidget);
     expect(tester.takeException(), isNull);
 
     await tester.drag(
