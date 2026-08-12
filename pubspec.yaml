@@ -11,6 +11,7 @@ flutter:
   generate: true
   assets:
     - assets/3d/manifest.json
+    - assets/3d/runtime/models/cargame_native_slice_v1.glb
 
 dependencies:
   flutter:

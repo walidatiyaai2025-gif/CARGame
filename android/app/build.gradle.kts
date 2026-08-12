@@ -8,6 +8,12 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+dependencies {
+    implementation("com.google.android.filament:filament-android:1.74.0")
+    implementation("com.google.android.filament:gltfio-android:1.74.0")
+    implementation("com.google.android.filament:filament-utils-android:1.74.0")
+}
+
 kotlin {
     compilerOptions {
         jvmTarget.set(JvmTarget.JVM_17)
@@ -78,12 +84,8 @@ android {
         release {
             manifestPlaceholders["admobApplicationId"] = releaseAdMobApplicationId
             when {
-                hasCompleteReleaseSigning -> {
-                    signingConfig = signingConfigs.getByName("release")
-                }
-                allowDebugSigningInRelease -> {
-                    signingConfig = signingConfigs.getByName("debug")
-                }
+                hasCompleteReleaseSigning -> signingConfig = signingConfigs.getByName("release")
+                allowDebugSigningInRelease -> signingConfig = signingConfigs.getByName("debug")
             }
         }
     }
@@ -92,9 +94,7 @@ android {
 val validateReleaseConfiguration = tasks.register("validateReleaseConfiguration") {
     doLast {
         if (releaseAdMobApplicationId.isBlank()) {
-            throw GradleException(
-                "ADMOB_ANDROID_APP_ID is required for Android release builds.",
-            )
+            throw GradleException("ADMOB_ANDROID_APP_ID is required for Android release builds.")
         }
         val usesGoogleTestAdMobApplicationId =
             releaseAdMobApplicationId == googleTestAdMobApplicationId ||

@@ -1,11 +1,13 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/application/realtime_3d/cargo_drag_controller.dart';
 import '../../core/domain/realtime_3d/cargo_interaction.dart';
 import '../../core/domain/realtime_3d/geometry.dart';
 import '../../core/settings/visual_effects_preference_scope.dart';
+import 'native_filament_realtime_3d_scene.dart';
 import 'projected_realtime_3d_scene.dart';
 
 class Realtime3dPreviewScreen extends StatefulWidget {
@@ -17,7 +19,7 @@ class Realtime3dPreviewScreen extends StatefulWidget {
 }
 
 class _Realtime3dPreviewScreenState extends State<Realtime3dPreviewScreen> {
-  late final ProjectedRealtime3dScene _scene;
+  late final NativeFilamentRealtime3dScene _scene;
   late final CargoDragController _dragController;
 
   bool _draggingCargo = false;
@@ -26,10 +28,13 @@ class _Realtime3dPreviewScreenState extends State<Realtime3dPreviewScreen> {
   ScreenPoint3? _queuedDragPoint;
   String _status = 'Drag the blue cargo to the matching delivery dock.';
 
+  bool get _useNativeFilament =>
+      !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+
   @override
   void initState() {
     super.initState();
-    _scene = ProjectedRealtime3dScene();
+    _scene = NativeFilamentRealtime3dScene();
     _dragController = CargoDragController(
       scene: _scene,
       targets: _scene.targets,
@@ -51,18 +56,14 @@ class _Realtime3dPreviewScreenState extends State<Realtime3dPreviewScreen> {
     );
     _picking = false;
     if (!mounted) return;
-
-    if (result.outcome == CargoInteractionOutcome.picked) {
-      setState(() {
+    setState(() {
+      if (result.outcome == CargoInteractionOutcome.picked) {
         _draggingCargo = true;
         _status = 'Cargo selected — move it onto a delivery dock.';
-      });
-      return;
-    }
-
-    setState(() {
-      _draggingCargo = false;
-      _status = 'Camera orbit — drag empty space to inspect the 3D scene.';
+      } else {
+        _draggingCargo = false;
+        _status = 'Camera orbit — drag empty space to inspect the 3D scene.';
+      }
     });
   }
 
@@ -71,14 +72,11 @@ class _Realtime3dPreviewScreenState extends State<Realtime3dPreviewScreen> {
       _scene.orbitBy(details.delta);
       return;
     }
-
     _queuedDragPoint = ScreenPoint3(
       details.localPosition.dx,
       details.localPosition.dy,
     );
-    if (!_dragUpdateInFlight) {
-      unawaited(_flushDragUpdates());
-    }
+    if (!_dragUpdateInFlight) unawaited(_flushDragUpdates());
   }
 
   Future<void> _flushDragUpdates() async {
@@ -99,9 +97,7 @@ class _Realtime3dPreviewScreenState extends State<Realtime3dPreviewScreen> {
     while (_dragUpdateInFlight) {
       await Future<void>.delayed(Duration.zero);
     }
-    if (_queuedDragPoint != null) {
-      await _flushDragUpdates();
-    }
+    if (_queuedDragPoint != null) await _flushDragUpdates();
   }
 
   Future<void> _handlePanEnd(DragEndDetails details) async {
@@ -142,6 +138,24 @@ class _Realtime3dPreviewScreenState extends State<Realtime3dPreviewScreen> {
     });
   }
 
+  Widget _sceneVisual(Size viewport) {
+    if (_useNativeFilament) {
+      return AndroidView(
+        key: const Key('rt3d-native-filament-view'),
+        viewType: NativeFilamentRealtime3dScene.viewType,
+        onPlatformViewCreated: _scene.attachPlatformView,
+      );
+    }
+    return ListenableBuilder(
+      listenable: _scene,
+      builder: (context, _) => CustomPaint(
+        key: const Key('rt3d-projected-fallback-view'),
+        painter: Realtime3dPreviewPainter(_scene.projectedFallback),
+        size: viewport,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final reducedMotion =
@@ -168,13 +182,7 @@ class _Realtime3dPreviewScreenState extends State<Realtime3dPreviewScreen> {
                     onPanUpdate: _handlePanUpdate,
                     onPanEnd: _handlePanEnd,
                     onPanCancel: _handlePanCancel,
-                    child: ListenableBuilder(
-                      listenable: _scene,
-                      builder: (context, _) => CustomPaint(
-                        painter: Realtime3dPreviewPainter(_scene),
-                        size: viewport,
-                      ),
-                    ),
+                    child: _sceneVisual(viewport),
                   ),
                 ),
                 PositionedDirectional(
@@ -207,11 +215,11 @@ class _Realtime3dPreviewScreenState extends State<Realtime3dPreviewScreen> {
                                 color: Colors.white.withValues(alpha: 0.16),
                               ),
                             ),
-                            child: const Column(
+                            child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Text(
+                                const Text(
                                   '3D VISUAL LAB',
                                   style: TextStyle(
                                     color: Colors.white,
@@ -220,10 +228,12 @@ class _Realtime3dPreviewScreenState extends State<Realtime3dPreviewScreen> {
                                     letterSpacing: 1.2,
                                   ),
                                 ),
-                                SizedBox(height: 2),
+                                const SizedBox(height: 2),
                                 Text(
-                                  'Cargo raycast + delivery targets + camera orbit',
-                                  style: TextStyle(
+                                  _useNativeFilament
+                                      ? 'Native Filament • GLB • PBR • cargo interaction'
+                                      : 'Projected fallback • cargo raycast • camera orbit',
+                                  style: const TextStyle(
                                     color: Color(0xFFC2D9EC),
                                     fontSize: 11,
                                     fontWeight: FontWeight.w600,

@@ -7,11 +7,24 @@ import sys
 REQUIRED_FILES = (
     'lib/core/domain/realtime_3d/renderer_admission.dart',
     'lib/core/domain/realtime_3d/production_scene_slice.dart',
+    'lib/core/domain/realtime_3d/filament_renderer_profile.dart',
+    'lib/features/realtime_3d/native_filament_realtime_3d_scene.dart',
+    'lib/features/realtime_3d/realtime_3d_preview_screen.dart',
+    'android/app/src/main/kotlin/com/walka/cargosort/MainActivity.kt',
+    'android/app/src/main/kotlin/com/walka/cargosort/NativeFilamentSceneFactory.kt',
+    'android/app/src/main/kotlin/com/walka/cargosort/NativeFilamentSceneView.kt',
+    'assets/3d/runtime/models/cargame_native_slice_v1.glb',
+    'assets/3d/provenance/cargame_native_slice_v1.json',
     'test/core/domain/realtime_3d_renderer_admission_test.dart',
     'test/core/domain/realtime_3d_production_scene_slice_test.dart',
+    'test/core/domain/realtime_3d_filament_renderer_profile_test.dart',
+    'test/features/native_filament_realtime_3d_scene_test.dart',
+    'tool/verify_rt3d_native_slice.py',
+    'tool/generate_rt3d_native_slice_glb.py',
     'docs/work/RT3D-002.md',
     '.github/workflows/rt3d_002_contract.yml',
     'android/app/build.gradle.kts',
+    'pubspec.yaml',
 )
 
 
@@ -27,10 +40,7 @@ def verify(root: Path) -> list[str]:
     if errors:
         return errors
 
-    renderer = _read(
-        root,
-        'lib/core/domain/realtime_3d/renderer_admission.dart',
-    )
+    renderer = _read(root, 'lib/core/domain/realtime_3d/renderer_admission.dart')
     for marker in (
         'enum Realtime3dRendererKind { nativeGpu, webView, projectedFallback }',
         'Realtime3dRendererCapability.localGlb',
@@ -46,10 +56,17 @@ def verify(root: Path) -> list[str]:
         if marker not in renderer:
             errors.append(f'renderer admission contract missing marker: {marker}')
 
-    scene = _read(
-        root,
-        'lib/core/domain/realtime_3d/production_scene_slice.dart',
-    )
+    profile = _read(root, 'lib/core/domain/realtime_3d/filament_renderer_profile.dart')
+    for marker in (
+        "id: 'google-filament-android-1.74.0'",
+        'kind: Realtime3dRendererKind.nativeGpu',
+        'requiredAndroidMinSdk: 21',
+        'Realtime3dRendererAdmissionPolicy.requiredCapabilities',
+    ):
+        if marker not in profile:
+            errors.append(f'Filament renderer profile missing marker: {marker}')
+
+    scene = _read(root, 'lib/core/domain/realtime_3d/production_scene_slice.dart')
     for marker in (
         "path.startsWith('assets/3d/runtime/models/')",
         'Realtime3dModelFormat.glb',
@@ -72,6 +89,56 @@ def verify(root: Path) -> list[str]:
     gradle = _read(root, 'android/app/build.gradle.kts')
     if 'minSdk = 23' not in gradle:
         errors.append('Android project minSdk drifted from RT3D-002 admission baseline')
+    for artifact in ('filament-android', 'gltfio-android', 'filament-utils-android'):
+        marker = f'com.google.android.filament:{artifact}:1.74.0'
+        if marker not in gradle:
+            errors.append(f'Android Filament dependency missing or unpinned: {marker}')
+
+    native_view = _read(
+        root,
+        'android/app/src/main/kotlin/com/walka/cargosort/NativeFilamentSceneView.kt',
+    )
+    for marker in (
+        'ModelViewer',
+        'loadModelGlb',
+        'Choreographer',
+        'getFirstEntityByName',
+        'transformManager',
+        'camera.lookAt',
+        'Google Filament',
+        '1.74.0',
+    ):
+        if marker not in native_view:
+            errors.append(f'native Filament view missing marker: {marker}')
+
+    dart_adapter = _read(
+        root,
+        'lib/features/realtime_3d/native_filament_realtime_3d_scene.dart',
+    )
+    for marker in (
+        'implements Realtime3dScenePort',
+        "static const viewType = 'cargame/native_filament_scene'",
+        "entityId: 'cargo.demo.electronics'",
+        'static const Vec3 cargoOrigin = Vec3(-4.6, 0.62, 1)',
+        "'building.electronics' => 'delivery.electronics'",
+        "'building.food' => 'delivery.food'",
+    ):
+        if marker not in dart_adapter:
+            errors.append(f'native Dart scene adapter missing marker: {marker}')
+
+    screen = _read(root, 'lib/features/realtime_3d/realtime_3d_preview_screen.dart')
+    for marker in (
+        'defaultTargetPlatform == TargetPlatform.android',
+        'AndroidView(',
+        'NativeFilamentRealtime3dScene.viewType',
+        'Realtime3dPreviewPainter(_scene.projectedFallback)',
+    ):
+        if marker not in screen:
+            errors.append(f'Android visual-lab routing missing marker: {marker}')
+
+    pubspec = _read(root, 'pubspec.yaml')
+    if 'assets/3d/runtime/models/cargame_native_slice_v1.glb' not in pubspec:
+        errors.append('native GLB is not bundled in Flutter assets')
 
     workflow = _read(root, '.github/workflows/rt3d_002_contract.yml')
     for marker in (
@@ -79,9 +146,17 @@ def verify(root: Path) -> list[str]:
         'python3 tool/verify_rt3d_002.py',
         'Test RT3D-002 contract validator',
         'python3 tool/test_rt3d_002.py',
+        'Verify RT3D-002 native Filament slice',
+        'python3 tool/verify_rt3d_native_slice.py',
+        'Test RT3D-002 native GLB validator',
+        'python3 tool/test_rt3d_native_slice.py',
+        'Generate deterministic RT3D-002 GLB evidence',
+        'python3 tool/generate_rt3d_native_slice_glb.py',
         'Test RT3D-002 domain contracts',
         'test/core/domain/realtime_3d_renderer_admission_test.dart',
         'test/core/domain/realtime_3d_production_scene_slice_test.dart',
+        'test/core/domain/realtime_3d_filament_renderer_profile_test.dart',
+        'test/features/native_filament_realtime_3d_scene_test.dart',
         'flutter-version: 3.44.8',
         'flutter pub get --enforce-lockfile',
     ):
@@ -90,20 +165,21 @@ def verify(root: Path) -> list[str]:
 
     work = _read(root, 'docs/work/RT3D-002.md')
     task_ids = re.findall(r'^- \[x\] (RT3D2-T\d{3}):', work, re.MULTILINE)
-    if len(task_ids) != 30:
+    if len(task_ids) != 60:
         errors.append(
-            f'RT3D-002 work ledger must contain exactly 30 completed tasks; found {len(task_ids)}',
+            f'RT3D-002 work ledger must contain exactly 60 completed tasks; found {len(task_ids)}',
         )
     if len(set(task_ids)) != len(task_ids):
         errors.append('RT3D-002 work ledger contains duplicate task IDs')
-    expected = [f'RT3D2-T{index:03d}' for index in range(1, 31)]
+    expected = [f'RT3D2-T{index:03d}' for index in range(1, 61)]
     if task_ids != expected:
-        errors.append('RT3D-002 work ledger task IDs must be contiguous T001..T030')
+        errors.append('RT3D-002 work ledger task IDs must be contiguous T001..T060')
 
     for marker in (
-        'No native renderer package is claimed as admitted in this checkpoint.',
-        'No production GLB/GLTF binary is claimed as admitted in this checkpoint.',
-        'RT3D-002 remains IN PROGRESS after this 30-task checkpoint.',
+        'Google Filament 1.74.0 is admitted as the Android native GPU renderer for this checkpoint.',
+        '`cargame_native_slice_v1.glb` is admitted as a project-generated runtime GLB with pinned provenance and SHA-256.',
+        'The Android 3D Visual Lab now hosts the native Filament scene through a Flutter PlatformView.',
+        'RT3D-002 remains IN PROGRESS after this 60-task checkpoint until merged-main APK evidence is promoted and verified.',
     ):
         if marker not in work:
             errors.append(f'RT3D-002 truth boundary missing from work ledger: {marker}')
