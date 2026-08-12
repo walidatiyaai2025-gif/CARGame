@@ -7,6 +7,7 @@ import '../../core/domain/realtime_3d/cargo_interaction.dart';
 import '../../core/domain/realtime_3d/geometry.dart';
 import '../../core/settings/visual_effects_preference_scope.dart';
 import 'projected_realtime_3d_scene.dart';
+import 'three_js_realtime_3d_screen.dart';
 
 class Realtime3dPreviewScreen extends StatefulWidget {
   const Realtime3dPreviewScreen({super.key});
@@ -41,6 +42,14 @@ class _Realtime3dPreviewScreenState extends State<Realtime3dPreviewScreen> {
   void dispose() {
     _scene.dispose();
     super.dispose();
+  }
+
+  Future<void> _openNative3d() async {
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (_) => const ThreeJsRealtime3dScreen(),
+      ),
+    );
   }
 
   Future<void> _handlePanStart(DragStartDetails details) async {
@@ -222,7 +231,7 @@ class _Realtime3dPreviewScreenState extends State<Realtime3dPreviewScreen> {
                                 ),
                                 SizedBox(height: 2),
                                 Text(
-                                  'Cargo raycast + delivery targets + camera orbit',
+                                  'Projected fallback + native GPU checkpoint',
                                   style: TextStyle(
                                     color: Color(0xFFC2D9EC),
                                     fontSize: 11,
@@ -233,7 +242,23 @@ class _Realtime3dPreviewScreenState extends State<Realtime3dPreviewScreen> {
                             ),
                           ),
                         ),
-                        const SizedBox(width: 10),
+                        const SizedBox(width: 8),
+                        KeyedSubtree(
+                          key: const Key('open-native-3d'),
+                          child: _RoundHudButton(
+                            tooltip: 'Open native real-time 3D scene',
+                            onTap: () => unawaited(_openNative3d()),
+                            child: const Text(
+                              'GPU',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
                         _RoundHudButton(
                           tooltip: 'Reset cargo',
                           onTap: _resetDemo,
