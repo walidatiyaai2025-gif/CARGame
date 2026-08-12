@@ -8,7 +8,7 @@ import struct
 from pathlib import Path
 
 OUTPUT = Path('assets/3d/runtime/models/cargame_native_slice_v1.glb')
-EXPECTED_SHA256 = '766e42dfc52314024771efe432c667e8a38e7d439c5182234d57e43dc4a5cd0b'
+EXPECTED_SHA256 = 'bfd04d6d5f6d4e5c13dd7fc6f851e173d085b64be2fd90eed2664ce9f58feacc'
 
 FACES = [
     ((1, 0, 0), [(0.5, -0.5, -0.5), (0.5, 0.5, -0.5), (0.5, 0.5, 0.5), (0.5, -0.5, 0.5)]),
