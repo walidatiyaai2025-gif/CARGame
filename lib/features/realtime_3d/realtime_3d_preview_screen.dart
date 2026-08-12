@@ -46,9 +46,7 @@ class _Realtime3dPreviewScreenState extends State<Realtime3dPreviewScreen> {
 
   Future<void> _openNative3d() async {
     await Navigator.of(context).push<void>(
-      MaterialPageRoute<void>(
-        builder: (_) => const ThreeJsRealtime3dScreen(),
-      ),
+      MaterialPageRoute<void>(builder: (_) => const ThreeJsRealtime3dScreen()),
     );
   }
 
