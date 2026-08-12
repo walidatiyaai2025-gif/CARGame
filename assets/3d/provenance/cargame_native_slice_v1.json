@@ -19,5 +19,5 @@
     "ground.main",
     "road.main"
   ],
-  "notes": "Low-poly deterministic visual-slice asset generated from unit-cube geometry and PBR material definitions committed with the project."
+  "notes": "Low-poly deterministic visual-slice asset generated from unit-cube geometry and PBR material definitions committed with the project. Digest and byte length are regenerated and pinned by the RT3D-002 CI contract."
 }
