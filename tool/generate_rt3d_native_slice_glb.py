@@ -8,7 +8,7 @@ import struct
 from pathlib import Path
 
 OUTPUT = Path('assets/3d/runtime/models/cargame_native_slice_v1.glb')
-EXPECTED_SHA256 = 'bfd04d6d5f6d4e5c13dd7fc6f851e173d085b64be2fd90eed2664ce9f58feacc'
+EXPECTED_SHA256 = '99ccaf68303dfac2ef45855b21aa1160b9421fa711ac2093c0a75a8a78e39358'
 
 FACES = [
     ((1, 0, 0), [(0.5, -0.5, -0.5), (0.5, 0.5, -0.5), (0.5, 0.5, 0.5), (0.5, -0.5, 0.5)]),
@@ -19,14 +19,22 @@ FACES = [
     ((0, 0, -1), [(0.5, -0.5, -0.5), (-0.5, -0.5, -0.5), (-0.5, 0.5, -0.5), (0.5, 0.5, -0.5)]),
 ]
 MATERIALS = [
-    ('ground', [0.10, 0.16, 0.14, 1], 0.95, 0.0),
-    ('road', [0.06, 0.07, 0.09, 1], 0.85, 0.0),
+    ('ground', [0.10, 0.22, 0.15, 1], 0.92, 0.0),
+    ('road', [0.055, 0.065, 0.08, 1], 0.82, 0.0),
     ('warehouse', [0.45, 0.52, 0.60, 1], 0.72, 0.05),
     ('vehicle', [0.02, 0.28, 0.72, 1], 0.28, 0.25),
     ('cargoA', [0.04, 0.48, 0.95, 1], 0.45, 0.05),
     ('cargoB', [0.95, 0.42, 0.08, 1], 0.55, 0.0),
     ('targetA', [0.02, 0.70, 0.92, 1], 0.40, 0.05),
     ('targetB', [0.94, 0.64, 0.06, 1], 0.45, 0.0),
+    ('stripe', [0.96, 0.84, 0.18, 1], 0.48, 0.0),
+    ('curb', [0.58, 0.64, 0.68, 1], 0.76, 0.0),
+    ('glass', [0.10, 0.35, 0.52, 1], 0.20, 0.45),
+    ('tire', [0.025, 0.03, 0.035, 1], 0.88, 0.0),
+    ('door', [0.12, 0.16, 0.22, 1], 0.68, 0.12),
+    ('foliage', [0.10, 0.52, 0.24, 1], 0.90, 0.0),
+    ('trunk', [0.36, 0.20, 0.08, 1], 0.92, 0.0),
+    ('lamp', [1.00, 0.76, 0.22, 1], 0.24, 0.10),
 ]
 
 
@@ -99,21 +107,63 @@ def generate() -> bytes:
             'scale': list(scale),
         })
 
+    # Main toy-city delivery yard.
     node('ground.main', 'ground', (0, -0.15, 0), (18, 0.25, 18))
     node('road.main', 'road', (0, 0, -1.2), (5.2, 0.08, 15.5))
+    node('road.cross', 'road', (0, 0.01, 1.2), (15.5, 0.08, 4.3))
+
+    # Readable road edge/center markings.
+    node('road.curb.west', 'curb', (-2.9, 0.10, -1.2), (0.18, 0.24, 15.5))
+    node('road.curb.east', 'curb', (2.9, 0.10, -1.2), (0.18, 0.24, 15.5))
+    node('road.curb.north', 'curb', (0, 0.11, 3.65), (15.5, 0.24, 0.18))
+    node('road.curb.south', 'curb', (0, 0.11, -1.25), (15.5, 0.24, 0.18))
+    for index, z in enumerate((-6.7, -4.6, -2.5, -0.4, 1.7, 3.8, 5.9)):
+        node(f'road.stripe.main.{index}', 'stripe', (0, 0.075, z), (0.16, 0.035, 0.9))
+    for index, x in enumerate((-6.0, -3.8, 3.8, 6.0)):
+        node(f'road.stripe.cross.{index}', 'stripe', (x, 0.08, 1.2), (0.9, 0.035, 0.16))
+
+    # Warehouse with readable entrance.
     node('environment.warehouse', 'warehouse', (-6, 1.8, 2.7), (3.2, 3.6, 5.8))
     node('environment.warehouse.roof', 'road', (-6, 3.72, 2.7), (3.5, 0.18, 6.1))
+    node('environment.warehouse.door', 'door', (-4.36, 1.35, 2.2), (0.12, 2.25, 2.35))
+    node('environment.warehouse.awning', 'vehicle', (-4.08, 2.65, 2.2), (0.55, 0.18, 2.65))
+
+    # Delivery pads with small edge pylons.
     node('delivery.electronics', 'targetA', (4.2, 0.18, 2.9), (2.8, 0.32, 2.5))
     node('delivery.food', 'targetB', (4.2, 0.18, -3.1), (2.8, 0.32, 2.5))
+    node('delivery.electronics.pylon', 'targetA', (5.25, 0.72, 3.8), (0.22, 1.25, 0.22))
+    node('delivery.food.pylon', 'targetB', (5.25, 0.72, -4.0), (0.22, 1.25, 0.22))
+
+    # Stylized delivery vehicle with windshield and four wheel blocks.
     node('vehicle.player', 'vehicle', (0.1, 0.72, -0.3), (1.75, 0.70, 3.2))
     node('vehicle.player.cabin', 'vehicle', (0.1, 1.35, -1), (1.65, 0.75, 1.45))
+    node('vehicle.player.windshield', 'glass', (0.1, 1.48, -1.77), (1.35, 0.42, 0.08))
+    for name, x, z in (
+        ('fl', -0.72, -1.45),
+        ('fr', 0.92, -1.45),
+        ('rl', -0.72, 0.78),
+        ('rr', 0.92, 0.78),
+    ):
+        node(f'vehicle.player.wheel.{name}', 'tire', (x, 0.42, z), (0.42, 0.42, 0.32))
+
+    # Interactive and stacked cargo.
     node('cargo.demo.electronics', 'cargoA', (-4.6, 0.62, 1), (1.05, 1.05, 1.05))
     node('cargo.demo.food', 'cargoB', (-4.6, 0.62, 3.4), (1.05, 1.05, 1.05))
     node('cargo.stack.electronics', 'cargoA', (-6.2, 0.48, 1), (0.72, 0.72, 0.72))
     node('cargo.stack.food', 'cargoB', (-6.2, 0.48, 3.4), (0.72, 0.72, 0.72))
+    node('cargo.stack.electronics.high', 'cargoA', (-6.2, 1.25, 1), (0.62, 0.62, 0.62))
+    node('cargo.stack.food.high', 'cargoB', (-6.2, 1.25, 3.4), (0.62, 0.62, 0.62))
+
+    # Low-cost environment dressing: three toy trees and two street lamps.
+    for index, (x, z) in enumerate(((-8.2, -5.8), (7.7, 6.1), (8.0, -6.0))):
+        node(f'environment.tree.{index}.trunk', 'trunk', (x, 0.75, z), (0.38, 1.5, 0.38))
+        node(f'environment.tree.{index}.crown', 'foliage', (x, 2.0, z), (1.45, 1.45, 1.45))
+    for index, (x, z) in enumerate(((-3.6, -5.6), (3.6, 6.0))):
+        node(f'environment.lamp.{index}.pole', 'curb', (x, 1.55, z), (0.14, 3.1, 0.14))
+        node(f'environment.lamp.{index}.head', 'lamp', (x, 3.10, z), (0.42, 0.20, 0.42))
 
     document = {
-        'asset': {'version': '2.0', 'generator': 'CARGame RT3D-002 native slice v1'},
+        'asset': {'version': '2.0', 'generator': 'CARGame RT3D-002 native slice visual polish v2'},
         'scene': 0,
         'scenes': [{'name': 'CARGame Native Delivery Slice', 'nodes': list(range(len(nodes)))}],
         'nodes': nodes,
