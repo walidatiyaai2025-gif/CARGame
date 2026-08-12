@@ -18,7 +18,7 @@ SCREEN = ROOT / 'lib/features/realtime_3d/realtime_3d_preview_screen.dart'
 PUBSPEC = ROOT / 'pubspec.yaml'
 GENERATOR = ROOT / 'tool/generate_rt3d_native_slice_glb.py'
 
-EXPECTED_SHA256 = '766e42dfc52314024771efe432c667e8a38e7d439c5182234d57e43dc4a5cd0b'
+EXPECTED_SHA256 = 'bfd04d6d5f6d4e5c13dd7fc6f851e173d085b64be2fd90eed2664ce9f58feacc'
 REQUIRED_NODES = {
     'vehicle.player',
     'cargo.demo.electronics',
