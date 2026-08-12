@@ -40,6 +40,11 @@
       "kind": "dev",
       "reviewed_version": "2.4.2",
       "license": "BSD-3-Clause"
+    },
+    "three_js": {
+      "kind": "main",
+      "reviewed_version": "0.3.0",
+      "license": "MIT"
     }
   }
 }
