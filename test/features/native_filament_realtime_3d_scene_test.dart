@@ -12,10 +12,7 @@ void main() {
     for (final target in scene.targets) {
       expect(target.bounds.contains(target.snapPosition), isTrue);
     }
-    expect(
-      scene.targets.first.snapPosition,
-      const Vec3(4.2, 0.68, 2.9),
-    );
+    expect(scene.targets.first.snapPosition, const Vec3(4.2, 0.68, 2.9));
   });
 
   test('native interaction camera emits normalized screen rays', () {

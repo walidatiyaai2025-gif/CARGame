@@ -62,11 +62,8 @@ class NativeFilamentRealtime3dScene extends ChangeNotifier
   bool get hoverCompatible => _hoverCompatible;
   ProjectedRealtime3dScene get projectedFallback => _projectedFallback;
 
-  Vec3 get _cameraEye => Vec3(
-    math.cos(_yaw) * 13.2,
-    _cameraHeight,
-    math.sin(_yaw) * 13.2,
-  );
+  Vec3 get _cameraEye =>
+      Vec3(math.cos(_yaw) * 13.2, _cameraHeight, math.sin(_yaw) * 13.2);
   Vec3 get _cameraTarget => const Vec3(0, 0.9, 0);
   Vec3 get _cameraForward => (_cameraTarget - _cameraEye).normalized();
   Vec3 get _cameraRight => _cameraForward.cross(Vec3.up).normalized();
@@ -95,10 +92,7 @@ class NativeFilamentRealtime3dScene extends ChangeNotifier
         .toDouble();
     _projectedFallback.orbitBy(delta);
     unawaited(
-      _invoke('orbitBy', <String, double>{
-        'dx': delta.dx,
-        'dy': delta.dy,
-      }),
+      _invoke('orbitBy', <String, double>{'dx': delta.dx, 'dy': delta.dy}),
     );
     notifyListeners();
   }
