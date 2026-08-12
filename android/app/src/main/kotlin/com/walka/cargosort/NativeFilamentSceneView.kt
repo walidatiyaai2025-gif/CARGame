@@ -47,9 +47,8 @@ class NativeFilamentSceneView(
     private val baseTransforms = mutableMapOf<String, FloatArray>()
     private var disposed = false
     private var rendering = false
-    private var yaw = -0.72
-    private var pitch = 0.48
-    private var radius = 20.0
+    private var yaw = 0.82
+    private var cameraHeight = 8.7
 
     private val frameCallback = object : Choreographer.FrameCallback {
         override fun doFrame(frameTimeNanos: Long) {
@@ -146,16 +145,15 @@ class NativeFilamentSceneView(
     }
 
     private fun updateCamera() {
-        val horizontalRadius = radius * cos(pitch)
-        val eyeX = horizontalRadius * cos(yaw)
-        val eyeY = radius * sin(pitch) + 2.0
-        val eyeZ = horizontalRadius * sin(yaw)
+        val eyeX = cos(yaw) * 13.2
+        val eyeY = cameraHeight
+        val eyeZ = sin(yaw) * 13.2
         modelViewer.camera.lookAt(
             eyeX,
             eyeY,
             eyeZ,
             0.0,
-            0.8,
+            0.9,
             0.0,
             0.0,
             1.0,
@@ -238,8 +236,8 @@ class NativeFilamentSceneView(
                 }
                 "orbitBy" -> {
                     val args = call.arguments as? Map<*, *> ?: emptyMap<String, Any>()
-                    yaw += number(args, "yaw")
-                    pitch = (pitch + number(args, "pitch")).coerceIn(0.18, 0.90)
+                    yaw -= number(args, "dx") * 0.008
+                    cameraHeight = (cameraHeight + number(args, "dy") * 0.025).coerceIn(5.8, 12.5)
                     updateCamera()
                     result.success(true)
                 }
