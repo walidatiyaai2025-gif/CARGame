@@ -19,6 +19,16 @@ jobs:
         with:
           ref: agent/rt3d-002-visual-expansion-30
           fetch-depth: 0
+      - name: Preserve generated Python block indentation
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('tool/apply_rt3d_visual_expansion_30.py')
+          text = path.read_text(encoding='utf-8')
+          text = text.replace('textwrap.dedent(NODE_INSERT).rstrip()', 'NODE_INSERT.rstrip()')
+          text = text.replace('textwrap.dedent(EXTRA_VERIFIER_CHECKS).rstrip()', 'EXTRA_VERIFIER_CHECKS.rstrip()')
+          path.write_text(text, encoding='utf-8')
+          PY
       - name: Apply 30 owner-visible Native Filament tasks
         run: python3 tool/apply_rt3d_visual_expansion_30.py
       - name: Verify generated source truth
