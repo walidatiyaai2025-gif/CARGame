@@ -33,8 +33,9 @@ jobs:
         run: python3 tool/apply_rt3d_visual_expansion_30.py
       - name: Verify generated source truth
         run: |
+          cp assets/3d/runtime/models/cargame_native_slice_v1.glb /tmp/cargame_native_slice_before.glb
           python3 tool/generate_rt3d_native_slice_glb.py
-          git diff --exit-code -- assets/3d/runtime/models/cargame_native_slice_v1.glb
+          cmp /tmp/cargame_native_slice_before.glb assets/3d/runtime/models/cargame_native_slice_v1.glb
           python3 tool/verify_rt3d_native_slice.py
       - name: Commit generated checkpoint and remove helper
         run: |
