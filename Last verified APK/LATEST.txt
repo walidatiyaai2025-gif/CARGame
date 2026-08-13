@@ -1,12 +1,12 @@
 CARGame latest verified release-mode APK
 ========================================
-Source commit: 0eb54c69fe809c9f7251f0c6ae66656b736f1e67
-Flutter CI run: 31616789342
-Promotion workflow run: 31617563919
-Generated UTC: 2026-08-12T16:33:57Z
+Source commit: b30ab7b7fe04bd8934ee6bd5d692cfa5afaf2bdd
+Flutter CI run: 31667456678
+Promotion workflow run: 31667938649
+Generated UTC: 2026-08-13T04:54:16Z
 File: CARGame-latest-verified.apk
-Size bytes: 74880154
-SHA-256: a1a29428bebea251530a3b5430f835657cffe6f21007212e9f904734e1f3f431
+Size bytes: 74880978
+SHA-256: 8e542af7060a0de30545585e9804faa427b457729c63b8235837406878eb0a46
 Signing: ephemeral CI signing
 Runtime ads: disabled
 Distribution status: QA/installable evidence only; NOT production/Play Store signed
