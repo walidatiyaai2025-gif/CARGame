@@ -8,8 +8,9 @@ import struct
 from pathlib import Path
 
 OUTPUT = Path('assets/3d/runtime/models/cargame_native_slice_v1.glb')
-EXPECTED_SHA256 = '99ccaf68303dfac2ef45855b21aa1160b9421fa711ac2093c0a75a8a78e39358'
+EXPECTED_SHA256 = '5de93589908d375446567cd84aa84dcba496a705538cec37c098f82440b480b2'
 
+# Stable gameplay IDs are preserved; visible district expansion implements RT3D2-T081..T110.
 FACES = [
     ((1, 0, 0), [(0.5, -0.5, -0.5), (0.5, 0.5, -0.5), (0.5, 0.5, 0.5), (0.5, -0.5, 0.5)]),
     ((-1, 0, 0), [(-0.5, -0.5, 0.5), (-0.5, 0.5, 0.5), (-0.5, 0.5, -0.5), (-0.5, -0.5, -0.5)]),
@@ -35,6 +36,15 @@ MATERIALS = [
     ('foliage', [0.10, 0.52, 0.24, 1], 0.90, 0.0),
     ('trunk', [0.36, 0.20, 0.08, 1], 0.92, 0.0),
     ('lamp', [1.00, 0.76, 0.22, 1], 0.24, 0.10),
+    ('sidewalk', [0.72, 0.74, 0.76, 1], 0.90, 0.0),
+    ('office', [0.76, 0.62, 0.42, 1], 0.78, 0.0),
+    ('sign', [0.93, 0.96, 1.00, 1], 0.35, 0.02),
+    ('hazard', [1.00, 0.28, 0.03, 1], 0.55, 0.0),
+    ('hedge', [0.05, 0.38, 0.16, 1], 0.95, 0.0),
+    ('bench', [0.42, 0.20, 0.08, 1], 0.82, 0.0),
+    ('bin', [0.03, 0.18, 0.13, 1], 0.88, 0.0),
+    ('beacon', [0.95, 0.04, 0.05, 1], 0.18, 0.08),
+    ('whiteLight', [1.00, 0.94, 0.72, 1], 0.16, 0.08),
 ]
 
 
@@ -108,7 +118,7 @@ def generate() -> bytes:
         })
 
     # Main toy-city delivery yard.
-    node('ground.main', 'ground', (0, -0.15, 0), (18, 0.25, 18))
+    node('ground.main', 'ground', (0, -0.15, 0), (24, 0.25, 24))
     node('road.main', 'road', (0, 0, -1.2), (5.2, 0.08, 15.5))
     node('road.cross', 'road', (0, 0.01, 1.2), (15.5, 0.08, 4.3))
 
@@ -162,8 +172,96 @@ def generate() -> bytes:
         node(f'environment.lamp.{index}.pole', 'curb', (x, 1.55, z), (0.14, 3.1, 0.14))
         node(f'environment.lamp.{index}.head', 'lamp', (x, 3.10, z), (0.42, 0.20, 0.42))
 
+
+    # RT3D2-T081..T084: sorting depot with roof, loading door, and sign.
+    node('environment.depot', 'warehouse', (-8.4, 1.55, -5.1), (3.0, 3.1, 4.0))
+    node('environment.depot.roof', 'road', (-8.4, 3.18, -5.1), (3.3, 0.18, 4.3))
+    node('environment.depot.door', 'door', (-6.86, 1.18, -5.1), (0.12, 1.95, 1.65))
+    node('environment.depot.sign', 'sign', (-6.70, 2.55, -5.1), (0.10, 0.55, 1.55))
+
+    # RT3D2-T085..T087: office, roof cap, and four windows.
+    node('environment.office', 'office', (8.2, 1.65, 4.9), (3.0, 3.3, 3.8))
+    node('environment.office.roof', 'road', (8.2, 3.38, 4.9), (3.3, 0.18, 4.1))
+    for index, z in enumerate((3.7, 4.5, 5.3, 6.1)):
+        node(f'environment.office.window.{index}', 'glass', (6.66, 1.95, z), (0.10, 0.72, 0.48))
+
+    # RT3D2-T088..T090: broad sidewalks.
+    node('environment.sidewalk.west', 'sidewalk', (-4.15, 0.08, -1.2), (2.0, 0.14, 18.0))
+    node('environment.sidewalk.east', 'sidewalk', (4.15, 0.08, -1.2), (2.0, 0.14, 18.0))
+    node('environment.sidewalk.north', 'sidewalk', (0, 0.08, 4.75), (18.0, 0.14, 1.7))
+
+    # RT3D2-T091..T092: two zebra crossings.
+    for index, x in enumerate((-2.25, -1.35, -0.45, 0.45, 1.35, 2.25)):
+        node(f'road.crosswalk.north.{index}', 'sign', (x, 0.095, 4.0), (0.54, 0.035, 0.22))
+        node(f'road.crosswalk.south.{index}', 'sign', (x, 0.095, -2.0), (0.54, 0.035, 0.22))
+
+    # RT3D2-T093..T094: parking slab and bay dividers.
+    node('environment.parking', 'road', (8.0, 0.04, -5.6), (5.5, 0.08, 4.2))
+    for index, x in enumerate((5.8, 6.9, 8.0, 9.1, 10.2)):
+        node(f'environment.parking.stripe.{index}', 'sign', (x, 0.09, -5.6), (0.08, 0.035, 3.5))
+
+    # RT3D2-T095: four hazard-cone blocks.
+    for index, z in enumerate((-0.2, 0.7, 1.6, 2.5)):
+        node(f'environment.cone.{index}', 'hazard', (-3.55, 0.32, z), (0.26, 0.62, 0.26))
+
+    # RT3D2-T096: delivery-lane bollards.
+    for index, z in enumerate((-4.5, -2.3, 2.2, 4.4)):
+        node(f'environment.bollard.{index}', 'curb', (2.85, 0.48, z), (0.18, 0.92, 0.18))
+
+    # RT3D2-T097..T098: traffic light.
+    node('environment.trafficLight.pole', 'door', (-2.2, 1.65, 4.3), (0.14, 3.3, 0.14))
+    node('environment.trafficLight.head', 'hazard', (-2.2, 3.35, 4.3), (0.38, 0.78, 0.34))
+
+    # RT3D2-T099..T101: checkpoint arch.
+    node('environment.checkpoint.left', 'vehicle', (-2.5, 1.55, -8.4), (0.28, 3.1, 0.28))
+    node('environment.checkpoint.right', 'vehicle', (2.5, 1.55, -8.4), (0.28, 3.1, 0.28))
+    node('environment.checkpoint.beam', 'sign', (0, 3.1, -8.4), (5.3, 0.34, 0.34))
+
+    # RT3D2-T102: three more toy trees.
+    for index, (x, z) in enumerate(((-10.2, 6.5), (10.4, 8.2), (-10.0, -9.0)), start=3):
+        node(f'environment.tree.{index}.trunk', 'trunk', (x, 0.75, z), (0.38, 1.5, 0.38))
+        node(f'environment.tree.{index}.crown', 'foliage', (x, 2.0, z), (1.45, 1.45, 1.45))
+
+    # RT3D2-T103: office hedge cluster.
+    for index, z in enumerate((2.6, 4.0, 5.4, 6.8)):
+        node(f'environment.hedge.{index}', 'hedge', (10.3, 0.52, z), (0.65, 0.95, 1.0))
+
+    # RT3D2-T104..T105: street furniture.
+    node('environment.bench', 'bench', (6.0, 0.55, 7.0), (1.9, 0.28, 0.55))
+    node('environment.bin', 'bin', (8.4, 0.55, 7.0), (0.62, 1.05, 0.62))
+
+    # RT3D2-T106: two more street lamps.
+    for index, (x, z) in enumerate(((-7.4, 7.4), (7.5, -8.1)), start=2):
+        node(f'environment.lamp.{index}.pole', 'curb', (x, 1.55, z), (0.14, 3.1, 0.14))
+        node(f'environment.lamp.{index}.head', 'lamp', (x, 3.10, z), (0.42, 0.20, 0.42))
+
+    # RT3D2-T107..T109: vehicle lighting, beacon, bumper, and cargo rack.
+    node('vehicle.player.headlight.left', 'whiteLight', (-0.62, 0.86, -1.92), (0.34, 0.22, 0.08))
+    node('vehicle.player.headlight.right', 'whiteLight', (0.82, 0.86, -1.92), (0.34, 0.22, 0.08))
+    node('vehicle.player.taillight.left', 'beacon', (-0.62, 0.82, 1.34), (0.32, 0.20, 0.08))
+    node('vehicle.player.taillight.right', 'beacon', (0.82, 0.82, 1.34), (0.32, 0.20, 0.08))
+    node('vehicle.player.beacon', 'beacon', (0.1, 1.98, -0.82), (0.34, 0.22, 0.34))
+    node('vehicle.player.rearBumper', 'curb', (0.1, 0.52, 1.42), (1.82, 0.18, 0.18))
+    node('vehicle.player.cargoRack', 'door', (0.1, 1.55, 0.55), (1.42, 0.18, 1.55))
+
+    # RT3D2-T110: target corner markers.
+    for target, material, center_x, center_z in (
+        ('electronics', 'targetA', 4.2, 2.9),
+        ('food', 'targetB', 4.2, -3.1),
+    ):
+        for corner, dx, dz in (
+            ('nw', -1.15, 0.95), ('ne', 1.15, 0.95),
+            ('sw', -1.15, -0.95), ('se', 1.15, -0.95),
+        ):
+            node(
+                f'delivery.{target}.marker.{corner}',
+                material,
+                (center_x + dx, 0.52, center_z + dz),
+                (0.18, 0.74, 0.18),
+            )
+
     document = {
-        'asset': {'version': '2.0', 'generator': 'CARGame RT3D-002 native slice visual polish v2'},
+        'asset': {'version': '2.0', 'generator': 'CARGame RT3D-002 native slice visual expansion v3'},
         'scene': 0,
         'scenes': [{'name': 'CARGame Native Delivery Slice', 'nodes': list(range(len(nodes)))}],
         'nodes': nodes,
