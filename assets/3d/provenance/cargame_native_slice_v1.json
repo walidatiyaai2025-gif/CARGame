@@ -6,9 +6,9 @@
   "ownership": "project-generated",
   "license": "CARGame project asset; no third-party model content",
   "source": "tool/generate_rt3d_native_slice_glb.py",
-  "generator": "CARGame RT3D-002 native slice v1",
-  "sha256": "bfd04d6d5f6d4e5c13dd7fc6f851e173d085b64be2fd90eed2664ce9f58feacc",
-  "byteLength": 4276,
+  "generator": "CARGame RT3D-002 native slice visual polish v2",
+  "sha256": "99ccaf68303dfac2ef45855b21aa1160b9421fa711ac2093c0a75a8a78e39358",
+  "byteLength": 9764,
   "requiredNodes": [
     "vehicle.player",
     "cargo.demo.electronics",
@@ -17,7 +17,12 @@
     "delivery.electronics",
     "delivery.food",
     "ground.main",
-    "road.main"
+    "road.main",
+    "road.cross",
+    "environment.warehouse.door",
+    "vehicle.player.windshield",
+    "environment.tree.0.crown",
+    "environment.lamp.0.head"
   ],
-  "notes": "Low-poly deterministic visual-slice asset generated from unit-cube geometry and PBR material definitions committed with the project. Digest and byte length are regenerated and pinned by the RT3D-002 CI contract; renderer adapter formatting is enforced by the same focused verification path."
+  "notes": "Second visible native-Filament checkpoint. Project-generated low-poly GLB adds a crossroad, curb/stripe detail, warehouse entrance, vehicle windshield/wheels, taller cargo stacks, toy trees and street lamps while preserving stable gameplay entity names and offline loading."
 }
