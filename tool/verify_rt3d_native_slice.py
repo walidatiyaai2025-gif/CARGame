@@ -18,21 +18,54 @@ SCREEN = ROOT / 'lib/features/realtime_3d/realtime_3d_preview_screen.dart'
 PUBSPEC = ROOT / 'pubspec.yaml'
 GENERATOR = ROOT / 'tool/generate_rt3d_native_slice_glb.py'
 
-EXPECTED_SHA256 = '99ccaf68303dfac2ef45855b21aa1160b9421fa711ac2093c0a75a8a78e39358'
+EXPECTED_SHA256 = '5de93589908d375446567cd84aa84dcba496a705538cec37c098f82440b480b2'
 REQUIRED_NODES = {
-    'vehicle.player',
     'cargo.demo.electronics',
     'cargo.demo.food',
-    'environment.warehouse',
     'delivery.electronics',
+    'delivery.electronics.marker.nw',
     'delivery.food',
-    'ground.main',
-    'road.main',
-    'road.cross',
-    'environment.warehouse.door',
-    'vehicle.player.windshield',
-    'environment.tree.0.crown',
+    'delivery.food.marker.se',
+    'environment.bench',
+    'environment.bin',
+    'environment.bollard.0',
+    'environment.checkpoint.beam',
+    'environment.checkpoint.left',
+    'environment.checkpoint.right',
+    'environment.cone.0',
+    'environment.depot',
+    'environment.depot.door',
+    'environment.depot.roof',
+    'environment.depot.sign',
+    'environment.hedge.0',
     'environment.lamp.0.head',
+    'environment.lamp.2.head',
+    'environment.office',
+    'environment.office.roof',
+    'environment.office.window.0',
+    'environment.parking',
+    'environment.parking.stripe.0',
+    'environment.sidewalk.east',
+    'environment.sidewalk.north',
+    'environment.sidewalk.west',
+    'environment.trafficLight.head',
+    'environment.trafficLight.pole',
+    'environment.tree.0.crown',
+    'environment.tree.3.crown',
+    'environment.warehouse',
+    'environment.warehouse.door',
+    'ground.main',
+    'road.cross',
+    'road.crosswalk.north.0',
+    'road.crosswalk.south.0',
+    'road.main',
+    'vehicle.player',
+    'vehicle.player.beacon',
+    'vehicle.player.cargoRack',
+    'vehicle.player.headlight.left',
+    'vehicle.player.rearBumper',
+    'vehicle.player.taillight.left',
+    'vehicle.player.windshield',
 }
 
 
@@ -83,7 +116,7 @@ def main() -> int:
     require(isinstance(nodes, list), 'GLB nodes must be a list')
     node_names = {node.get('name') for node in nodes if isinstance(node, dict)}
     require(REQUIRED_NODES <= node_names, f'missing required scene nodes: {sorted(REQUIRED_NODES - node_names)}')
-    require(len(nodes) >= 45, 'visual-polish slice must retain at least 45 visible scene nodes')
+    require(len(nodes) >= 120, 'visual-expansion slice must retain at least 120 visible scene nodes')
     require(
         len([name for name in node_names if isinstance(name, str) and name.startswith('cargo.')]) >= 6,
         'visual-polish slice must contain at least six visible cargo nodes',
@@ -98,13 +131,47 @@ def main() -> int:
     )
     require(
         len([name for name in node_names if isinstance(name, str) and name.startswith('environment.tree.')]) >= 6,
-        'visual-polish slice must contain toy environment trees',
+        'visual-expansion slice must contain toy environment trees',
+    )
+
+
+    require(
+        len([name for name in node_names if isinstance(name, str) and name.startswith('environment.office.window.')]) >= 4,
+        'visual-expansion office must retain four visible windows',
+    )
+    require(
+        len([name for name in node_names if isinstance(name, str) and name.startswith('road.crosswalk.')]) >= 12,
+        'visual-expansion slice must retain two zebra crossings',
+    )
+    require(
+        len([name for name in node_names if isinstance(name, str) and name.startswith('environment.parking.stripe.')]) >= 5,
+        'visual-expansion parking bay dividers must remain visible',
+    )
+    require(
+        len([name for name in node_names if isinstance(name, str) and name.startswith('environment.cone.')]) == 4,
+        'visual-expansion loading edge must retain four hazard cones',
+    )
+    require(
+        len([name for name in node_names if isinstance(name, str) and name.startswith('environment.bollard.')]) == 4,
+        'visual-expansion delivery lane must retain four bollards',
+    )
+    require(
+        len([name for name in node_names if isinstance(name, str) and name.startswith('environment.hedge.')]) >= 4,
+        'visual-expansion office landscaping must retain hedge blocks',
+    )
+    require(
+        len([name for name in node_names if isinstance(name, str) and name.startswith('delivery.electronics.marker.')]) == 4,
+        'electronics target must retain four visible corner markers',
+    )
+    require(
+        len([name for name in node_names if isinstance(name, str) and name.startswith('delivery.food.marker.')]) == 4,
+        'food target must retain four visible corner markers',
     )
 
     meshes = document.get('meshes')
     materials = document.get('materials')
-    require(isinstance(meshes, list) and len(meshes) >= 16, 'visual-polish GLB must contain at least 16 mesh/material variants')
-    require(isinstance(materials, list) and len(materials) >= 16, 'visual-polish GLB must contain at least 16 PBR materials')
+    require(isinstance(meshes, list) and len(meshes) >= 25, 'visual-expansion GLB must contain at least 25 mesh/material variants')
+    require(isinstance(materials, list) and len(materials) >= 25, 'visual-expansion GLB must contain at least 25 PBR materials')
     for material in materials:
         require(
             isinstance(material, dict) and 'pbrMetallicRoughness' in material,
@@ -125,7 +192,7 @@ def main() -> int:
     )
     require(set(provenance.get('requiredNodes', [])) == REQUIRED_NODES, 'provenance requiredNodes drift')
     require(
-        provenance.get('generator') == 'CARGame RT3D-002 native slice visual polish v2',
+        provenance.get('generator') == 'CARGame RT3D-002 native slice visual expansion v3',
         'provenance visual revision mismatch',
     )
 
@@ -136,7 +203,8 @@ def main() -> int:
     )
     generator = GENERATOR.read_text(encoding='utf-8')
     require(EXPECTED_SHA256 in generator, 'generator must pin admitted GLB hash')
-    require('visual polish v2' in generator, 'generator must identify the visible polish revision')
+    require('visual expansion v3' in generator, 'generator must identify the visible expansion revision')
+    require('RT3D2-T081..T110' in generator, 'generator must identify the 30-task visual checkpoint')
 
     gradle = GRADLE.read_text(encoding='utf-8')
     for artifact in ('filament-android', 'gltfio-android', 'filament-utils-android'):
@@ -189,7 +257,7 @@ def main() -> int:
         'non-Android projected fallback must remain explicit and isolated',
     )
 
-    print('RT3D NATIVE SLICE VALIDATION PASSED')
+    print('RT3D NATIVE VISUAL EXPANSION VALIDATION PASSED')
     print(f'GLB bytes: {len(data)}')
     print(f'GLB sha256: {digest}')
     print(f'Nodes: {len(nodes)} | Meshes: {len(meshes)} | Materials: {len(materials)}')
