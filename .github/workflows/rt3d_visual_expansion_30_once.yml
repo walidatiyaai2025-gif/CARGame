@@ -1,0 +1,35 @@
+name: RT3D Visual Expansion 30 Once
+
+on:
+  push:
+    branches:
+      - agent/rt3d-002-visual-expansion-30
+    paths:
+      - tool/apply_rt3d_visual_expansion_30.py
+      - .github/workflows/rt3d_visual_expansion_30_once.yml
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/rt3d-002-visual-expansion-30
+          fetch-depth: 0
+      - name: Apply 30 owner-visible Native Filament tasks
+        run: python3 tool/apply_rt3d_visual_expansion_30.py
+      - name: Verify generated source truth
+        run: |
+          python3 tool/generate_rt3d_native_slice_glb.py
+          git diff --exit-code -- assets/3d/runtime/models/cargame_native_slice_v1.glb
+          python3 tool/verify_rt3d_native_slice.py
+      - name: Commit generated checkpoint and remove helper
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "RT3D-002: implement visual expansion T081-T110"
+          git push origin HEAD:agent/rt3d-002-visual-expansion-30
