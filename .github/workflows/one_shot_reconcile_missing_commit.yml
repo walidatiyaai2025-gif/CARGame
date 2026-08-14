@@ -1,0 +1,43 @@
+name: One-shot Reconcile Missing Governance Commit
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/one_shot_reconcile_missing_commit.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  transplant:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout full repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ github.token }}
+
+      - name: Transplant only the missing governance patch onto current main
+        shell: bash
+        run: |
+          set -euo pipefail
+          target='reconcile/visual-apk-governance-20260814'
+          source_commit='aa9dba4b563ebef7fa339aec4c6c7e904b100d1f'
+
+          git fetch origin '+refs/heads/*:refs/remotes/origin/*' --prune
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git checkout -B "$target" origin/main
+
+          # Apply only the one audited post-merge commit; never merge its stale branch history.
+          git cherry-pick "$source_commit"
+
+          # Guard the transplant scope: the accepted delta must remain AGENTS.md only.
+          changed=$(git diff --name-only origin/main...HEAD)
+          test "$changed" = 'AGENTS.md'
+          git diff --check origin/main...HEAD
+
+          git push --force-with-lease origin "HEAD:refs/heads/$target"
