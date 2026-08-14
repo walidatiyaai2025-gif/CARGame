@@ -1,0 +1,126 @@
+name: Branch Reconciliation Audit
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/branch_reconciliation_audit.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch every branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin '+refs/heads/*:refs/remotes/origin/*' --prune
+          echo "Remote branches: $(git for-each-ref refs/remotes/origin --format='%(refname:short)' | grep -v '^origin/HEAD$' | wc -l)"
+
+      - name: Audit patch-unique work against main
+        shell: bash
+        run: |
+          set -euo pipefail
+          main_ref='origin/main'
+          report='branch-reconciliation-audit.tsv'
+          markdown='branch-reconciliation-audit.md'
+
+          printf 'branch\thead_nonmerge_commits_not_in_main\tpatch_unique_nonmerge_commits\tpatch_equivalent_nonmerge_commits\tbehind_main\tclassification\n' > "$report"
+          {
+            echo '# CARGame branch reconciliation audit'
+            echo
+            echo "Main: \`$(git rev-parse "$main_ref")\`"
+            echo
+            echo '| Branch | Non-merge commits not in main | Patch-unique | Patch-equivalent | Behind main | Classification |'
+            echo '|---|---:|---:|---:|---:|---|'
+          } > "$markdown"
+
+          candidates=0
+          clean=0
+          branches=0
+
+          while IFS= read -r ref; do
+            branch="${ref#origin/}"
+            [[ "$branch" == 'main' ]] && continue
+            [[ "$branch" == 'HEAD' ]] && continue
+            branches=$((branches + 1))
+
+            ancestry_unique=$(git rev-list --no-merges --right-only --count "$main_ref...$ref")
+            patch_unique=$(git rev-list --no-merges --right-only --cherry-pick --count "$main_ref...$ref")
+            patch_equivalent=$((ancestry_unique - patch_unique))
+            behind=$(git rev-list --left-only --count "$main_ref...$ref")
+
+            if (( patch_unique == 0 )); then
+              classification='NO_UNIQUE_PATCHES'
+              clean=$((clean + 1))
+            else
+              classification='CANDIDATE_UNIQUE_PATCHES'
+              candidates=$((candidates + 1))
+            fi
+
+            printf '%s\t%s\t%s\t%s\t%s\t%s\n' \
+              "$branch" "$ancestry_unique" "$patch_unique" "$patch_equivalent" "$behind" "$classification" >> "$report"
+            printf '| `%s` | %s | %s | %s | %s | %s |\n' \
+              "$branch" "$ancestry_unique" "$patch_unique" "$patch_equivalent" "$behind" "$classification" >> "$markdown"
+          done < <(git for-each-ref refs/remotes/origin --format='%(refname:short)' | sort)
+
+          {
+            echo
+            echo '## Summary'
+            echo
+            echo "- Branches audited: $branches"
+            echo "- Branches with no patch-unique non-merge commits: $clean"
+            echo "- Candidate branches with patch-unique non-merge commits: $candidates"
+            echo
+            echo '## Candidate unique commits'
+            echo
+          } >> "$markdown"
+
+          while IFS=$'\t' read -r branch ancestry_unique patch_unique patch_equivalent behind classification; do
+            [[ "$branch" == 'branch' ]] && continue
+            [[ "$classification" != 'CANDIDATE_UNIQUE_PATCHES' ]] && continue
+            ref="origin/$branch"
+            {
+              echo "### \`$branch\`"
+              echo
+              echo '```text'
+              git log --no-merges --right-only --cherry-pick --pretty=format:'%H %s' "$main_ref...$ref" || true
+              echo
+              echo '```'
+              echo
+            } >> "$markdown"
+          done < "$report"
+
+          echo "BRANCHES_AUDITED=$branches" >> "$GITHUB_ENV"
+          echo "CANDIDATE_BRANCHES=$candidates" >> "$GITHUB_ENV"
+          echo "NO_UNIQUE_PATCH_BRANCHES=$clean" >> "$GITHUB_ENV"
+
+          cat "$markdown"
+
+      - name: Upload audit report
+        uses: actions/upload-artifact@v4
+        with:
+          name: branch-reconciliation-audit
+          path: |
+            branch-reconciliation-audit.tsv
+            branch-reconciliation-audit.md
+          retention-days: 7
+
+      - name: Summary
+        shell: bash
+        run: |
+          {
+            echo '## Branch reconciliation audit'
+            echo "- Branches audited: $BRANCHES_AUDITED"
+            echo "- No unique patches: $NO_UNIQUE_PATCH_BRANCHES"
+            echo "- Candidate branches: $CANDIDATE_BRANCHES"
+          } >> "$GITHUB_STEP_SUMMARY"
