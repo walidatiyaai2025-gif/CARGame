@@ -1,0 +1,146 @@
+name: Branch Provenance Audit
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/branch_provenance_audit.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  provenance:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch branches and PR history
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin '+refs/heads/*:refs/remotes/origin/*' --prune
+          gh api --paginate --slurp "/repos/${GITHUB_REPOSITORY}/pulls?state=all&per_page=100" | jq 'add' > all-prs.json
+          echo "PRs loaded: $(jq length all-prs.json)"
+
+      - name: Classify current branch heads
+        shell: bash
+        run: |
+          set -euo pipefail
+          report='branch-provenance-audit.tsv'
+          md='branch-provenance-audit.md'
+          printf 'branch\tcurrent_sha\tclassification\tpr_numbers\tpost_merge_commits\tpatch_unique_vs_main\tbehind_main\n' > "$report"
+
+          declare -A counts
+          reviewed=0
+          candidates=0
+
+          while IFS= read -r ref; do
+            branch="${ref#origin/}"
+            [[ "$branch" == main || "$branch" == HEAD ]] && continue
+            reviewed=$((reviewed + 1))
+            sha=$(git rev-parse "$ref")
+            patch_unique=$(git rev-list --no-merges --right-only --cherry-pick --count "origin/main...$ref")
+            behind=$(git rev-list --left-only --count "origin/main...$ref")
+
+            branch_prs=$(jq --arg b "$branch" '[.[] | select(.head.ref == $b)]' all-prs.json)
+            pr_numbers=$(jq -r '[.[].number] | map(tostring) | join(",")' <<<"$branch_prs")
+            exact_merged=$(jq --arg sha "$sha" '[.[] | select(.head.sha == $sha and .merged_at != null)] | sort_by(.merged_at) | last // empty' <<<"$branch_prs")
+            exact_open=$(jq --arg sha "$sha" '[.[] | select(.head.sha == $sha and .state == "open")] | sort_by(.created_at) | last // empty' <<<"$branch_prs")
+            exact_closed=$(jq --arg sha "$sha" '[.[] | select(.head.sha == $sha and .state == "closed" and .merged_at == null)] | sort_by(.closed_at) | last // empty' <<<"$branch_prs")
+
+            classification=''
+            post_merge=0
+
+            if [[ -n "$exact_merged" ]]; then
+              classification='MERGED_EXACT_HEAD'
+            elif [[ -n "$exact_open" ]]; then
+              classification='OPEN_PR_CURRENT_HEAD'
+              candidates=$((candidates + 1))
+            elif [[ -n "$exact_closed" ]]; then
+              classification='CLOSED_UNMERGED_CURRENT_HEAD'
+              candidates=$((candidates + 1))
+            elif (( $(jq length <<<"$branch_prs") == 0 )); then
+              classification='NO_PR_HISTORY'
+              candidates=$((candidates + 1))
+            else
+              latest_merged=$(jq '[.[] | select(.merged_at != null)] | sort_by(.merged_at) | last // empty' <<<"$branch_prs")
+              if [[ -n "$latest_merged" ]]; then
+                merged_sha=$(jq -r '.head.sha' <<<"$latest_merged")
+                if git cat-file -e "${merged_sha}^{commit}" 2>/dev/null && git merge-base --is-ancestor "$merged_sha" "$ref"; then
+                  post_merge=$(git rev-list --no-merges --count "${merged_sha}..$ref")
+                  if (( post_merge == 0 )); then
+                    classification='MERGED_HISTORY_EQUIVALENT_HEAD'
+                  else
+                    classification='POST_MERGE_ADVANCE'
+                    candidates=$((candidates + 1))
+                  fi
+                else
+                  classification='PR_HISTORY_HEAD_REWRITTEN'
+                  candidates=$((candidates + 1))
+                fi
+              else
+                classification='PR_HISTORY_HEAD_CHANGED_UNMERGED'
+                candidates=$((candidates + 1))
+              fi
+            fi
+
+            counts[$classification]=$(( ${counts[$classification]:-0} + 1 ))
+            printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+              "$branch" "$sha" "$classification" "$pr_numbers" "$post_merge" "$patch_unique" "$behind" >> "$report"
+          done < <(git for-each-ref refs/remotes/origin --format='%(refname:short)' | sort)
+
+          {
+            echo '# CARGame branch provenance audit'
+            echo
+            echo "Main: \`$(git rev-parse origin/main)\`"
+            echo
+            echo "- Branch heads reviewed: $reviewed"
+            echo "- Heads requiring provenance review: $candidates"
+            echo
+            echo '## Classification counts'
+            echo
+            for k in "${!counts[@]}"; do echo "- $k: ${counts[$k]}"; done | sort
+            echo
+            echo '## Heads requiring review'
+            echo
+            echo '| Branch | Classification | PRs | Post-merge commits | Patch-unique | Behind |'
+            echo '|---|---|---|---:|---:|---:|'
+            awk -F '\t' 'NR>1 && $3 !~ /^MERGED_/ {printf "| `%s` | %s | %s | %s | %s | %s |\n", $1,$3,$4,$5,$6,$7}' "$report"
+            echo
+            echo '## Post-merge advance details'
+            echo
+          } > "$md"
+
+          while IFS=$'\t' read -r branch sha classification prs post_merge patch_unique behind; do
+            [[ "$branch" == branch ]] && continue
+            [[ "$classification" != POST_MERGE_ADVANCE ]] && continue
+            latest_merged_sha=$(jq -r --arg b "$branch" '[.[] | select(.head.ref == $b and .merged_at != null)] | sort_by(.merged_at) | last | .head.sha' all-prs.json)
+            {
+              echo "### \`$branch\`"
+              echo
+              echo '```text'
+              git log --no-merges --pretty=format:'%H %s' "${latest_merged_sha}..origin/${branch}" || true
+              echo
+              echo '```'
+              echo
+            } >> "$md"
+          done < "$report"
+
+          cat "$md"
+
+      - name: Upload provenance report
+        uses: actions/upload-artifact@v4
+        with:
+          name: branch-provenance-audit
+          path: |
+            branch-provenance-audit.tsv
+            branch-provenance-audit.md
+          retention-days: 7
