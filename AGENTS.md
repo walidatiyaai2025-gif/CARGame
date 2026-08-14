@@ -125,6 +125,35 @@ maintained copy of feature statuses.
 - Prevent RenderFlex overflows.
 - Prevent repeated taps, duplicate rewards, and overlapping navigation.
 
+## Mandatory visual APK checkpoints
+
+Every user-facing implementation increment, even when it is a small partial step,
+prototype, visual polish item, interaction, asset integration, camera adjustment,
+3D mechanic, or navigation change, must have a visible and reachable representation
+inside the actual application.
+
+- Source code, tests, architecture notes, status text, screenshots, PR descriptions,
+  console output, and CI artifacts alone do not satisfy visual acceptance.
+- Invisible plumbing may be implemented when technically required, but the checkpoint
+  reported to the user must pair it with the smallest safe visible in-app proof that
+  exercises the same production contract.
+- A temporary lab/debug route is acceptable only when it is reachable from the app,
+  uses production domain/application contracts, and is explicitly transitional toward
+  the final experience.
+- Every visible checkpoint must be testable in the Android build without developer
+  tooling or source-code inspection.
+- A user-facing checkpoint is not visually complete until the exact successful
+  `main` source commit has been promoted by the governed retention workflow into
+  `Last verified APK/CARGame-latest-verified.apk`.
+- PR/debug APK artifacts are verification evidence only. They never replace the root
+  retained APK as the user's stable visual handoff.
+- Never report a user-facing feature as visually complete while the root retained APK
+  still points to an older source commit that does not contain that feature.
+- Preserve the previously verified root APK when any verification or promotion gate
+  fails, is cancelled, or remains incomplete.
+
+The canonical detailed policy is `docs/VISUAL_APK_CHECKPOINT_POLICY.md`.
+
 ## Real-time 3D visual direction
 
 - Use premium stylized real-time 3D visuals for the globe, countries, cities, gameplay spaces, cargo, buildings, and vehicles.
@@ -210,6 +239,9 @@ Motion budgets:
 A function is not done until all applicable conditions are met:
 
 - Integrated into the actual user flow.
+- Any user-facing increment has a reachable visual in-app proof.
+- For user-facing work, the successful `main` source commit has been promoted into
+  `Last verified APK/CARGame-latest-verified.apk` before visual completion is claimed.
 - Acceptance criteria in `docs/FEATURE_CATALOG.md` are satisfied.
 - Loading, empty, disabled, error, retry, and offline states are handled.
 - Repeated taps and asynchronous race conditions are guarded.
