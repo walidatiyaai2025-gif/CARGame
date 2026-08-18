@@ -173,7 +173,9 @@ void main() {
       checkpoint('T09', find.byType(LevelSelectScreen), findsOneWidget);
       checkpoint('T10', find.byType(LevelSelectScreen), findsOneWidget);
 
-      final firstCapital = find.text('${levels.first.number}').first;
+      final firstCapital = find.bySemanticsLabel(
+        levels.first.capitalStage.label(true),
+      );
       checkpoint('T11', firstCapital, findsOneWidget);
 
       final lockedCapital = find.byIcon(Icons.lock_rounded).first;
