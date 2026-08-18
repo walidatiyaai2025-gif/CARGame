@@ -10,6 +10,7 @@ import 'package:cargo_sort_game/features/game/game_screen.dart';
 import 'package:cargo_sort_game/features/game/gameplay_result_debrief.dart';
 import 'package:cargo_sort_game/features/game/level_data.dart';
 import 'package:cargo_sort_game/features/home/home_screen.dart';
+import 'package:cargo_sort_game/features/levels/capital_world_map.dart';
 import 'package:cargo_sort_game/features/levels/city_briefing_screen.dart';
 import 'package:cargo_sort_game/features/levels/level_select_screen.dart';
 import 'package:cargo_sort_game/features/shop/shop_screen.dart';
@@ -173,15 +174,30 @@ void main() {
       checkpoint('T09', find.byType(LevelSelectScreen), findsOneWidget);
       checkpoint('T10', find.byType(LevelSelectScreen), findsOneWidget);
 
-      final firstCapital = find.text('${levels.first.number}').first;
-      checkpoint('T11', firstCapital, findsOneWidget);
+      final mapNodes = find.descendant(
+        of: find.byType(CapitalWorldMap),
+        matching: find.byWidgetPredicate(
+          (widget) => widget is GestureDetector && widget.child is SizedBox,
+        ),
+      );
+      checkpoint('T11', mapNodes, findsNWidgets(25));
 
-      final lockedCapital = find.byIcon(Icons.lock_rounded).first;
-      await tester.tap(lockedCapital);
-      await tester.pump(const Duration(milliseconds: 350));
-      checkpoint('T12', find.byType(CityBriefingScreen), findsNothing);
+      final firstCapitalNode = tester.widget<GestureDetector>(mapNodes.at(0));
+      final lockedCapitalNode = tester.widget<GestureDetector>(mapNodes.at(1));
+      checkpoint(
+        'T12',
+        firstCapitalNode.onTap != null &&
+            lockedCapitalNode.onTap == null &&
+            find.byType(CityBriefingScreen).evaluate().isEmpty,
+        isTrue,
+      );
 
-      await tester.tap(firstCapital);
+      await tester.drag(find.byType(ListView), const Offset(0, -900));
+      await tester.pump(const Duration(milliseconds: 300));
+      final startMissionFinder = find.byType(GameButton);
+      expect(startMissionFinder, findsOneWidget);
+      final startMission = tester.widget<GameButton>(startMissionFinder);
+      startMission.onPressed!.call();
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 350));
 
