@@ -173,17 +173,15 @@ void main() {
       checkpoint('T09', find.byType(LevelSelectScreen), findsOneWidget);
       checkpoint('T10', find.byType(LevelSelectScreen), findsOneWidget);
 
-      final firstCapital = find.bySemanticsLabel(
-        levels.first.capitalStage.label(true),
-      );
-      checkpoint('T11', firstCapital, findsOneWidget);
+      final startMission = find.text('ابدأ اللعب!');
+      checkpoint('T11', startMission, findsOneWidget);
 
       final lockedCapital = find.byIcon(Icons.lock_rounded).first;
       await tester.tap(lockedCapital);
       await tester.pump(const Duration(milliseconds: 350));
       checkpoint('T12', find.byType(CityBriefingScreen), findsNothing);
 
-      await tester.tap(firstCapital);
+      await tester.tap(startMission);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 350));
 
