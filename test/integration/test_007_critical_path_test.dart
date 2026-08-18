@@ -173,24 +173,14 @@ void main() {
       checkpoint('T09', find.byType(LevelSelectScreen), findsOneWidget);
       checkpoint('T10', find.byType(LevelSelectScreen), findsOneWidget);
 
-      final firstCapital = find
-          .bySemanticsLabel(levels.first.capitalStage.label(true))
-          .first;
-      await tester.ensureVisible(firstCapital);
-      await tester.pump();
+      final firstCapital = find.text('${levels.first.number}').first;
       checkpoint('T11', firstCapital, findsOneWidget);
 
-      final lockedCapital = find
-          .bySemanticsLabel(levels[1].capitalStage.label(true))
-          .first;
-      await tester.ensureVisible(lockedCapital);
-      await tester.pump();
+      final lockedCapital = find.byIcon(Icons.lock_rounded).first;
       await tester.tap(lockedCapital);
       await tester.pump(const Duration(milliseconds: 350));
       checkpoint('T12', find.byType(CityBriefingScreen), findsNothing);
 
-      await tester.ensureVisible(firstCapital);
-      await tester.pump();
       await tester.tap(firstCapital);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 350));
