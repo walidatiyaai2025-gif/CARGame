@@ -42,18 +42,20 @@ void main() {
       );
     });
 
-    test('rejects orphan and unknown products', () {
-      final orphan = _level(
+    test('allows single occurrences but rejects unknown products', () {
+      final singleOccurrences = _level(
+        moves: 4,
         items: <CargoItem>[
           productCatalog[0],
-          productCatalog[0],
           productCatalog[1],
+          productCatalog[2],
+          productCatalog[3],
         ],
       );
       final unknown = _level(
         items: <CargoItem>[
           productCatalog[0],
-          productCatalog[0],
+          productCatalog[1],
           CargoItem(
             id: 999,
             name: 'Unknown',
@@ -62,24 +64,42 @@ void main() {
             accentColor: productCatalog[1].accentColor,
             icon: productCatalog[1].icon,
           ),
-          CargoItem(
-            id: 999,
-            name: 'Unknown',
-            category: 'Unknown',
-            color: productCatalog[1].color,
-            accentColor: productCatalog[1].accentColor,
-            icon: productCatalog[1].icon,
-          ),
+          productCatalog[2],
         ],
       );
 
-      expect(
-        LevelSolvabilityValidator.validate(orphan).errors,
-        contains('orphan_product:2'),
-      );
+      expect(LevelSolvabilityValidator.validate(singleOccurrences).errors, isEmpty);
       expect(
         LevelSolvabilityValidator.validate(unknown).errors,
         contains('unknown_product:999'),
+      );
+    });
+
+    test('rejects invalid house assignment contracts', () {
+      final mismatchedCount = _level(
+        houseCount: 3,
+        houseAssignments: const <int>[1, 2],
+      );
+      final outOfRange = _level(
+        houseCount: 2,
+        houseAssignments: const <int>[1, 2, 3, 1],
+      );
+      final invalidCount = _level(
+        houseCount: 0,
+        houseAssignments: const <int>[1, 1, 1, 1],
+      );
+
+      expect(
+        LevelSolvabilityValidator.validate(mismatchedCount).errors,
+        contains('house_assignment_count_mismatch'),
+      );
+      expect(
+        LevelSolvabilityValidator.validate(outOfRange).errors,
+        contains('house_assignment_out_of_range:3'),
+      );
+      expect(
+        LevelSolvabilityValidator.validate(invalidCount).errors,
+        contains('house_count_not_positive'),
       );
     });
 
@@ -97,9 +117,9 @@ void main() {
         difficulty: 11,
         items: <CargoItem>[
           mismatchedProduct,
-          mismatchedProduct,
           productCatalog[1],
-          productCatalog[1],
+          productCatalog[2],
+          productCatalog[3],
         ],
       );
 
@@ -127,6 +147,8 @@ LevelData _level({
   int moves = 4,
   int difficulty = 1,
   List<CargoItem>? items,
+  int houseCount = 1,
+  List<int> houseAssignments = const <int>[],
 }) {
   return LevelData(
     number: number,
@@ -141,5 +163,7 @@ LevelData _level({
           productCatalog[1],
           productCatalog[1],
         ],
+    houseCount: houseCount,
+    houseAssignments: houseAssignments,
   );
 }
