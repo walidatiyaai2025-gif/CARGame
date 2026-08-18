@@ -48,7 +48,7 @@ void main() {
     );
     await tester.pump();
 
-    await tester.tap(find.byKey(const ValueKey('cargo-1-0')));
+    await _tapVisible(tester, find.byKey(const ValueKey('house-1-cargo-1-0')));
     await tester.pump();
 
     final warehouse = find.byKey(const ValueKey('warehouse-1'));
@@ -72,7 +72,7 @@ void main() {
     expect(currentVisibleTarget.isEmpty, isFalse);
     await tester.tapAt(currentVisibleTarget.center);
     await tester.pump();
-    expect(find.byKey(const ValueKey('cargo-1-0')), findsOneWidget);
+    expect(find.byKey(const ValueKey('house-1-cargo-1-0')), findsOneWidget);
     expect(
       find.descendant(
         of: find.byKey(const ValueKey('game-moves')),
@@ -127,7 +127,10 @@ void main() {
       );
       await tester.pump();
 
-      await tester.tap(find.byKey(ValueKey('cargo-${selected.id}-0')));
+      await _tapVisible(
+        tester,
+        find.byKey(ValueKey('house-1-cargo-${selected.id}-0')),
+      );
       await tester.pump();
 
       final selectedWarehouse = find.byKey(
@@ -143,9 +146,11 @@ void main() {
       await _pumpUntil(tester, find.byType(GameActionFeedback));
       expect(find.byType(GameActionFeedback), findsOneWidget);
 
-      final remainingCargo = find.byKey(ValueKey('cargo-${remaining.id}-0'));
+      final remainingCargo = find.byKey(
+        ValueKey('house-1-cargo-${remaining.id}-0'),
+      );
       expect(remainingCargo, findsOneWidget);
-      await tester.tap(remainingCargo);
+      await _tapVisible(tester, remainingCargo);
       await tester.pump();
 
       await _pumpUntilAbsent(tester, find.byType(GameActionFeedback));
@@ -174,6 +179,13 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+}
+
+Future<void> _tapVisible(WidgetTester tester, Finder finder) async {
+  expect(finder, findsOneWidget);
+  await tester.ensureVisible(finder);
+  await tester.pump();
+  await tester.tap(finder);
 }
 
 Future<void> _pumpUntil(

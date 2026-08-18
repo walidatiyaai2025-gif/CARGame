@@ -164,6 +164,12 @@
       "classification": "audited-local-motion"
     },
     {
+      "path": "lib/features/game/gameplay_house_cargo_board.dart",
+      "primitive": "AnimatedContainer(",
+      "count": 1,
+      "classification": "audited-local-motion"
+    },
+    {
       "path": "lib/features/game/gameplay_operations_deck.dart",
       "primitive": "AnimatedContainer(",
       "count": 1,

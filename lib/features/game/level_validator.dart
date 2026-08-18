@@ -42,6 +42,21 @@ class LevelSolvabilityValidator {
       return LevelValidationResult(List<String>.unmodifiable(errors));
     }
 
+    if (level.houseCount < 1) {
+      errors.add('house_count_not_positive');
+    }
+
+    if (level.houseAssignments.isNotEmpty) {
+      if (level.houseAssignments.length != level.items.length) {
+        errors.add('house_assignment_count_mismatch');
+      }
+      for (final house in level.houseAssignments) {
+        if (house < 1 || house > level.houseCount) {
+          errors.add('house_assignment_out_of_range:$house');
+        }
+      }
+    }
+
     final catalogById = <int, CargoItem>{
       for (final item in productCatalog) item.id: item,
     };
@@ -61,12 +76,6 @@ class LevelSolvabilityValidator {
 
     if (itemCounts.length < 2) {
       errors.add('insufficient_product_types');
-    }
-
-    for (final entry in itemCounts.entries) {
-      if (entry.value < 2) {
-        errors.add('orphan_product:${entry.key}');
-      }
     }
 
     if (level.moves <= 0) {

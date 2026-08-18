@@ -85,6 +85,7 @@ class _CityBriefingScreenState extends State<CityBriefingScreen> {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final skin = gameSkinById(store.selectedTheme);
     final world = gameWorlds[level.world - 1];
+    final route = capitalRouteForWorld(level.world);
     final previousStars = store.starsForLevel(level.number);
     final selectedCount =
         (_hint ? 1 : 0) + (_moves ? 1 : 0) + (_shield ? 1 : 0);
@@ -157,7 +158,7 @@ class _CityBriefingScreenState extends State<CityBriefingScreen> {
                             children: [
                               _DeploymentHero(
                                 level: level,
-                                worldName: world.name,
+                                worldName: route.name(isArabic),
                                 previousStars: previousStars,
                                 isArabic: isArabic,
                                 compact: compact,
@@ -328,7 +329,7 @@ class _MissionCommandBar extends StatelessWidget {
               ),
             ),
             Text(
-              '${isArabic ? 'العالم' : 'WORLD'} $worldNumber',
+              '${isArabic ? 'المسار' : 'ROUTE'} $worldNumber',
               style: const TextStyle(
                 color: AppTheme.muted,
                 fontSize: 10,
@@ -546,7 +547,7 @@ class _DeploymentHero extends StatelessWidget {
                       ),
                       const SizedBox(height: 10),
                       Text(
-                        level.cityName,
+                        level.localizedCityName(isArabic),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
@@ -558,7 +559,7 @@ class _DeploymentHero extends StatelessWidget {
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        '$worldName • ${isArabic ? 'المرحلة' : 'Level'} ${level.number}',
+                        '${level.localizedCountryName(isArabic)} • $worldName • ${isArabic ? 'المرحلة' : 'Level'} ${level.number}',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
@@ -612,7 +613,7 @@ class _DeploymentHero extends StatelessWidget {
                     type: boss ? ThreeDIconType.boss : ThreeDIconType.city,
                     size: compact ? 72 : 94,
                     animate: true,
-                    semanticLabel: level.cityName,
+                    semanticLabel: level.localizedDestinationLabel(isArabic),
                   ),
                 ),
               ],

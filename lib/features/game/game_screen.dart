@@ -12,6 +12,7 @@ import '../../core/storage/progress_store.dart';
 import '../../core/theme/game_skin.dart';
 import '../../core/theme/three_d_game_icon.dart';
 import 'city_catalog.dart';
+import 'gameplay_house_cargo_board.dart';
 import 'gameplay_operations_deck.dart';
 import 'gameplay_result_debrief.dart';
 import 'level_data.dart';
@@ -46,6 +47,7 @@ class _GameScreenState extends State<GameScreen> {
   final GlobalKey _motionLayerKey = GlobalKey();
 
   late List<CargoItem> _remaining;
+  late List<int> _remainingHouses;
   CargoItem? _selected;
   int? _selectedIndex;
   Offset? _selectedOrigin;
@@ -99,8 +101,15 @@ class _GameScreenState extends State<GameScreen> {
   void _reset({bool applyLoadout = false}) {
     _rewardTransactionId =
         'level-${widget.level.number}-attempt-${DateTime.now().toUtc().microsecondsSinceEpoch}-${_rewardAttemptSequence++}';
-    _remaining = [...widget.level.items]
-      ..shuffle(Random(widget.level.number * 41));
+    final placements = List.generate(
+      widget.level.items.length,
+      (index) => (
+        item: widget.level.items[index],
+        house: widget.level.houseForItemIndex(index),
+      ),
+    )..shuffle(Random(widget.level.number * 41));
+    _remaining = [for (final placement in placements) placement.item];
+    _remainingHouses = [for (final placement in placements) placement.house];
     final economy = EconomyConfig.current;
     _moves =
         widget.level.moves +
@@ -189,8 +198,13 @@ class _GameScreenState extends State<GameScreen> {
         if (flight.selectedIndex < _remaining.length &&
             identical(_remaining[flight.selectedIndex], flight.item)) {
           _remaining.removeAt(flight.selectedIndex);
+          _remainingHouses.removeAt(flight.selectedIndex);
         } else {
-          _remaining.remove(flight.item);
+          final fallbackIndex = _remaining.indexOf(flight.item);
+          if (fallbackIndex >= 0) {
+            _remaining.removeAt(fallbackIndex);
+            _remainingHouses.removeAt(fallbackIndex);
+          }
         }
         _combo++;
         _bestCombo = max(_bestCombo, _combo);
@@ -386,7 +400,7 @@ class _GameScreenState extends State<GameScreen> {
     final bonusCoins = won ? widget.store.lastCompletionBonus : 0;
     final bonusXp = won ? widget.store.lastCompletionBonusXp : 0;
 
-    final world = gameWorlds[widget.level.world - 1];
+    final routeName = capitalRouteForWorld(widget.level.world).name(ar);
 
     await showModalBottomSheet<void>(
       context: context,
@@ -400,8 +414,8 @@ class _GameScreenState extends State<GameScreen> {
         worldReward: worldReward,
         isArabic: ar,
         busy: _resultActionBusy,
-        cityName: widget.level.cityName,
-        worldName: world.name,
+        cityName: widget.level.localizedDestinationLabel(ar),
+        worldName: routeName,
         levelNumber: widget.level.number,
         stars: stars,
         reward: reward,
@@ -462,6 +476,7 @@ class _GameScreenState extends State<GameScreen> {
     final skin = gameSkinById(widget.store.selectedTheme);
     final world = gameWorlds[widget.level.world - 1];
     final ar = Localizations.localeOf(context).languageCode == 'ar';
+    final routeName = capitalRouteForWorld(widget.level.world).name(ar);
     final flight = _flight;
     final canGoBack = Navigator.of(context).canPop();
 
@@ -512,8 +527,8 @@ class _GameScreenState extends State<GameScreen> {
                     child: Column(
                       children: [
                         GameplayCommandBar(
-                          cityName: widget.level.cityName,
-                          worldName: world.name,
+                          cityName: widget.level.localizedDestinationLabel(ar),
+                          worldName: routeName,
                           levelNumber: widget.level.number,
                           difficulty: widget.level.difficulty,
                           compact: compact,
@@ -551,9 +566,11 @@ class _GameScreenState extends State<GameScreen> {
                         SizedBox(height: compact ? 5 : 8),
                         Expanded(
                           flex: 3,
-                          child: GameplayCargoBoard(
+                          child: GameplayHouseCargoBoard(
                             levelNumber: widget.level.number,
                             items: _remaining,
+                            houseAssignments: _remainingHouses,
+                            houseCount: widget.level.houseCount,
                             selectedIndex: _selectedIndex,
                             travellingIndex: _resolving ? _selectedIndex : null,
                             onTap: _choosePackage,

@@ -29,6 +29,8 @@ class LevelData {
     required this.moves,
     required this.items,
     required this.difficulty,
+    this.houseCount = 1,
+    this.houseAssignments = const <int>[],
   });
 
   final int number;
@@ -36,6 +38,50 @@ class LevelData {
   final int moves;
   final List<CargoItem> items;
   final int difficulty;
+  final int houseCount;
+  final List<int> houseAssignments;
+
+  int houseForItemIndex(int index) {
+    if (index < 0 || index >= items.length) {
+      throw RangeError.index(index, items, 'index');
+    }
+    if (houseAssignments.length != items.length) return 1;
+    return houseAssignments[index];
+  }
+}
+
+class LevelCargoProgression {
+  const LevelCargoProgression._();
+
+  static const int minimumCargoItems = 9;
+  static const int maximumCargoItems = 23;
+  static const int minimumHouses = 3;
+  static const int maximumHouses = 6;
+  static const int maximumDistinctProducts = 9;
+
+  static int cargoCountForLevel(int levelNumber) {
+    _validateLevelNumber(levelNumber);
+    return min(
+      minimumCargoItems + ((levelNumber - 1) ~/ 10),
+      maximumCargoItems,
+    );
+  }
+
+  static int houseCountForLevel(int levelNumber) {
+    _validateLevelNumber(levelNumber);
+    return min(minimumHouses + ((levelNumber - 1) ~/ 40), maximumHouses);
+  }
+
+  static int distinctProductCountForLevel(int levelNumber) {
+    _validateLevelNumber(levelNumber);
+    return min(3 + ((levelNumber - 1) ~/ 20), maximumDistinctProducts);
+  }
+
+  static void _validateLevelNumber(int levelNumber) {
+    if (levelNumber < 1 || levelNumber > 150) {
+      throw RangeError.range(levelNumber, 1, 150, 'levelNumber');
+    }
+  }
 }
 
 class GameWorld {
@@ -265,28 +311,30 @@ LevelData generateLevel(int number) {
 
   final random = Random(number * 7919 + 2026);
   final world = ((number - 1) ~/ 25) + 1;
-  final levelInWorld = ((number - 1) % 25) + 1;
+  final cargoCount = LevelCargoProgression.cargoCountForLevel(number);
+  final houseCount = LevelCargoProgression.houseCountForLevel(number);
 
-  final availableProducts = min(6 + world * 2, productCatalog.length);
+  final availableProducts = min(8 + world * 2, productCatalog.length);
   final typeCount = min(
-    2 + ((levelInWorld - 1) ~/ 5),
-    min(6, availableProducts),
+    LevelCargoProgression.distinctProductCountForLevel(number),
+    availableProducts,
   );
-  final pairCount = min(2 + ((number - 1) ~/ 12), 8);
 
   final shuffledProducts = List<CargoItem>.of(
     productCatalog.take(availableProducts),
   )..shuffle(random);
   final selectedProducts = shuffledProducts.take(typeCount).toList();
 
-  final items = <CargoItem>[];
-  for (var pair = 0; pair < pairCount; pair++) {
-    final product = selectedProducts[pair % selectedProducts.length];
-    items
-      ..add(product)
-      ..add(product);
+  final items = <CargoItem>[...selectedProducts];
+  while (items.length < cargoCount) {
+    items.add(selectedProducts[random.nextInt(selectedProducts.length)]);
   }
   items.shuffle(random);
+
+  final houseAssignments = List<int>.generate(
+    cargoCount,
+    (index) => (index % houseCount) + 1,
+  )..shuffle(random);
 
   final difficulty = LevelDifficultyPolicy.declaredDifficultyForLevel(number);
   final safetyMoves = LevelDifficultyPolicy.safetyMoveBaseForLevel(
@@ -301,5 +349,7 @@ LevelData generateLevel(int number) {
     moves: moves,
     items: List<CargoItem>.unmodifiable(items),
     difficulty: difficulty,
+    houseCount: houseCount,
+    houseAssignments: List<int>.unmodifiable(houseAssignments),
   );
 }

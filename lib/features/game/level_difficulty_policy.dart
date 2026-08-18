@@ -43,9 +43,9 @@ class LevelDifficultyPolicy {
       maxLevel: 15,
       minDifficulty: 1,
       maxDifficulty: 1,
-      minCargoItems: 4,
-      maxCargoItems: 6,
-      minDistinctProducts: 2,
+      minCargoItems: 9,
+      maxCargoItems: 10,
+      minDistinctProducts: 3,
       maxDistinctProducts: 3,
       minMoveSlack: 5,
       maxMoveSlack: 7,
@@ -56,9 +56,9 @@ class LevelDifficultyPolicy {
       maxLevel: 45,
       minDifficulty: 2,
       maxDifficulty: 3,
-      minCargoItems: 6,
-      maxCargoItems: 10,
-      minDistinctProducts: 2,
+      minCargoItems: 10,
+      maxCargoItems: 13,
+      minDistinctProducts: 3,
       maxDistinctProducts: 5,
       minMoveSlack: 4,
       maxMoveSlack: 7,
@@ -69,9 +69,9 @@ class LevelDifficultyPolicy {
       maxLevel: 75,
       minDifficulty: 4,
       maxDifficulty: 5,
-      minCargoItems: 10,
+      minCargoItems: 13,
       maxCargoItems: 16,
-      minDistinctProducts: 2,
+      minDistinctProducts: 5,
       maxDistinctProducts: 6,
       minMoveSlack: 3,
       maxMoveSlack: 6,
@@ -83,9 +83,9 @@ class LevelDifficultyPolicy {
       minDifficulty: 6,
       maxDifficulty: 8,
       minCargoItems: 16,
-      maxCargoItems: 16,
-      minDistinctProducts: 2,
-      maxDistinctProducts: 6,
+      maxCargoItems: 20,
+      minDistinctProducts: 6,
+      maxDistinctProducts: 8,
       minMoveSlack: 2,
       maxMoveSlack: 4,
     ),
@@ -95,10 +95,10 @@ class LevelDifficultyPolicy {
       maxLevel: 150,
       minDifficulty: 9,
       maxDifficulty: 10,
-      minCargoItems: 16,
-      maxCargoItems: 16,
-      minDistinctProducts: 2,
-      maxDistinctProducts: 6,
+      minCargoItems: 21,
+      maxCargoItems: 23,
+      minDistinctProducts: 9,
+      maxDistinctProducts: 9,
       minMoveSlack: 1,
       maxMoveSlack: 3,
     ),
@@ -130,8 +130,8 @@ class LevelDifficultyPolicy {
     }
 
     // Expert missions need a measurable gameplay-pressure increase rather than
-    // only a higher metadata/reward difficulty number. Keep cargo density
-    // unchanged and tighten the perfect-run error budget by one move.
+    // only a higher metadata/reward difficulty number. Keep the growing cargo
+    // curve intact and tighten the perfect-run error budget by one move.
     if (bandForLevel(levelNumber) == LevelDifficultyBand.expert) {
       return 1;
     }

@@ -52,7 +52,7 @@ void main() {
     );
     await tester.pump();
 
-    await tester.tap(find.byKey(ValueKey('cargo-${selected.id}-0')));
+    await tester.tap(find.byKey(ValueKey('house-1-cargo-${selected.id}-0')));
     await tester.pump();
     await tester.tap(find.byKey(ValueKey('warehouse-${wrongWarehouse.id}')));
 
