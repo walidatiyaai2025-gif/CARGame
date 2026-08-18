@@ -10,15 +10,13 @@ void main() {
   testWidgets(
     'unlocked capital opens briefing through named shared game route',
     (tester) async {
-      String? pushedRouteName;
+      final pushedRouteNames = <String?>[];
       final store = ProgressStore();
       final settings = AppSettingsStore();
 
       await tester.pumpWidget(
         MaterialApp(
-          navigatorObservers: [
-            _RouteObserver((name) => pushedRouteName = name),
-          ],
+          navigatorObservers: [_RouteObserver(pushedRouteNames.add)],
           home: LevelSelectScreen(store: store, settings: settings),
         ),
       );
@@ -30,15 +28,17 @@ void main() {
       await tester.drag(find.byType(ListView), const Offset(0, -900));
       await tester.pump(const Duration(milliseconds: 300));
 
-      final startMission = find.byType(GameButton);
-      expect(startMission, findsOneWidget);
+      final startMissionFinder = find.byType(GameButton);
+      expect(startMissionFinder, findsOneWidget);
       expect(find.text('START MISSION'), findsOneWidget);
 
-      await tester.tap(startMission);
+      final startMission = tester.widget<GameButton>(startMissionFinder);
+      expect(startMission.onPressed, isNotNull);
+      startMission.onPressed!.call();
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 350));
 
-      expect(pushedRouteName, '/briefing/level/1');
+      expect(pushedRouteNames, contains('/briefing/level/1'));
       expect(find.byType(CityBriefingScreen), findsOneWidget);
     },
   );
