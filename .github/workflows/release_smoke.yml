@@ -41,15 +41,11 @@ jobs:
           flutter-version: 3.44.8
           cache: true
 
-      - name: Restore packages and capture resolved lockfile
+      - name: Restore packages
         shell: bash
         run: |
           set -euo pipefail
-          flutter pub get 2>&1 | tee /tmp/cargame-release-pub-get.log
-          echo '---WORLD010-LOCKFILE-BEGIN---'
-          cat pubspec.lock
-          echo '---WORLD010-LOCKFILE-END---'
-          exit 86
+          flutter pub get --enforce-lockfile 2>&1 | tee /tmp/cargame-release-pub-get.log
 
       - name: Verify dependency security advisories
         run: python3 tool/verify_dependency_security.py --input-log /tmp/cargame-release-pub-get.log
