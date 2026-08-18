@@ -1,9 +1,7 @@
 name: WORLD-010 Format Snapshot
 
 on:
-  push:
-    branches:
-      - agent/world-010-ai-continent-map
+  pull_request:
     paths:
       - lib/features/levels/capital_world_map.dart
       - .github/workflows/world010-format-snapshot.yml
