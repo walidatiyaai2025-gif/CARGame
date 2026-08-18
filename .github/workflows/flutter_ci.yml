@@ -12,42 +12,24 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  verify:
+  restore:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
     steps:
       - name: Checkout feature branch
         uses: actions/checkout@v4
         with:
           ref: agent/world-009-real-capital-map
           fetch-depth: 0
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          channel: stable
-          flutter-version: 3.44.8
-          cache: true
-      - name: Apply compact header repair and restore CI
+      - name: Restore canonical CI and clean temporary helper
         shell: bash
         run: |
           set -euo pipefail
-          python3 - <<'PY'
-          from pathlib import Path
-          path = Path('lib/features/levels/level_select_screen.dart')
-          text = path.read_text()
-          old = '''                Row(\n                  children: [\n                    Container(\n                      padding: const EdgeInsets.symmetric(\n                        horizontal: 9,\n                        vertical: 5,\n                      ),\n                      decoration: BoxDecoration(\n                        color: Colors.white.withValues(alpha: .12),\n                        borderRadius: BorderRadius.circular(20),\n                        border: Border.all(color: Colors.white24),\n                      ),\n                      child: Text(\n                        isArabic\n                            ? '150 دولة وعاصمة'\n                            : '150 COUNTRIES & CAPITALS',\n                        style: const TextStyle(\n                          color: Colors.white,\n                          fontSize: 9,\n                          fontWeight: FontWeight.w900,\n                          letterSpacing: .5,\n                        ),\n                      ),\n                    ),\n                    const Spacer(),\n                    Text(\n                      '${isArabic ? 'المسار' : 'ROUTE'} $chapter/6',\n                      style: const TextStyle(\n                        color: Colors.white70,\n                        fontSize: 10,\n                        fontWeight: FontWeight.w900,\n                      ),\n                    ),\n                  ],\n                ),'''
-          new = '''                Row(\n                  children: [\n                    Expanded(\n                      child: Align(\n                        alignment: AlignmentDirectional.centerStart,\n                        child: FittedBox(\n                          fit: BoxFit.scaleDown,\n                          alignment: AlignmentDirectional.centerStart,\n                          child: Container(\n                            padding: const EdgeInsets.symmetric(\n                              horizontal: 9,\n                              vertical: 5,\n                            ),\n                            decoration: BoxDecoration(\n                              color: Colors.white.withValues(alpha: .12),\n                              borderRadius: BorderRadius.circular(20),\n                              border: Border.all(color: Colors.white24),\n                            ),\n                            child: Text(\n                              isArabic\n                                  ? '150 دولة وعاصمة'\n                                  : '150 COUNTRIES & CAPITALS',\n                              style: const TextStyle(\n                                color: Colors.white,\n                                fontSize: 9,\n                                fontWeight: FontWeight.w900,\n                                letterSpacing: .5,\n                              ),\n                            ),\n                          ),\n                        ),\n                      ),\n                    ),\n                    const SizedBox(width: 8),\n                    FittedBox(\n                      fit: BoxFit.scaleDown,\n                      child: Text(\n                        '${isArabic ? 'المسار' : 'ROUTE'} $chapter/6',\n                        style: const TextStyle(\n                          color: Colors.white70,\n                          fontSize: 10,\n                          fontWeight: FontWeight.w900,\n                        ),\n                      ),\n                    ),\n                  ],\n                ),'''
-          if old not in text:
-              raise SystemExit('challenge header target block not found')
-          path.write_text(text.replace(old, new, 1))
-          Path('.github/workflows/world009_header_repair.yml').unlink(missing_ok=True)
-          PY
-          dart format lib/features/levels/level_select_screen.dart
-          flutter pub get --enforce-lockfile
-          flutter test test/features/levels/level_select_responsive_test.dart
-          git checkout HEAD^ -- .github/workflows/flutter_ci.yml
+          git fetch origin main
+          git checkout origin/main -- .github/workflows/flutter_ci.yml
+          rm -f .github/workflows/world009_header_repair.yml
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
-          git commit -m 'WORLD-009 harden compact challenge header'
+          git commit -m 'ci: restore canonical Flutter CI after WORLD-009 repair'
           git push origin HEAD:agent/world-009-real-capital-map
