@@ -24,9 +24,7 @@ void main() {
     tester,
   ) async {
     await withTargetPlatform(TargetPlatform.linux, () async {
-      await tester.pumpWidget(
-        const MaterialApp(home: Realtime3dPreviewScreen()),
-      );
+      await tester.pumpWidget(const MaterialApp(home: Realtime3dPreviewScreen()));
       await tester.pump();
 
       expect(
@@ -43,9 +41,7 @@ void main() {
     tester,
   ) async {
     await withTargetPlatform(TargetPlatform.android, () async {
-      await tester.pumpWidget(
-        const MaterialApp(home: Realtime3dPreviewScreen()),
-      );
+      await tester.pumpWidget(const MaterialApp(home: Realtime3dPreviewScreen()));
       await tester.pump();
 
       expect(find.byKey(const Key('rt3d-native-filament-view')), findsOneWidget);
@@ -63,9 +59,7 @@ void main() {
     tester,
   ) async {
     await withTargetPlatform(TargetPlatform.android, () async {
-      await tester.pumpWidget(
-        const MaterialApp(home: Realtime3dPreviewScreen()),
-      );
+      await tester.pumpWidget(const MaterialApp(home: Realtime3dPreviewScreen()));
       await tester.pump();
 
       await tester.tap(find.byKey(const Key('rt3d-camera-warehouse')));
