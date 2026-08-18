@@ -48,10 +48,7 @@ void main() {
     );
     await tester.pump();
 
-    await _tapVisible(
-      tester,
-      find.byKey(const ValueKey('house-1-cargo-1-0')),
-    );
+    await _tapVisible(tester, find.byKey(const ValueKey('house-1-cargo-1-0')));
     await tester.pump();
 
     final warehouse = find.byKey(const ValueKey('warehouse-1'));
