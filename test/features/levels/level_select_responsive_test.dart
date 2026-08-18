@@ -54,12 +54,7 @@ void main() {
       locale: const Locale('en'),
     );
 
-    final compactException = tester.takeException();
-    if (compactException != null) {
-      debugPrint('WORLD009_COMPACT_EXCEPTION: $compactException');
-      debugDumpRenderTree();
-    }
-    expect(compactException, isNull);
+    expect(tester.takeException(), isNull);
     expect(find.text('World Map'), findsOneWidget);
     expect(find.byType(ListView), findsOneWidget);
     expect(find.byType(CapitalWorldMap), findsOneWidget);

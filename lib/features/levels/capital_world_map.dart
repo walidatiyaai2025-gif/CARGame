@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../core/theme/app_theme.dart';
 import '../game/city_catalog.dart';
 import '../game/level_data.dart';
 

@@ -688,20 +688,20 @@ class _SelectedCapitalCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 7),
-                    Row(
+                    Wrap(
+                      spacing: 7,
+                      runSpacing: 5,
                       children: [
                         _StageMeta(
                           icon: Icons.flag_rounded,
                           text:
                               '${isArabic ? 'مرحلة' : 'Level'} ${level.number}',
                         ),
-                        const SizedBox(width: 7),
                         _StageMeta(
                           icon: Icons.inventory_2_rounded,
                           text:
                               '${level.items.length} ${isArabic ? 'منتج' : 'cargo'}',
                         ),
-                        const SizedBox(width: 7),
                         _StageMeta(
                           icon: Icons.house_rounded,
                           text:
@@ -797,32 +797,28 @@ class _StageMeta extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Flexible(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 5),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF1F4F8),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 12, color: AppTheme.muted),
-            const SizedBox(width: 4),
-            Flexible(
-              child: Text(
-                text,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: AppTheme.muted,
-                  fontSize: 8.5,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 5),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF1F4F8),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: AppTheme.muted),
+          const SizedBox(width: 4),
+          Text(
+            text,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: AppTheme.muted,
+              fontSize: 8.5,
+              fontWeight: FontWeight.w800,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
