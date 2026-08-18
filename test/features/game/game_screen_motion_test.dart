@@ -48,7 +48,10 @@ void main() {
     );
     await tester.pump();
 
-    await tester.tap(find.byKey(const ValueKey('house-1-cargo-1-0')));
+    await _tapVisible(
+      tester,
+      find.byKey(const ValueKey('house-1-cargo-1-0')),
+    );
     await tester.pump();
 
     final warehouse = find.byKey(const ValueKey('warehouse-1'));
@@ -127,7 +130,10 @@ void main() {
       );
       await tester.pump();
 
-      await tester.tap(find.byKey(ValueKey('house-1-cargo-${selected.id}-0')));
+      await _tapVisible(
+        tester,
+        find.byKey(ValueKey('house-1-cargo-${selected.id}-0')),
+      );
       await tester.pump();
 
       final selectedWarehouse = find.byKey(
@@ -147,7 +153,7 @@ void main() {
         ValueKey('house-1-cargo-${remaining.id}-0'),
       );
       expect(remainingCargo, findsOneWidget);
-      await tester.tap(remainingCargo);
+      await _tapVisible(tester, remainingCargo);
       await tester.pump();
 
       await _pumpUntilAbsent(tester, find.byType(GameActionFeedback));
@@ -176,6 +182,13 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+}
+
+Future<void> _tapVisible(WidgetTester tester, Finder finder) async {
+  expect(finder, findsOneWidget);
+  await tester.ensureVisible(finder);
+  await tester.pump();
+  await tester.tap(finder);
 }
 
 Future<void> _pumpUntil(
