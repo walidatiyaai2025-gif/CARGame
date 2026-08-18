@@ -179,6 +179,8 @@ class _Realtime3dPreviewScreenState extends State<Realtime3dPreviewScreen> {
           final viewport = Size(constraints.maxWidth, constraints.maxHeight);
           _scene.setViewport(viewport);
           return Semantics(
+            container: true,
+            explicitChildNodes: true,
             label: 'Interactive 3D cargo visual checkpoint',
             value: _status,
             child: Stack(
@@ -373,9 +375,11 @@ class _CameraPresetButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Semantics(
+      container: true,
       button: true,
       selected: selected,
       label: '${preset.label} camera',
+      excludeSemantics: true,
       child: Tooltip(
         message: 'Show ${preset.label.toLowerCase()} camera view',
         child: Material(
