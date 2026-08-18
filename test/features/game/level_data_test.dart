@@ -27,7 +27,11 @@ void main() {
           second.difficulty,
           reason: 'level $number difficulty',
         );
-        expect(first.houseCount, second.houseCount, reason: 'level $number houses');
+        expect(
+          first.houseCount,
+          second.houseCount,
+          reason: 'level $number houses',
+        );
         expect(
           first.items.map((item) => item.id),
           orderedEquals(second.items.map((item) => item.id)),
@@ -45,7 +49,11 @@ void main() {
           cached.difficulty,
           reason: 'level $number cached difficulty',
         );
-        expect(first.houseCount, cached.houseCount, reason: 'level $number cached houses');
+        expect(
+          first.houseCount,
+          cached.houseCount,
+          reason: 'level $number cached houses',
+        );
         expect(
           first.items.map((item) => item.id),
           orderedEquals(cached.items.map((item) => item.id)),
@@ -228,8 +236,14 @@ void main() {
     test('generation rejects level numbers outside the production range', () {
       expect(() => generateLevel(0), throwsRangeError);
       expect(() => generateLevel(151), throwsRangeError);
-      expect(() => LevelCargoProgression.cargoCountForLevel(0), throwsRangeError);
-      expect(() => LevelCargoProgression.houseCountForLevel(151), throwsRangeError);
+      expect(
+        () => LevelCargoProgression.cargoCountForLevel(0),
+        throwsRangeError,
+      );
+      expect(
+        () => LevelCargoProgression.houseCountForLevel(151),
+        throwsRangeError,
+      );
     });
   });
 }
