@@ -19,12 +19,12 @@ jobs:
           channel: stable
           flutter-version: 3.44.8
           cache: true
-      - name: Format and emit source
-        shell: bash
-        run: |
-          set -euo pipefail
-          dart format lib/features/levels/capital_world_map.dart
-          echo '---WORLD010-FORMATTED-BEGIN---'
-          base64 -w0 lib/features/levels/capital_world_map.dart
-          echo
-          echo '---WORLD010-FORMATTED-END---'
+      - name: Format source
+        run: dart format lib/features/levels/capital_world_map.dart
+      - name: Upload formatted source
+        uses: actions/upload-artifact@v4
+        with:
+          name: world010-formatted-map-source
+          path: lib/features/levels/capital_world_map.dart
+          if-no-files-found: error
+          retention-days: 1
