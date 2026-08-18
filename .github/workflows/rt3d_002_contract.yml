@@ -1,11 +1,53 @@
 name: RT3D-002 Production 3D Contract
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'lib/core/domain/realtime_3d/**'
+      - 'lib/core/application/realtime_3d/**'
+      - 'lib/features/realtime_3d/**'
+      - 'assets/3d/**'
+      - 'test/core/domain/realtime_3d_*'
+      - 'test/features/native_filament_realtime_3d_scene_test.dart'
+      - 'tool/verify_rt3d_002.py'
+      - 'tool/test_rt3d_002.py'
+      - 'tool/verify_rt3d_003.py'
+      - 'tool/test_rt3d_003.py'
+      - 'tool/verify_rt3d_native_slice.py'
+      - 'tool/test_rt3d_native_slice.py'
+      - 'tool/generate_rt3d_native_slice_glb.py'
+      - 'docs/work/RT3D-002.md'
+      - 'docs/work/RT3D-003-refresh.md'
+      - 'android/app/build.gradle.kts'
+      - 'android/app/src/main/kotlin/com/walka/cargosort/**'
+      - 'pubspec.yaml'
+      - '.github/workflows/rt3d_002_contract.yml'
   pull_request:
+    paths:
+      - 'lib/core/domain/realtime_3d/**'
+      - 'lib/core/application/realtime_3d/**'
+      - 'lib/features/realtime_3d/**'
+      - 'assets/3d/**'
+      - 'test/core/domain/realtime_3d_*'
+      - 'test/features/native_filament_realtime_3d_scene_test.dart'
+      - 'tool/verify_rt3d_002.py'
+      - 'tool/test_rt3d_002.py'
+      - 'tool/verify_rt3d_003.py'
+      - 'tool/test_rt3d_003.py'
+      - 'tool/verify_rt3d_native_slice.py'
+      - 'tool/test_rt3d_native_slice.py'
+      - 'tool/generate_rt3d_native_slice_glb.py'
+      - 'docs/work/RT3D-002.md'
+      - 'docs/work/RT3D-003-refresh.md'
+      - 'android/app/build.gradle.kts'
+      - 'android/app/src/main/kotlin/com/walka/cargosort/**'
+      - 'pubspec.yaml'
+      - '.github/workflows/rt3d_002_contract.yml'
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: rt3d-002-${{ github.ref }}
@@ -13,33 +55,65 @@ concurrency:
 
 jobs:
   verify:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
     steps:
-      - name: Checkout feature branch
+      - name: Checkout
         uses: actions/checkout@v4
-        with:
-          ref: agent/rt3d-003-cinematic-polish-refresh
-          fetch-depth: 0
+
+      - name: Generate deterministic RT3D-002 GLB evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tool/generate_rt3d_native_slice_glb.py
+          git diff --exit-code -- assets/3d/runtime/models/cargame_native_slice_v1.glb
+
+      - name: Verify RT3D-002 native Filament slice
+        run: python3 tool/verify_rt3d_native_slice.py
+
+      - name: Test RT3D-002 native GLB validator
+        run: python3 tool/test_rt3d_native_slice.py
+
+      - name: Verify RT3D-003 cinematic runtime contract
+        run: python3 tool/verify_rt3d_003.py
+
+      - name: Test RT3D-003 cinematic validator
+        run: python3 tool/test_rt3d_003.py
+
+      - name: Verify RT3D-002 production 3D contract
+        run: python3 tool/verify_rt3d_002.py
+
+      - name: Test RT3D-002 contract validator
+        run: python3 tool/test_rt3d_002.py
+
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
           flutter-version: 3.44.8
           cache: true
-      - name: Canonical format and restore focused CI
-        shell: bash
-        run: |
-          set -euo pipefail
-          dart format \
-            lib/features/realtime_3d/native_filament_realtime_3d_scene.dart \
-            lib/features/realtime_3d/realtime_3d_preview_screen.dart \
-            test/features/native_filament_realtime_3d_scene_test.dart
-          git checkout HEAD^ -- .github/workflows/rt3d_002_contract.yml
-          rm -f .github/workflows/rt3d003_format_once.yml
-          git diff --check
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -A
-          git commit -m 'RT3D-003 apply canonical Dart formatting'
-          git push origin HEAD:agent/rt3d-003-cinematic-polish-refresh
+
+      - name: Verify RT3D-002 Dart formatting
+        run: >-
+          dart format --output=none --set-exit-if-changed
+          lib/core/domain/realtime_3d/renderer_admission.dart
+          lib/core/domain/realtime_3d/production_scene_slice.dart
+          lib/core/domain/realtime_3d/filament_renderer_profile.dart
+          lib/features/realtime_3d/native_filament_realtime_3d_scene.dart
+          lib/features/realtime_3d/realtime_3d_preview_screen.dart
+          test/core/domain/realtime_3d_renderer_admission_test.dart
+          test/core/domain/realtime_3d_production_scene_slice_test.dart
+          test/core/domain/realtime_3d_filament_renderer_profile_test.dart
+          test/features/native_filament_realtime_3d_scene_test.dart
+
+      - name: Restore packages
+        run: flutter pub get --enforce-lockfile
+
+      - name: Test RT3D-002 domain contracts
+        run: >-
+          flutter test
+          test/core/domain/realtime_3d_renderer_admission_test.dart
+          test/core/domain/realtime_3d_production_scene_slice_test.dart
+          test/core/domain/realtime_3d_filament_renderer_profile_test.dart
+          test/features/native_filament_realtime_3d_scene_test.dart
