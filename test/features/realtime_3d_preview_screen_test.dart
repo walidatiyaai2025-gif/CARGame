@@ -15,18 +15,16 @@ void main() {
   ) async {
     debugDefaultTargetPlatformOverride = TargetPlatform.linux;
 
-    await tester.pumpWidget(
-      const MaterialApp(home: Realtime3dPreviewScreen()),
-    );
+    await tester.pumpWidget(const MaterialApp(home: Realtime3dPreviewScreen()));
     await tester.pump();
 
-    expect(find.byKey(const Key('rt3d-projected-fallback-view')), findsOneWidget);
-    expect(find.byKey(const Key('rt3d-native-filament-view')), findsNothing);
-    expect(find.byKey(const Key('rt3d-camera-presets')), findsNothing);
     expect(
-      find.textContaining('Projected fallback'),
+      find.byKey(const Key('rt3d-projected-fallback-view')),
       findsOneWidget,
     );
+    expect(find.byKey(const Key('rt3d-native-filament-view')), findsNothing);
+    expect(find.byKey(const Key('rt3d-camera-presets')), findsNothing);
+    expect(find.textContaining('Projected fallback'), findsOneWidget);
   });
 
   testWidgets('Android Visual Lab exposes accessible deterministic cameras', (
@@ -34,9 +32,7 @@ void main() {
   ) async {
     debugDefaultTargetPlatformOverride = TargetPlatform.android;
 
-    await tester.pumpWidget(
-      const MaterialApp(home: Realtime3dPreviewScreen()),
-    );
+    await tester.pumpWidget(const MaterialApp(home: Realtime3dPreviewScreen()));
     await tester.pump();
 
     expect(find.byKey(const Key('rt3d-native-filament-view')), findsOneWidget);
@@ -54,9 +50,7 @@ void main() {
   ) async {
     debugDefaultTargetPlatformOverride = TargetPlatform.android;
 
-    await tester.pumpWidget(
-      const MaterialApp(home: Realtime3dPreviewScreen()),
-    );
+    await tester.pumpWidget(const MaterialApp(home: Realtime3dPreviewScreen()));
     await tester.pump();
 
     await tester.tap(find.byKey(const Key('rt3d-camera-warehouse')));
