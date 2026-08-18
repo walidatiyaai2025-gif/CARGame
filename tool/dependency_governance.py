@@ -255,9 +255,12 @@ def detect_license(text: str) -> str | None:
     normalized = text.lower()
     if 'apache license' in normalized and 'version 2.0' in normalized:
         return 'Apache-2.0'
-    if (
-        ('mit license' in normalized or 'the mit license' in normalized)
-        and 'permission is hereby granted' in normalized
+    if 'permission is hereby granted, free of charge' in normalized and (
+        'mit license' in normalized
+        or (
+            'the software is provided "as is"' in normalized
+            and 'copies or substantial portions of the software' in normalized
+        )
     ):
         return 'MIT'
     if (

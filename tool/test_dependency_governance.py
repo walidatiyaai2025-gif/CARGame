@@ -19,6 +19,23 @@ of this software and associated documentation files (the \"Software\"), to deal
 in the Software without restriction.
 """
 
+HEADERLESS_MIT_LICENSE = """Copyright (c) 2018 Example
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the \"Software\"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+"""
+
 
 class DependencyGovernanceTest(unittest.TestCase):
     def setUp(self) -> None:
@@ -124,6 +141,17 @@ class DependencyGovernanceTest(unittest.TestCase):
 
         self.assertEqual([], violations)
         self.assertEqual('1.2.3', inventory[0]['resolved'])
+        self.assertEqual('MIT', inventory[0]['license'])
+
+    def test_headerless_canonical_mit_license_passes(self) -> None:
+        (self.package_root / 'LICENSE').write_text(
+            HEADERLESS_MIT_LICENSE,
+            encoding='utf-8',
+        )
+
+        violations, inventory = governance.verify_project(self.root)
+
+        self.assertEqual([], violations)
         self.assertEqual('MIT', inventory[0]['license'])
 
     def test_git_dependency_is_rejected(self) -> None:
