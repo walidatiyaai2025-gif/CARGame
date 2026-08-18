@@ -173,7 +173,7 @@ void main() {
       checkpoint('T09', find.byType(LevelSelectScreen), findsOneWidget);
       checkpoint('T10', find.byType(LevelSelectScreen), findsOneWidget);
 
-      final startMission = find.text('ابدأ اللعب!');
+      final startMission = find.byType(GameButton);
       checkpoint('T11', startMission, findsOneWidget);
 
       final lockedCapital = find.byIcon(Icons.lock_rounded).first;
