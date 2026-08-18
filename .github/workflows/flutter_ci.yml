@@ -29,7 +29,7 @@ jobs:
           flutter-version: 3.44.8
           cache: true
 
-      - name: Repair critical-path map mission flow and restore CI
+      - name: Finalize critical-path map mission flow and restore CI
         shell: bash
         run: |
           set -euo pipefail
@@ -47,7 +47,7 @@ jobs:
               raise SystemExit('critical-path import anchor not found')
 
           old = """      final firstCapital = find.text('${levels.first.number}').first;\n      checkpoint('T11', firstCapital, findsOneWidget);\n\n      final lockedCapital = find.byIcon(Icons.lock_rounded).first;\n      await tester.tap(lockedCapital);\n      await tester.pump(const Duration(milliseconds: 350));\n      checkpoint('T12', find.byType(CityBriefingScreen), findsNothing);\n\n      await tester.tap(firstCapital);\n      await tester.pump();\n      await tester.pump(const Duration(milliseconds: 350));\n"""
-          new = """      final mapNodes = find.descendant(\n        of: find.byType(CapitalWorldMap),\n        matching: find.byWidgetPredicate(\n          (widget) => widget is GestureDetector && widget.child is SizedBox,\n        ),\n      );\n      checkpoint('T11', mapNodes, findsNWidgets(25));\n\n      final firstCapitalNode = tester.widget<GestureDetector>(mapNodes.at(0));\n      final lockedCapitalNode = tester.widget<GestureDetector>(mapNodes.at(1));\n      checkpoint(\n        'T12',\n        firstCapitalNode.onTap != null &&\n            lockedCapitalNode.onTap == null &&\n            find.byType(CityBriefingScreen).evaluate().isEmpty,\n        isTrue,\n      );\n\n      await tester.drag(find.byType(ListView), const Offset(0, -900));\n      await tester.pump(const Duration(milliseconds: 300));\n      final startMissionFinder = find.byType(GameButton);\n      checkpoint('T12', startMissionFinder, findsOneWidget);\n      final startMission = tester.widget<GameButton>(startMissionFinder);\n      startMission.onPressed!.call();\n      await tester.pump();\n      await tester.pump(const Duration(milliseconds: 350));\n"""
+          new = """      final mapNodes = find.descendant(\n        of: find.byType(CapitalWorldMap),\n        matching: find.byWidgetPredicate(\n          (widget) => widget is GestureDetector && widget.child is SizedBox,\n        ),\n      );\n      checkpoint('T11', mapNodes, findsNWidgets(25));\n\n      final firstCapitalNode = tester.widget<GestureDetector>(mapNodes.at(0));\n      final lockedCapitalNode = tester.widget<GestureDetector>(mapNodes.at(1));\n      checkpoint(\n        'T12',\n        firstCapitalNode.onTap != null &&\n            lockedCapitalNode.onTap == null &&\n            find.byType(CityBriefingScreen).evaluate().isEmpty,\n        isTrue,\n      );\n\n      await tester.drag(find.byType(ListView), const Offset(0, -900));\n      await tester.pump(const Duration(milliseconds: 300));\n      final startMissionFinder = find.byType(GameButton);\n      expect(startMissionFinder, findsOneWidget);\n      final startMission = tester.widget<GameButton>(startMissionFinder);\n      startMission.onPressed!.call();\n      await tester.pump();\n      await tester.pump(const Duration(milliseconds: 350));\n"""
           if old not in text:
               raise SystemExit('critical-path interaction block not found')
           path.write_text(text.replace(old, new, 1))
@@ -56,10 +56,12 @@ jobs:
           flutter pub get --enforce-lockfile
           dart format test/integration/test_007_critical_path_test.dart
           flutter test test/integration/test_007_critical_path_test.dart
-          python3 tool/verify_test_007_critical_path.py
 
           git show origin/agent/game-017-house-cargo-progression:.github/workflows/flutter_ci.yml > .github/workflows/flutter_ci.yml
           rm -f .github/workflows/world009_critical_path_repair.yml
+
+          python3 tool/verify_test_007_critical_path.py
+          python3 tool/test_test_007_critical_path.py
 
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
