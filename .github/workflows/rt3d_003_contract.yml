@@ -1,0 +1,101 @@
+name: RT3D-003 Cinematic Native 3D Contract
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'lib/features/realtime_3d/**'
+      - 'android/app/src/main/kotlin/com/walka/cargosort/NativeFilamentSceneView.kt'
+      - 'assets/3d/runtime/models/cargame_native_slice_v1.glb'
+      - 'assets/3d/provenance/cargame_native_slice_v1.json'
+      - 'tool/generate_rt3d_native_slice_glb.py'
+      - 'tool/verify_rt3d_native_slice.py'
+      - 'tool/test_rt3d_native_slice.py'
+      - 'tool/verify_rt3d_003.py'
+      - 'tool/test_rt3d_003.py'
+      - 'test/features/native_filament_realtime_3d_scene_test.dart'
+      - 'test/features/realtime_3d_preview_screen_test.dart'
+      - 'docs/work/RT3D-003-refresh.md'
+      - '.github/workflows/rt3d_003_contract.yml'
+  pull_request:
+    paths:
+      - 'lib/features/realtime_3d/**'
+      - 'android/app/src/main/kotlin/com/walka/cargosort/NativeFilamentSceneView.kt'
+      - 'assets/3d/runtime/models/cargame_native_slice_v1.glb'
+      - 'assets/3d/provenance/cargame_native_slice_v1.json'
+      - 'tool/generate_rt3d_native_slice_glb.py'
+      - 'tool/verify_rt3d_native_slice.py'
+      - 'tool/test_rt3d_native_slice.py'
+      - 'tool/verify_rt3d_003.py'
+      - 'tool/test_rt3d_003.py'
+      - 'test/features/native_filament_realtime_3d_scene_test.dart'
+      - 'test/features/realtime_3d_preview_screen_test.dart'
+      - 'docs/work/RT3D-003-refresh.md'
+      - '.github/workflows/rt3d_003_contract.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rt3d-003-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Regenerate deterministic cinematic GLB
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tool/generate_rt3d_native_slice_glb.py
+          git diff --exit-code -- assets/3d/runtime/models/cargame_native_slice_v1.glb
+
+      - name: Verify cinematic GLB contract
+        run: python3 tool/verify_rt3d_native_slice.py
+
+      - name: Test cinematic GLB validator
+        run: python3 tool/test_rt3d_native_slice.py
+
+      - name: Verify RT3D-003 runtime contract
+        run: python3 tool/verify_rt3d_003.py
+
+      - name: Test RT3D-003 runtime validator
+        run: python3 tool/test_rt3d_003.py
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.44.8
+          cache: true
+
+      - name: Restore packages
+        run: flutter pub get --enforce-lockfile
+
+      - name: Verify RT3D-003 Dart formatting
+        run: >-
+          dart format --output=none --set-exit-if-changed
+          lib/features/realtime_3d/native_filament_realtime_3d_scene.dart
+          lib/features/realtime_3d/realtime_3d_preview_screen.dart
+          test/features/native_filament_realtime_3d_scene_test.dart
+          test/features/realtime_3d_preview_screen_test.dart
+
+      - name: Analyze RT3D-003 Dart surface
+        run: >-
+          flutter analyze --no-fatal-infos --no-fatal-warnings
+          lib/features/realtime_3d/native_filament_realtime_3d_scene.dart
+          lib/features/realtime_3d/realtime_3d_preview_screen.dart
+          test/features/native_filament_realtime_3d_scene_test.dart
+          test/features/realtime_3d_preview_screen_test.dart
+
+      - name: Test camera geometry and Visual Lab HUD
+        run: >-
+          flutter test
+          test/features/native_filament_realtime_3d_scene_test.dart
+          test/features/realtime_3d_preview_screen_test.dart
