@@ -1,0 +1,23 @@
+name: WORLD-009 Overflow Probe
+
+on:
+  push:
+    branches:
+      - agent/world-009-real-capital-map
+
+permissions:
+  contents: read
+
+jobs:
+  overflow-probe:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.44.8
+          cache: true
+      - run: flutter pub get --enforce-lockfile
+      - name: Run compact overflow probe
+        run: flutter test test/features/levels/level_select_overflow_probe_test.dart --reporter expanded
