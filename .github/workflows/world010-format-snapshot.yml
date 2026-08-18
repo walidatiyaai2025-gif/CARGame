@@ -1,0 +1,32 @@
+name: WORLD-010 Format Snapshot
+
+on:
+  push:
+    branches:
+      - agent/world-010-ai-continent-map
+    paths:
+      - lib/features/levels/capital_world_map.dart
+      - .github/workflows/world010-format-snapshot.yml
+
+permissions:
+  contents: read
+
+jobs:
+  format:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.44.8
+          cache: true
+      - name: Format and emit source
+        shell: bash
+        run: |
+          set -euo pipefail
+          dart format lib/features/levels/capital_world_map.dart
+          echo '---WORLD010-FORMATTED-BEGIN---'
+          base64 -w0 lib/features/levels/capital_world_map.dart
+          echo
+          echo '---WORLD010-FORMATTED-END---'
