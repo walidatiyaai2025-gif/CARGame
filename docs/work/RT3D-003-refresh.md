@@ -15,12 +15,13 @@ Priority: P0 VISUAL
 - Regenerated project-owned GLB is pinned to SHA-256 `b727b594612452a9a3723aa64423ee5d18a9b90567aba191d9a035bf888de157`.
 - Validator and provenance now target the RT3D-003 cinematic node/material contract instead of the stale RT3D-002 scene.
 - The contract explicitly protects emissive lamps/headlights/rear lights/beacon/signals, vehicle mirrors/bumpers, road arrows, traffic signals, pallet/skyline dressing and delivery rims while retaining stable cargo/delivery IDs.
-- Native runtime camera/bloom implementation is now executing: bloom, Overview/Warehouse/Docks presets, reset, custom orbit state, frame count and FPS estimate.
+- Native runtime now includes Filament bloom, Overview/Warehouse/Docks presets, reset/custom orbit state, frame count and FPS estimate.
+- Dart bridge and accessible Visual Lab camera HUD are implemented; canonical Dart formatting is the active CI checkpoint.
 
 ## Next gates
 
-1. Confirm refreshed RT3D/full CI is green.
-2. Validate native bloom/camera runtime compilation and tests.
-3. HUD/semantics and reduced-motion behavior.
-4. Focused validator + full Flutter CI + Android APK security.
-5. Exact-main merge and retained Last verified APK evidence.
+1. Canonical Dart format and focused RT3D CI.
+2. Full Flutter analyze/test/debug APK gate.
+3. Android release APK/AAB packaging and artifact security.
+4. Exact-main merge and retained Last verified APK evidence.
+5. Owner physical-device visual play-test.
