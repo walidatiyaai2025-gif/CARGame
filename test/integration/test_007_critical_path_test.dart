@@ -173,13 +173,19 @@ void main() {
       checkpoint('T09', find.byType(LevelSelectScreen), findsOneWidget);
       checkpoint('T10', find.byType(LevelSelectScreen), findsOneWidget);
 
-      final startMission = find.byType(GameButton);
-      checkpoint('T11', startMission, findsOneWidget);
-
       final lockedCapital = find.byIcon(Icons.lock_rounded).first;
       await tester.tap(lockedCapital);
       await tester.pump(const Duration(milliseconds: 350));
       checkpoint('T12', find.byType(CityBriefingScreen), findsNothing);
+
+      final startMission = find.byType(GameButton);
+      await tester.scrollUntilVisible(
+        startMission,
+        250,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pump(const Duration(milliseconds: 100));
+      checkpoint('T11', startMission, findsOneWidget);
 
       await tester.tap(startMission);
       await tester.pump();
