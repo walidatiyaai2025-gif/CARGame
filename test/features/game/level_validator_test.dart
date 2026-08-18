@@ -13,7 +13,9 @@ void main() {
 
     test('representative world boundaries validate', () {
       for (final levelNumber in <int>[1, 25, 26, 50, 51, 125, 126, 150]) {
-        final result = LevelSolvabilityValidator.validate(levels[levelNumber - 1]);
+        final result = LevelSolvabilityValidator.validate(
+          levels[levelNumber - 1],
+        );
         expect(result.errors, isEmpty, reason: 'level $levelNumber');
       }
     });
@@ -68,7 +70,10 @@ void main() {
         ],
       );
 
-      expect(LevelSolvabilityValidator.validate(singleOccurrences).errors, isEmpty);
+      expect(
+        LevelSolvabilityValidator.validate(singleOccurrences).errors,
+        isEmpty,
+      );
       expect(
         LevelSolvabilityValidator.validate(unknown).errors,
         contains('unknown_product:999'),
