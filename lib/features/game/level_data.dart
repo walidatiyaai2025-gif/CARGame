@@ -69,10 +69,7 @@ class LevelCargoProgression {
 
   static int houseCountForLevel(int levelNumber) {
     _validateLevelNumber(levelNumber);
-    return min(
-      minimumHouses + ((levelNumber - 1) ~/ 40),
-      maximumHouses,
-    );
+    return min(minimumHouses + ((levelNumber - 1) ~/ 40), maximumHouses);
   }
 
   static int distinctProductCountForLevel(int levelNumber) {
