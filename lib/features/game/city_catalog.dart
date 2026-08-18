@@ -48,12 +48,48 @@ class CapitalRoute {
 }
 
 const capitalRoutes = <CapitalRoute>[
-  CapitalRoute(world: 1, nameEn: 'Western Europe', nameAr: 'أوروبا الغربية', subtitleEn: 'Europe begins with the Atlantic capitals', subtitleAr: 'ابدأ الرحلة من عواصم أوروبا المطلة على الأطلسي'),
-  CapitalRoute(world: 2, nameEn: 'Eastern Europe & Central Asia', nameAr: 'أوروبا الشرقية وآسيا الوسطى', subtitleEn: 'Cross Europe into the Caucasus and Central Asia', subtitleAr: 'اعبر شرق أوروبا والقوقاز وآسيا الوسطى'),
-  CapitalRoute(world: 3, nameEn: 'Asia', nameAr: 'آسيا', subtitleEn: 'Travel through East, South and Southeast Asia', subtitleAr: 'تنقّل بين شرق وجنوب وجنوب شرق آسيا'),
-  CapitalRoute(world: 4, nameEn: 'Middle East & East Africa', nameAr: 'الشرق الأوسط وشرق أفريقيا', subtitleEn: 'Connect the Gulf, North Africa and East Africa', subtitleAr: 'اربط الخليج وشمال أفريقيا وشرق أفريقيا'),
-  CapitalRoute(world: 5, nameEn: 'Africa', nameAr: 'أفريقيا', subtitleEn: 'Continue through central, western and southern Africa', subtitleAr: 'واصل الرحلة عبر وسط وغرب وجنوب أفريقيا'),
-  CapitalRoute(world: 6, nameEn: 'Americas & Oceania', nameAr: 'الأمريكتان وأوقيانوسيا', subtitleEn: 'Finish across the Americas, Australia and New Zealand', subtitleAr: 'اختتم الرحلة عبر الأمريكتين وأستراليا ونيوزيلندا'),
+  CapitalRoute(
+    world: 1,
+    nameEn: 'Western Europe',
+    nameAr: 'أوروبا الغربية',
+    subtitleEn: 'Europe begins with the Atlantic capitals',
+    subtitleAr: 'ابدأ الرحلة من عواصم أوروبا المطلة على الأطلسي',
+  ),
+  CapitalRoute(
+    world: 2,
+    nameEn: 'Eastern Europe & Central Asia',
+    nameAr: 'أوروبا الشرقية وآسيا الوسطى',
+    subtitleEn: 'Cross Europe into the Caucasus and Central Asia',
+    subtitleAr: 'اعبر شرق أوروبا والقوقاز وآسيا الوسطى',
+  ),
+  CapitalRoute(
+    world: 3,
+    nameEn: 'Asia',
+    nameAr: 'آسيا',
+    subtitleEn: 'Travel through East, South and Southeast Asia',
+    subtitleAr: 'تنقّل بين شرق وجنوب وجنوب شرق آسيا',
+  ),
+  CapitalRoute(
+    world: 4,
+    nameEn: 'Middle East & East Africa',
+    nameAr: 'الشرق الأوسط وشرق أفريقيا',
+    subtitleEn: 'Connect the Gulf, North Africa and East Africa',
+    subtitleAr: 'اربط الخليج وشمال أفريقيا وشرق أفريقيا',
+  ),
+  CapitalRoute(
+    world: 5,
+    nameEn: 'Africa',
+    nameAr: 'أفريقيا',
+    subtitleEn: 'Continue through central, western and southern Africa',
+    subtitleAr: 'واصل الرحلة عبر وسط وغرب وجنوب أفريقيا',
+  ),
+  CapitalRoute(
+    world: 6,
+    nameEn: 'Americas & Oceania',
+    nameAr: 'الأمريكتان وأوقيانوسيا',
+    subtitleEn: 'Finish across the Americas, Australia and New Zealand',
+    subtitleAr: 'اختتم الرحلة عبر الأمريكتين وأستراليا ونيوزيلندا',
+  ),
 ];
 
 const _capitalRows = <String>[
@@ -227,12 +263,7 @@ final List<CapitalStage> capitalStages = List<CapitalStage>.unmodifiable(
 
 CapitalStage capitalStageForLevel(int levelNumber) {
   if (levelNumber < 1 || levelNumber > capitalStages.length) {
-    throw RangeError.range(
-      levelNumber,
-      1,
-      capitalStages.length,
-      'levelNumber',
-    );
+    throw RangeError.range(levelNumber, 1, capitalStages.length, 'levelNumber');
   }
   return capitalStages[levelNumber - 1];
 }
@@ -262,6 +293,7 @@ extension CityLevelData on LevelData {
   String get countryName => capitalStage.countryEn;
   String localizedCityName(bool isArabic) => capitalStage.capital(isArabic);
   String localizedCountryName(bool isArabic) => capitalStage.country(isArabic);
-  String localizedDestinationLabel(bool isArabic) => capitalStage.label(isArabic);
+  String localizedDestinationLabel(bool isArabic) =>
+      capitalStage.label(isArabic);
   bool get isBossCity => cityIndex == 24;
 }

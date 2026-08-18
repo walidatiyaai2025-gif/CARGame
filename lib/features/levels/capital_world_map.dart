@@ -257,9 +257,7 @@ class _CapitalNode extends StatelessWidget {
                 Positioned(
                   top: size + 3,
                   child: Container(
-                    constraints: BoxConstraints(
-                      maxWidth: compact ? 104 : 124,
-                    ),
+                    constraints: BoxConstraints(maxWidth: compact ? 104 : 124),
                     padding: const EdgeInsets.symmetric(
                       horizontal: 7,
                       vertical: 4,
@@ -342,11 +340,7 @@ class _MapLegend extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
-              Icons.public_rounded,
-              size: 12,
-              color: Colors.white70,
-            ),
+            const Icon(Icons.public_rounded, size: 12, color: Colors.white70),
             const SizedBox(width: 5),
             Text(
               isArabic ? 'اسحب وكبّر الخريطة' : 'Pan & zoom map',

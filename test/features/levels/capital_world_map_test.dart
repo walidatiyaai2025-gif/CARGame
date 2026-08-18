@@ -17,38 +17,39 @@ void main() {
     expect(tokyo.dx, greaterThan(cairo.dx));
   });
 
-  testWidgets('capital map exposes the current real destination and selects it', (
-    tester,
-  ) async {
-    LevelData? selected;
+  testWidgets(
+    'capital map exposes the current real destination and selects it',
+    (tester) async {
+      LevelData? selected;
 
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: SizedBox(
-            width: 390,
-            child: CapitalWorldMap(
-              levels: levels.take(25).toList(),
-              highestUnlockedLevel: 1,
-              selectedLevel: 1,
-              starsForLevel: (_) => 0,
-              isArabic: false,
-              accent: const Color(0xFFFFC857),
-              onSelect: (level) => selected = level,
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SizedBox(
+              width: 390,
+              child: CapitalWorldMap(
+                levels: levels.take(25).toList(),
+                highestUnlockedLevel: 1,
+                selectedLevel: 1,
+                starsForLevel: (_) => 0,
+                isArabic: false,
+                accent: const Color(0xFFFFC857),
+                onSelect: (level) => selected = level,
+              ),
             ),
           ),
         ),
-      ),
-    );
-    await tester.pump();
+      );
+      await tester.pump();
 
-    expect(find.byType(InteractiveViewer), findsOneWidget);
-    expect(find.text('Lisbon'), findsOneWidget);
-    expect(find.text('Portugal'), findsOneWidget);
+      expect(find.byType(InteractiveViewer), findsOneWidget);
+      expect(find.text('Lisbon'), findsOneWidget);
+      expect(find.text('Portugal'), findsOneWidget);
 
-    await tester.tap(find.text('Lisbon'));
-    await tester.pump();
-    expect(selected?.number, 1);
-    expect(tester.takeException(), isNull);
-  });
+      await tester.tap(find.text('Lisbon'));
+      await tester.pump();
+      expect(selected?.number, 1);
+      expect(tester.takeException(), isNull);
+    },
+  );
 }

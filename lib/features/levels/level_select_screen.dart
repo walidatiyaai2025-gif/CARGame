@@ -60,9 +60,8 @@ class _LevelSelectScreenState extends State<LevelSelectScreen> {
         .where((level) => level.number <= highest)
         .fold<LevelData?>(
           null,
-          (latest, level) => level.number > (latest?.number ?? 0)
-              ? level
-              : latest,
+          (latest, level) =>
+              level.number > (latest?.number ?? 0) ? level : latest,
         );
 
     setState(() {
@@ -279,7 +278,9 @@ class _CapitalChallengeHeader extends StatelessWidget {
                         border: Border.all(color: Colors.white24),
                       ),
                       child: Text(
-                        isArabic ? '150 دولة وعاصمة' : '150 COUNTRIES & CAPITALS',
+                        isArabic
+                            ? '150 دولة وعاصمة'
+                            : '150 COUNTRIES & CAPITALS',
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 9,
@@ -537,9 +538,7 @@ class _ChapterArrow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: onTap == null
-          ? const Color(0xFFF0F2F5)
-          : const Color(0xFFECF4FF),
+      color: onTap == null ? const Color(0xFFF0F2F5) : const Color(0xFFECF4FF),
       shape: const CircleBorder(),
       child: IconButton(
         onPressed: onTap,
@@ -661,9 +660,9 @@ class _SelectedCapitalCard extends StatelessWidget {
                               vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF22A8E8).withValues(
-                                alpha: .12,
-                              ),
+                              color: const Color(
+                                0xFF22A8E8,
+                              ).withValues(alpha: .12),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
@@ -693,7 +692,8 @@ class _SelectedCapitalCard extends StatelessWidget {
                       children: [
                         _StageMeta(
                           icon: Icons.flag_rounded,
-                          text: '${isArabic ? 'مرحلة' : 'Level'} ${level.number}',
+                          text:
+                              '${isArabic ? 'مرحلة' : 'Level'} ${level.number}',
                         ),
                         const SizedBox(width: 7),
                         _StageMeta(

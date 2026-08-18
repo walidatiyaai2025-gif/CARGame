@@ -6,34 +6,35 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('unlocked capital opens briefing through named shared game route', (
-    tester,
-  ) async {
-    String? pushedRouteName;
-    final store = ProgressStore();
-    final settings = AppSettingsStore();
+  testWidgets(
+    'unlocked capital opens briefing through named shared game route',
+    (tester) async {
+      String? pushedRouteName;
+      final store = ProgressStore();
+      final settings = AppSettingsStore();
 
-    await tester.pumpWidget(
-      MaterialApp(
-        navigatorObservers: [
-          _RouteObserver((name) => pushedRouteName = name),
-        ],
-        home: LevelSelectScreen(store: store, settings: settings),
-      ),
-    );
-    await tester.pump(const Duration(milliseconds: 100));
+      await tester.pumpWidget(
+        MaterialApp(
+          navigatorObservers: [
+            _RouteObserver((name) => pushedRouteName = name),
+          ],
+          home: LevelSelectScreen(store: store, settings: settings),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 100));
 
-    expect(find.text('Lisbon'), findsWidgets);
-    expect(find.text('Portugal'), findsWidgets);
-    expect(find.text('START MISSION'), findsOneWidget);
+      expect(find.text('Lisbon'), findsWidgets);
+      expect(find.text('Portugal'), findsWidgets);
+      expect(find.text('START MISSION'), findsOneWidget);
 
-    await tester.tap(find.text('START MISSION'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 350));
+      await tester.tap(find.text('START MISSION'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 350));
 
-    expect(pushedRouteName, '/briefing/level/1');
-    expect(find.byType(CityBriefingScreen), findsOneWidget);
-  });
+      expect(pushedRouteName, '/briefing/level/1');
+      expect(find.byType(CityBriefingScreen), findsOneWidget);
+    },
+  );
 }
 
 final class _RouteObserver extends NavigatorObserver {
