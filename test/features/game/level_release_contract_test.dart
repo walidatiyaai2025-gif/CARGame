@@ -45,9 +45,19 @@ void main() {
           reason: 'level $number difficulty',
         );
         expect(
+          regenerated.houseCount,
+          cached.houseCount,
+          reason: 'level $number house count',
+        );
+        expect(
           regenerated.items.map((item) => item.id),
           orderedEquals(cached.items.map((item) => item.id)),
           reason: 'level $number product sequence',
+        );
+        expect(
+          regenerated.houseAssignments,
+          orderedEquals(cached.houseAssignments),
+          reason: 'level $number house sequence',
         );
       }
     });
