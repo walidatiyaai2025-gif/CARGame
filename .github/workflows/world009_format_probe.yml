@@ -1,0 +1,35 @@
+name: WORLD-009 Format Probe
+
+on:
+  push:
+    branches:
+      - agent/world-009-real-capital-map
+
+permissions:
+  contents: read
+
+jobs:
+  format-probe:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.44.8
+          cache: true
+      - name: Print canonical Dart format diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          files=(
+            lib/features/game/city_catalog.dart
+            lib/features/levels/capital_world_map.dart
+            lib/features/levels/level_select_screen.dart
+            test/features/levels/capital_world_map_test.dart
+            test/features/levels/level_select_navigation_test.dart
+          )
+          dart format "${files[@]}"
+          echo '--- WORLD009_FORMAT_DIFF_BEGIN ---'
+          git --no-pager diff -- "${files[@]}"
+          echo '--- WORLD009_FORMAT_DIFF_END ---'
