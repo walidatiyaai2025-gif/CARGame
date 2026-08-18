@@ -6,19 +6,21 @@ on:
       - agent/world-009-real-capital-map
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   format-probe:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: agent/world-009-real-capital-map
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
           flutter-version: 3.44.8
           cache: true
-      - name: Print canonical Dart format diff
+      - name: Apply canonical Dart formatting
         shell: bash
         run: |
           set -euo pipefail
@@ -30,6 +32,12 @@ jobs:
             test/features/levels/level_select_navigation_test.dart
           )
           dart format "${files[@]}"
-          echo '--- WORLD009_FORMAT_DIFF_BEGIN ---'
-          git --no-pager diff -- "${files[@]}"
-          echo '--- WORLD009_FORMAT_DIFF_END ---'
+          if git diff --quiet -- "${files[@]}"; then
+            echo 'All WORLD-009 files already formatted.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add "${files[@]}"
+          git commit -m 'style: format WORLD-009 Dart files [skip ci]'
+          git push origin HEAD:agent/world-009-real-capital-map
