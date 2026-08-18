@@ -9,6 +9,17 @@ import '../../core/domain/realtime_3d/cargo_interaction.dart';
 import '../../core/domain/realtime_3d/geometry.dart';
 import 'projected_realtime_3d_scene.dart';
 
+enum NativeFilamentCameraPreset {
+  overview('overview', 'Overview'),
+  warehouse('warehouse', 'Warehouse'),
+  docks('docks', 'Docks');
+
+  const NativeFilamentCameraPreset(this.wireName, this.label);
+
+  final String wireName;
+  final String label;
+}
+
 /// Production Android adapter. World-space interaction stays in Dart while the
 /// visible scene is rendered by the native Filament PlatformView.
 class NativeFilamentRealtime3dScene extends ChangeNotifier
@@ -55,16 +66,19 @@ class NativeFilamentRealtime3dScene extends ChangeNotifier
   bool _hoverCompatible = false;
   double _yaw = 0.82;
   double _cameraHeight = 8.7;
+  NativeFilamentCameraPreset? _cameraPreset =
+      NativeFilamentCameraPreset.overview;
+  Vec3 _cameraEye = const Vec3(9.0, 8.7, 9.3);
+  Vec3 _cameraTarget = const Vec3(0, 0.9, 0);
 
   Vec3 get cargoPosition => _cargoPosition;
   bool get cargoSelected => _cargoSelected;
   String? get hoveredTargetId => _hoveredTargetId;
   bool get hoverCompatible => _hoverCompatible;
   ProjectedRealtime3dScene get projectedFallback => _projectedFallback;
+  NativeFilamentCameraPreset? get cameraPreset => _cameraPreset;
+  String get cameraLabel => _cameraPreset?.label ?? 'Custom';
 
-  Vec3 get _cameraEye =>
-      Vec3(math.cos(_yaw) * 13.2, _cameraHeight, math.sin(_yaw) * 13.2);
-  Vec3 get _cameraTarget => const Vec3(0, 0.9, 0);
   Vec3 get _cameraForward => (_cameraTarget - _cameraEye).normalized();
   Vec3 get _cameraRight => _cameraForward.cross(Vec3.up).normalized();
   Vec3 get _cameraUp => _cameraRight.cross(_cameraForward).normalized();
@@ -90,12 +104,46 @@ class NativeFilamentRealtime3dScene extends ChangeNotifier
     _cameraHeight = (_cameraHeight + (delta.dy * 0.025))
         .clamp(5.8, 12.5)
         .toDouble();
+    _cameraPreset = null;
+    _cameraEye = Vec3(
+      math.cos(_yaw) * 13.2,
+      _cameraHeight,
+      math.sin(_yaw) * 13.2,
+    );
+    _cameraTarget = const Vec3(0, 0.9, 0);
     _projectedFallback.orbitBy(delta);
     unawaited(
       _invoke('orbitBy', <String, double>{'dx': delta.dx, 'dy': delta.dy}),
     );
     notifyListeners();
   }
+
+  Future<void> setCameraPreset(NativeFilamentCameraPreset preset) async {
+    final (eye, target) = switch (preset) {
+      NativeFilamentCameraPreset.overview => (
+        const Vec3(9.0, 8.7, 9.3),
+        const Vec3(0, 0.9, 0),
+      ),
+      NativeFilamentCameraPreset.warehouse => (
+        const Vec3(-0.8, 6.3, 10.8),
+        const Vec3(-5.6, 1.4, 2.4),
+      ),
+      NativeFilamentCameraPreset.docks => (
+        const Vec3(10.5, 5.8, 1.2),
+        const Vec3(4.2, 0.7, -0.1),
+      ),
+    };
+    _cameraPreset = preset;
+    _cameraEye = eye;
+    _cameraTarget = target;
+    await _invoke('setCameraPreset', <String, String>{
+      'preset': preset.wireName,
+    });
+    notifyListeners();
+  }
+
+  Future<void> resetCamera() =>
+      setCameraPreset(NativeFilamentCameraPreset.overview);
 
   void resetCargo() {
     _cargoPosition = cargoOrigin;
@@ -110,6 +158,9 @@ class NativeFilamentRealtime3dScene extends ChangeNotifier
 
   Future<void> _syncNativeState() async {
     await _invoke('resetCargo');
+    await _invoke('setCameraPreset', <String, String>{
+      'preset': (_cameraPreset ?? NativeFilamentCameraPreset.overview).wireName,
+    });
     await _sendCargoPosition(_cargoPosition);
   }
 

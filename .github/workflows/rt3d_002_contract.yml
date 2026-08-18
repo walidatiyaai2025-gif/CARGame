@@ -12,10 +12,13 @@ on:
       - 'test/features/native_filament_realtime_3d_scene_test.dart'
       - 'tool/verify_rt3d_002.py'
       - 'tool/test_rt3d_002.py'
+      - 'tool/verify_rt3d_003.py'
+      - 'tool/test_rt3d_003.py'
       - 'tool/verify_rt3d_native_slice.py'
       - 'tool/test_rt3d_native_slice.py'
       - 'tool/generate_rt3d_native_slice_glb.py'
       - 'docs/work/RT3D-002.md'
+      - 'docs/work/RT3D-003-refresh.md'
       - 'android/app/build.gradle.kts'
       - 'android/app/src/main/kotlin/com/walka/cargosort/**'
       - 'pubspec.yaml'
@@ -30,10 +33,13 @@ on:
       - 'test/features/native_filament_realtime_3d_scene_test.dart'
       - 'tool/verify_rt3d_002.py'
       - 'tool/test_rt3d_002.py'
+      - 'tool/verify_rt3d_003.py'
+      - 'tool/test_rt3d_003.py'
       - 'tool/verify_rt3d_native_slice.py'
       - 'tool/test_rt3d_native_slice.py'
       - 'tool/generate_rt3d_native_slice_glb.py'
       - 'docs/work/RT3D-002.md'
+      - 'docs/work/RT3D-003-refresh.md'
       - 'android/app/build.gradle.kts'
       - 'android/app/src/main/kotlin/com/walka/cargosort/**'
       - 'pubspec.yaml'
@@ -68,6 +74,12 @@ jobs:
 
       - name: Test RT3D-002 native GLB validator
         run: python3 tool/test_rt3d_native_slice.py
+
+      - name: Verify RT3D-003 cinematic runtime contract
+        run: python3 tool/verify_rt3d_003.py
+
+      - name: Test RT3D-003 cinematic validator
+        run: python3 tool/test_rt3d_003.py
 
       - name: Verify RT3D-002 production 3D contract
         run: python3 tool/verify_rt3d_002.py

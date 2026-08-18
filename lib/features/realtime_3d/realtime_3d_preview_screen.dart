@@ -138,6 +138,15 @@ class _Realtime3dPreviewScreenState extends State<Realtime3dPreviewScreen> {
     });
   }
 
+  Future<void> _selectCamera(NativeFilamentCameraPreset preset) async {
+    await _scene.setCameraPreset(preset);
+    if (!mounted) return;
+    setState(() {
+      _status =
+          '${preset.label} camera selected — camera change applied instantly.';
+    });
+  }
+
   Widget _sceneVisual(Size viewport) {
     if (_useNativeFilament) {
       return AndroidView(
@@ -170,6 +179,8 @@ class _Realtime3dPreviewScreenState extends State<Realtime3dPreviewScreen> {
           final viewport = Size(constraints.maxWidth, constraints.maxHeight);
           _scene.setViewport(viewport);
           return Semantics(
+            container: true,
+            explicitChildNodes: true,
             label: 'Interactive 3D cargo visual checkpoint',
             value: _status,
             child: Stack(
@@ -231,8 +242,10 @@ class _Realtime3dPreviewScreenState extends State<Realtime3dPreviewScreen> {
                                 const SizedBox(height: 2),
                                 Text(
                                   _useNativeFilament
-                                      ? 'Native Filament • GLB • PBR • cargo interaction'
+                                      ? 'Native Filament • GLB • PBR • bloom • ${_scene.cameraLabel}'
                                       : 'Projected fallback • cargo raycast • camera orbit',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
                                     color: Color(0xFFC2D9EC),
                                     fontSize: 11,
@@ -256,6 +269,49 @@ class _Realtime3dPreviewScreenState extends State<Realtime3dPreviewScreen> {
                     ),
                   ),
                 ),
+                if (_useNativeFilament)
+                  PositionedDirectional(
+                    start: 14,
+                    end: 14,
+                    top: 88,
+                    child: SafeArea(
+                      bottom: false,
+                      child: Align(
+                        alignment: AlignmentDirectional.center,
+                        child: Container(
+                          key: const Key('rt3d-camera-presets'),
+                          constraints: const BoxConstraints(maxWidth: 460),
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: const Color(0xD90A2342),
+                            borderRadius: BorderRadius.circular(18),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.16),
+                            ),
+                          ),
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                for (final preset
+                                    in NativeFilamentCameraPreset.values) ...[
+                                  _CameraPresetButton(
+                                    preset: preset,
+                                    selected: _scene.cameraPreset == preset,
+                                    onTap: () => _selectCamera(preset),
+                                  ),
+                                  if (preset !=
+                                      NativeFilamentCameraPreset.values.last)
+                                    const SizedBox(width: 6),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                 PositionedDirectional(
                   start: 18,
                   end: 18,
@@ -300,6 +356,72 @@ class _Realtime3dPreviewScreenState extends State<Realtime3dPreviewScreen> {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+class _CameraPresetButton extends StatelessWidget {
+  const _CameraPresetButton({
+    required this.preset,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final NativeFilamentCameraPreset preset;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      container: true,
+      button: true,
+      selected: selected,
+      label: '${preset.label} camera',
+      excludeSemantics: true,
+      child: Tooltip(
+        message: 'Show ${preset.label.toLowerCase()} camera view',
+        child: Material(
+          color: selected
+              ? const Color(0xFF16B4E8)
+              : Colors.white.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(13),
+          child: InkWell(
+            key: Key('rt3d-camera-${preset.wireName}'),
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(13),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    switch (preset) {
+                      NativeFilamentCameraPreset.overview =>
+                        Icons.public_rounded,
+                      NativeFilamentCameraPreset.warehouse =>
+                        Icons.warehouse_rounded,
+                      NativeFilamentCameraPreset.docks =>
+                        Icons.location_on_rounded,
+                    },
+                    size: 16,
+                    color: Colors.white,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    preset.label,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
