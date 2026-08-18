@@ -50,10 +50,26 @@ class NativeFilamentSceneView(
     private var viewerDestroyedByDetach = false
     private var yaw = 0.82
     private var cameraHeight = 8.7
+    private var activeCameraPreset = "overview"
+    private var frameCount = 0L
+    private var lastFrameTimeNanos = 0L
+    private var fpsEstimate = 0.0
 
     private val frameCallback = object : Choreographer.FrameCallback {
         override fun doFrame(frameTimeNanos: Long) {
             if (!disposed && rendering) {
+                if (lastFrameTimeNanos != 0L && frameTimeNanos > lastFrameTimeNanos) {
+                    val instantaneousFps =
+                        1_000_000_000.0 / (frameTimeNanos - lastFrameTimeNanos).toDouble()
+                    fpsEstimate =
+                        if (fpsEstimate == 0.0) {
+                            instantaneousFps
+                        } else {
+                            (fpsEstimate * 0.9) + (instantaneousFps * 0.1)
+                        }
+                }
+                lastFrameTimeNanos = frameTimeNanos
+                frameCount += 1
                 modelViewer.render(frameTimeNanos)
                 Choreographer.getInstance().postFrameCallback(this)
             }
@@ -97,7 +113,7 @@ class NativeFilamentSceneView(
         channel.setMethodCallHandler(this)
         configureRenderer()
         loadModel(context)
-        updateCamera()
+        applyCameraPreset("overview")
 
         root.addOnAttachStateChangeListener(
             object : View.OnAttachStateChangeListener {
@@ -117,7 +133,7 @@ class NativeFilamentSceneView(
         modelViewer.view.ambientOcclusionOptions =
             modelViewer.view.ambientOcclusionOptions.apply { enabled = true }
         modelViewer.view.bloomOptions =
-            modelViewer.view.bloomOptions.apply { enabled = false }
+            modelViewer.view.bloomOptions.apply { enabled = true }
     }
 
     private fun loadModel(context: Context) {
@@ -151,15 +167,18 @@ class NativeFilamentSceneView(
     private fun startRendering() {
         if (rendering || disposed || viewerDestroyedByDetach) return
         rendering = true
+        lastFrameTimeNanos = 0L
         Choreographer.getInstance().postFrameCallback(frameCallback)
     }
 
     private fun stopRendering() {
         rendering = false
+        lastFrameTimeNanos = 0L
         Choreographer.getInstance().removeFrameCallback(frameCallback)
     }
 
-    private fun updateCamera() {
+    private fun updateOrbitCamera() {
+        activeCameraPreset = "custom"
         val eyeX = cos(yaw) * 13.2
         val eyeY = cameraHeight
         val eyeZ = sin(yaw) * 13.2
@@ -174,6 +193,30 @@ class NativeFilamentSceneView(
             1.0,
             0.0,
         )
+    }
+
+    private fun applyCameraPreset(preset: String): Boolean {
+        val normalized = preset.lowercase()
+        val camera =
+            when (normalized) {
+                "overview" -> doubleArrayOf(9.0, 8.7, 9.3, 0.0, 0.9, 0.0)
+                "warehouse" -> doubleArrayOf(-0.8, 6.3, 10.8, -5.6, 1.4, 2.4)
+                "docks" -> doubleArrayOf(10.5, 5.8, 1.2, 4.2, 0.7, -0.1)
+                else -> return false
+            }
+        activeCameraPreset = normalized
+        modelViewer.camera.lookAt(
+            camera[0],
+            camera[1],
+            camera[2],
+            camera[3],
+            camera[4],
+            camera[5],
+            0.0,
+            1.0,
+            0.0,
+        )
+        return true
     }
 
     private fun setPosition(name: String, x: Double, y: Double, z: Double) {
@@ -252,10 +295,17 @@ class NativeFilamentSceneView(
                 "orbitBy" -> {
                     val args = call.arguments as? Map<*, *> ?: emptyMap<String, Any>()
                     yaw -= number(args, "dx") * 0.008
-                    cameraHeight = (cameraHeight + number(args, "dy") * 0.025).coerceIn(5.8, 12.5)
-                    updateCamera()
+                    cameraHeight =
+                        (cameraHeight + number(args, "dy") * 0.025).coerceIn(5.8, 12.5)
+                    updateOrbitCamera()
                     result.success(true)
                 }
+                "setCameraPreset" -> {
+                    val args = call.arguments as? Map<*, *> ?: emptyMap<String, Any>()
+                    val preset = args["preset"] as? String ?: return result.success(false)
+                    result.success(applyCameraPreset(preset))
+                }
+                "resetCamera" -> result.success(applyCameraPreset("overview"))
                 "resetCargo" -> {
                     resetEntity("cargo.demo.electronics")
                     resetEntity("cargo.demo.food")
@@ -267,6 +317,10 @@ class NativeFilamentSceneView(
                         "version" to "1.74.0",
                         "asset" to MODEL_ASSET,
                         "nativeGpu" to true,
+                        "bloom" to true,
+                        "cameraPreset" to activeCameraPreset,
+                        "frameCount" to frameCount,
+                        "fpsEstimate" to fpsEstimate,
                     ),
                 )
                 else -> result.notImplemented()
