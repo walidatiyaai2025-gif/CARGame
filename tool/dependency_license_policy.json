@@ -21,6 +21,11 @@
       "reviewed_version": "6.0.0",
       "license": "BSD-3-Clause"
     },
+    "flutter_svg": {
+      "kind": "main",
+      "reviewed_version": "2.3.0",
+      "license": "MIT"
+    },
     "google_mobile_ads": {
       "kind": "main",
       "reviewed_version": "9.0.0",
