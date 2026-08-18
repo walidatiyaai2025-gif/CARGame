@@ -1,43 +1,14 @@
 name: WORLD-009 Format Probe
 
 on:
-  push:
-    branches:
-      - agent/world-009-real-capital-map
+  workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  format-probe:
+  removed:
+    if: ${{ false }}
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: agent/world-009-real-capital-map
-      - uses: subosito/flutter-action@v2
-        with:
-          channel: stable
-          flutter-version: 3.44.8
-          cache: true
-      - name: Apply canonical Dart formatting
-        shell: bash
-        run: |
-          set -euo pipefail
-          files=(
-            lib/features/game/city_catalog.dart
-            lib/features/levels/capital_world_map.dart
-            lib/features/levels/level_select_screen.dart
-            test/features/levels/capital_world_map_test.dart
-            test/features/levels/level_select_navigation_test.dart
-          )
-          dart format "${files[@]}"
-          if git diff --quiet -- "${files[@]}"; then
-            echo 'All WORLD-009 files already formatted.'
-            exit 0
-          fi
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add "${files[@]}"
-          git commit -m 'style: format WORLD-009 Dart files [skip ci]'
-          git push origin HEAD:agent/world-009-real-capital-map
+      - run: echo 'Temporary WORLD-009 format probe retired.'
