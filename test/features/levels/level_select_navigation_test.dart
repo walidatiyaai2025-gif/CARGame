@@ -1,5 +1,6 @@
 import 'package:cargo_sort_game/core/settings/app_settings_store.dart';
 import 'package:cargo_sort_game/core/storage/progress_store.dart';
+import 'package:cargo_sort_game/core/widgets/game_button.dart';
 import 'package:cargo_sort_game/features/levels/city_briefing_screen.dart';
 import 'package:cargo_sort_game/features/levels/level_select_screen.dart';
 import 'package:flutter/material.dart';
@@ -25,9 +26,15 @@ void main() {
 
       expect(find.text('Lisbon'), findsWidgets);
       expect(find.text('Portugal'), findsWidgets);
+
+      await tester.drag(find.byType(ListView), const Offset(0, -900));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      final startMission = find.byType(GameButton);
+      expect(startMission, findsOneWidget);
       expect(find.text('START MISSION'), findsOneWidget);
 
-      await tester.tap(find.text('START MISSION'));
+      await tester.tap(startMission);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 350));
 
