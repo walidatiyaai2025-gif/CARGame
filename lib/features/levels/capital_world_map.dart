@@ -107,14 +107,15 @@ class _CapitalWorldMapState extends State<CapitalWorldMap> {
                           child: CustomPaint(
                             painter: _CapitalRoutePainter(
                               levels: widget.levels,
-                              highestUnlockedLevel:
-                                  widget.highestUnlockedLevel,
+                              highestUnlockedLevel: widget.highestUnlockedLevel,
                             ),
                           ),
                         ),
-                        for (var index = 0;
-                            index < widget.levels.length;
-                            index++)
+                        for (
+                          var index = 0;
+                          index < widget.levels.length;
+                          index++
+                        )
                           _positionedNode(
                             level: widget.levels[index],
                             index: index,
@@ -321,7 +322,11 @@ class _ContinentBadge extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.public_rounded, color: Color(0xFFFFD36A), size: 16),
+            const Icon(
+              Icons.public_rounded,
+              color: Color(0xFFFFD36A),
+              size: 16,
+            ),
             const SizedBox(width: 6),
             Flexible(
               child: Text(
@@ -375,10 +380,10 @@ class _CapitalNode extends StatelessWidget {
     final fill = !unlocked
         ? const Color(0xFF463D37)
         : completed
-            ? const Color(0xFFB97A24)
-            : current
-                ? const Color(0xFF6E46C9)
-                : const Color(0xFF3D7391);
+        ? const Color(0xFFB97A24)
+        : current
+        ? const Color(0xFF6E46C9)
+        : const Color(0xFF3D7391);
     final labelVisible = selected || current;
 
     return Semantics(
@@ -406,8 +411,8 @@ class _CapitalNode extends StatelessWidget {
                     color: selected
                         ? Colors.white
                         : unlocked
-                            ? const Color(0xFFFFD36A)
-                            : Colors.white38,
+                        ? const Color(0xFFFFD36A)
+                        : Colors.white38,
                     width: selected ? 3 : 1.5,
                   ),
                   boxShadow: [
@@ -427,26 +432,29 @@ class _CapitalNode extends StatelessWidget {
                         size: size * .47,
                       )
                     : completed
-                        ? Icon(
-                            Icons.check_rounded,
-                            color: Colors.white,
-                            size: size * .56,
-                          )
-                        : Text(
-                            '${level.number}',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: compact ? 8 : 9,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
+                    ? Icon(
+                        Icons.check_rounded,
+                        color: Colors.white,
+                        size: size * .56,
+                      )
+                    : Text(
+                        '${level.number}',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: compact ? 8 : 9,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
               ),
               if (labelVisible)
                 Positioned(
                   top: size + 3,
                   child: Container(
                     constraints: BoxConstraints(maxWidth: compact ? 104 : 124),
-                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 7,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xEB2B1E12),
                       borderRadius: BorderRadius.circular(10),
@@ -525,12 +533,14 @@ class _MapLegend extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.search_rounded, size: 12, color: Color(0xFFFFD36A)),
+            const Icon(
+              Icons.search_rounded,
+              size: 12,
+              color: Color(0xFFFFD36A),
+            ),
             const SizedBox(width: 5),
             Text(
-              isArabic
-                  ? 'كَبّرْ للاكتِشَافْ'
-                  : 'Zoom to Explore',
+              isArabic ? 'كَبّرْ للاكتِشَافْ' : 'Zoom to Explore',
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 8,
