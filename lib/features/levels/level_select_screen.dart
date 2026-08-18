@@ -7,11 +7,13 @@ import '../../core/storage/progress_store.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/game_skin.dart';
 import '../../core/theme/three_d_game_icon.dart';
+import '../../core/widgets/game_button.dart';
 import '../game/city_catalog.dart';
 import '../game/level_data.dart';
+import 'capital_world_map.dart';
 import 'city_briefing_screen.dart';
 
-class LevelSelectScreen extends StatelessWidget {
+class LevelSelectScreen extends StatefulWidget {
   const LevelSelectScreen({
     super.key,
     required this.store,
@@ -22,13 +24,85 @@ class LevelSelectScreen extends StatelessWidget {
   final AppSettingsStore settings;
 
   @override
+  State<LevelSelectScreen> createState() => _LevelSelectScreenState();
+}
+
+class _LevelSelectScreenState extends State<LevelSelectScreen> {
+  static const String _briefingRoutePrefix = '/briefing/level/';
+
+  late int _chapter;
+  late int _selectedLevel;
+
+  @override
+  void initState() {
+    super.initState();
+    _chapter = _worldForLevel(widget.store.highestUnlockedLevel);
+    _selectedLevel = widget.store.highestUnlockedLevel.clamp(
+      1,
+      ProgressStore.totalLevels,
+    );
+  }
+
+  int _worldForLevel(int levelNumber) {
+    return (((levelNumber.clamp(1, ProgressStore.totalLevels) - 1) ~/ 25) + 1)
+        .clamp(1, 6);
+  }
+
+  List<LevelData> _levelsForChapter(int chapter) {
+    return levels.where((level) => level.world == chapter).toList();
+  }
+
+  void _selectChapter(int chapter) {
+    final nextChapter = chapter.clamp(1, 6);
+    final chapterLevels = _levelsForChapter(nextChapter);
+    final highest = widget.store.highestUnlockedLevel;
+    final candidate = chapterLevels
+        .where((level) => level.number <= highest)
+        .fold<LevelData?>(
+          null,
+          (latest, level) =>
+              level.number > (latest?.number ?? 0) ? level : latest,
+        );
+
+    setState(() {
+      _chapter = nextChapter;
+      _selectedLevel = (candidate ?? chapterLevels.first).number;
+    });
+  }
+
+  void _selectLevel(LevelData level) {
+    setState(() => _selectedLevel = level.number);
+  }
+
+  Future<void> _openBriefing(LevelData level) async {
+    if (level.number > widget.store.highestUnlockedLevel) return;
+    await GameNavigator.push<void>(
+      context,
+      name: '$_briefingRoutePrefix${level.number}',
+      guardKey: 'briefing:${level.number}',
+      builder: (_) => CityBriefingScreen(
+        level: level,
+        store: widget.store,
+        settings: widget.settings,
+      ),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     return AnimatedBuilder(
-      animation: store,
+      animation: widget.store,
       builder: (context, _) {
-        final skin = gameSkinById(store.selectedTheme);
+        final skin = gameSkinById(widget.store.selectedTheme);
+        final chapterLevels = _levelsForChapter(_chapter);
+        final selected = chapterLevels.firstWhere(
+          (level) => level.number == _selectedLevel,
+          orElse: () => chapterLevels.first,
+        );
+        final route = capitalRouteForWorld(_chapter);
+
         return Scaffold(
           backgroundColor: const Color(0xFFF4F7FB),
           appBar: AppBar(
@@ -37,7 +111,7 @@ class LevelSelectScreen extends StatelessWidget {
             elevation: 0,
             scrolledUnderElevation: 0,
             surfaceTintColor: Colors.transparent,
-            backgroundColor: Colors.white.withValues(alpha: .92),
+            backgroundColor: Colors.white.withValues(alpha: .94),
             foregroundColor: AppTheme.navy,
             titleTextStyle: const TextStyle(
               color: AppTheme.navy,
@@ -62,11 +136,11 @@ class LevelSelectScreen extends StatelessWidget {
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          Colors.white.withValues(alpha: .18),
-                          const Color(0xFFF4F7FB).withValues(alpha: .58),
-                          const Color(0xFFF4F7FB).withValues(alpha: .92),
+                          Colors.white.withValues(alpha: .10),
+                          const Color(0xFFF4F7FB).withValues(alpha: .52),
+                          const Color(0xFFF4F7FB).withValues(alpha: .94),
                         ],
-                        stops: const [0, .40, 1],
+                        stops: const [0, .45, 1],
                       ),
                     ),
                   ),
@@ -75,21 +149,48 @@ class LevelSelectScreen extends StatelessWidget {
               ListView(
                 padding: const EdgeInsets.fromLTRB(14, 14, 14, 34),
                 children: [
-                  _GlobalHeader(isArabic: isArabic, store: store, skin: skin),
-                  const SizedBox(height: 16),
-                  for (final world in gameWorlds) ...[
-                    _WorldSection(
-                      world: world,
-                      levels: levels
-                          .where((level) => level.world == world.number)
-                          .toList(),
-                      store: store,
-                      settings: settings,
-                      isArabic: isArabic,
-                      skin: skin,
-                    ),
-                    const SizedBox(height: 16),
-                  ],
+                  _CapitalChallengeHeader(
+                    isArabic: isArabic,
+                    store: widget.store,
+                    skin: skin,
+                    route: route,
+                    chapter: _chapter,
+                  ),
+                  const SizedBox(height: 14),
+                  CapitalWorldMap(
+                    levels: chapterLevels,
+                    highestUnlockedLevel: widget.store.highestUnlockedLevel,
+                    selectedLevel: selected.number,
+                    starsForLevel: widget.store.starsForLevel,
+                    isArabic: isArabic,
+                    accent: skin.accent,
+                    onSelect: _selectLevel,
+                  ),
+                  const SizedBox(height: 12),
+                  _ChapterNavigator(
+                    chapter: _chapter,
+                    isArabic: isArabic,
+                    route: route,
+                    onPrevious: _chapter > 1
+                        ? () => _selectChapter(_chapter - 1)
+                        : null,
+                    onNext: _chapter < 6
+                        ? () => _selectChapter(_chapter + 1)
+                        : null,
+                    onChapter: _selectChapter,
+                  ),
+                  const SizedBox(height: 12),
+                  _SelectedCapitalCard(
+                    level: selected,
+                    unlocked:
+                        selected.number <= widget.store.highestUnlockedLevel,
+                    current:
+                        selected.number == widget.store.highestUnlockedLevel,
+                    stars: widget.store.starsForLevel(selected.number),
+                    isArabic: isArabic,
+                    skin: skin,
+                    onStart: () => _openBriefing(selected),
+                  ),
                 ],
               ),
             ],
@@ -100,27 +201,28 @@ class LevelSelectScreen extends StatelessWidget {
   }
 }
 
-class _GlobalHeader extends StatelessWidget {
-  const _GlobalHeader({
+class _CapitalChallengeHeader extends StatelessWidget {
+  const _CapitalChallengeHeader({
     required this.isArabic,
     required this.store,
     required this.skin,
+    required this.route,
+    required this.chapter,
   });
 
   final bool isArabic;
   final ProgressStore store;
   final GameSkin skin;
+  final CapitalRoute route;
+  final int chapter;
 
   @override
   Widget build(BuildContext context) {
-    final currentWorld = ((store.highestUnlockedLevel - 1) ~/ 25 + 1).clamp(
-      1,
-      gameWorlds.length,
-    );
     final nextLevel = store.highestUnlockedLevel.clamp(
       1,
       ProgressStore.totalLevels,
     );
+    final nextStage = capitalStageForLevel(nextLevel);
 
     return Container(
       clipBehavior: Clip.antiAlias,
@@ -129,213 +231,152 @@ class _GlobalHeader extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            const Color(0xFF0B1120),
-            Color.lerp(const Color(0xFF0B1120), skin.primary, .46)!,
-            Color.lerp(skin.primary, skin.secondary, .52)!,
+            const Color(0xFF071928),
+            Color.lerp(const Color(0xFF071928), skin.primary, .42)!,
+            Color.lerp(skin.primary, skin.secondary, .48)!,
           ],
         ),
-        borderRadius: BorderRadius.circular(32),
-        border: Border.all(color: Colors.white.withValues(alpha: .55)),
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(color: Colors.white.withValues(alpha: .48)),
         boxShadow: [
           BoxShadow(
-            color: skin.primary.withValues(alpha: .25),
-            blurRadius: 26,
-            offset: const Offset(0, 14),
+            color: skin.primary.withValues(alpha: .22),
+            blurRadius: 24,
+            offset: const Offset(0, 12),
           ),
         ],
       ),
       child: Stack(
         children: [
           PositionedDirectional(
-            end: -42,
-            top: -30,
+            end: -34,
+            top: -34,
             child: Opacity(
               opacity: .12,
-              child: const ThreeDGameIcon(type: ThreeDIconType.city, size: 210),
-            ),
-          ),
-          PositionedDirectional(
-            start: -28,
-            bottom: -52,
-            child: Container(
-              width: 150,
-              height: 150,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white12, width: 18),
+              child: const Icon(
+                Icons.public_rounded,
+                color: Colors.white,
+                size: 180,
               ),
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(18),
+            padding: const EdgeInsets.all(17),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
                     Expanded(
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
+                      child: Align(
                         alignment: AlignmentDirectional.centerStart,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: .12),
-                            borderRadius: BorderRadius.circular(30),
-                            border: Border.all(color: Colors.white24),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Container(
-                                width: 7,
-                                height: 7,
-                                decoration: const BoxDecoration(
-                                  color: Color(0xFF59F0A8),
-                                  shape: BoxShape.circle,
-                                ),
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: AlignmentDirectional.centerStart,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 9,
+                              vertical: 5,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: .12),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: Colors.white24),
+                            ),
+                            child: Text(
+                              isArabic
+                                  ? '150 دولة وعاصمة'
+                                  : '150 COUNTRIES & CAPITALS',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 9,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: .5,
                               ),
-                              const SizedBox(width: 7),
-                              Text(
-                                isArabic ? 'شبكة المسارات' : 'ROUTE NETWORK',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w900,
-                                  letterSpacing: .8,
-                                ),
-                              ),
-                            ],
+                            ),
                           ),
                         ),
                       ),
                     ),
                     const SizedBox(width: 8),
-                    _HeaderBadge(
-                      icon: Icons.public_rounded,
-                      label: '${isArabic ? 'العالم' : 'WORLD'} $currentWorld',
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: 66,
-                      height: 66,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: .12),
-                        borderRadius: BorderRadius.circular(22),
-                        border: Border.all(color: Colors.white24),
-                      ),
-                      child: const ThreeDGameIcon(
-                        type: ThreeDIconType.city,
-                        size: 58,
-                        animate: true,
-                      ),
-                    ),
-                    const SizedBox(width: 13),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            isArabic
-                                ? 'رحلة المدن العالمية'
-                                : 'Global City Journey',
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 22,
-                              height: 1.05,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                          const SizedBox(height: 5),
-                          Text(
-                            isArabic
-                                ? 'جهّز المسار التالي ووسّع شبكة الشحن العالمية'
-                                : 'Clear the next route and expand your cargo network',
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: Colors.white70,
-                              fontSize: 12,
-                              height: 1.25,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 18),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _NetworkStat(
-                        value: '${store.completedLevels}',
-                        label: isArabic ? 'مكتملة' : 'CLEARED',
-                        icon: Icons.flag_rounded,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _NetworkStat(
-                        value: '${store.totalStars}',
-                        label: isArabic ? 'نجمة' : 'STARS',
-                        icon: Icons.star_rounded,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _NetworkStat(
-                        value: '$nextLevel',
-                        label: isArabic ? 'التالي' : 'NEXT',
-                        icon: Icons.route_rounded,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                Row(
-                  children: [
-                    Expanded(
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
                       child: Text(
-                        isArabic
-                            ? '${store.completedLevels}/${ProgressStore.totalLevels} مدينة مكتملة'
-                            : '${store.completedLevels}/${ProgressStore.totalLevels} cities completed',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                        '${isArabic ? 'المسار' : 'ROUTE'} $chapter/6',
                         style: const TextStyle(
                           color: Colors.white70,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w900,
                         ),
-                      ),
-                    ),
-                    Text(
-                      '${(store.completionProgress * 100).round()}%',
-                      style: TextStyle(
-                        color: skin.accent,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w900,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 7),
+                const SizedBox(height: 12),
+                Text(
+                  isArabic ? 'تحدي عواصم العالم' : 'World Capitals Challenge',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    height: 1.02,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  route.name(isArabic),
+                  style: TextStyle(
+                    color: skin.accent,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  route.subtitle(isArabic),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 11,
+                    height: 1.3,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 13),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _HeaderStat(
+                        icon: Icons.flag_rounded,
+                        value: '${store.completedLevels}',
+                        label: isArabic ? 'مكتملة' : 'CLEARED',
+                      ),
+                    ),
+                    const SizedBox(width: 7),
+                    Expanded(
+                      child: _HeaderStat(
+                        icon: Icons.star_rounded,
+                        value: '${store.totalStars}',
+                        label: isArabic ? 'نجمة' : 'STARS',
+                      ),
+                    ),
+                    const SizedBox(width: 7),
+                    Expanded(
+                      child: _HeaderStat(
+                        icon: Icons.location_on_rounded,
+                        value: '$nextLevel',
+                        label: nextStage.capital(isArabic),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 11),
                 ClipRRect(
                   borderRadius: BorderRadius.circular(20),
                   child: LinearProgressIndicator(
                     value: store.completionProgress,
-                    minHeight: 9,
+                    minHeight: 7,
                     backgroundColor: Colors.white24,
                     valueColor: AlwaysStoppedAnimation<Color>(skin.accent),
                   ),
@@ -349,138 +390,212 @@ class _GlobalHeader extends StatelessWidget {
   }
 }
 
-class _HeaderBadge extends StatelessWidget {
-  const _HeaderBadge({required this.icon, required this.label});
-
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
-    decoration: BoxDecoration(
-      color: Colors.black.withValues(alpha: .16),
-      borderRadius: BorderRadius.circular(30),
-      border: Border.all(color: Colors.white24),
-    ),
-    child: Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, color: Colors.white70, size: 14),
-        const SizedBox(width: 5),
-        Text(
-          label,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 10,
-            fontWeight: FontWeight.w900,
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
-class _NetworkStat extends StatelessWidget {
-  const _NetworkStat({
+class _HeaderStat extends StatelessWidget {
+  const _HeaderStat({
+    required this.icon,
     required this.value,
     required this.label,
-    required this.icon,
   });
 
+  final IconData icon;
   final String value;
   final String label;
-  final IconData icon;
 
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
-    decoration: BoxDecoration(
-      color: Colors.white.withValues(alpha: .10),
-      borderRadius: BorderRadius.circular(16),
-      border: Border.all(color: Colors.white.withValues(alpha: .14)),
-    ),
-    child: Row(
-      children: [
-        Icon(icon, color: Colors.white70, size: 17),
-        const SizedBox(width: 7),
-        Expanded(
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: AlignmentDirectional.centerStart,
-            child: Row(
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: .10),
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: Colors.white12),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: Colors.white70, size: 16),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 15,
+                    fontSize: 13,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
-                const SizedBox(width: 5),
                 Text(
                   label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: Colors.white60,
-                    fontSize: 8.5,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: .4,
+                    fontSize: 7.5,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ],
             ),
           ),
-        ),
-      ],
-    ),
-  );
+        ],
+      ),
+    );
+  }
 }
 
-class _WorldSection extends StatelessWidget {
-  const _WorldSection({
-    required this.world,
-    required this.levels,
-    required this.store,
-    required this.settings,
+class _ChapterNavigator extends StatelessWidget {
+  const _ChapterNavigator({
+    required this.chapter,
     required this.isArabic,
-    required this.skin,
+    required this.route,
+    required this.onPrevious,
+    required this.onNext,
+    required this.onChapter,
   });
 
-  final GameWorld world;
-  final List<LevelData> levels;
-  final ProgressStore store;
-  final AppSettingsStore settings;
+  final int chapter;
   final bool isArabic;
-  final GameSkin skin;
-
-  static const String _briefingRoutePrefix = '/briefing/level/';
+  final CapitalRoute route;
+  final VoidCallback? onPrevious;
+  final VoidCallback? onNext;
+  final ValueChanged<int> onChapter;
 
   @override
   Widget build(BuildContext context) {
-    final unlocked = store.highestUnlockedLevel >= levels.first.number;
-    final completed = levels
-        .where((level) => level.number < store.highestUnlockedLevel)
-        .length;
-    final stars = levels.fold<int>(
-      0,
-      (sum, level) => sum + store.starsForLevel(level.number),
-    );
-    final progress = (completed / levels.length).clamp(0.0, 1.0);
-    final worldComplete = completed >= levels.length;
-    final startLevel = levels.first.number;
-    final endLevel = levels.last.number;
-
     return Container(
-      clipBehavior: Clip.antiAlias,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: .94),
-        borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: Colors.white.withValues(alpha: .82)),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: Colors.white),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x1C0B1120),
+            color: Color(0x180B1120),
+            blurRadius: 16,
+            offset: Offset(0, 7),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          _ChapterArrow(
+            icon: isArabic
+                ? Icons.arrow_forward_ios_rounded
+                : Icons.arrow_back_ios_new_rounded,
+            onTap: onPrevious,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  route.name(isArabic),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: AppTheme.navy,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    for (var index = 1; index <= 6; index++)
+                      GestureDetector(
+                        onTap: () => onChapter(index),
+                        child: Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 3),
+                          width: index == chapter ? 22 : 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: index == chapter
+                                ? const Color(0xFF2D6CDF)
+                                : const Color(0xFFD4DAE3),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          _ChapterArrow(
+            icon: isArabic
+                ? Icons.arrow_back_ios_new_rounded
+                : Icons.arrow_forward_ios_rounded,
+            onTap: onNext,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ChapterArrow extends StatelessWidget {
+  const _ChapterArrow({required this.icon, required this.onTap});
+
+  final IconData icon;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: onTap == null ? const Color(0xFFF0F2F5) : const Color(0xFFECF4FF),
+      shape: const CircleBorder(),
+      child: IconButton(
+        onPressed: onTap,
+        icon: Icon(
+          icon,
+          size: 18,
+          color: onTap == null ? Colors.black26 : const Color(0xFF2D6CDF),
+        ),
+      ),
+    );
+  }
+}
+
+class _SelectedCapitalCard extends StatelessWidget {
+  const _SelectedCapitalCard({
+    required this.level,
+    required this.unlocked,
+    required this.current,
+    required this.stars,
+    required this.isArabic,
+    required this.skin,
+    required this.onStart,
+  });
+
+  final LevelData level;
+  final bool unlocked;
+  final bool current;
+  final int stars;
+  final bool isArabic;
+  final GameSkin skin;
+  final VoidCallback onStart;
+
+  @override
+  Widget build(BuildContext context) {
+    final stage = level.capitalStage;
+
+    return Container(
+      padding: const EdgeInsets.all(15),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: .97),
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: Colors.white),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x200B1120),
             blurRadius: 22,
             offset: Offset(0, 10),
           ),
@@ -488,543 +603,234 @@ class _WorldSection extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.fromLTRB(16, 15, 16, 14),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Color.lerp(world.startColor, skin.primary, .16)!,
-                  Color.lerp(world.endColor, skin.secondary, .16)!,
-                ],
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 64,
+                height: 64,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      skin.primary.withValues(alpha: .16),
+                      skin.accent.withValues(alpha: .18),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(21),
+                  border: Border.all(
+                    color: skin.primary.withValues(alpha: .16),
+                  ),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: .13),
-                        borderRadius: BorderRadius.circular(17),
-                        border: Border.all(color: Colors.white24),
-                      ),
-                      child: unlocked
-                          ? const ThreeDGameIcon(
-                              type: ThreeDIconType.city,
-                              size: 43,
-                            )
-                          : const Icon(
-                              Icons.lock_rounded,
-                              color: Colors.white,
-                              size: 25,
-                            ),
+                    const Icon(
+                      Icons.location_city_rounded,
+                      color: AppTheme.navy,
+                      size: 27,
                     ),
-                    const SizedBox(width: 11),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          FittedBox(
-                            fit: BoxFit.scaleDown,
-                            alignment: AlignmentDirectional.centerStart,
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.black.withValues(alpha: .14),
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  child: Text(
-                                    '${isArabic ? 'العالم' : 'WORLD'} ${world.number}',
-                                    style: const TextStyle(
-                                      color: Colors.white70,
-                                      fontSize: 9,
-                                      fontWeight: FontWeight.w900,
-                                      letterSpacing: .6,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 7),
-                                if (unlocked)
-                                  _WorldStatusBadge(
-                                    label: worldComplete
-                                        ? (isArabic ? 'مكتمل' : 'CLEARED')
-                                        : (isArabic ? 'نشط' : 'ACTIVE'),
-                                    complete: worldComplete,
-                                  ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 5),
-                          Text(
-                            world.name,
+                    const SizedBox(height: 2),
+                    Text(
+                      stage.countryCode,
+                      style: const TextStyle(
+                        color: AppTheme.navy,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: .8,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            stage.capital(isArabic),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 19,
+                              color: AppTheme.navy,
+                              fontSize: 21,
+                              height: 1.05,
                               fontWeight: FontWeight.w900,
                             ),
                           ),
-                        ],
+                        ),
+                        if (current)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 7,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(
+                                0xFF22A8E8,
+                              ).withValues(alpha: .12),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              isArabic ? 'الحالية' : 'CURRENT',
+                              style: const TextStyle(
+                                color: Color(0xFF137FB4),
+                                fontSize: 8,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      stage.country(isArabic),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppTheme.muted,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    _WorldIndex(number: world.number, unlocked: unlocked),
+                    const SizedBox(height: 7),
+                    Wrap(
+                      spacing: 7,
+                      runSpacing: 5,
+                      children: [
+                        _StageMeta(
+                          icon: Icons.flag_rounded,
+                          text:
+                              '${isArabic ? 'مرحلة' : 'Level'} ${level.number}',
+                        ),
+                        _StageMeta(
+                          icon: Icons.inventory_2_rounded,
+                          text:
+                              '${level.items.length} ${isArabic ? 'منتج' : 'cargo'}',
+                        ),
+                        _StageMeta(
+                          icon: Icons.house_rounded,
+                          text:
+                              '${level.houseCount} ${isArabic ? 'بيوت' : 'houses'}',
+                        ),
+                      ],
+                    ),
                   ],
                 ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _WorldMeta(
-                        icon: Icons.route_rounded,
-                        label: '$startLevel–$endLevel',
-                      ),
-                    ),
-                    const SizedBox(width: 7),
-                    Expanded(
-                      child: _WorldMeta(
-                        icon: Icons.flag_rounded,
-                        label: unlocked ? '$completed/25' : '--/25',
-                      ),
-                    ),
-                    const SizedBox(width: 7),
-                    Expanded(
-                      child: _WorldMeta(
-                        icon: Icons.star_rounded,
-                        label: unlocked ? '$stars/75' : '--/75',
-                      ),
-                    ),
-                  ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 13),
+          Row(
+            children: [
+              for (var index = 0; index < 3; index++)
+                Padding(
+                  padding: const EdgeInsetsDirectional.only(end: 3),
+                  child: index < stars
+                      ? const ThreeDGameIcon(
+                          type: ThreeDIconType.star,
+                          size: 20,
+                        )
+                      : const Icon(
+                          Icons.star_outline_rounded,
+                          size: 20,
+                          color: Color(0xFFD2D7DF),
+                        ),
                 ),
-                const SizedBox(height: 10),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
-                  child: LinearProgressIndicator(
-                    value: unlocked ? progress : 0,
-                    minHeight: 6,
-                    backgroundColor: Colors.white24,
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      worldComplete ? const Color(0xFF59F0A8) : skin.accent,
-                    ),
+              const Spacer(),
+              Text(
+                unlocked
+                    ? '${isArabic ? 'الصعوبة' : 'Difficulty'} ${level.difficulty}/10'
+                    : (isArabic ? 'مرحلة مقفلة' : 'Locked stage'),
+                style: TextStyle(
+                  color: unlocked ? AppTheme.muted : const Color(0xFF9A5360),
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          GameButton(
+            semanticLabel: unlocked
+                ? (isArabic
+                      ? 'ابدأ مرحلة ${stage.capitalAr}'
+                      : 'Start ${stage.capitalEn} stage')
+                : (isArabic ? 'المرحلة مقفلة' : 'Stage locked'),
+            onPressed: unlocked ? onStart : null,
+            enabled: unlocked,
+            height: 56,
+            expand: true,
+            gradient: unlocked
+                ? LinearGradient(
+                    colors: [
+                      const Color(0xFF20B45A),
+                      Color.lerp(const Color(0xFF20B45A), skin.primary, .24)!,
+                    ],
+                  )
+                : null,
+            backgroundColor: unlocked ? null : const Color(0xFFE5E8ED),
+            foregroundColor: unlocked ? Colors.white : Colors.black38,
+            borderRadius: BorderRadius.circular(18),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(unlocked ? Icons.play_arrow_rounded : Icons.lock_rounded),
+                const SizedBox(width: 7),
+                Text(
+                  unlocked
+                      ? (isArabic ? 'ابدأ اللعب!' : 'START MISSION')
+                      : (isArabic ? 'مقفلة' : 'LOCKED'),
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w900,
                   ),
                 ),
               ],
             ),
           ),
-          if (unlocked)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Color(0xFFF9FBFE), Color(0xFFF1F5FA)],
-                ),
-              ),
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final width = constraints.maxWidth;
-                  final columns = width >= 720
-                      ? 6
-                      : width >= 520
-                      ? 5
-                      : width >= 380
-                      ? 4
-                      : 3;
-                  final extent = width < 340 ? 120.0 : 126.0;
-
-                  return GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: levels.length,
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: columns,
-                      crossAxisSpacing: 9,
-                      mainAxisSpacing: 9,
-                      mainAxisExtent: extent,
-                    ),
-                    itemBuilder: (context, index) {
-                      final level = levels[index];
-                      final cityUnlocked =
-                          level.number <= store.highestUnlockedLevel;
-                      return _CityCard(
-                        level: level,
-                        unlocked: cityUnlocked,
-                        current: level.number == store.highestUnlockedLevel,
-                        stars: store.starsForLevel(level.number),
-                        world: world,
-                        skin: skin,
-                        isArabic: isArabic,
-                        onTap: cityUnlocked
-                            ? () {
-                                GameNavigator.push<void>(
-                                  context,
-                                  name: '$_briefingRoutePrefix${level.number}',
-                                  guardKey: 'briefing:${level.number}',
-                                  builder: (_) => CityBriefingScreen(
-                                    level: level,
-                                    store: store,
-                                    settings: settings,
-                                  ),
-                                );
-                              }
-                            : null,
-                      );
-                    },
-                  );
-                },
-              ),
-            )
-          else
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 22),
-              child: Row(
-                children: [
-                  Container(
-                    width: 42,
-                    height: 42,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFE9EDF3),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.lock_clock_rounded,
-                      color: AppTheme.muted,
-                      size: 21,
-                    ),
-                  ),
-                  const SizedBox(width: 11),
-                  Expanded(
-                    child: Text(
-                      isArabic
-                          ? 'أكمل العالم السابق لفتح شبكة المدن التالية'
-                          : 'Complete the previous world to unlock this route network',
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: AppTheme.muted,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
         ],
       ),
     );
   }
 }
 
-class _WorldStatusBadge extends StatelessWidget {
-  const _WorldStatusBadge({required this.label, required this.complete});
-
-  final String label;
-  final bool complete;
-
-  @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-    decoration: BoxDecoration(
-      color: complete
-          ? const Color(0xFF59F0A8).withValues(alpha: .20)
-          : Colors.white.withValues(alpha: .16),
-      borderRadius: BorderRadius.circular(20),
-      border: Border.all(
-        color: complete ? const Color(0x6659F0A8) : Colors.white24,
-      ),
-    ),
-    child: Text(
-      label,
-      style: TextStyle(
-        color: complete ? const Color(0xFFB8FFD8) : Colors.white,
-        fontSize: 8,
-        fontWeight: FontWeight.w900,
-        letterSpacing: .5,
-      ),
-    ),
-  );
-}
-
-class _WorldIndex extends StatelessWidget {
-  const _WorldIndex({required this.number, required this.unlocked});
-
-  final int number;
-  final bool unlocked;
-
-  @override
-  Widget build(BuildContext context) => Container(
-    width: 42,
-    height: 42,
-    alignment: Alignment.center,
-    decoration: BoxDecoration(
-      color: Colors.black.withValues(alpha: unlocked ? .16 : .10),
-      shape: BoxShape.circle,
-      border: Border.all(color: Colors.white24),
-    ),
-    child: Text(
-      number.toString().padLeft(2, '0'),
-      style: TextStyle(
-        color: unlocked ? Colors.white : Colors.white54,
-        fontSize: 13,
-        fontWeight: FontWeight.w900,
-        letterSpacing: .4,
-      ),
-    ),
-  );
-}
-
-class _WorldMeta extends StatelessWidget {
-  const _WorldMeta({required this.icon, required this.label});
+class _StageMeta extends StatelessWidget {
+  const _StageMeta({required this.icon, required this.text});
 
   final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-    decoration: BoxDecoration(
-      color: Colors.black.withValues(alpha: .12),
-      borderRadius: BorderRadius.circular(13),
-      border: Border.all(color: Colors.white12),
-    ),
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(icon, color: Colors.white70, size: 14),
-        const SizedBox(width: 5),
-        Flexible(
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Text(
-              label,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 10,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
-class _CityCard extends StatelessWidget {
-  const _CityCard({
-    required this.level,
-    required this.unlocked,
-    required this.current,
-    required this.stars,
-    required this.world,
-    required this.skin,
-    required this.isArabic,
-    required this.onTap,
-  });
-
-  final LevelData level;
-  final bool unlocked;
-  final bool current;
-  final int stars;
-  final GameWorld world;
-  final GameSkin skin;
-  final bool isArabic;
-  final VoidCallback? onTap;
+  final String text;
 
   @override
   Widget build(BuildContext context) {
-    final boss = level.isBossCity;
-    final accent = boss
-        ? AppTheme.orange
-        : Color.lerp(world.startColor, skin.primary, .20)!;
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
-        child: Ink(
-          padding: const EdgeInsets.all(7),
-          decoration: BoxDecoration(
-            gradient: unlocked
-                ? LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      Colors.white,
-                      accent.withValues(alpha: boss ? .16 : .07),
-                    ],
-                  )
-                : const LinearGradient(
-                    colors: [Color(0xFFE7EAF0), Color(0xFFDDE1E7)],
-                  ),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: unlocked
-                  ? accent.withValues(alpha: current ? .95 : .72)
-                  : Colors.black12,
-              width: current ? 2.4 : (boss ? 2.2 : 1.2),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 5),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF1F4F8),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: AppTheme.muted),
+          const SizedBox(width: 4),
+          Text(
+            text,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: AppTheme.muted,
+              fontSize: 8.5,
+              fontWeight: FontWeight.w800,
             ),
-            boxShadow: unlocked
-                ? [
-                    BoxShadow(
-                      color: accent.withValues(alpha: .15),
-                      blurRadius: 11,
-                      offset: const Offset(0, 5),
-                    ),
-                  ]
-                : null,
           ),
-          child: Stack(
-            children: [
-              PositionedDirectional(
-                end: 0,
-                top: 0,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
-                    vertical: 3,
-                  ),
-                  decoration: BoxDecoration(
-                    color: unlocked
-                        ? accent.withValues(alpha: .12)
-                        : Colors.black.withValues(alpha: .06),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(
-                    current
-                        ? (isArabic ? 'التالي' : 'NEXT')
-                        : '#${level.number}',
-                    style: TextStyle(
-                      color: unlocked ? accent : Colors.black38,
-                      fontSize: 8,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ),
-              ),
-              Center(
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: SizedBox(
-                    width: 94,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        if (unlocked)
-                          Container(
-                            width: 50,
-                            height: 50,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: accent.withValues(alpha: .10),
-                              border: Border.all(
-                                color: accent.withValues(alpha: .24),
-                              ),
-                            ),
-                            child: ThreeDGameIcon(
-                              type: boss
-                                  ? ThreeDIconType.boss
-                                  : ThreeDIconType.city,
-                              size: boss ? 47 : 43,
-                              animate: boss,
-                              semanticLabel: level.cityName,
-                            ),
-                          )
-                        else
-                          Container(
-                            width: 46,
-                            height: 46,
-                            decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: .13),
-                              shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white54),
-                            ),
-                            child: const Icon(
-                              Icons.lock_rounded,
-                              color: Colors.white,
-                              size: 21,
-                            ),
-                          ),
-                        const SizedBox(height: 6),
-                        Text(
-                          level.cityName,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: unlocked ? AppTheme.navy : Colors.black38,
-                            fontSize: 10,
-                            height: 1,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                        const SizedBox(height: 3),
-                        Text(
-                          boss
-                              ? (isArabic ? 'مركز رئيسي' : 'HUB CITY')
-                              : '${isArabic ? 'مرحلة' : 'Level'} ${level.number}',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: boss && unlocked ? accent : AppTheme.muted,
-                            fontSize: 8,
-                            height: 1,
-                            fontWeight: boss
-                                ? FontWeight.w900
-                                : FontWeight.w600,
-                            letterSpacing: boss ? .3 : 0,
-                          ),
-                        ),
-                        const SizedBox(height: 5),
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: List.generate(
-                            3,
-                            (index) => Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 1,
-                              ),
-                              child: index < stars
-                                  ? const ThreeDGameIcon(
-                                      type: ThreeDIconType.star,
-                                      size: 13,
-                                    )
-                                  : Icon(
-                                      Icons.star_outline_rounded,
-                                      size: 12,
-                                      color: Colors.black.withValues(
-                                        alpha: .12,
-                                      ),
-                                    ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
+        ],
       ),
     );
   }

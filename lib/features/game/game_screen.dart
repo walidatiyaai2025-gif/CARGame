@@ -400,7 +400,7 @@ class _GameScreenState extends State<GameScreen> {
     final bonusCoins = won ? widget.store.lastCompletionBonus : 0;
     final bonusXp = won ? widget.store.lastCompletionBonusXp : 0;
 
-    final world = gameWorlds[widget.level.world - 1];
+    final routeName = capitalRouteForWorld(widget.level.world).name(ar);
 
     await showModalBottomSheet<void>(
       context: context,
@@ -414,8 +414,8 @@ class _GameScreenState extends State<GameScreen> {
         worldReward: worldReward,
         isArabic: ar,
         busy: _resultActionBusy,
-        cityName: widget.level.cityName,
-        worldName: world.name,
+        cityName: widget.level.localizedDestinationLabel(ar),
+        worldName: routeName,
         levelNumber: widget.level.number,
         stars: stars,
         reward: reward,
@@ -476,6 +476,7 @@ class _GameScreenState extends State<GameScreen> {
     final skin = gameSkinById(widget.store.selectedTheme);
     final world = gameWorlds[widget.level.world - 1];
     final ar = Localizations.localeOf(context).languageCode == 'ar';
+    final routeName = capitalRouteForWorld(widget.level.world).name(ar);
     final flight = _flight;
     final canGoBack = Navigator.of(context).canPop();
 
@@ -526,8 +527,8 @@ class _GameScreenState extends State<GameScreen> {
                     child: Column(
                       children: [
                         GameplayCommandBar(
-                          cityName: widget.level.cityName,
-                          worldName: world.name,
+                          cityName: widget.level.localizedDestinationLabel(ar),
+                          worldName: routeName,
                           levelNumber: widget.level.number,
                           difficulty: widget.level.difficulty,
                           compact: compact,
