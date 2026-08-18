@@ -56,9 +56,9 @@ def main() -> int:
             EXPECTED_GENERATOR,
             'emissiveFactor',
             'road.arrow.main.shaft',
-            'environment.signal.0.red',
-            'environment.skyline.0',
-            'delivery.electronics.rim.north',
+            "node(f'environment.signal.{index}.red'",
+            'environment.skyline.',
+            'delivery.electronics.rim',
         ),
         'GLB generator',
     )
