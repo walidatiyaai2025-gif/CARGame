@@ -1,9 +1,8 @@
 name: RT3D-003 Widget Test Format Once
 
 on:
-  push:
-    branches:
-      - agent/rt3d-003-cinematic-polish-refresh
+  pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: write
