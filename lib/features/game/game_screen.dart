@@ -12,6 +12,7 @@ import '../../core/storage/progress_store.dart';
 import '../../core/theme/game_skin.dart';
 import '../../core/theme/three_d_game_icon.dart';
 import 'city_catalog.dart';
+import 'gameplay_house_cargo_board.dart';
 import 'gameplay_operations_deck.dart';
 import 'gameplay_result_debrief.dart';
 import 'level_data.dart';
@@ -564,7 +565,7 @@ class _GameScreenState extends State<GameScreen> {
                         SizedBox(height: compact ? 5 : 8),
                         Expanded(
                           flex: 3,
-                          child: GameplayCargoBoard(
+                          child: GameplayHouseCargoBoard(
                             levelNumber: widget.level.number,
                             items: _remaining,
                             houseAssignments: _remainingHouses,
