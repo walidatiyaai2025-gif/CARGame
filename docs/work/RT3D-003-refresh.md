@@ -15,7 +15,7 @@ Priority: P0 VISUAL
 - Regenerated project-owned GLB is pinned to SHA-256 `b727b594612452a9a3723aa64423ee5d18a9b90567aba191d9a035bf888de157`.
 - Validator and provenance now target the RT3D-003 cinematic node/material contract instead of the stale RT3D-002 scene.
 - The contract explicitly protects emissive lamps/headlights/rear lights/beacon/signals, vehicle mirrors/bumpers, road arrows, traffic signals, pallet/skyline dressing and delivery rims while retaining stable cargo/delivery IDs.
-- Native runtime camera/bloom work is staged next: bloom enabled, deterministic Overview/Warehouse/Docks presets, reset, custom orbit state, and renderer frame/FPS diagnostics.
+- Native runtime camera/bloom implementation is now executing: bloom, Overview/Warehouse/Docks presets, reset, custom orbit state, frame count and FPS estimate.
 
 ## Next gates
 
