@@ -142,7 +142,8 @@ class _Realtime3dPreviewScreenState extends State<Realtime3dPreviewScreen> {
     await _scene.setCameraPreset(preset);
     if (!mounted) return;
     setState(() {
-      _status = '${preset.label} camera selected — camera change applied instantly.';
+      _status =
+          '${preset.label} camera selected — camera change applied instantly.';
     });
   }
 
@@ -393,7 +394,8 @@ class _CameraPresetButton extends StatelessWidget {
                 children: [
                   Icon(
                     switch (preset) {
-                      NativeFilamentCameraPreset.overview => Icons.public_rounded,
+                      NativeFilamentCameraPreset.overview =>
+                        Icons.public_rounded,
                       NativeFilamentCameraPreset.warehouse =>
                         Icons.warehouse_rounded,
                       NativeFilamentCameraPreset.docks =>

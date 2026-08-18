@@ -26,27 +26,30 @@ void main() {
     expect(scene.cameraPreset, NativeFilamentCameraPreset.overview);
   });
 
-  test('camera presets update deterministic raycast geometry without channel', () async {
-    final scene = NativeFilamentRealtime3dScene();
-    addTearDown(scene.dispose);
-    scene.setViewport(const Size(1000, 1000));
+  test(
+    'camera presets update deterministic raycast geometry without channel',
+    () async {
+      final scene = NativeFilamentRealtime3dScene();
+      addTearDown(scene.dispose);
+      scene.setViewport(const Size(1000, 1000));
 
-    await scene.setCameraPreset(NativeFilamentCameraPreset.warehouse);
-    final warehouseRay = scene.screenRay(const ScreenPoint3(500, 500));
-    expect(warehouseRay.origin, const Vec3(-0.8, 6.3, 10.8));
-    expect(warehouseRay.direction.length, closeTo(1, 1e-9));
-    expect(scene.cameraLabel, 'Warehouse');
+      await scene.setCameraPreset(NativeFilamentCameraPreset.warehouse);
+      final warehouseRay = scene.screenRay(const ScreenPoint3(500, 500));
+      expect(warehouseRay.origin, const Vec3(-0.8, 6.3, 10.8));
+      expect(warehouseRay.direction.length, closeTo(1, 1e-9));
+      expect(scene.cameraLabel, 'Warehouse');
 
-    await scene.setCameraPreset(NativeFilamentCameraPreset.docks);
-    final docksRay = scene.screenRay(const ScreenPoint3(500, 500));
-    expect(docksRay.origin, const Vec3(10.5, 5.8, 1.2));
-    expect(scene.cameraPreset, NativeFilamentCameraPreset.docks);
+      await scene.setCameraPreset(NativeFilamentCameraPreset.docks);
+      final docksRay = scene.screenRay(const ScreenPoint3(500, 500));
+      expect(docksRay.origin, const Vec3(10.5, 5.8, 1.2));
+      expect(scene.cameraPreset, NativeFilamentCameraPreset.docks);
 
-    await scene.resetCamera();
-    final resetRay = scene.screenRay(const ScreenPoint3(500, 500));
-    expect(resetRay.origin, const Vec3(9.0, 8.7, 9.3));
-    expect(scene.cameraPreset, NativeFilamentCameraPreset.overview);
-  });
+      await scene.resetCamera();
+      final resetRay = scene.screenRay(const ScreenPoint3(500, 500));
+      expect(resetRay.origin, const Vec3(9.0, 8.7, 9.3));
+      expect(scene.cameraPreset, NativeFilamentCameraPreset.overview);
+    },
+  );
 
   test('manual orbit exits deterministic preset mode', () async {
     final scene = NativeFilamentRealtime3dScene();

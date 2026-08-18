@@ -136,7 +136,9 @@ class NativeFilamentRealtime3dScene extends ChangeNotifier
     _cameraPreset = preset;
     _cameraEye = eye;
     _cameraTarget = target;
-    await _invoke('setCameraPreset', <String, String>{'preset': preset.wireName});
+    await _invoke('setCameraPreset', <String, String>{
+      'preset': preset.wireName,
+    });
     notifyListeners();
   }
 
