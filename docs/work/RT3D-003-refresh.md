@@ -16,11 +16,12 @@ Priority: P0 VISUAL
 - Validator and provenance now target the RT3D-003 cinematic node/material contract instead of the stale RT3D-002 scene.
 - The contract explicitly protects emissive lamps/headlights/rear lights/beacon/signals, vehicle mirrors/bumpers, road arrows, traffic signals, pallet/skyline dressing and delivery rims while retaining stable cargo/delivery IDs.
 - Native runtime now includes Filament bloom, Overview/Warehouse/Docks presets, reset/custom orbit state, frame count and FPS estimate.
-- Dart bridge and accessible Visual Lab camera HUD are implemented; canonical Dart formatting is the active CI checkpoint.
+- Dart bridge, accessible Visual Lab camera HUD, camera/raycast tests, fallback widget tests, and a dedicated RT3D-003 CI gate are implemented.
+- The only active source checkpoint is canonical formatting of the newly added Visual Lab widget test.
 
 ## Next gates
 
-1. Canonical Dart format and focused RT3D CI.
+1. Canonical widget-test format and focused RT3D-003 CI.
 2. Full Flutter analyze/test/debug APK gate.
 3. Android release APK/AAB packaging and artifact security.
 4. Exact-main merge and retained Last verified APK evidence.
