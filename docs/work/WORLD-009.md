@@ -18,6 +18,7 @@ Replace the fictional grid-based level selector with an offline geographic world
 - Briefing, gameplay command bar, and result debrief consume localized capital/country and geographic route labels.
 - Compact selected-stage metadata uses a wrapping layout to prevent narrow-phone horizontal overflow.
 - The challenge-header badge and route counter are now constraint-aware with `Expanded` / `FittedBox` so the 360x640 English layout cannot force a horizontal RenderFlex overflow.
+- TEST-007 now validates the 25 actual capital-node interaction contracts, verifies the next stage remains locked, scrolls to the selected-capital mission card, and enters briefing through the production `GameButton` flow.
 - Existing briefing navigation and GAME-017 9-to-23 cargo / 3-to-6 houses progression remain unchanged.
 - Temporary repair/probe workflows have been removed; the branch is back on the canonical repository Flutter CI workflow.
 
