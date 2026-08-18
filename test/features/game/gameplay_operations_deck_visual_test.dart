@@ -46,7 +46,8 @@ void main() {
 
     expect(tester.takeException(), isNull);
     expect(find.text('MISSION LIVE'), findsOneWidget);
-    expect(find.text('CARGO BAY'), findsOneWidget);
+    expect(find.text('CARGO BAY • HOUSES'), findsOneWidget);
+    expect(find.text('3 HOUSES'), findsOneWidget);
     expect(find.text('SORTING DOCKS'), findsOneWidget);
     expect(find.byKey(const ValueKey('game-moves')), findsOneWidget);
     expect(find.byType(ThreeDGameIcon), findsAtLeastNWidgets(3));
