@@ -46,6 +46,7 @@ class _GameScreenState extends State<GameScreen> {
   final GlobalKey _motionLayerKey = GlobalKey();
 
   late List<CargoItem> _remaining;
+  late List<int> _remainingHouses;
   CargoItem? _selected;
   int? _selectedIndex;
   Offset? _selectedOrigin;
@@ -99,8 +100,15 @@ class _GameScreenState extends State<GameScreen> {
   void _reset({bool applyLoadout = false}) {
     _rewardTransactionId =
         'level-${widget.level.number}-attempt-${DateTime.now().toUtc().microsecondsSinceEpoch}-${_rewardAttemptSequence++}';
-    _remaining = [...widget.level.items]
-      ..shuffle(Random(widget.level.number * 41));
+    final placements = List.generate(
+      widget.level.items.length,
+      (index) => (
+        item: widget.level.items[index],
+        house: widget.level.houseForItemIndex(index),
+      ),
+    )..shuffle(Random(widget.level.number * 41));
+    _remaining = [for (final placement in placements) placement.item];
+    _remainingHouses = [for (final placement in placements) placement.house];
     final economy = EconomyConfig.current;
     _moves =
         widget.level.moves +
@@ -189,8 +197,13 @@ class _GameScreenState extends State<GameScreen> {
         if (flight.selectedIndex < _remaining.length &&
             identical(_remaining[flight.selectedIndex], flight.item)) {
           _remaining.removeAt(flight.selectedIndex);
+          _remainingHouses.removeAt(flight.selectedIndex);
         } else {
-          _remaining.remove(flight.item);
+          final fallbackIndex = _remaining.indexOf(flight.item);
+          if (fallbackIndex >= 0) {
+            _remaining.removeAt(fallbackIndex);
+            _remainingHouses.removeAt(fallbackIndex);
+          }
         }
         _combo++;
         _bestCombo = max(_bestCombo, _combo);
@@ -554,6 +567,8 @@ class _GameScreenState extends State<GameScreen> {
                           child: GameplayCargoBoard(
                             levelNumber: widget.level.number,
                             items: _remaining,
+                            houseAssignments: _remainingHouses,
+                            houseCount: widget.level.houseCount,
                             selectedIndex: _selectedIndex,
                             travellingIndex: _resolving ? _selectedIndex : null,
                             onTap: _choosePackage,
