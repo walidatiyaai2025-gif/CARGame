@@ -137,11 +137,7 @@ class _HouseBoardHeader extends StatelessWidget {
         ),
       ),
       const SizedBox(width: 6),
-      Icon(
-        Icons.home_work_rounded,
-        color: accent,
-        size: compact ? 16 : 19,
-      ),
+      Icon(Icons.home_work_rounded, color: accent, size: compact ? 16 : 19),
       const SizedBox(width: 5),
       Expanded(
         child: Text(
