@@ -15,11 +15,12 @@ Priority: P0 VISUAL
 - Regenerated project-owned GLB is pinned to SHA-256 `b727b594612452a9a3723aa64423ee5d18a9b90567aba191d9a035bf888de157`.
 - Validator and provenance now target the RT3D-003 cinematic node/material contract instead of the stale RT3D-002 scene.
 - The contract explicitly protects emissive lamps/headlights/rear lights/beacon/signals, vehicle mirrors/bumpers, road arrows, traffic signals, pallet/skyline dressing and delivery rims while retaining stable cargo/delivery IDs.
+- Native runtime camera/bloom work is staged next: bloom enabled, deterministic Overview/Warehouse/Docks presets, reset, custom orbit state, and renderer frame/FPS diagnostics.
 
 ## Next gates
 
 1. Confirm refreshed RT3D/full CI is green.
-2. Native bloom and deterministic camera presets.
+2. Validate native bloom/camera runtime compilation and tests.
 3. HUD/semantics and reduced-motion behavior.
 4. Focused validator + full Flutter CI + Android APK security.
 5. Exact-main merge and retained Last verified APK evidence.
