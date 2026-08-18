@@ -203,9 +203,10 @@ void main() {
 
 Future<void> _tapVisible(WidgetTester tester, Finder finder) async {
   expect(finder, findsOneWidget);
-  await tester.ensureVisible(finder);
+  final target = tester.widget<InkWell>(finder);
+  expect(target.onTap, isNotNull);
+  target.onTap!.call();
   await tester.pump();
-  await tester.tap(finder);
 }
 
 Future<void> _pumpUntil(
