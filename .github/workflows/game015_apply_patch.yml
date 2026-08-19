@@ -1,0 +1,75 @@
+name: GAME-015 Apply Runtime Wiring
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  wire:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/game-015-runtime-wiring
+          fetch-depth: 0
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.44.8
+          cache: true
+
+      - name: Restore packages
+        run: flutter pub get --enforce-lockfile
+
+      - name: Apply canonical runtime wiring
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tool/game015_wire_game_screen_once.py
+          dart format \
+            lib/features/game/game_screen.dart \
+            test/features/game/game_screen_active_run_test.dart
+          git diff --check
+
+      - name: Analyze focused GAME-015 surface
+        run: >-
+          flutter analyze --no-fatal-infos --no-fatal-warnings
+          lib/features/game/game_screen.dart
+          lib/features/game/active_run_coordinator.dart
+          lib/features/game/active_run_session.dart
+          lib/features/game/active_run_snapshot.dart
+          lib/features/game/active_run_store.dart
+          test/features/game/game_screen_active_run_test.dart
+          test/features/game/game_screen_pause_test.dart
+          test/features/game/active_run_coordinator_test.dart
+
+      - name: Run focused GAME-015 tests
+        run: >-
+          flutter test
+          test/features/game/game_screen_active_run_test.dart
+          test/features/game/game_screen_pause_test.dart
+          test/features/game/active_run_coordinator_test.dart
+          test/features/game/active_run_session_test.dart
+          test/features/game/active_run_snapshot_test.dart
+
+      - name: Commit source wiring only when changed
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            lib/features/game/game_screen.dart \
+            test/features/game/game_screen_active_run_test.dart
+          git diff --cached --check
+          if git diff --cached --quiet; then
+            echo 'GAME-015 runtime wiring already committed.'
+            exit 0
+          fi
+          git commit -m 'GAME-015 wire active-run lifecycle recovery'
+          git push origin HEAD:agent/game-015-runtime-wiring
