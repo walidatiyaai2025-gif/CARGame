@@ -241,7 +241,7 @@ def test_rejects_production_truth_drift() -> None:
         replace(
             root,
             'docs/work/AST-007.md',
-            'Approved provenance records: 0.',
+            'Approved provenance records: 12.',
             'Approved provenance records: 124.',
         )
         expect_failure(root, 'AST-007 work note missing production truth')

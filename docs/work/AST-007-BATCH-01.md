@@ -1,15 +1,15 @@
 # AST-007 — Cargo Batch 01
 
 Issue: #210
-Branch: `agent/ast-007-cargo-batch-01`
+Branch: `agent/ast-007-batch01-procedural-art`
 Parent feature: `AST-007` — IN PROGRESS
 
 ## Purpose
 
-Prepare a reproducible production-art handoff for the first 12 deterministic cargo assets selected by the merged AST-007 intake planner. This checkpoint defines what must be created and how it must be validated; it does not pretend that artwork, commercial-use approval, or runtime admission already exists.
+Record and enforce the first admitted production-art batch for the 12 deterministic cargo assets selected by the AST-007 intake planner. The runtime artwork is project-original procedural WebP generated from source-controlled geometry instructions, and each admitted file has matching provenance and a verified export checksum.
 
-Runtime binary status: `NOT_CREATED`
-Provenance status: `NOT_CREATED`
+Runtime binary status: `READY`
+Provenance status: `READY`
 
 ## Batch boundary
 
@@ -60,19 +60,18 @@ Batch 01 contains exactly 12 deterministic cargo assets:
 
 ## Admission sequence
 
-For each asset, the next production step is:
+For each asset in this batch the source-controlled admission sequence is now complete through the repository gate:
 
-1. create/render the original asset against `spec.json`;
+1. render the original deterministic project-owned asset from the checked-in generator;
 2. export the runtime WebP to its exact manifest path under the 120 KiB pcargo budget;
-3. record complete AST-011 provenance with commercial-use evidence and real checksums;
-4. change the spec status only when the corresponding artifact/record actually exists;
-5. run AST-007 validation, AST-011 asset admission, full Flutter CI, and device/profile visual/memory checks;
-6. keep the existing Flutter fallback active for any item not successfully admitted.
+3. record AST-011 provenance with commercial-use evidence and real source/export checksums;
+4. mark the spec READY only because the corresponding binary and provenance record exist;
+5. verify WebP container, byte budget and SHA-256 equality against provenance;
+6. keep device/profile visual and memory observation as separate evidence and keep fallbacks for all still-unadmitted cargo identities.
 
 ## Non-claims
 
-- No runtime cargo WebP is added by this handoff checkpoint.
-- No provenance record is added or auto-approved.
-- No commercial-use license is inferred from a prompt.
-- No production signing or physical-device visual evidence is claimed.
-- `AST-007` remains IN PROGRESS and `GAME-012` remains blocked.
+- This checkpoint admits exactly 12 runtime cargo WebP files and 12 matching source-controlled provenance records; it does not claim the remaining 112 cargo identities are complete.
+- Commercial-use status comes from the project-original source-controlled procedural artwork record, not from prompt text alone.
+- No production signing or physical-device visual/performance evidence is claimed.
+- `AST-007` remains IN PROGRESS and `GAME-012` remains blocked until the full production pack and required device evidence are complete.
