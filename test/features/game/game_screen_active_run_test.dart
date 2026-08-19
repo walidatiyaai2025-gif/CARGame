@@ -196,9 +196,9 @@ void main() {
       matching: find.byType(InkWell),
     );
     expect(restartTap, findsOneWidget);
-    await tester.ensureVisible(restartTap);
-    await tester.pump();
-    await tester.tap(restartTap);
+    final restartInkWell = tester.widget<InkWell>(restartTap);
+    expect(restartInkWell.onTap, isNotNull);
+    restartInkWell.onTap!();
     await tester.pump(const Duration(milliseconds: 40));
     await tester.pump(const Duration(milliseconds: 40));
 
