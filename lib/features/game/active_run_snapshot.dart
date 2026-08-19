@@ -41,19 +41,19 @@ class ActiveRunSnapshot {
   bool get isTerminal => remainingItemIds.isEmpty || movesRemaining <= 0;
 
   Map<String, Object> toJson() => <String, Object>{
-        'version': version,
-        'levelNumber': levelNumber,
-        'levelCargoCount': levelCargoCount,
-        'remainingItemIds': remainingItemIds,
-        'remainingHouseIds': remainingHouseIds,
-        'movesRemaining': movesRemaining,
-        'combo': combo,
-        'bestCombo': bestCombo,
-        'preparedHints': preparedHints,
-        'shieldActive': shieldActive,
-        'madeWrongMove': madeWrongMove,
-        'rewardTransactionId': rewardTransactionId,
-      };
+    'version': version,
+    'levelNumber': levelNumber,
+    'levelCargoCount': levelCargoCount,
+    'remainingItemIds': remainingItemIds,
+    'remainingHouseIds': remainingHouseIds,
+    'movesRemaining': movesRemaining,
+    'combo': combo,
+    'bestCombo': bestCombo,
+    'preparedHints': preparedHints,
+    'shieldActive': shieldActive,
+    'madeWrongMove': madeWrongMove,
+    'rewardTransactionId': rewardTransactionId,
+  };
 
   String encode() => jsonEncode(toJson());
 
@@ -152,15 +152,21 @@ class ActiveRunSnapshot {
 
     final allowedItemCounts = <int, int>{};
     for (final item in level.items) {
-      allowedItemCounts.update(item.id, (value) => value + 1,
-          ifAbsent: () => 1);
+      allowedItemCounts.update(
+        item.id,
+        (value) => value + 1,
+        ifAbsent: () => 1,
+      );
     }
 
     final remainingCounts = <int, int>{};
     for (final itemId in remainingItemIds) {
       if (!allowedItemCounts.containsKey(itemId)) return false;
-      remainingCounts.update(itemId, (value) => value + 1,
-          ifAbsent: () => 1);
+      remainingCounts.update(
+        itemId,
+        (value) => value + 1,
+        ifAbsent: () => 1,
+      );
       if (remainingCounts[itemId]! > allowedItemCounts[itemId]!) return false;
     }
 
