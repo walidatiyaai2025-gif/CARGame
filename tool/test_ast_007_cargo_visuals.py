@@ -19,6 +19,18 @@ def fixture() -> Path:
         target = root / relative
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(source, target)
+
+    batch_spec = json.loads(
+        (ROOT / 'assets/3d/source/cargo/batch_01/spec.json').read_text(
+            encoding='utf-8',
+        ),
+    )
+    for item in batch_spec['assets']:
+        relative = item['runtimePath']
+        source = ROOT / relative
+        target = root / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source, target)
     return root
 
 
