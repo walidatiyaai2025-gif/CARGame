@@ -29,6 +29,7 @@ REQUIRED_FILES = [
     'docs/work/AST-007.md',
     'docs/work/AST-007-BATCH-01.md',
     'docs/work/AST-007-INTAKE-HARDENING-100.md',
+    'docs/work/AST-007-batch01.md',
     '.github/workflows/flutter_ci.yml',
 ]
 
@@ -162,8 +163,8 @@ def validate(root: Path = Path('.')) -> None:
     work_doc = _read(root, 'docs/work/AST-007.md')
     for token in [
         '133 descriptors: 9 non-cargo + 124 cargo',
-        'Approved provenance records: 0.',
-        'Runtime WebP binaries: 0.',
+        'Approved provenance records: 12.',
+        'Runtime WebP binaries: 12.',
         'The planner does not invent or auto-approve provenance.',
     ]:
         if token not in work_doc:
@@ -171,12 +172,22 @@ def validate(root: Path = Path('.')) -> None:
 
     batch_doc = _read(root, 'docs/work/AST-007-BATCH-01.md')
     for token in [
-        'Runtime binary status: `NOT_CREATED`',
-        'Provenance status: `NOT_CREATED`',
+        'Runtime binary status: `READY`',
+        'Provenance status: `READY`',
         '12 deterministic cargo assets',
     ]:
         if token not in batch_doc:
             raise ValidationError(f'AST-007 batch 01 work note missing truth boundary: {token}')
+
+    admission_doc = _read(root, 'docs/work/AST-007-batch01.md')
+    for token in [
+        'Generator SHA-256:',
+        '12 assets',
+        'No third-party image, logo, trademark, model, or licensed visual source is incorporated.',
+        'AST-007 remains IN PROGRESS',
+    ]:
+        if token not in admission_doc:
+            raise ValidationError(f'AST-007 batch 01 admission evidence missing: {token}')
 
     hardening_doc = _read(root, 'docs/work/AST-007-INTAKE-HARDENING-100.md')
     for token in [

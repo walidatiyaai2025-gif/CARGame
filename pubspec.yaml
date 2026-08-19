@@ -12,6 +12,18 @@ flutter:
   assets:
     - assets/3d/manifest.json
     - assets/3d/runtime/models/cargame_native_slice_v1.glb
+    - assets/3d/runtime/cargo/fashion/cg_cargo_accessory_box_pcargo_v01.webp
+    - assets/3d/runtime/cargo/special/cg_cargo_accessory_carton_pcargo_v01.webp
+    - assets/3d/runtime/cargo/toys/cg_cargo_action_figure_box_pcargo_v01.webp
+    - assets/3d/runtime/cargo/fashion/cg_cargo_apparel_box_pcargo_v01.webp
+    - assets/3d/runtime/cargo/food/cg_cargo_apple_crate_pcargo_v01.webp
+    - assets/3d/runtime/cargo/office/cg_cargo_archive_box_pcargo_v01.webp
+    - assets/3d/runtime/cargo/special/cg_cargo_auto_part_crate_pcargo_v01.webp
+    - assets/3d/runtime/cargo/food/cg_cargo_bakery_box_pcargo_v01.webp
+    - assets/3d/runtime/cargo/sports/cg_cargo_basketball_bag_pcargo_v01.webp
+    - assets/3d/runtime/cargo/special/cg_cargo_battery_pack_pcargo_v01.webp
+    - assets/3d/runtime/cargo/toys/cg_cargo_board_game_box_pcargo_v01.webp
+    - assets/3d/runtime/cargo/fashion/cg_cargo_boot_carton_pcargo_v01.webp
     - assets/maps/world_continents_ai.svg
 
 dependencies:

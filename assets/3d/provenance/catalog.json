@@ -1,4 +1,317 @@
 {
   "schemaVersion": 1,
-  "records": []
+  "records": [
+    {
+      "assetId": "cargo.accessory_box",
+      "runtimePath": "assets/3d/runtime/cargo/fashion/cg_cargo_accessory_box_pcargo_v01.webp",
+      "sourceType": "generated",
+      "creatorVendorTool": "CARGame deterministic Python/Pillow procedural renderer",
+      "creationDate": "2026-08-19",
+      "commercialUseReference": "Project-original procedural artwork authored specifically for CARGame using only source-controlled geometric drawing instructions; no third-party images, logos, trademarks, or licensed visual material are incorporated.",
+      "generation": {
+        "prompt": "Create an original generic 3D-styled cargo package icon for 'Accessory Box' using deterministic geometric primitives, transparent background, upper-left highlight, soft grounded shadow, no logos, no brands, 384x384.",
+        "referenceFileIds": []
+      },
+      "sourceSha256": "7a74304b9e3a6ccd1573dd6872361812e116f199f3bb577cc2cccef64a0a6b4e",
+      "exportSha256": "849f638796e9bb88451073c2febc919ea41a177d13312d8f18d0598306c91994",
+      "profile": "pcargo",
+      "revision": 1,
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "encoder": "Pillow WebP encoder",
+      "quality": "86",
+      "reviewer": "CARGame source-controlled asset admission review",
+      "approvalDate": "2026-08-19",
+      "attribution": "",
+      "prohibitedUse": "Do not present this generic package artwork as a real-world brand, licensed product, or third-party endorsement."
+    },
+    {
+      "assetId": "cargo.accessory_carton",
+      "runtimePath": "assets/3d/runtime/cargo/special/cg_cargo_accessory_carton_pcargo_v01.webp",
+      "sourceType": "generated",
+      "creatorVendorTool": "CARGame deterministic Python/Pillow procedural renderer",
+      "creationDate": "2026-08-19",
+      "commercialUseReference": "Project-original procedural artwork authored specifically for CARGame using only source-controlled geometric drawing instructions; no third-party images, logos, trademarks, or licensed visual material are incorporated.",
+      "generation": {
+        "prompt": "Create an original generic 3D-styled cargo package icon for 'Accessory Carton' using deterministic geometric primitives, transparent background, upper-left highlight, soft grounded shadow, no logos, no brands, 384x384.",
+        "referenceFileIds": []
+      },
+      "sourceSha256": "7a74304b9e3a6ccd1573dd6872361812e116f199f3bb577cc2cccef64a0a6b4e",
+      "exportSha256": "3205947f9a9dd9ff4b91a7a23473fcc4ca7506771e390bb82c9e3fdb9674ed1a",
+      "profile": "pcargo",
+      "revision": 1,
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "encoder": "Pillow WebP encoder",
+      "quality": "86",
+      "reviewer": "CARGame source-controlled asset admission review",
+      "approvalDate": "2026-08-19",
+      "attribution": "",
+      "prohibitedUse": "Do not present this generic package artwork as a real-world brand, licensed product, or third-party endorsement."
+    },
+    {
+      "assetId": "cargo.action_figure_box",
+      "runtimePath": "assets/3d/runtime/cargo/toys/cg_cargo_action_figure_box_pcargo_v01.webp",
+      "sourceType": "generated",
+      "creatorVendorTool": "CARGame deterministic Python/Pillow procedural renderer",
+      "creationDate": "2026-08-19",
+      "commercialUseReference": "Project-original procedural artwork authored specifically for CARGame using only source-controlled geometric drawing instructions; no third-party images, logos, trademarks, or licensed visual material are incorporated.",
+      "generation": {
+        "prompt": "Create an original generic 3D-styled cargo package icon for 'Action Figure Box' using deterministic geometric primitives, transparent background, upper-left highlight, soft grounded shadow, no logos, no brands, 384x384.",
+        "referenceFileIds": []
+      },
+      "sourceSha256": "7a74304b9e3a6ccd1573dd6872361812e116f199f3bb577cc2cccef64a0a6b4e",
+      "exportSha256": "31c3687ad592616cd02f65106746cb0545b92acd0d4a38850376c299d21927f3",
+      "profile": "pcargo",
+      "revision": 1,
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "encoder": "Pillow WebP encoder",
+      "quality": "86",
+      "reviewer": "CARGame source-controlled asset admission review",
+      "approvalDate": "2026-08-19",
+      "attribution": "",
+      "prohibitedUse": "Do not present this generic package artwork as a real-world brand, licensed product, or third-party endorsement."
+    },
+    {
+      "assetId": "cargo.apparel_box",
+      "runtimePath": "assets/3d/runtime/cargo/fashion/cg_cargo_apparel_box_pcargo_v01.webp",
+      "sourceType": "generated",
+      "creatorVendorTool": "CARGame deterministic Python/Pillow procedural renderer",
+      "creationDate": "2026-08-19",
+      "commercialUseReference": "Project-original procedural artwork authored specifically for CARGame using only source-controlled geometric drawing instructions; no third-party images, logos, trademarks, or licensed visual material are incorporated.",
+      "generation": {
+        "prompt": "Create an original generic 3D-styled cargo package icon for 'Apparel Box' using deterministic geometric primitives, transparent background, upper-left highlight, soft grounded shadow, no logos, no brands, 384x384.",
+        "referenceFileIds": []
+      },
+      "sourceSha256": "7a74304b9e3a6ccd1573dd6872361812e116f199f3bb577cc2cccef64a0a6b4e",
+      "exportSha256": "e342cbe40f4d26f87b9f3aa4fba1bb97d66fc7d4af1b22e8739693aa807661dc",
+      "profile": "pcargo",
+      "revision": 1,
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "encoder": "Pillow WebP encoder",
+      "quality": "86",
+      "reviewer": "CARGame source-controlled asset admission review",
+      "approvalDate": "2026-08-19",
+      "attribution": "",
+      "prohibitedUse": "Do not present this generic package artwork as a real-world brand, licensed product, or third-party endorsement."
+    },
+    {
+      "assetId": "cargo.apple_crate",
+      "runtimePath": "assets/3d/runtime/cargo/food/cg_cargo_apple_crate_pcargo_v01.webp",
+      "sourceType": "generated",
+      "creatorVendorTool": "CARGame deterministic Python/Pillow procedural renderer",
+      "creationDate": "2026-08-19",
+      "commercialUseReference": "Project-original procedural artwork authored specifically for CARGame using only source-controlled geometric drawing instructions; no third-party images, logos, trademarks, or licensed visual material are incorporated.",
+      "generation": {
+        "prompt": "Create an original generic 3D-styled cargo package icon for 'Apple Crate' using deterministic geometric primitives, transparent background, upper-left highlight, soft grounded shadow, no logos, no brands, 384x384.",
+        "referenceFileIds": []
+      },
+      "sourceSha256": "7a74304b9e3a6ccd1573dd6872361812e116f199f3bb577cc2cccef64a0a6b4e",
+      "exportSha256": "b3105182e43d627219ecbf2be8a7a3be7aba5bc23409c9f0bf9d57be79d351c6",
+      "profile": "pcargo",
+      "revision": 1,
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "encoder": "Pillow WebP encoder",
+      "quality": "86",
+      "reviewer": "CARGame source-controlled asset admission review",
+      "approvalDate": "2026-08-19",
+      "attribution": "",
+      "prohibitedUse": "Do not present this generic package artwork as a real-world brand, licensed product, or third-party endorsement."
+    },
+    {
+      "assetId": "cargo.archive_box",
+      "runtimePath": "assets/3d/runtime/cargo/office/cg_cargo_archive_box_pcargo_v01.webp",
+      "sourceType": "generated",
+      "creatorVendorTool": "CARGame deterministic Python/Pillow procedural renderer",
+      "creationDate": "2026-08-19",
+      "commercialUseReference": "Project-original procedural artwork authored specifically for CARGame using only source-controlled geometric drawing instructions; no third-party images, logos, trademarks, or licensed visual material are incorporated.",
+      "generation": {
+        "prompt": "Create an original generic 3D-styled cargo package icon for 'Archive Box' using deterministic geometric primitives, transparent background, upper-left highlight, soft grounded shadow, no logos, no brands, 384x384.",
+        "referenceFileIds": []
+      },
+      "sourceSha256": "7a74304b9e3a6ccd1573dd6872361812e116f199f3bb577cc2cccef64a0a6b4e",
+      "exportSha256": "07556c924dd5ad34640c7c76ff068fc406c5b56a884f8ca99bc1abdac29aa648",
+      "profile": "pcargo",
+      "revision": 1,
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "encoder": "Pillow WebP encoder",
+      "quality": "86",
+      "reviewer": "CARGame source-controlled asset admission review",
+      "approvalDate": "2026-08-19",
+      "attribution": "",
+      "prohibitedUse": "Do not present this generic package artwork as a real-world brand, licensed product, or third-party endorsement."
+    },
+    {
+      "assetId": "cargo.auto_part_crate",
+      "runtimePath": "assets/3d/runtime/cargo/special/cg_cargo_auto_part_crate_pcargo_v01.webp",
+      "sourceType": "generated",
+      "creatorVendorTool": "CARGame deterministic Python/Pillow procedural renderer",
+      "creationDate": "2026-08-19",
+      "commercialUseReference": "Project-original procedural artwork authored specifically for CARGame using only source-controlled geometric drawing instructions; no third-party images, logos, trademarks, or licensed visual material are incorporated.",
+      "generation": {
+        "prompt": "Create an original generic 3D-styled cargo package icon for 'Auto Part Crate' using deterministic geometric primitives, transparent background, upper-left highlight, soft grounded shadow, no logos, no brands, 384x384.",
+        "referenceFileIds": []
+      },
+      "sourceSha256": "7a74304b9e3a6ccd1573dd6872361812e116f199f3bb577cc2cccef64a0a6b4e",
+      "exportSha256": "31a4079330d3ccb1b6b78803b5f5243bc8e567c7462589c81836380a29a42e57",
+      "profile": "pcargo",
+      "revision": 1,
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "encoder": "Pillow WebP encoder",
+      "quality": "86",
+      "reviewer": "CARGame source-controlled asset admission review",
+      "approvalDate": "2026-08-19",
+      "attribution": "",
+      "prohibitedUse": "Do not present this generic package artwork as a real-world brand, licensed product, or third-party endorsement."
+    },
+    {
+      "assetId": "cargo.bakery_box",
+      "runtimePath": "assets/3d/runtime/cargo/food/cg_cargo_bakery_box_pcargo_v01.webp",
+      "sourceType": "generated",
+      "creatorVendorTool": "CARGame deterministic Python/Pillow procedural renderer",
+      "creationDate": "2026-08-19",
+      "commercialUseReference": "Project-original procedural artwork authored specifically for CARGame using only source-controlled geometric drawing instructions; no third-party images, logos, trademarks, or licensed visual material are incorporated.",
+      "generation": {
+        "prompt": "Create an original generic 3D-styled cargo package icon for 'Bakery Box' using deterministic geometric primitives, transparent background, upper-left highlight, soft grounded shadow, no logos, no brands, 384x384.",
+        "referenceFileIds": []
+      },
+      "sourceSha256": "7a74304b9e3a6ccd1573dd6872361812e116f199f3bb577cc2cccef64a0a6b4e",
+      "exportSha256": "b18d38ce4c8b3242b06996ebe54eb998781a2ba389bc4478cd7491b68078c581",
+      "profile": "pcargo",
+      "revision": 1,
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "encoder": "Pillow WebP encoder",
+      "quality": "86",
+      "reviewer": "CARGame source-controlled asset admission review",
+      "approvalDate": "2026-08-19",
+      "attribution": "",
+      "prohibitedUse": "Do not present this generic package artwork as a real-world brand, licensed product, or third-party endorsement."
+    },
+    {
+      "assetId": "cargo.basketball_bag",
+      "runtimePath": "assets/3d/runtime/cargo/sports/cg_cargo_basketball_bag_pcargo_v01.webp",
+      "sourceType": "generated",
+      "creatorVendorTool": "CARGame deterministic Python/Pillow procedural renderer",
+      "creationDate": "2026-08-19",
+      "commercialUseReference": "Project-original procedural artwork authored specifically for CARGame using only source-controlled geometric drawing instructions; no third-party images, logos, trademarks, or licensed visual material are incorporated.",
+      "generation": {
+        "prompt": "Create an original generic 3D-styled cargo package icon for 'Basketball Bag' using deterministic geometric primitives, transparent background, upper-left highlight, soft grounded shadow, no logos, no brands, 384x384.",
+        "referenceFileIds": []
+      },
+      "sourceSha256": "7a74304b9e3a6ccd1573dd6872361812e116f199f3bb577cc2cccef64a0a6b4e",
+      "exportSha256": "4ecdf24306eca259a2c3be0c3c07bc999420d34bb05973bda470779c4326cb72",
+      "profile": "pcargo",
+      "revision": 1,
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "encoder": "Pillow WebP encoder",
+      "quality": "86",
+      "reviewer": "CARGame source-controlled asset admission review",
+      "approvalDate": "2026-08-19",
+      "attribution": "",
+      "prohibitedUse": "Do not present this generic package artwork as a real-world brand, licensed product, or third-party endorsement."
+    },
+    {
+      "assetId": "cargo.battery_pack",
+      "runtimePath": "assets/3d/runtime/cargo/special/cg_cargo_battery_pack_pcargo_v01.webp",
+      "sourceType": "generated",
+      "creatorVendorTool": "CARGame deterministic Python/Pillow procedural renderer",
+      "creationDate": "2026-08-19",
+      "commercialUseReference": "Project-original procedural artwork authored specifically for CARGame using only source-controlled geometric drawing instructions; no third-party images, logos, trademarks, or licensed visual material are incorporated.",
+      "generation": {
+        "prompt": "Create an original generic 3D-styled cargo package icon for 'Battery Pack' using deterministic geometric primitives, transparent background, upper-left highlight, soft grounded shadow, no logos, no brands, 384x384.",
+        "referenceFileIds": []
+      },
+      "sourceSha256": "7a74304b9e3a6ccd1573dd6872361812e116f199f3bb577cc2cccef64a0a6b4e",
+      "exportSha256": "62c49e9aa08612e5634c79bf21a4b43b9df2d729aae14ee678e76f83e7de527b",
+      "profile": "pcargo",
+      "revision": 1,
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "encoder": "Pillow WebP encoder",
+      "quality": "86",
+      "reviewer": "CARGame source-controlled asset admission review",
+      "approvalDate": "2026-08-19",
+      "attribution": "",
+      "prohibitedUse": "Do not present this generic package artwork as a real-world brand, licensed product, or third-party endorsement."
+    },
+    {
+      "assetId": "cargo.board_game_box",
+      "runtimePath": "assets/3d/runtime/cargo/toys/cg_cargo_board_game_box_pcargo_v01.webp",
+      "sourceType": "generated",
+      "creatorVendorTool": "CARGame deterministic Python/Pillow procedural renderer",
+      "creationDate": "2026-08-19",
+      "commercialUseReference": "Project-original procedural artwork authored specifically for CARGame using only source-controlled geometric drawing instructions; no third-party images, logos, trademarks, or licensed visual material are incorporated.",
+      "generation": {
+        "prompt": "Create an original generic 3D-styled cargo package icon for 'Board Game Box' using deterministic geometric primitives, transparent background, upper-left highlight, soft grounded shadow, no logos, no brands, 384x384.",
+        "referenceFileIds": []
+      },
+      "sourceSha256": "7a74304b9e3a6ccd1573dd6872361812e116f199f3bb577cc2cccef64a0a6b4e",
+      "exportSha256": "26917bd4e1f0e78fc99b0fc7c16feae8944c3c99cbb6f7cc5de95f7b1a368d06",
+      "profile": "pcargo",
+      "revision": 1,
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "encoder": "Pillow WebP encoder",
+      "quality": "86",
+      "reviewer": "CARGame source-controlled asset admission review",
+      "approvalDate": "2026-08-19",
+      "attribution": "",
+      "prohibitedUse": "Do not present this generic package artwork as a real-world brand, licensed product, or third-party endorsement."
+    },
+    {
+      "assetId": "cargo.boot_carton",
+      "runtimePath": "assets/3d/runtime/cargo/fashion/cg_cargo_boot_carton_pcargo_v01.webp",
+      "sourceType": "generated",
+      "creatorVendorTool": "CARGame deterministic Python/Pillow procedural renderer",
+      "creationDate": "2026-08-19",
+      "commercialUseReference": "Project-original procedural artwork authored specifically for CARGame using only source-controlled geometric drawing instructions; no third-party images, logos, trademarks, or licensed visual material are incorporated.",
+      "generation": {
+        "prompt": "Create an original generic 3D-styled cargo package icon for 'Boot Carton' using deterministic geometric primitives, transparent background, upper-left highlight, soft grounded shadow, no logos, no brands, 384x384.",
+        "referenceFileIds": []
+      },
+      "sourceSha256": "7a74304b9e3a6ccd1573dd6872361812e116f199f3bb577cc2cccef64a0a6b4e",
+      "exportSha256": "4c650ef3b2dfe6394bd14032bd61ab5971266543540521795c7cb72094ab2dd0",
+      "profile": "pcargo",
+      "revision": 1,
+      "dimensions": {
+        "width": 384,
+        "height": 384
+      },
+      "encoder": "Pillow WebP encoder",
+      "quality": "86",
+      "reviewer": "CARGame source-controlled asset admission review",
+      "approvalDate": "2026-08-19",
+      "attribution": "",
+      "prohibitedUse": "Do not present this generic package artwork as a real-world brand, licensed product, or third-party endorsement."
+    }
+  ]
 }
