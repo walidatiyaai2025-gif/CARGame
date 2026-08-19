@@ -6,23 +6,33 @@ on:
       - agent/game-009-pause-lifecycle
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   format-probe:
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: agent/game-009-pause-lifecycle
           fetch-depth: 0
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
           flutter-version: 3.44.8
           cache: true
-      - name: Show formatter diff
+      - name: Format and commit
         shell: bash
         run: |
           set -euo pipefail
           dart format lib/features/game/game_screen.dart test/features/game/game_screen_pause_test.dart
-          git diff -- lib/features/game/game_screen.dart test/features/game/game_screen_pause_test.dart
+          if git diff --quiet -- lib/features/game/game_screen.dart test/features/game/game_screen_pause_test.dart; then
+            echo "Already formatted."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add lib/features/game/game_screen.dart test/features/game/game_screen_pause_test.dart
+          git commit -m "style: format GAME-009 Dart files"
+          git push origin HEAD:agent/game-009-pause-lifecycle
