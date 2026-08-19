@@ -9,7 +9,7 @@ import 'level_data.dart';
 /// being partially recovered.
 final class ActiveRunStore {
   ActiveRunStore({RecoveringPreferences? preferences})
-      : _preferences = preferences ?? RecoveringPreferences();
+    : _preferences = preferences ?? RecoveringPreferences();
 
   static const storageKey = 'active_run_snapshot_v1';
 
