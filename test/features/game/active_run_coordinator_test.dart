@@ -36,8 +36,10 @@ void main() {
     final restored = await coordinator.restore();
 
     expect(restored, isNotNull);
-    expect(restored!.remaining.map((item) => item.id),
-        session.remaining.map((item) => item.id));
+    expect(
+      restored!.remaining.map((item) => item.id),
+      session.remaining.map((item) => item.id),
+    );
     expect(restored.rewardTransactionId, session.rewardTransactionId);
     expect(fake.clearCount, 0);
   });
@@ -58,8 +60,10 @@ void main() {
     await Future.wait([firstWrite, secondWrite]);
 
     expect(fake.saveCount, 2);
-    expect(fake.snapshot!.remainingItemIds,
-        second.remaining.map((item) => item.id).toList());
+    expect(
+      fake.snapshot!.remainingItemIds,
+      second.remaining.map((item) => item.id).toList(),
+    );
   });
 
   test('terminal clear prevents later checkpoints from resurrecting run', () async {
@@ -88,8 +92,10 @@ void main() {
 
     final fresh = sessionFor(level, removed: 2);
     await coordinator.checkpoint(fresh);
-    expect(fake.snapshot!.remainingItemIds,
-        fresh.remaining.map((item) => item.id).toList());
+    expect(
+      fake.snapshot!.remainingItemIds,
+      fresh.remaining.map((item) => item.id).toList(),
+    );
   });
 
   test('preserves GAME-017 cargo progression contract', () {
