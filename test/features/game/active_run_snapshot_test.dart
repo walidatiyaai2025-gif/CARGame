@@ -5,23 +5,25 @@ import 'package:cargo_sort_game/features/game/level_data.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  ActiveRunSnapshot validSnapshot(LevelData level) => ActiveRunSnapshot(
-    version: ActiveRunSnapshot.currentVersion,
-    levelNumber: level.number,
-    levelCargoCount: level.items.length,
-    remainingItemIds: level.items.map((item) => item.id).toList(),
-    remainingHouseIds: List<int>.generate(
-      level.items.length,
-      level.houseForItemIndex,
-    ),
-    movesRemaining: level.moves,
-    combo: 0,
-    bestCombo: 0,
-    preparedHints: 0,
-    shieldActive: false,
-    madeWrongMove: false,
-    rewardTransactionId: 'level-${level.number}-attempt-test',
-  );
+  ActiveRunSnapshot validSnapshot(LevelData level) {
+    return ActiveRunSnapshot(
+      version: ActiveRunSnapshot.currentVersion,
+      levelNumber: level.number,
+      levelCargoCount: level.items.length,
+      remainingItemIds: level.items.map((item) => item.id).toList(),
+      remainingHouseIds: List<int>.generate(
+        level.items.length,
+        level.houseForItemIndex,
+      ),
+      movesRemaining: level.moves,
+      combo: 0,
+      bestCombo: 0,
+      preparedHints: 0,
+      shieldActive: false,
+      madeWrongMove: false,
+      rewardTransactionId: 'level-${level.number}-attempt-test',
+    );
+  }
 
   test('GAME-017 cargo progression contract remains intact', () {
     expect(levels, hasLength(150));
@@ -30,16 +32,14 @@ void main() {
     expect(LevelCargoProgression.cargoCountForLevel(1), 9);
     expect(LevelCargoProgression.cargoCountForLevel(11), 10);
     expect(LevelCargoProgression.cargoCountForLevel(21), 11);
-    expect(
-      LevelCargoProgression.cargoCountForLevel(150),
-      greaterThan(LevelCargoProgression.cargoCountForLevel(1)),
-    );
+    final firstCount = LevelCargoProgression.cargoCountForLevel(1);
+    final finalCount = LevelCargoProgression.cargoCountForLevel(150);
+    expect(finalCount, greaterThan(firstCount));
   });
 
   test('round trips a compatible unfinished run', () {
     final level = levels.first;
     final snapshot = validSnapshot(level);
-
     final decoded = ActiveRunSnapshot.tryDecode(snapshot.encode());
 
     expect(decoded, isNotNull);
@@ -51,9 +51,8 @@ void main() {
 
   test('future schema fails closed', () {
     final level = levels.first;
-    final json = validSnapshot(level).toJson()
-      ..['version'] = ActiveRunSnapshot.currentVersion + 1;
-
+    final json = validSnapshot(level).toJson();
+    json['version'] = ActiveRunSnapshot.currentVersion + 1;
     final decoded = ActiveRunSnapshot.tryDecode(jsonEncode(json));
 
     expect(decoded, isNotNull);
@@ -62,18 +61,14 @@ void main() {
 
   test('terminal snapshots never resume', () {
     final level = levels.first;
-    final base = validSnapshot(level).toJson();
+    final wonJson = validSnapshot(level).toJson();
+    wonJson['remainingItemIds'] = <int>[];
+    wonJson['remainingHouseIds'] = <int>[];
+    final won = ActiveRunSnapshot.tryDecode(jsonEncode(wonJson));
 
-    final won = ActiveRunSnapshot.tryDecode(
-      jsonEncode(<String, Object>{
-        ...base,
-        'remainingItemIds': <int>[],
-        'remainingHouseIds': <int>[],
-      }),
-    );
-    final lost = ActiveRunSnapshot.tryDecode(
-      jsonEncode(<String, Object>{...base, 'movesRemaining': 0}),
-    );
+    final lostJson = validSnapshot(level).toJson();
+    lostJson['movesRemaining'] = 0;
+    final lost = ActiveRunSnapshot.tryDecode(jsonEncode(lostJson));
 
     expect(won, isNotNull);
     expect(won!.isCompatibleWith(level), isFalse);
@@ -84,7 +79,6 @@ void main() {
   test('changed level identity or production shape fails closed', () {
     final level = levels.first;
     final snapshot = validSnapshot(level);
-
     expect(snapshot.isCompatibleWith(levels[1]), isFalse);
 
     final changedShape = ActiveRunSnapshot(
@@ -107,47 +101,35 @@ void main() {
   test('unknown cargo, duplicate overflow, and invalid houses fail closed', () {
     final level = levels.first;
     final snapshot = validSnapshot(level);
-    final base = snapshot.toJson();
 
-    final unknownCargo = ActiveRunSnapshot.tryDecode(
-      jsonEncode(<String, Object>{
-        ...base,
-        'remainingItemIds': <int>[999],
-        'remainingHouseIds': <int>[1],
-      }),
-    );
+    final unknownJson = snapshot.toJson();
+    unknownJson['remainingItemIds'] = <int>[999];
+    unknownJson['remainingHouseIds'] = <int>[1];
+    final unknownCargo = ActiveRunSnapshot.tryDecode(jsonEncode(unknownJson));
     expect(unknownCargo!.isCompatibleWith(level), isFalse);
 
     final firstId = level.items.first.id;
     final available = level.items.where((item) => item.id == firstId).length;
-    final overflow = ActiveRunSnapshot.tryDecode(
-      jsonEncode(<String, Object>{
-        ...base,
-        'remainingItemIds': List<int>.filled(available + 1, firstId),
-        'remainingHouseIds': List<int>.filled(available + 1, 1),
-      }),
+    final overflowJson = snapshot.toJson();
+    overflowJson['remainingItemIds'] = List<int>.filled(
+      available + 1,
+      firstId,
     );
+    overflowJson['remainingHouseIds'] = List<int>.filled(available + 1, 1);
+    final overflow = ActiveRunSnapshot.tryDecode(jsonEncode(overflowJson));
     expect(overflow!.isCompatibleWith(level), isFalse);
 
-    final badHouse = ActiveRunSnapshot.tryDecode(
-      jsonEncode(<String, Object>{
-        ...base,
-        'remainingHouseIds': <int>[
-          level.houseCount + 1,
-          ...snapshot.remainingHouseIds.skip(1),
-        ],
-      }),
-    );
+    final badHouseJson = snapshot.toJson();
+    final houses = List<int>.from(snapshot.remainingHouseIds);
+    houses[0] = level.houseCount + 1;
+    badHouseJson['remainingHouseIds'] = houses;
+    final badHouse = ActiveRunSnapshot.tryDecode(jsonEncode(badHouseJson));
     expect(badHouse!.isCompatibleWith(level), isFalse);
   });
 
   test('malformed JSON and wrong field types are rejected', () {
     expect(ActiveRunSnapshot.tryDecode('{broken'), isNull);
-    expect(
-      ActiveRunSnapshot.tryDecode(
-        jsonEncode(<String, Object>{'version': '1'}),
-      ),
-      isNull,
-    );
+    final wrongTypes = jsonEncode(<String, Object>{'version': '1'});
+    expect(ActiveRunSnapshot.tryDecode(wrongTypes), isNull);
   });
 }
