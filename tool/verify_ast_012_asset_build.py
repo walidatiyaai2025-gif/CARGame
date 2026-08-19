@@ -1,21 +1,23 @@
 #!/usr/bin/env python3
 """Deterministic source/build validation for CARGame runtime assets (AST-012).
 
-Descriptor-only manifest entries are intentionally allowed: AST-007 may declare a
-future runtime WebP while retaining the production fallback until commercial-use
-provenance and the binary are admitted. Any binary that *is* present under the
-runtime root must be declared, non-empty, supported, and within its class budget.
+The WebP gameplay manifest may intentionally contain descriptor-only entries while
+AST-007 waits for commercial-use provenance. Native GLB runtime assets use their
+existing per-model provenance sidecar as the declaration authority. Every binary
+physically present under assets/3d/runtime must be declared, safe, non-empty,
+supported and within its runtime-class budget.
 """
 
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
-import os
 from pathlib import Path, PurePosixPath
 import sys
 
 MANIFEST = PurePosixPath("assets/3d/manifest.json")
+PROVENANCE_DIR = PurePosixPath("assets/3d/provenance")
 RUNTIME_ROOT = PurePosixPath("assets/3d/runtime")
 SUPPORTED_EXTENSIONS = {".webp", ".glb"}
 MAX_BYTES_BY_CLASS = {
@@ -61,16 +63,27 @@ def _safe_runtime_path(value: object, *, asset_id: str) -> PurePosixPath:
     return path
 
 
+def _load_json(path: Path, *, label: str) -> object:
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        _fail(f"{label} is not valid UTF-8 JSON: {exc}")
+
+
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
 def validate_repo(root: Path) -> dict[str, int]:
     root = root.resolve()
     manifest_file = root / MANIFEST
     if not manifest_file.is_file():
         _fail(f"missing manifest: {MANIFEST}")
-    try:
-        document = json.loads(manifest_file.read_text(encoding="utf-8"))
-    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
-        _fail(f"manifest is not valid UTF-8 JSON: {exc}")
-
+    document = _load_json(manifest_file, label="manifest")
     if not isinstance(document, dict):
         _fail("manifest root must be an object")
     if document.get("schemaVersion") != 1:
@@ -81,6 +94,7 @@ def validate_repo(root: Path) -> dict[str, int]:
 
     ids: set[str] = set()
     declared_paths: dict[PurePosixPath, str] = {}
+    native_metadata: dict[PurePosixPath, tuple[int, str]] = {}
     for index, item in enumerate(assets):
         if not isinstance(item, dict):
             _fail(f"assets[{index}] must be an object")
@@ -91,9 +105,44 @@ def validate_repo(root: Path) -> dict[str, int]:
             _fail(f"duplicate asset id: {asset_id}")
         ids.add(asset_id)
         path = _safe_runtime_path(item.get("path"), asset_id=asset_id)
+        if path.suffix.lower() != ".webp":
+            _fail(f"{asset_id}: gameplay manifest entries must be WebP descriptors")
         if path in declared_paths:
             _fail(f"duplicate runtime path: {path} ({declared_paths[path]}, {asset_id})")
         declared_paths[path] = asset_id
+
+    provenance_dir = root / PROVENANCE_DIR
+    native_sidecars = 0
+    if provenance_dir.is_dir():
+        for sidecar in sorted(provenance_dir.glob("*.json")):
+            if sidecar.name == "catalog.json":
+                continue
+            data = _load_json(sidecar, label=sidecar.relative_to(root).as_posix())
+            if not isinstance(data, dict) or "runtimePath" not in data:
+                continue
+            asset_id = data.get("assetId")
+            if not isinstance(asset_id, str) or not asset_id.strip():
+                _fail(f"{sidecar.name}: assetId must be a non-empty string")
+            path = _safe_runtime_path(data.get("runtimePath"), asset_id=asset_id)
+            if path.suffix.lower() != ".glb":
+                continue
+            if data.get("schemaVersion") != 1 or data.get("format") != "glb":
+                _fail(f"{sidecar.name}: GLB provenance must use schemaVersion 1 and format glb")
+            if path in declared_paths:
+                _fail(f"duplicate runtime path: {path} ({declared_paths[path]}, {asset_id})")
+            byte_length = data.get("byteLength")
+            checksum = data.get("sha256")
+            if not isinstance(byte_length, int) or byte_length <= 0:
+                _fail(f"{sidecar.name}: byteLength must be a positive integer")
+            if not isinstance(checksum, str) or len(checksum) != 64:
+                _fail(f"{sidecar.name}: sha256 must contain 64 hex characters")
+            try:
+                int(checksum, 16)
+            except ValueError:
+                _fail(f"{sidecar.name}: sha256 must contain 64 hex characters")
+            declared_paths[path] = asset_id
+            native_metadata[path] = (byte_length, checksum.lower())
+            native_sidecars += 1
 
     runtime_dir = root / RUNTIME_ROOT
     binaries: list[Path] = []
@@ -119,9 +168,17 @@ def validate_repo(root: Path) -> dict[str, int]:
         budget = MAX_BYTES_BY_CLASS[runtime_class]
         if size > budget:
             _fail(f"runtime binary exceeds {runtime_class} budget ({size} > {budget} bytes): {rel}")
+        if rel in native_metadata:
+            expected_size, expected_sha = native_metadata[rel]
+            if size != expected_size:
+                _fail(f"native provenance byteLength mismatch ({size} != {expected_size}): {rel}")
+            actual_sha = _sha256(binary)
+            if actual_sha != expected_sha:
+                _fail(f"native provenance sha256 mismatch: {rel}")
 
     return {
         "manifest_entries": len(assets),
+        "native_sidecars": native_sidecars,
         "declared_runtime_paths": len(declared_paths),
         "runtime_binaries": len(binaries),
     }
@@ -138,6 +195,7 @@ def main(argv: list[str] | None = None) -> int:
         return 1
     print("AST-012 ASSET BUILD VALIDATION PASSED")
     print(f"Manifest entries       : {summary['manifest_entries']}")
+    print(f"Native sidecars        : {summary['native_sidecars']}")
     print(f"Declared runtime paths : {summary['declared_runtime_paths']}")
     print(f"Runtime binaries       : {summary['runtime_binaries']}")
     return 0
