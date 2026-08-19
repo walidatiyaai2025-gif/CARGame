@@ -1,0 +1,45 @@
+name: AST-012 Asset Build Contract
+
+on:
+  pull_request:
+    paths:
+      - 'assets/3d/**'
+      - 'tool/verify_ast_012_asset_build.py'
+      - 'tool/test_ast_012_asset_build.py'
+      - '.github/workflows/ast_012_asset_build.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'assets/3d/**'
+      - 'tool/verify_ast_012_asset_build.py'
+      - 'tool/test_ast_012_asset_build.py'
+      - '.github/workflows/ast_012_asset_build.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ast-012-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  asset-build-contract:
+    name: Validate runtime asset contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Validate repository asset build contract
+        run: python3 tool/verify_ast_012_asset_build.py
+
+      - name: Run mutation regressions
+        working-directory: tool
+        run: python3 -m unittest -v test_ast_012_asset_build.py
