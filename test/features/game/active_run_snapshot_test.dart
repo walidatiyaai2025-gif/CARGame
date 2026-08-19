@@ -6,22 +6,22 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   ActiveRunSnapshot validSnapshot(LevelData level) => ActiveRunSnapshot(
-        version: ActiveRunSnapshot.currentVersion,
-        levelNumber: level.number,
-        levelCargoCount: level.items.length,
-        remainingItemIds: level.items.map((item) => item.id).toList(),
-        remainingHouseIds: List<int>.generate(
-          level.items.length,
-          level.houseForItemIndex,
-        ),
-        movesRemaining: level.moves,
-        combo: 0,
-        bestCombo: 0,
-        preparedHints: 0,
-        shieldActive: false,
-        madeWrongMove: false,
-        rewardTransactionId: 'level-${level.number}-attempt-test',
-      );
+    version: ActiveRunSnapshot.currentVersion,
+    levelNumber: level.number,
+    levelCargoCount: level.items.length,
+    remainingItemIds: level.items.map((item) => item.id).toList(),
+    remainingHouseIds: List<int>.generate(
+      level.items.length,
+      level.houseForItemIndex,
+    ),
+    movesRemaining: level.moves,
+    combo: 0,
+    bestCombo: 0,
+    preparedHints: 0,
+    shieldActive: false,
+    madeWrongMove: false,
+    rewardTransactionId: 'level-${level.number}-attempt-test',
+  );
 
   test('GAME-017 cargo progression contract remains intact', () {
     expect(levels, hasLength(150));
