@@ -1,0 +1,32 @@
+name: AST-012 Asset Build Contract
+
+on:
+  pull_request:
+    paths:
+      - 'assets/3d/**'
+      - 'tool/verify_asset_build.py'
+      - 'tool/test_asset_build_validation.py'
+      - '.github/workflows/ast_012_asset_build.yml'
+      - 'docs/work/AST-012.md'
+  push:
+    branches: [main]
+    paths:
+      - 'assets/3d/**'
+      - 'tool/verify_asset_build.py'
+      - 'tool/test_asset_build_validation.py'
+      - '.github/workflows/ast_012_asset_build.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run AST-012 validator
+        run: python3 tool/verify_asset_build.py
+      - name: Run AST-012 mutation regressions
+        working-directory: tool
+        run: python3 -m unittest -v test_asset_build_validation.py
