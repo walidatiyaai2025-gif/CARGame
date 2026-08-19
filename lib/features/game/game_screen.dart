@@ -11,6 +11,9 @@ import '../../core/motion/game_travel_motion.dart';
 import '../../core/storage/progress_store.dart';
 import '../../core/theme/game_skin.dart';
 import '../../core/theme/three_d_game_icon.dart';
+import 'active_run_coordinator.dart';
+import 'active_run_session.dart';
+import 'active_run_store.dart';
 import 'city_catalog.dart';
 import 'gameplay_house_cargo_board.dart';
 import 'gameplay_operations_deck.dart';
@@ -28,6 +31,7 @@ class GameScreen extends StatefulWidget {
     this.hapticsEnabled = true,
     this.soundEnabled = true,
     this.onPlacementSound,
+    this.activeRunPersistence,
   });
 
   final LevelData level;
@@ -37,6 +41,7 @@ class GameScreen extends StatefulWidget {
   final bool hapticsEnabled;
   final bool soundEnabled;
   final GameActionFeedbackSoundHook? onPlacementSound;
+  final ActiveRunPersistence? activeRunPersistence;
 
   @override
   State<GameScreen> createState() => _GameScreenState();
@@ -72,6 +77,9 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
   bool _resolving = false;
   bool _manualPaused = false;
   bool _lifecyclePaused = false;
+  late ActiveRunCoordinator _activeRunCoordinator;
+  bool _runReady = false;
+  bool _abandonBusy = false;
 
   bool get _isPaused => _manualPaused || _lifecyclePaused;
   int get _matchedCount => widget.level.items.length - _remaining.length;
@@ -100,13 +108,142 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
     _ads = widget.adService ?? AdService();
     _ads.preload();
     _reset(applyLoadout: true);
+    _activeRunCoordinator = _createActiveRunCoordinator();
+    unawaited(_initializeActiveRun());
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     final shouldPause = state != AppLifecycleState.resumed;
     if (_lifecyclePaused == shouldPause || !mounted) return;
+    if (shouldPause && _runReady && !_finished) {
+      unawaited(_checkpointActiveRun());
+    }
     setState(() => _lifecyclePaused = shouldPause);
+  }
+
+  ActiveRunCoordinator _createActiveRunCoordinator() => ActiveRunCoordinator(
+    level: widget.level,
+    store: widget.activeRunPersistence,
+  );
+
+  Future<void> _initializeActiveRun() async {
+    ActiveRunSession? restored;
+    try {
+      restored = await _activeRunCoordinator.restore();
+    } catch (_) {
+      // Persistence failure must not block the offline core game. A clean
+      // attempt remains playable, while durable rewards/economy stay separate.
+    }
+    if (!mounted) return;
+
+    setState(() {
+      if (restored != null) _applyActiveRunSession(restored);
+      _runReady = true;
+    });
+
+    if (restored == null) {
+      await _checkpointActiveRun();
+    }
+  }
+
+  void _applyActiveRunSession(ActiveRunSession session) {
+    _remaining = List<CargoItem>.of(session.remaining);
+    _remainingHouses = List<int>.of(session.remainingHouses);
+    _moves = session.movesRemaining;
+    _combo = session.combo;
+    _bestCombo = session.bestCombo;
+    _preparedHints = session.preparedHints;
+    _shieldActive = session.shieldActive;
+    _madeWrongMove = session.madeWrongMove;
+    _rewardTransactionId = session.rewardTransactionId;
+    _selected = null;
+    _selectedIndex = null;
+    _selectedOrigin = null;
+    _flight = null;
+    _feedbackKind = null;
+    _feedbackCombo = 0;
+    final pendingFeedback = _feedbackCompleter;
+    if (pendingFeedback != null && !pendingFeedback.isCompleted) {
+      pendingFeedback.complete();
+    }
+    _feedbackCompleter = null;
+    _finished = false;
+    _resultActionBusy = false;
+    _resultVisible = false;
+    _resultSheetDismissed = false;
+    _resolving = false;
+    _manualPaused = false;
+  }
+
+  ActiveRunSession _currentActiveRunSession() => ActiveRunSession(
+    remaining: List<CargoItem>.unmodifiable(_remaining),
+    remainingHouses: List<int>.unmodifiable(_remainingHouses),
+    movesRemaining: _moves,
+    combo: _combo,
+    bestCombo: _bestCombo,
+    preparedHints: _preparedHints,
+    shieldActive: _shieldActive,
+    madeWrongMove: _madeWrongMove,
+    rewardTransactionId: _rewardTransactionId,
+  );
+
+  Future<void> _checkpointActiveRun() async {
+    if (!_runReady || _finished || _remaining.isEmpty || _moves <= 0) return;
+    try {
+      await _activeRunCoordinator.checkpoint(_currentActiveRunSession());
+    } catch (_) {
+      // Checkpoint I/O is best-effort: never mutate durable reward/economy
+      // truth and never block current offline gameplay on storage failure.
+    }
+  }
+
+  Future<void> _restartRun() async {
+    if (!_runReady || _finished || _resultVisible || _resolving || _isPaused) {
+      return;
+    }
+    try {
+      await _activeRunCoordinator.clearForRestartOrAbandon();
+    } catch (_) {
+      if (mounted) _showActiveRunSafetyMessage();
+      return;
+    }
+    if (!mounted) return;
+    setState(() => _reset());
+    await _checkpointActiveRun();
+  }
+
+  Future<void> _abandonRun() async {
+    if (!_runReady ||
+        _abandonBusy ||
+        _finished ||
+        _resultVisible ||
+        _resolving ||
+        _isPaused ||
+        !Navigator.of(context).canPop()) {
+      return;
+    }
+    setState(() => _abandonBusy = true);
+    try {
+      await _activeRunCoordinator.clearForRestartOrAbandon();
+    } catch (_) {
+      if (mounted) {
+        setState(() => _abandonBusy = false);
+        _showActiveRunSafetyMessage();
+      }
+      return;
+    }
+    if (!mounted) return;
+    Navigator.of(context).pop();
+  }
+
+  void _showActiveRunSafetyMessage() {
+    final ar = Localizations.localeOf(context).languageCode == 'ar';
+    _message(
+      ar
+          ? 'تعذر حفظ حالة المهمة بأمان. حاول مرة أخرى.'
+          : 'Could not safely update the mission checkpoint. Try again.',
+    );
   }
 
   void _pauseManually() {
@@ -170,7 +307,13 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
   }
 
   void _choosePackage(CargoItem item, int index, Offset globalOrigin) {
-    if (_isPaused || _finished || _moves <= 0 || _resultVisible || _resolving) {
+    if (!_runReady ||
+        _abandonBusy ||
+        _isPaused ||
+        _finished ||
+        _moves <= 0 ||
+        _resultVisible ||
+        _resolving) {
       return;
     }
     setState(() {
@@ -184,7 +327,9 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
     final selected = _selected;
     final selectedIndex = _selectedIndex;
     final layer = _motionLayerKey.currentContext?.findRenderObject();
-    if (_isPaused ||
+    if (!_runReady ||
+        _abandonBusy ||
+        _isPaused ||
         selected == null ||
         selectedIndex == null ||
         _finished ||
@@ -250,6 +395,10 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
       _feedbackCombo = correct ? _combo : 0;
     });
 
+    if (_remaining.isNotEmpty && _moves > 0) {
+      await _checkpointActiveRun();
+    }
+
     await feedbackCompleter.future;
     if (!mounted || feedbackSequence != _feedbackSequence) return;
     _resolving = false;
@@ -277,6 +426,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
   Future<void> _finishWin() async {
     if (_finished) return;
     _finished = true;
+    await _activeRunCoordinator.clearTerminal();
 
     final stars = _earnedStars;
     final reward = EconomyConfig.current.levelCoinReward(
@@ -305,6 +455,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
   Future<void> _finishLoss() async {
     if (_finished) return;
     _finished = true;
+    await _activeRunCoordinator.clearTerminal();
     await widget.store.loseHeart();
     await widget.store.recordLoss();
     if (!mounted) return;
@@ -313,10 +464,11 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
 
   Future<void> _useHint() async {
     final selected = _selected;
-    if (_isPaused || selected == null || _finished) return;
+    if (!_runReady || _isPaused || selected == null || _finished) return;
 
     if (_preparedHints > 0) {
       setState(() => _preparedHints--);
+      await _checkpointActiveRun();
       _message('${selected.name} → ${selected.category} warehouse');
       return;
     }
@@ -339,7 +491,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
   }
 
   Future<void> _useExtraMoves() async {
-    if (_isPaused || _finished) return;
+    if (!_runReady || _isPaused || _finished) return;
     final used = await widget.store.useExtraMoves();
     if (!mounted || _isPaused) return;
     if (!used) {
@@ -348,11 +500,12 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
     }
     final extraMoves = EconomyConfig.current.gameplay.extraMovesPerBooster;
     setState(() => _moves += extraMoves);
+    await _checkpointActiveRun();
     _message('+$extraMoves moves added.');
   }
 
   Future<void> _useComboShield() async {
-    if (_isPaused || _finished) return;
+    if (!_runReady || _isPaused || _finished) return;
     if (_shieldActive) {
       _message('Combo shield is already active.');
       return;
@@ -364,6 +517,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
       return;
     }
     setState(() => _shieldActive = true);
+    await _checkpointActiveRun();
     _message('Combo shield activated.');
   }
 
@@ -405,7 +559,11 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
     _dismissResultSheet(sheetContext);
     await WidgetsBinding.instance.endOfFrame;
     if (!mounted) return;
-    setState(() => _reset());
+    setState(() {
+      _activeRunCoordinator = _createActiveRunCoordinator();
+      _reset();
+    });
+    await _checkpointActiveRun();
   }
 
   Future<void> _showResult({
@@ -457,10 +615,12 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                     if (!mounted) return;
                     _dismissResultSheet(sheetContext);
                     setState(() {
+                      _activeRunCoordinator = _createActiveRunCoordinator();
                       _finished = false;
                       _resultVisible = false;
                       _moves += 5;
                     });
+                    unawaited(_checkpointActiveRun());
                   },
                 );
                 if (!started) {
@@ -493,6 +653,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
     if (pendingFeedback != null && !pendingFeedback.isCompleted) {
       pendingFeedback.complete();
     }
+    unawaited(_activeRunCoordinator.flush().catchError((Object _) {}));
     _ads.dispose();
     super.dispose();
   }
@@ -506,12 +667,24 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
     final flight = _flight;
     final canGoBack = Navigator.of(context).canPop();
 
+    final canAbandon =
+        canGoBack &&
+        _runReady &&
+        !_abandonBusy &&
+        !_finished &&
+        !_resultVisible &&
+        !_resolving &&
+        !_isPaused;
+
     return PopScope(
-      canPop: !_resultVisible && !_resolving && !_isPaused,
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop && canAbandon) unawaited(_abandonRun());
+      },
       child: Scaffold(
         backgroundColor: const Color(0xFFF4F7FB),
         body: TickerMode(
-          enabled: !_isPaused,
+          enabled: _runReady && !_isPaused,
           child: Stack(
             key: _motionLayerKey,
             children: [
@@ -564,20 +737,18 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                             difficulty: widget.level.difficulty,
                             compact: compact,
                             isArabic: ar,
-                            onBack:
-                                !canGoBack ||
-                                    _resultVisible ||
-                                    _resolving ||
-                                    _isPaused
+                            onBack: !canAbandon
                                 ? null
-                                : () => Navigator.maybePop(context),
+                                : () => unawaited(_abandonRun()),
                             onRestart:
-                                _finished ||
+                                !_runReady ||
+                                    _abandonBusy ||
+                                    _finished ||
                                     _resultVisible ||
                                     _resolving ||
                                     _isPaused
                                 ? null
-                                : () => setState(() => _reset()),
+                                : () => unawaited(_restartRun()),
                           ),
                           SizedBox(height: compact ? 6 : 9),
                           GameplayStatusPanel(
@@ -691,7 +862,9 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                       child: IconButton.filledTonal(
                         key: const ValueKey('game-pause-button'),
                         tooltip: ar ? 'إيقاف مؤقت' : 'Pause',
-                        onPressed: _isPaused ? null : _pauseManually,
+                        onPressed: !_runReady || _abandonBusy || _isPaused
+                            ? null
+                            : _pauseManually,
                         icon: const Icon(Icons.pause_rounded),
                       ),
                     ),
@@ -722,6 +895,33 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                   hapticsEnabled: widget.hapticsEnabled,
                   onSound: widget.soundEnabled ? widget.onPlacementSound : null,
                   onCompleted: () => _completeActionFeedback(_feedbackSequence),
+                ),
+              if (!_runReady)
+                Positioned.fill(
+                  child: AbsorbPointer(
+                    child: ColoredBox(
+                      key: const ValueKey('game-active-run-restoring'),
+                      color: const Color(0xD90A1220),
+                      child: Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const CircularProgressIndicator(),
+                            const SizedBox(height: 14),
+                            Text(
+                              ar
+                                  ? 'جارٍ استعادة المهمة بأمان…'
+                                  : 'Restoring mission safely…',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               if (_isPaused)
                 Positioned.fill(

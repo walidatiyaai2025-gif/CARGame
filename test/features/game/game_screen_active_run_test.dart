@@ -75,70 +75,69 @@ void main() {
     expect(persistence.saveCount, 0);
   });
 
-  testWidgets('post-mutation checkpoint survives simulated process recreation', (
-    tester,
-  ) async {
-    await _useGameplaySurface(tester);
-    final level = _level();
-    final persistence = _FakeActiveRunPersistence();
-    final firstStore = ProgressStore();
+  testWidgets(
+    'post-mutation checkpoint survives simulated process recreation',
+    (tester) async {
+      await _useGameplaySurface(tester);
+      final level = _level();
+      final persistence = _FakeActiveRunPersistence();
+      final firstStore = ProgressStore();
 
-    await tester.pumpWidget(
-      MaterialApp(
-        home: _game(level, firstStore, _FakeAdService(), persistence),
-      ),
-    );
-    await _pumpUntilReady(tester);
-    expect(persistence.saveCount, 1);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: _game(level, firstStore, _FakeAdService(), persistence),
+        ),
+      );
+      await _pumpUntilReady(tester);
+      expect(persistence.saveCount, 1);
 
-    await _tapVisible(
-      tester,
-      find.byKey(const ValueKey('house-1-cargo-1-0')),
-    );
-    final warehouse = find.byKey(const ValueKey('warehouse-1'));
-    final viewport = Offset.zero & tester.binding.renderViews.single.size;
-    final target = tester.getRect(warehouse).intersect(viewport);
-    expect(target.isEmpty, isFalse);
-    await tester.tapAt(target.center);
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 320));
-    await tester.pump(const Duration(milliseconds: 40));
+      await _tapVisible(
+        tester,
+        find.byKey(const ValueKey('house-1-cargo-1-0')),
+      );
+      final warehouse = find.byKey(const ValueKey('warehouse-1'));
+      final viewport = Offset.zero & tester.binding.renderViews.single.size;
+      final target = tester.getRect(warehouse).intersect(viewport);
+      expect(target.isEmpty, isFalse);
+      await tester.tapAt(target.center);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 320));
+      await tester.pump(const Duration(milliseconds: 40));
 
-    expect(persistence.saveCount, greaterThanOrEqualTo(2));
-    expect(persistence.snapshot, isNotNull);
-    expect(persistence.snapshot!.movesRemaining, 3);
-    expect(persistence.snapshot!.remainingItemIds, hasLength(1));
-    final restoredTransaction = persistence.snapshot!.rewardTransactionId;
+      expect(persistence.saveCount, greaterThanOrEqualTo(2));
+      expect(persistence.snapshot, isNotNull);
+      expect(persistence.snapshot!.movesRemaining, 3);
+      expect(persistence.snapshot!.remainingItemIds, hasLength(1));
+      final restoredTransaction = persistence.snapshot!.rewardTransactionId;
 
-    await tester.pumpWidget(const SizedBox.shrink());
-    await tester.pump();
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump();
 
-    final secondStore = ProgressStore();
-    final secondAds = _FakeAdService();
-    await tester.pumpWidget(
-      MaterialApp(
-        home: _game(level, secondStore, secondAds, persistence),
-      ),
-    );
-    await _pumpUntilReady(tester);
+      final secondStore = ProgressStore();
+      final secondAds = _FakeAdService();
+      await tester.pumpWidget(
+        MaterialApp(home: _game(level, secondStore, secondAds, persistence)),
+      );
+      await _pumpUntilReady(tester);
 
-    expect(
-      find.descendant(
-        of: find.byKey(const ValueKey('game-moves')),
-        matching: find.text('3'),
-      ),
-      findsOneWidget,
-    );
-    expect(persistence.snapshot!.rewardTransactionId, restoredTransaction);
-    expect(secondStore.wins, 0);
-    expect(secondStore.losses, 0);
-    expect(secondStore.hearts, ProgressStore.maxHearts);
-    expect(secondStore.freeHints, greaterThanOrEqualTo(0));
-    expect(secondStore.extraMovesBoosters, greaterThanOrEqualTo(0));
-    expect(secondStore.comboShields, greaterThanOrEqualTo(0));
-    expect(secondAds.interstitialShows, 0);
-    expect(secondAds.rewardedShows, 0);
-  });
+      expect(
+        find.descendant(
+          of: find.byKey(const ValueKey('game-moves')),
+          matching: find.text('3'),
+        ),
+        findsOneWidget,
+      );
+      expect(persistence.snapshot!.rewardTransactionId, restoredTransaction);
+      expect(secondStore.wins, 0);
+      expect(secondStore.losses, 0);
+      expect(secondStore.hearts, ProgressStore.maxHearts);
+      expect(secondStore.freeHints, greaterThanOrEqualTo(0));
+      expect(secondStore.extraMovesBoosters, greaterThanOrEqualTo(0));
+      expect(secondStore.comboShields, greaterThanOrEqualTo(0));
+      expect(secondAds.interstitialShows, 0);
+      expect(secondAds.rewardedShows, 0);
+    },
+  );
 
   testWidgets('background lifecycle checkpoints the unfinished run', (
     tester,
@@ -149,12 +148,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: _game(
-          level,
-          ProgressStore(),
-          _FakeAdService(),
-          persistence,
-        ),
+        home: _game(level, ProgressStore(), _FakeAdService(), persistence),
       ),
     );
     await _pumpUntilReady(tester);
@@ -180,12 +174,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: _game(
-          level,
-          ProgressStore(),
-          _FakeAdService(),
-          persistence,
-        ),
+        home: _game(level, ProgressStore(), _FakeAdService(), persistence),
       ),
     );
     await _pumpUntilReady(tester);
