@@ -1,0 +1,39 @@
+name: AST-007 Tracking Migrate Once
+
+on:
+  push:
+    branches:
+      - agent/ast-007-batch01-procedural-art
+    paths:
+      - 'tool/migrate_ast007_batch01_tracking_once.py'
+      - '.github/workflows/ast007_tracking_migrate_once.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  migrate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/ast-007-batch01-procedural-art
+          fetch-depth: 0
+      - name: Migrate current AST-007 production truth
+        run: python3 tool/migrate_ast007_batch01_tracking_once.py
+      - name: Validate migrated tracking and batch contract
+        run: |
+          python3 tool/verify_ast_007_batch_01.py
+          python3 tool/test_ast_007_batch_01.py
+          python3 tool/verify_ast_007_cargo_visuals.py
+          python3 tool/test_ast_007_cargo_visuals.py
+          git diff --check
+      - name: Commit migrated tracking
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/STATUS.md docs/work/AST-007.md docs/work/AST-007-BATCH-01.md tool/verify_ast_007_cargo_visuals.py tool/test_ast_007_cargo_visuals.py
+          git commit -m 'AST-007 record 12 admitted cargo assets and 112 remaining'
+          git push origin HEAD:agent/ast-007-batch01-procedural-art
