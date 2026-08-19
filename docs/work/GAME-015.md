@@ -16,9 +16,11 @@ Protect unfinished missions from process/lifecycle interruption without replayin
 - Added regression coverage for round-trip recovery, corruption, stale/future data, terminal-state rejection, cargo/house validation, and the GAME-017 9-product progressive cargo contract.
 - Added `ActiveRunSession`, a reward-neutral translation boundary between a validated snapshot and `GameScreen` runtime fields. It preserves remaining cargo/house assignments, move/combo/hint/shield/wrong-move state and the existing reward transaction identity without owning durable rewards, hearts, ads, or inventory.
 - Added round-trip and cross-level rejection regressions for the runtime translation boundary while retaining the GAME-017 cargo progression contract.
+- Added `ActiveRunCoordinator` and a narrow `ActiveRunPersistence` contract. Persistence writes are serialized so older asynchronous checkpoints cannot overwrite newer gameplay mutations, terminal clear prevents snapshot resurrection, and restart/abandon clear permits a fresh attempt afterward.
+- Added coordinator regressions for restore, ordered concurrent checkpoints, terminal clear, restart clear, and the GAME-017 cargo progression contract.
 
 ## Remaining GAME-015 integration
-The final focused checkpoint must wire `ActiveRunStore` + `ActiveRunSession` into `GameScreen`: restore before the first playable frame, checkpoint after deterministic gameplay mutations/backgrounding, and clear after terminal result or explicit restart/abandon. That integration must prove no duplicate booster use, heart loss, ad trigger, or completion transaction before GAME-015 can be marked complete.
+The final focused checkpoint must wire `ActiveRunCoordinator` into `GameScreen`: restore before the first playable frame, checkpoint after deterministic gameplay mutations/backgrounding, and clear after terminal result or explicit restart/abandon. That integration must prove no duplicate booster use, heart loss, ad trigger, or completion transaction before GAME-015 can be marked complete.
 
 ## Verification boundary
-GAME-015 remains IN PROGRESS until the `GameScreen` runtime wiring and normal CI/build gates are green on the final head. This checkpoint deliberately narrows the mutation surface by making snapshot/runtime translation independently testable before lifecycle persistence is connected to the user-facing screen.
+GAME-015 remains IN PROGRESS until the `GameScreen` runtime wiring and normal CI/build gates are green on the final head. The coordinator checkpoint removes persistence ordering races before the user-facing lifecycle wiring is connected.
