@@ -6,15 +6,18 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   ActiveRunSnapshot validSnapshot(LevelData level) {
+    final itemIds = level.items.map((item) => item.id).toList();
+    final houseIds = <int>[];
+    for (var index = 0; index < level.items.length; index++) {
+      houseIds.add(level.houseForItemIndex(index));
+    }
+
     return ActiveRunSnapshot(
       version: ActiveRunSnapshot.currentVersion,
       levelNumber: level.number,
       levelCargoCount: level.items.length,
-      remainingItemIds: level.items.map((item) => item.id).toList(),
-      remainingHouseIds: List<int>.generate(
-        level.items.length,
-        level.houseForItemIndex,
-      ),
+      remainingItemIds: itemIds,
+      remainingHouseIds: houseIds,
       movesRemaining: level.moves,
       combo: 0,
       bestCombo: 0,
@@ -25,7 +28,7 @@ void main() {
     );
   }
 
-  test('GAME-017 cargo progression contract remains intact', () {
+  test('GAME-017 cargo contract', () {
     expect(levels, hasLength(150));
     expect(levels.first.items, hasLength(9));
     expect(levels.first.houseCount, 3);
@@ -37,7 +40,7 @@ void main() {
     expect(finalCount, greaterThan(firstCount));
   });
 
-  test('round trips a compatible unfinished run', () {
+  test('round trips unfinished run', () {
     final level = levels.first;
     final snapshot = validSnapshot(level);
     final decoded = ActiveRunSnapshot.tryDecode(snapshot.encode());
@@ -59,7 +62,7 @@ void main() {
     expect(decoded!.isCompatibleWith(level), isFalse);
   });
 
-  test('terminal snapshots never resume', () {
+  test('terminal snapshots do not resume', () {
     final level = levels.first;
     final wonJson = validSnapshot(level).toJson();
     wonJson['remainingItemIds'] = <int>[];
@@ -76,7 +79,7 @@ void main() {
     expect(lost!.isCompatibleWith(level), isFalse);
   });
 
-  test('changed level identity or production shape fails closed', () {
+  test('changed level identity fails closed', () {
     final level = levels.first;
     final snapshot = validSnapshot(level);
     expect(snapshot.isCompatibleWith(levels[1]), isFalse);
@@ -98,7 +101,7 @@ void main() {
     expect(changedShape.isCompatibleWith(level), isFalse);
   });
 
-  test('unknown cargo, duplicate overflow, and invalid houses fail closed', () {
+  test('invalid cargo and houses fail closed', () {
     final level = levels.first;
     final snapshot = validSnapshot(level);
 
@@ -109,25 +112,27 @@ void main() {
     expect(unknownCargo!.isCompatibleWith(level), isFalse);
 
     final firstId = level.items.first.id;
-    final available = level.items.where((item) => item.id == firstId).length;
+    var available = 0;
+    for (final item in level.items) {
+      if (item.id == firstId) available++;
+    }
+    final overflowItems = List<int>.filled(available + 1, firstId);
+    final overflowHouses = List<int>.filled(available + 1, 1);
     final overflowJson = snapshot.toJson();
-    overflowJson['remainingItemIds'] = List<int>.filled(
-      available + 1,
-      firstId,
-    );
-    overflowJson['remainingHouseIds'] = List<int>.filled(available + 1, 1);
+    overflowJson['remainingItemIds'] = overflowItems;
+    overflowJson['remainingHouseIds'] = overflowHouses;
     final overflow = ActiveRunSnapshot.tryDecode(jsonEncode(overflowJson));
     expect(overflow!.isCompatibleWith(level), isFalse);
 
-    final badHouseJson = snapshot.toJson();
     final houses = List<int>.from(snapshot.remainingHouseIds);
     houses[0] = level.houseCount + 1;
+    final badHouseJson = snapshot.toJson();
     badHouseJson['remainingHouseIds'] = houses;
     final badHouse = ActiveRunSnapshot.tryDecode(jsonEncode(badHouseJson));
     expect(badHouse!.isCompatibleWith(level), isFalse);
   });
 
-  test('malformed JSON and wrong field types are rejected', () {
+  test('malformed payloads are rejected', () {
     expect(ActiveRunSnapshot.tryDecode('{broken'), isNull);
     final wrongTypes = jsonEncode(<String, Object>{'version': '1'});
     expect(ActiveRunSnapshot.tryDecode(wrongTypes), isNull);
