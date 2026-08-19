@@ -40,20 +40,22 @@ class ActiveRunSnapshot {
 
   bool get isTerminal => remainingItemIds.isEmpty || movesRemaining <= 0;
 
-  Map<String, Object> toJson() => <String, Object>{
-    'version': version,
-    'levelNumber': levelNumber,
-    'levelCargoCount': levelCargoCount,
-    'remainingItemIds': remainingItemIds,
-    'remainingHouseIds': remainingHouseIds,
-    'movesRemaining': movesRemaining,
-    'combo': combo,
-    'bestCombo': bestCombo,
-    'preparedHints': preparedHints,
-    'shieldActive': shieldActive,
-    'madeWrongMove': madeWrongMove,
-    'rewardTransactionId': rewardTransactionId,
-  };
+  Map<String, Object> toJson() {
+    return <String, Object>{
+      'version': version,
+      'levelNumber': levelNumber,
+      'levelCargoCount': levelCargoCount,
+      'remainingItemIds': remainingItemIds,
+      'remainingHouseIds': remainingHouseIds,
+      'movesRemaining': movesRemaining,
+      'combo': combo,
+      'bestCombo': bestCombo,
+      'preparedHints': preparedHints,
+      'shieldActive': shieldActive,
+      'madeWrongMove': madeWrongMove,
+      'rewardTransactionId': rewardTransactionId,
+    };
+  }
 
   String encode() => jsonEncode(toJson());
 
@@ -96,20 +98,18 @@ class ActiveRunSnapshot {
       final madeWrongMove = readBool('madeWrongMove');
       final rewardTransactionId = decoded['rewardTransactionId'];
 
-      if (version == null ||
-          levelNumber == null ||
-          levelCargoCount == null ||
-          remainingItemIds == null ||
-          remainingHouseIds == null ||
-          movesRemaining == null ||
-          combo == null ||
-          bestCombo == null ||
-          preparedHints == null ||
-          shieldActive == null ||
-          madeWrongMove == null ||
-          rewardTransactionId is! String) {
-        return null;
-      }
+      if (version == null) return null;
+      if (levelNumber == null) return null;
+      if (levelCargoCount == null) return null;
+      if (remainingItemIds == null) return null;
+      if (remainingHouseIds == null) return null;
+      if (movesRemaining == null) return null;
+      if (combo == null) return null;
+      if (bestCombo == null) return null;
+      if (preparedHints == null) return null;
+      if (shieldActive == null) return null;
+      if (madeWrongMove == null) return null;
+      if (rewardTransactionId is! String) return null;
 
       return ActiveRunSnapshot(
         version: version,
@@ -136,42 +136,37 @@ class ActiveRunSnapshot {
   /// malformed counters, changed production level shape, unknown products,
   /// invalid houses, or impossible item/house list lengths.
   bool isCompatibleWith(LevelData level) {
-    if (version != currentVersion ||
-        levelNumber != level.number ||
-        levelCargoCount != level.items.length ||
-        rewardTransactionId.trim().isEmpty ||
-        isTerminal ||
-        movesRemaining < 0 ||
-        combo < 0 ||
-        bestCombo < combo ||
-        preparedHints < 0 ||
-        remainingItemIds.length != remainingHouseIds.length ||
-        remainingItemIds.length > level.items.length) {
-      return false;
-    }
+    if (version != currentVersion) return false;
+    if (levelNumber != level.number) return false;
+    if (levelCargoCount != level.items.length) return false;
+    if (rewardTransactionId.trim().isEmpty) return false;
+    if (isTerminal) return false;
+    if (movesRemaining < 0) return false;
+    if (combo < 0) return false;
+    if (bestCombo < combo) return false;
+    if (preparedHints < 0) return false;
+    if (remainingItemIds.length != remainingHouseIds.length) return false;
+    if (remainingItemIds.length > level.items.length) return false;
 
     final allowedItemCounts = <int, int>{};
     for (final item in level.items) {
-      allowedItemCounts.update(
-        item.id,
-        (value) => value + 1,
-        ifAbsent: () => 1,
-      );
+      final currentCount = allowedItemCounts[item.id] ?? 0;
+      allowedItemCounts[item.id] = currentCount + 1;
     }
 
     final remainingCounts = <int, int>{};
     for (final itemId in remainingItemIds) {
-      if (!allowedItemCounts.containsKey(itemId)) return false;
-      remainingCounts.update(
-        itemId,
-        (value) => value + 1,
-        ifAbsent: () => 1,
-      );
-      if (remainingCounts[itemId]! > allowedItemCounts[itemId]!) return false;
+      final allowedCount = allowedItemCounts[itemId];
+      if (allowedCount == null) return false;
+      final currentCount = remainingCounts[itemId] ?? 0;
+      final nextCount = currentCount + 1;
+      if (nextCount > allowedCount) return false;
+      remainingCounts[itemId] = nextCount;
     }
 
     for (final houseId in remainingHouseIds) {
-      if (houseId < 1 || houseId > level.houseCount) return false;
+      if (houseId < 1) return false;
+      if (houseId > level.houseCount) return false;
     }
 
     return true;
