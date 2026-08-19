@@ -7,6 +7,10 @@ on:
     paths:
       - 'tool/generate_ast007_cargo_batch01.py'
       - '.github/workflows/ast007_batch01_generate_once.yml'
+  pull_request:
+    paths:
+      - 'tool/generate_ast007_cargo_batch01.py'
+      - '.github/workflows/ast007_batch01_generate_once.yml'
   workflow_dispatch:
 
 permissions:
