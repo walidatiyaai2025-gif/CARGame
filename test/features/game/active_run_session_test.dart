@@ -33,7 +33,10 @@ void main() {
     final session = ActiveRunSession.fromSnapshot(snapshot, level);
 
     expect(session, isNotNull);
-    expect(session!.remaining.map((item) => item.id), snapshot.remainingItemIds);
+    expect(
+      session!.remaining.map((item) => item.id),
+      snapshot.remainingItemIds,
+    );
     expect(session.remainingHouses, snapshot.remainingHouseIds);
     expect(session.movesRemaining, snapshot.movesRemaining);
     expect(session.combo, snapshot.combo);
