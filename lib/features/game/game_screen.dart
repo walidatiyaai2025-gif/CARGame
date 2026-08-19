@@ -543,7 +543,8 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                 child: LayoutBuilder(
                   builder: (context, constraints) {
                     final compact =
-                        constraints.maxHeight < 690 || constraints.maxWidth < 370;
+                        constraints.maxHeight < 690 ||
+                        constraints.maxWidth < 370;
                     final horizontal = compact ? 9.0 : 14.0;
                     return Padding(
                       padding: EdgeInsets.fromLTRB(
@@ -555,7 +556,9 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                       child: Column(
                         children: [
                           GameplayCommandBar(
-                            cityName: widget.level.localizedDestinationLabel(ar),
+                            cityName: widget.level.localizedDestinationLabel(
+                              ar,
+                            ),
                             worldName: routeName,
                             levelNumber: widget.level.number,
                             difficulty: widget.level.difficulty,
@@ -608,7 +611,9 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                               houseAssignments: _remainingHouses,
                               houseCount: widget.level.houseCount,
                               selectedIndex: _selectedIndex,
-                              travellingIndex: _resolving ? _selectedIndex : null,
+                              travellingIndex: _resolving
+                                  ? _selectedIndex
+                                  : null,
                               onTap: _choosePackage,
                               compact: compact,
                               isArabic: ar,
@@ -716,8 +721,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                       : (ar ? 'وضع غير صحيح' : 'Wrong placement'),
                   hapticsEnabled: widget.hapticsEnabled,
                   onSound: widget.soundEnabled ? widget.onPlacementSound : null,
-                  onCompleted: () =>
-                      _completeActionFeedback(_feedbackSequence),
+                  onCompleted: () => _completeActionFeedback(_feedbackSequence),
                 ),
               if (_isPaused)
                 Positioned.fill(
@@ -734,7 +738,10 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(Icons.pause_circle_rounded, size: 54),
+                                const Icon(
+                                  Icons.pause_circle_rounded,
+                                  size: 54,
+                                ),
                                 const SizedBox(height: 12),
                                 Text(
                                   ar ? 'اللعبة متوقفة مؤقتًا' : 'Game paused',

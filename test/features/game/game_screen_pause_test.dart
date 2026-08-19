@@ -22,9 +22,7 @@ void main() {
     await tester.binding.setSurfaceSize(const Size(800, 1000));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
-    await tester.pumpWidget(
-      MaterialApp(home: _buildGame()),
-    );
+    await tester.pumpWidget(MaterialApp(home: _buildGame()));
     await tester.pump();
 
     await tester.tap(find.byKey(const ValueKey('game-pause-button')));
@@ -42,58 +40,57 @@ void main() {
     expect(find.byKey(const ValueKey('game-pause-overlay')), findsNothing);
   });
 
-  testWidgets('lifecycle pause freezes in-flight cargo without consuming a move', (
-    tester,
-  ) async {
-    await tester.binding.setSurfaceSize(const Size(800, 1000));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
+  testWidgets(
+    'lifecycle pause freezes in-flight cargo without consuming a move',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 1000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
 
-    await tester.pumpWidget(
-      MaterialApp(home: _buildGame()),
-    );
-    await tester.pump();
+      await tester.pumpWidget(MaterialApp(home: _buildGame()));
+      await tester.pump();
 
-    await _tapVisible(
-      tester,
-      find.byKey(const ValueKey('house-1-cargo-1-0')),
-    );
-    await tester.pump();
+      await _tapVisible(
+        tester,
+        find.byKey(const ValueKey('house-1-cargo-1-0')),
+      );
+      await tester.pump();
 
-    final warehouse = find.byKey(const ValueKey('warehouse-1'));
-    final viewport = Offset.zero & tester.binding.renderViews.single.size;
-    final target = tester.getRect(warehouse).intersect(viewport);
-    expect(target.isEmpty, isFalse);
-    await tester.tapAt(target.center);
-    await tester.pump();
-    expect(find.byType(GameTravelMotion), findsOneWidget);
+      final warehouse = find.byKey(const ValueKey('warehouse-1'));
+      final viewport = Offset.zero & tester.binding.renderViews.single.size;
+      final target = tester.getRect(warehouse).intersect(viewport);
+      expect(target.isEmpty, isFalse);
+      await tester.tapAt(target.center);
+      await tester.pump();
+      expect(find.byType(GameTravelMotion), findsOneWidget);
 
-    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 700));
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 700));
 
-    expect(find.byType(GameTravelMotion), findsOneWidget);
-    expect(
-      find.descendant(
-        of: find.byKey(const ValueKey('game-moves')),
-        matching: find.text('4'),
-      ),
-      findsOneWidget,
-    );
+      expect(find.byType(GameTravelMotion), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byKey(const ValueKey('game-moves')),
+          matching: find.text('4'),
+        ),
+        findsOneWidget,
+      );
 
-    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 280));
-    await tester.pump();
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 280));
+      await tester.pump();
 
-    expect(find.byType(GameTravelMotion), findsNothing);
-    expect(
-      find.descendant(
-        of: find.byKey(const ValueKey('game-moves')),
-        matching: find.text('3'),
-      ),
-      findsOneWidget,
-    );
-  });
+      expect(find.byType(GameTravelMotion), findsNothing);
+      expect(
+        find.descendant(
+          of: find.byKey(const ValueKey('game-moves')),
+          matching: find.text('3'),
+        ),
+        findsOneWidget,
+      );
+    },
+  );
 }
 
 GameScreen _buildGame() {
