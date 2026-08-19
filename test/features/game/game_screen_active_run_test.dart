@@ -191,7 +191,14 @@ void main() {
     await _pumpUntilReady(tester);
     final oldTransaction = persistence.snapshot!.rewardTransactionId;
 
-    await tester.tap(find.byTooltip('Restart'));
+    final restartTap = find.ancestor(
+      of: find.byIcon(Icons.restart_alt_rounded),
+      matching: find.byType(InkWell),
+    );
+    expect(restartTap, findsOneWidget);
+    await tester.ensureVisible(restartTap);
+    await tester.pump();
+    await tester.tap(restartTap);
     await tester.pump(const Duration(milliseconds: 40));
     await tester.pump(const Duration(milliseconds: 40));
 
