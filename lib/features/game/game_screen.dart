@@ -42,7 +42,7 @@ class GameScreen extends StatefulWidget {
   State<GameScreen> createState() => _GameScreenState();
 }
 
-class _GameScreenState extends State<GameScreen> {
+class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
   late final AdService _ads;
   final GlobalKey _motionLayerKey = GlobalKey();
 
@@ -70,7 +70,10 @@ class _GameScreenState extends State<GameScreen> {
   bool _resultVisible = false;
   bool _resultSheetDismissed = false;
   bool _resolving = false;
+  bool _manualPaused = false;
+  bool _lifecyclePaused = false;
 
+  bool get _isPaused => _manualPaused || _lifecyclePaused;
   int get _matchedCount => widget.level.items.length - _remaining.length;
   double get _progress => widget.level.items.isEmpty
       ? 0
@@ -93,9 +96,27 @@ class _GameScreenState extends State<GameScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _ads = widget.adService ?? AdService();
     _ads.preload();
     _reset(applyLoadout: true);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    final shouldPause = state != AppLifecycleState.resumed;
+    if (_lifecyclePaused == shouldPause || !mounted) return;
+    setState(() => _lifecyclePaused = shouldPause);
+  }
+
+  void _pauseManually() {
+    if (_manualPaused || _finished || _resultVisible) return;
+    setState(() => _manualPaused = true);
+  }
+
+  void _resumeManually() {
+    if (!_manualPaused) return;
+    setState(() => _manualPaused = false);
   }
 
   void _reset({bool applyLoadout = false}) {
@@ -149,7 +170,9 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   void _choosePackage(CargoItem item, int index, Offset globalOrigin) {
-    if (_finished || _moves <= 0 || _resultVisible || _resolving) return;
+    if (_isPaused || _finished || _moves <= 0 || _resultVisible || _resolving) {
+      return;
+    }
     setState(() {
       _selected = item;
       _selectedIndex = index;
@@ -161,7 +184,8 @@ class _GameScreenState extends State<GameScreen> {
     final selected = _selected;
     final selectedIndex = _selectedIndex;
     final layer = _motionLayerKey.currentContext?.findRenderObject();
-    if (selected == null ||
+    if (_isPaused ||
+        selected == null ||
         selectedIndex == null ||
         _finished ||
         _moves <= 0 ||
@@ -289,7 +313,7 @@ class _GameScreenState extends State<GameScreen> {
 
   Future<void> _useHint() async {
     final selected = _selected;
-    if (selected == null || _finished) return;
+    if (_isPaused || selected == null || _finished) return;
 
     if (_preparedHints > 0) {
       setState(() => _preparedHints--);
@@ -306,6 +330,7 @@ class _GameScreenState extends State<GameScreen> {
         EconomyConfig.current.gameplay.hintCoinCost,
       );
     }
+    if (!mounted || _isPaused) return;
     if (!used) {
       _message('Not enough coins or hints.');
       return;
@@ -314,30 +339,30 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   Future<void> _useExtraMoves() async {
-    if (_finished) return;
+    if (_isPaused || _finished) return;
     final used = await widget.store.useExtraMoves();
+    if (!mounted || _isPaused) return;
     if (!used) {
       _message('No extra-moves boosters available.');
       return;
     }
-    if (!mounted) return;
     final extraMoves = EconomyConfig.current.gameplay.extraMovesPerBooster;
     setState(() => _moves += extraMoves);
     _message('+$extraMoves moves added.');
   }
 
   Future<void> _useComboShield() async {
-    if (_finished) return;
+    if (_isPaused || _finished) return;
     if (_shieldActive) {
       _message('Combo shield is already active.');
       return;
     }
     final used = await widget.store.useComboShield();
+    if (!mounted || _isPaused) return;
     if (!used) {
       _message('No combo shields available.');
       return;
     }
-    if (!mounted) return;
     setState(() => _shieldActive = true);
     _message('Combo shield activated.');
   }
@@ -463,6 +488,7 @@ class _GameScreenState extends State<GameScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     final pendingFeedback = _feedbackCompleter;
     if (pendingFeedback != null && !pendingFeedback.isCompleted) {
       pendingFeedback.complete();
@@ -481,190 +507,277 @@ class _GameScreenState extends State<GameScreen> {
     final canGoBack = Navigator.of(context).canPop();
 
     return PopScope(
-      canPop: !_resultVisible && !_resolving,
+      canPop: !_resultVisible && !_resolving && !_isPaused,
       child: Scaffold(
         backgroundColor: const Color(0xFFF4F7FB),
-        body: Stack(
-          key: _motionLayerKey,
-          children: [
-            Positioned.fill(
-              child: AmbientMotionBackground(
-                startColor: world.startColor,
-                endColor: world.endColor,
+        body: TickerMode(
+          enabled: !_isPaused,
+          child: Stack(
+            key: _motionLayerKey,
+            children: [
+              Positioned.fill(
+                child: AmbientMotionBackground(
+                  startColor: world.startColor,
+                  endColor: world.endColor,
+                ),
               ),
-            ),
-            Positioned.fill(
-              child: IgnorePointer(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        const Color(0xFF091321).withValues(alpha: .82),
-                        const Color(0xFFF4F7FB).withValues(alpha: .82),
-                        const Color(0xFFF4F7FB).withValues(alpha: .97),
-                      ],
-                      stops: const [0, .31, 1],
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          const Color(0xFF091321).withValues(alpha: .82),
+                          const Color(0xFFF4F7FB).withValues(alpha: .82),
+                          const Color(0xFFF4F7FB).withValues(alpha: .97),
+                        ],
+                        stops: const [0, .31, 1],
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-            SafeArea(
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final compact =
-                      constraints.maxHeight < 690 || constraints.maxWidth < 370;
-                  final horizontal = compact ? 9.0 : 14.0;
-                  return Padding(
-                    padding: EdgeInsets.fromLTRB(
-                      horizontal,
-                      compact ? 6 : 9,
-                      horizontal,
-                      compact ? 8 : 12,
-                    ),
-                    child: Column(
-                      children: [
-                        GameplayCommandBar(
-                          cityName: widget.level.localizedDestinationLabel(ar),
-                          worldName: routeName,
-                          levelNumber: widget.level.number,
-                          difficulty: widget.level.difficulty,
-                          compact: compact,
-                          isArabic: ar,
-                          onBack: !canGoBack || _resultVisible || _resolving
-                              ? null
-                              : () => Navigator.maybePop(context),
-                          onRestart: _finished || _resultVisible || _resolving
-                              ? null
-                              : () => setState(() => _reset()),
-                        ),
-                        SizedBox(height: compact ? 6 : 9),
-                        GameplayStatusPanel(
-                          moves: _moves,
-                          matched: _matchedCount,
-                          total: widget.level.items.length,
-                          progress: _progress,
-                          combo: _combo,
-                          hearts: widget.store.hearts,
-                          skin: skin,
-                          shieldActive: _shieldActive,
-                          compact: compact,
-                          isArabic: ar,
-                        ),
-                        SizedBox(height: compact ? 5 : 8),
-                        GameplayMissionBanner(
-                          isBoss: widget.level.isBossCity,
-                          isArabic: ar,
-                          selectedCargo: _selected,
-                          resolving: _resolving,
-                          accent: skin.accent,
-                          primary: skin.primary,
-                          compact: compact,
-                        ),
-                        SizedBox(height: compact ? 5 : 8),
-                        Expanded(
-                          flex: 3,
-                          child: GameplayHouseCargoBoard(
+              SafeArea(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final compact =
+                        constraints.maxHeight < 690 ||
+                        constraints.maxWidth < 370;
+                    final horizontal = compact ? 9.0 : 14.0;
+                    return Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        horizontal,
+                        compact ? 6 : 9,
+                        horizontal,
+                        compact ? 8 : 12,
+                      ),
+                      child: Column(
+                        children: [
+                          GameplayCommandBar(
+                            cityName: widget.level.localizedDestinationLabel(
+                              ar,
+                            ),
+                            worldName: routeName,
                             levelNumber: widget.level.number,
-                            items: _remaining,
-                            houseAssignments: _remainingHouses,
-                            houseCount: widget.level.houseCount,
-                            selectedIndex: _selectedIndex,
-                            travellingIndex: _resolving ? _selectedIndex : null,
-                            onTap: _choosePackage,
+                            difficulty: widget.level.difficulty,
                             compact: compact,
                             isArabic: ar,
-                            accent: skin.primary,
+                            onBack:
+                                !canGoBack ||
+                                    _resultVisible ||
+                                    _resolving ||
+                                    _isPaused
+                                ? null
+                                : () => Navigator.maybePop(context),
+                            onRestart:
+                                _finished ||
+                                    _resultVisible ||
+                                    _resolving ||
+                                    _isPaused
+                                ? null
+                                : () => setState(() => _reset()),
                           ),
-                        ),
-                        SizedBox(height: compact ? 6 : 9),
-                        Expanded(
-                          flex: 2,
-                          child: GameplayWarehouseBoard(
-                            levelNumber: widget.level.number,
-                            warehouses: _warehouses,
-                            activeWarehouseId: flight?.warehouse.id,
-                            activeCargoId: flight?.item.id,
-                            onTap: _chooseWarehouse,
+                          SizedBox(height: compact ? 6 : 9),
+                          GameplayStatusPanel(
+                            moves: _moves,
+                            matched: _matchedCount,
+                            total: widget.level.items.length,
+                            progress: _progress,
+                            combo: _combo,
+                            hearts: widget.store.hearts,
+                            skin: skin,
+                            shieldActive: _shieldActive,
                             compact: compact,
                             isArabic: ar,
-                            accent: skin.primary,
                           ),
-                        ),
-                        SizedBox(height: compact ? 6 : 9),
-                        GameplayBoosterDock(
-                          compact: compact,
-                          children: [
-                            GameplayBoosterButton(
-                              type: ThreeDIconType.hint,
-                              label: ar ? 'تلميح' : 'HINT',
-                              count: widget.store.freeHints + _preparedHints,
-                              active: _selected != null,
-                              accent: const Color(0xFFFFB300),
+                          SizedBox(height: compact ? 5 : 8),
+                          GameplayMissionBanner(
+                            isBoss: widget.level.isBossCity,
+                            isArabic: ar,
+                            selectedCargo: _selected,
+                            resolving: _resolving,
+                            accent: skin.accent,
+                            primary: skin.primary,
+                            compact: compact,
+                          ),
+                          SizedBox(height: compact ? 5 : 8),
+                          Expanded(
+                            flex: 3,
+                            child: GameplayHouseCargoBoard(
+                              levelNumber: widget.level.number,
+                              items: _remaining,
+                              houseAssignments: _remainingHouses,
+                              houseCount: widget.level.houseCount,
+                              selectedIndex: _selectedIndex,
+                              travellingIndex: _resolving
+                                  ? _selectedIndex
+                                  : null,
+                              onTap: _choosePackage,
                               compact: compact,
-                              onPressed:
-                                  _selected == null || _finished || _resolving
-                                  ? null
-                                  : _useHint,
+                              isArabic: ar,
+                              accent: skin.primary,
                             ),
-                            GameplayBoosterButton(
-                              type: ThreeDIconType.extraMoves,
-                              label: ar ? 'حركات' : 'MOVES',
-                              count: widget.store.extraMovesBoosters,
-                              accent: const Color(0xFF2D6CDF),
+                          ),
+                          SizedBox(height: compact ? 6 : 9),
+                          Expanded(
+                            flex: 2,
+                            child: GameplayWarehouseBoard(
+                              levelNumber: widget.level.number,
+                              warehouses: _warehouses,
+                              activeWarehouseId: flight?.warehouse.id,
+                              activeCargoId: flight?.item.id,
+                              onTap: _chooseWarehouse,
                               compact: compact,
-                              onPressed: _finished || _resolving
-                                  ? null
-                                  : _useExtraMoves,
+                              isArabic: ar,
+                              accent: skin.primary,
                             ),
-                            GameplayBoosterButton(
-                              type: ThreeDIconType.shield,
-                              label: ar ? 'درع' : 'SHIELD',
-                              count: widget.store.comboShields,
-                              active: _shieldActive,
-                              accent: const Color(0xFF7B3FF2),
-                              compact: compact,
-                              onPressed: _finished || _resolving
-                                  ? null
-                                  : _useComboShield,
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-            ),
-            if (flight != null)
-              GameTravelMotion(
-                key: ValueKey(flight.id),
-                start: flight.start,
-                end: flight.end,
-                size: 58,
-                onCompleted: () => unawaited(_completeFlight(flight)),
-                child: GameplayFlightCargo(
-                  item: flight.item,
-                  levelNumber: widget.level.number,
+                          ),
+                          SizedBox(height: compact ? 6 : 9),
+                          GameplayBoosterDock(
+                            compact: compact,
+                            children: [
+                              GameplayBoosterButton(
+                                type: ThreeDIconType.hint,
+                                label: ar ? 'تلميح' : 'HINT',
+                                count: widget.store.freeHints + _preparedHints,
+                                active: _selected != null,
+                                accent: const Color(0xFFFFB300),
+                                compact: compact,
+                                onPressed:
+                                    _selected == null ||
+                                        _finished ||
+                                        _resolving ||
+                                        _isPaused
+                                    ? null
+                                    : _useHint,
+                              ),
+                              GameplayBoosterButton(
+                                type: ThreeDIconType.extraMoves,
+                                label: ar ? 'حركات' : 'MOVES',
+                                count: widget.store.extraMovesBoosters,
+                                accent: const Color(0xFF2D6CDF),
+                                compact: compact,
+                                onPressed: _finished || _resolving || _isPaused
+                                    ? null
+                                    : _useExtraMoves,
+                              ),
+                              GameplayBoosterButton(
+                                type: ThreeDIconType.shield,
+                                label: ar ? 'درع' : 'SHIELD',
+                                count: widget.store.comboShields,
+                                active: _shieldActive,
+                                accent: const Color(0xFF7B3FF2),
+                                compact: compact,
+                                onPressed: _finished || _resolving || _isPaused
+                                    ? null
+                                    : _useComboShield,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    );
+                  },
                 ),
               ),
-            if (_feedbackKind case final feedbackKind?)
-              GameActionFeedback(
-                key: ValueKey(_feedbackSequence),
-                kind: feedbackKind,
-                combo: _feedbackCombo,
-                semanticLabel: feedbackKind == GameActionFeedbackKind.correct
-                    ? (ar
-                          ? 'وضع صحيح، سلسلة $_feedbackCombo'
-                          : 'Correct placement, combo $_feedbackCombo')
-                    : (ar ? 'وضع غير صحيح' : 'Wrong placement'),
-                hapticsEnabled: widget.hapticsEnabled,
-                onSound: widget.soundEnabled ? widget.onPlacementSound : null,
-                onCompleted: () => _completeActionFeedback(_feedbackSequence),
-              ),
-          ],
+              if (!_finished && !_resultVisible)
+                SafeArea(
+                  child: Align(
+                    alignment: ar ? Alignment.topLeft : Alignment.topRight,
+                    child: Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: IconButton.filledTonal(
+                        key: const ValueKey('game-pause-button'),
+                        tooltip: ar ? 'إيقاف مؤقت' : 'Pause',
+                        onPressed: _isPaused ? null : _pauseManually,
+                        icon: const Icon(Icons.pause_rounded),
+                      ),
+                    ),
+                  ),
+                ),
+              if (flight != null)
+                GameTravelMotion(
+                  key: ValueKey(flight.id),
+                  start: flight.start,
+                  end: flight.end,
+                  size: 58,
+                  onCompleted: () => unawaited(_completeFlight(flight)),
+                  child: GameplayFlightCargo(
+                    item: flight.item,
+                    levelNumber: widget.level.number,
+                  ),
+                ),
+              if (_feedbackKind case final feedbackKind?)
+                GameActionFeedback(
+                  key: ValueKey(_feedbackSequence),
+                  kind: feedbackKind,
+                  combo: _feedbackCombo,
+                  semanticLabel: feedbackKind == GameActionFeedbackKind.correct
+                      ? (ar
+                            ? 'وضع صحيح، سلسلة $_feedbackCombo'
+                            : 'Correct placement, combo $_feedbackCombo')
+                      : (ar ? 'وضع غير صحيح' : 'Wrong placement'),
+                  hapticsEnabled: widget.hapticsEnabled,
+                  onSound: widget.soundEnabled ? widget.onPlacementSound : null,
+                  onCompleted: () => _completeActionFeedback(_feedbackSequence),
+                ),
+              if (_isPaused)
+                Positioned.fill(
+                  child: ColoredBox(
+                    key: const ValueKey('game-pause-overlay'),
+                    color: const Color(0xB30A1220),
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 320),
+                        child: Card(
+                          margin: const EdgeInsets.all(24),
+                          child: Padding(
+                            padding: const EdgeInsets.all(24),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.pause_circle_rounded,
+                                  size: 54,
+                                ),
+                                const SizedBox(height: 12),
+                                Text(
+                                  ar ? 'اللعبة متوقفة مؤقتًا' : 'Game paused',
+                                  style: Theme.of(context).textTheme.titleLarge,
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  _lifecyclePaused
+                                      ? (ar
+                                            ? 'ستستأنف اللعبة بأمان عند العودة للتطبيق.'
+                                            : 'Gameplay will resume safely when the app is active again.')
+                                      : (ar
+                                            ? 'الحركات والأنيميشن معطلة حتى الاستئناف.'
+                                            : 'Moves and motion are frozen until you resume.'),
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: 18),
+                                FilledButton.icon(
+                                  key: const ValueKey('game-resume-button'),
+                                  onPressed: _lifecyclePaused
+                                      ? null
+                                      : _resumeManually,
+                                  icon: const Icon(Icons.play_arrow_rounded),
+                                  label: Text(ar ? 'استئناف' : 'Resume'),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
