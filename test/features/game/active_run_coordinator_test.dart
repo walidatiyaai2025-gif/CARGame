@@ -66,37 +66,43 @@ void main() {
     );
   });
 
-  test('terminal clear prevents later checkpoints from resurrecting run', () async {
-    final level = levels[40];
-    final fake = _FakeActiveRunPersistence();
-    final coordinator = ActiveRunCoordinator(level: level, store: fake);
+  test(
+    'terminal clear prevents later checkpoints from resurrecting run',
+    () async {
+      final level = levels[40];
+      final fake = _FakeActiveRunPersistence();
+      final coordinator = ActiveRunCoordinator(level: level, store: fake);
 
-    await coordinator.checkpoint(sessionFor(level));
-    await coordinator.clearTerminal();
-    await coordinator.checkpoint(sessionFor(level, removed: 2));
-    await coordinator.flush();
+      await coordinator.checkpoint(sessionFor(level));
+      await coordinator.clearTerminal();
+      await coordinator.checkpoint(sessionFor(level, removed: 2));
+      await coordinator.flush();
 
-    expect(fake.snapshot, isNull);
-    expect(fake.clearCount, 1);
-    expect(fake.saveCount, 1);
-  });
+      expect(fake.snapshot, isNull);
+      expect(fake.clearCount, 1);
+      expect(fake.saveCount, 1);
+    },
+  );
 
-  test('restart or abandon clears but still permits a fresh checkpoint', () async {
-    final level = levels[60];
-    final fake = _FakeActiveRunPersistence();
-    final coordinator = ActiveRunCoordinator(level: level, store: fake);
+  test(
+    'restart or abandon clears but still permits a fresh checkpoint',
+    () async {
+      final level = levels[60];
+      final fake = _FakeActiveRunPersistence();
+      final coordinator = ActiveRunCoordinator(level: level, store: fake);
 
-    await coordinator.checkpoint(sessionFor(level));
-    await coordinator.clearForRestartOrAbandon();
-    expect(fake.snapshot, isNull);
+      await coordinator.checkpoint(sessionFor(level));
+      await coordinator.clearForRestartOrAbandon();
+      expect(fake.snapshot, isNull);
 
-    final fresh = sessionFor(level, removed: 2);
-    await coordinator.checkpoint(fresh);
-    expect(
-      fake.snapshot!.remainingItemIds,
-      fresh.remaining.map((item) => item.id).toList(),
-    );
-  });
+      final fresh = sessionFor(level, removed: 2);
+      await coordinator.checkpoint(fresh);
+      expect(
+        fake.snapshot!.remainingItemIds,
+        fresh.remaining.map((item) => item.id).toList(),
+      );
+    },
+  );
 
   test('preserves GAME-017 cargo progression contract', () {
     expect(levels.first.items, hasLength(9));
