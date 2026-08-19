@@ -7,11 +7,11 @@ import 'level_data.dart';
 /// This coordinator owns no durable progression, rewards, hearts, ads, or
 /// inventory. Its only responsibility is reward-neutral unfinished-run state.
 final class ActiveRunCoordinator {
-  ActiveRunCoordinator({required this.level, ActiveRunStore? store})
+  ActiveRunCoordinator({required this.level, ActiveRunPersistence? store})
     : _store = store ?? ActiveRunStore();
 
   final LevelData level;
-  final ActiveRunStore _store;
+  final ActiveRunPersistence _store;
   Future<void> _tail = Future<void>.value();
   bool _terminal = false;
 
