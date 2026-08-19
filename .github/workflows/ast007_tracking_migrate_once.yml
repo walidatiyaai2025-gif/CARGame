@@ -1,9 +1,7 @@
 name: AST-007 Tracking Migrate Once
 
 on:
-  push:
-    branches:
-      - agent/ast-007-batch01-procedural-art
+  pull_request:
     paths:
       - 'tool/migrate_ast007_batch01_tracking_once.py'
       - '.github/workflows/ast007_tracking_migrate_once.yml'
