@@ -1,0 +1,6 @@
+CARGO V2 ASSET TEAM folder lock.
+Owner: ASSET_TEAM
+Scope: Assets/_Project/Generated/
+Assigned: generated IMG_, VFX_, SFX_ and BGM_ assets.
+Palette: #0A1A2F #FFC107 #FFFFFF.
+Do not modify another team's locked area without CAPTAIN coordination.
