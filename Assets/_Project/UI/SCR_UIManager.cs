@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -10,34 +9,35 @@ namespace CargoV2.UI
         {
             Splash = 0,
             Loading = 1,
-            WorldMap = 2,
         }
+
+        public const string LogoAssetPath = "Assets/_Project/Generated/IMG_Logo_Premium.svg";
+        public const string TruckAssetPath = "Assets/_Project/Generated/IMG_Truck_Premium.svg";
+        public const string TruckAltAssetPath = "Assets/_Project/Generated/IMG_Truck_Premium_Alt.svg";
+        public const string GlowAssetPath = "Assets/_Project/Generated/VFX_Glow_Premium.svg";
 
         [Header("Scene flow")]
         [SerializeField] private SceneMode sceneMode = SceneMode.Splash;
         [SerializeField, Min(0.5f)] private float splashDurationSeconds = 3.2f;
         [SerializeField, Min(0.5f)] private float loadingDurationSeconds = 3.0f;
-        [SerializeField] private string splashScene = "01_Splash";
         [SerializeField] private string loadingScene = "02_Loading";
         [SerializeField] private string worldMapScene = "04_WorldMap";
 
         [Header("Premium art pass")]
-        [SerializeField] private Texture2D logoTexture;
-        [SerializeField] private Texture2D truckTexture;
-        [SerializeField] private Texture2D truckAltTexture;
-        [SerializeField] private Texture2D glowTexture;
+        [SerializeField] private Sprite logoSprite;
+        [SerializeField] private Sprite truckSprite;
+        [SerializeField] private Sprite truckAltSprite;
+        [SerializeField] private Sprite glowSprite;
 
-        private static readonly Color NavyTop = new Color32(0x05, 0x0D, 0x1B, 0xFF);
-        private static readonly Color NavyLift = new Color32(0x12, 0x2E, 0x4A, 0xFF);
+        private static readonly Color Navy = new Color32(0x05, 0x0D, 0x1B, 0xFF);
+        private static readonly Color NavyLift = new Color32(0x0C, 0x22, 0x39, 0xFF);
+        private static readonly Color DeepBlue = new Color32(0x11, 0x34, 0x57, 0xFF);
         private static readonly Color Gold = new Color32(0xFF, 0xC1, 0x07, 0xFF);
         private static readonly Color WarmGold = new Color32(0xFF, 0xD8, 0x63, 0xFF);
         private static readonly Color IceWhite = new Color32(0xF4, 0xF7, 0xFA, 0xFF);
 
         private const float ReferenceHalfHeight = 5.4f;
         private const float TransitionFadeSeconds = 0.28f;
-
-        private readonly List<SpriteRenderer> sceneRenderers = new List<SpriteRenderer>(64);
-        private readonly List<ParticleDot> particleDots = new List<ParticleDot>(24);
 
         private Camera sceneCamera;
         private Texture2D solidTexture;
@@ -47,10 +47,11 @@ namespace CargoV2.UI
 
         private Transform heroRoot;
         private SpriteRenderer logoRenderer;
-        private SpriteRenderer glowRenderer;
-        private SpriteRenderer lightSweepRenderer;
         private SpriteRenderer truckRenderer;
         private SpriteRenderer truckAltRenderer;
+        private SpriteRenderer glowRenderer;
+        private SpriteRenderer lightSweepRenderer;
+        private SpriteRenderer fadeRenderer;
         private Transform progressFillTransform;
         private float progressTrackWidth;
         private float progressTrackStartX;
@@ -61,53 +62,57 @@ namespace CargoV2.UI
         private void Awake()
         {
             Application.targetFrameRate = 60;
-            BuildCamera();
+            EnsureCamera();
             BuildSolidSprite();
         }
 
         private void Start()
         {
             startedAt = Time.unscaledTime;
-            BuildSharedBackdrop();
+            BuildBackdrop();
 
-            switch (sceneMode)
+            if (sceneMode == SceneMode.Splash)
             {
-                case SceneMode.Splash:
-                    BuildSplash();
-                    break;
-                case SceneMode.Loading:
-                    BuildLoading();
-                    break;
-                case SceneMode.WorldMap:
-                    BuildWorldMapCheckpoint();
-                    break;
+                BuildSplash();
+            }
+            else
+            {
+                BuildLoading();
             }
 
+            BuildFadeOverlay();
             ValidateRequiredArt();
-            Debug.Log($"[CARGO V2][UI_TEAM] Premium {sceneMode} checkpoint ready.");
+            Debug.Log($"[CARGO V2][UI_TEAM] Premium {sceneMode} scene ready.");
         }
 
         private void Update()
         {
             float elapsed = Time.unscaledTime - startedAt;
 
-            switch (sceneMode)
+            if (sceneMode == SceneMode.Splash)
             {
-                case SceneMode.Splash:
-                    UpdateSplash(elapsed);
-                    break;
-                case SceneMode.Loading:
-                    UpdateLoading(elapsed);
-                    break;
-                case SceneMode.WorldMap:
-                    UpdateBackdropMotion(elapsed);
-                    break;
+                UpdateSplash(elapsed);
             }
-
-            UpdateParticles(elapsed);
+            else
+            {
+                UpdateLoading(elapsed);
+            }
         }
 
-        private void BuildCamera()
+        private void OnDestroy()
+        {
+            if (solidSprite != null)
+            {
+                Destroy(solidSprite);
+            }
+
+            if (solidTexture != null)
+            {
+                Destroy(solidTexture);
+            }
+        }
+
+        private void EnsureCamera()
         {
             sceneCamera = Camera.main;
             if (sceneCamera == null)
@@ -121,215 +126,298 @@ namespace CargoV2.UI
             sceneCamera.transform.position = new Vector3(0f, 0f, -10f);
             sceneCamera.transform.rotation = Quaternion.identity;
             sceneCamera.clearFlags = CameraClearFlags.SolidColor;
-            sceneCamera.backgroundColor = NavyTop;
+            sceneCamera.backgroundColor = Navy;
         }
 
         private void BuildSolidSprite()
         {
             solidTexture = new Texture2D(2, 2, TextureFormat.RGBA32, false)
             {
-                name = "UI_RuntimeSolid",
+                name = "CargoV2_UI_Solid",
                 filterMode = FilterMode.Bilinear,
                 wrapMode = TextureWrapMode.Clamp,
             };
+
             solidTexture.SetPixels(new[] { Color.white, Color.white, Color.white, Color.white });
             solidTexture.Apply(false, true);
-            solidSprite = Sprite.Create(solidTexture, new Rect(0, 0, 2, 2), new Vector2(0.5f, 0.5f), 2f);
-            solidSprite.name = "UI_RuntimeSolidSprite";
+            solidSprite = Sprite.Create(solidTexture, new Rect(0f, 0f, 2f, 2f), new Vector2(0.5f, 0.5f), 2f);
+            solidSprite.name = "CargoV2_UI_SolidSprite";
         }
 
-        private void BuildSharedBackdrop()
+        private void BuildBackdrop()
         {
             float worldWidth = GetWorldWidth();
 
-            CreateRect("Backdrop_Navy", new Vector2(worldWidth + 1f, ReferenceHalfHeight * 2f + 1f),
-                new Vector3(0f, 0f, 4f), NavyTop, -100);
+            CreateRect(
+                "Backdrop_Navy",
+                new Vector2(worldWidth + 1f, ReferenceHalfHeight * 2f + 1f),
+                new Vector3(0f, 0f, 5f),
+                Navy,
+                -100);
 
-            CreateRect("Backdrop_Lift", new Vector2(worldWidth + 1f, ReferenceHalfHeight * 0.78f),
-                new Vector3(0f, -3.7f, 3.8f), WithAlpha(NavyLift, 0.50f), -99);
+            CreateRect(
+                "Backdrop_DeepBlue",
+                new Vector2(worldWidth + 1f, 4.5f),
+                new Vector3(0f, -3.45f, 4.8f),
+                WithAlpha(DeepBlue, 0.45f),
+                -99);
 
-            CreateRect("Top_Hairline", new Vector2(worldWidth * 0.86f, 0.025f),
-                new Vector3(0f, 4.52f, 3.5f), WithAlpha(Gold, 0.52f), -20);
+            CreateRect(
+                "Backdrop_HorizonGlow",
+                new Vector2(worldWidth * 0.78f, 0.22f),
+                new Vector3(0f, -1.35f, 4.5f),
+                WithAlpha(Gold, 0.07f),
+                -96);
 
-            CreateRect("Bottom_Hairline", new Vector2(worldWidth * 0.86f, 0.018f),
-                new Vector3(0f, -4.48f, 3.5f), WithAlpha(IceWhite, 0.18f), -20);
+            CreateRect(
+                "TopGoldLine",
+                new Vector2(worldWidth * 0.84f, 0.025f),
+                new Vector3(0f, 4.55f, 4.2f),
+                WithAlpha(Gold, 0.48f),
+                -90);
 
-            BuildRouteConstellation();
-            BuildAmbientParticles();
+            CreateRect(
+                "BottomCoolLine",
+                new Vector2(worldWidth * 0.84f, 0.018f),
+                new Vector3(0f, -4.58f, 4.2f),
+                WithAlpha(IceWhite, 0.14f),
+                -90);
+
+            BuildRouteConstellation(worldWidth);
+        }
+
+        private void BuildRouteConstellation(float worldWidth)
+        {
+            float width = Mathf.Min(9.8f, worldWidth * 0.72f);
+            float y = -4.05f;
+
+            CreateRect(
+                "Route_Constellation_Line",
+                new Vector2(width, 0.016f),
+                new Vector3(0f, y, 3f),
+                WithAlpha(IceWhite, 0.08f),
+                -70);
+
+            for (int i = 0; i < 7; i++)
+            {
+                float t = i / 6f;
+                float x = Mathf.Lerp(-width * 0.5f, width * 0.5f, t);
+                float yOffset = Mathf.Sin(i * 1.31f) * 0.11f;
+                float size = i == 3 ? 0.08f : 0.045f;
+                Color color = i == 3 ? WithAlpha(Gold, 0.55f) : WithAlpha(IceWhite, 0.18f);
+
+                CreateRect(
+                    $"Route_Constellation_Node_{i:00}",
+                    new Vector2(size, size),
+                    new Vector3(x, y + yOffset, 2.9f),
+                    color,
+                    -69);
+            }
         }
 
         private void BuildSplash()
         {
-            heroRoot = new GameObject("Splash_Hero").transform;
-            heroRoot.position = new Vector3(0f, 0.2f, 0f);
+            heroRoot = new GameObject("Splash_PremiumHero").transform;
+            heroRoot.position = new Vector3(0f, 0.05f, 0f);
 
-            glowRenderer = CreateTextureRenderer(
+            glowRenderer = CreateArt(
                 "VFX_Glow_Premium",
-                glowTexture,
+                glowSprite,
                 8.4f,
                 heroRoot,
-                new Vector3(0f, 0.15f, 0.9f),
-                -7,
-                WithAlpha(WarmGold, 0.54f));
+                new Vector3(0f, 1.35f, 0.8f),
+                -8,
+                WithAlpha(Color.white, 0.62f));
 
-            logoRenderer = CreateTextureRenderer(
-                "IMG_Logo_Premium",
-                logoTexture,
-                6.3f,
+            truckRenderer = CreateArt(
+                "IMG_Truck_Premium",
+                truckSprite,
+                5.15f,
                 heroRoot,
-                new Vector3(0f, 0.35f, 0f),
-                5,
+                new Vector3(0f, -1.12f, 0.3f),
+                1,
+                WithAlpha(Color.white, 0.94f));
+
+            logoRenderer = CreateArt(
+                "IMG_Logo_Premium",
+                logoSprite,
+                6.45f,
+                heroRoot,
+                new Vector3(0f, 1.62f, 0f),
+                8,
                 Color.white);
 
             if (logoRenderer == null)
             {
-                CreatePremiumText("CARGO V2", heroRoot, new Vector3(0f, 0.42f, 0f), 92, 0.067f, Gold, 5, FontStyle.Bold);
+                CreatePremiumText(
+                    "CARGO V2",
+                    heroRoot,
+                    new Vector3(0f, 1.72f, 0f),
+                    92,
+                    0.064f,
+                    Gold,
+                    8,
+                    FontStyle.Bold);
             }
 
-            CreatePremiumText("GLOBAL LOGISTICS · PREMIUM DELIVERY NETWORK", heroRoot,
-                new Vector3(0f, -1.72f, 0f), 32, 0.038f, WithAlpha(IceWhite, 0.82f), 6, FontStyle.Normal);
+            CreatePremiumText(
+                "PREMIUM GLOBAL CARGO NETWORK",
+                heroRoot,
+                new Vector3(0f, -3.25f, 0f),
+                28,
+                0.036f,
+                WithAlpha(IceWhite, 0.82f),
+                9,
+                FontStyle.Bold);
 
-            CreateRect("Splash_Accent_Left", new Vector2(1.45f, 0.035f),
-                new Vector3(-3.35f, -1.75f, 0f), WithAlpha(Gold, 0.48f), 4);
+            CreatePremiumText(
+                "DELIVER  ·  EXPAND  ·  DOMINATE",
+                heroRoot,
+                new Vector3(0f, -3.72f, 0f),
+                22,
+                0.031f,
+                WithAlpha(WarmGold, 0.78f),
+                9,
+                FontStyle.Normal);
 
-            CreateRect("Splash_Accent_Right", new Vector2(1.45f, 0.035f),
-                new Vector3(3.35f, -1.75f, 0f), WithAlpha(Gold, 0.48f), 4);
+            lightSweepRenderer = CreateRect(
+                "Splash_LightSweep",
+                new Vector2(0.13f, 5.2f),
+                new Vector3(-5.4f, 0.55f, -0.2f),
+                WithAlpha(IceWhite, 0f),
+                20,
+                heroRoot);
 
-            lightSweepRenderer = CreateRect("Splash_LightSweep", new Vector2(0.18f, 3.65f),
-                new Vector3(-4.1f, 0.42f, -0.2f), WithAlpha(IceWhite, 0.0f), 11);
-            lightSweepRenderer.transform.rotation = Quaternion.Euler(0f, 0f, -18f);
+            lightSweepRenderer.transform.localRotation = Quaternion.Euler(0f, 0f, -17f);
         }
 
         private void BuildLoading()
         {
-            heroRoot = new GameObject("Loading_Hero").transform;
-            heroRoot.position = new Vector3(0f, 0.25f, 0f);
+            heroRoot = new GameObject("Loading_PremiumHero").transform;
+            heroRoot.position = new Vector3(0f, 0.15f, 0f);
 
-            CreatePremiumText("PREPARING YOUR ROUTE", heroRoot, new Vector3(0f, 3.48f, 0f),
-                38, 0.046f, WithAlpha(IceWhite, 0.90f), 7, FontStyle.Bold);
+            logoRenderer = CreateArt(
+                "IMG_Logo_Premium",
+                logoSprite,
+                3.65f,
+                heroRoot,
+                new Vector3(0f, 3.45f, 0f),
+                10,
+                WithAlpha(Color.white, 0.98f));
 
-            CreatePremiumText("GLOBAL DELIVERY NETWORK", heroRoot, new Vector3(0f, 3.02f, 0f),
-                24, 0.035f, WithAlpha(WarmGold, 0.80f), 7, FontStyle.Normal);
-
-            glowRenderer = CreateTextureRenderer(
+            glowRenderer = CreateArt(
                 "VFX_Glow_Premium",
-                glowTexture,
-                9.2f,
+                glowSprite,
+                8.8f,
                 heroRoot,
-                new Vector3(0f, 0.45f, 0.9f),
-                -7,
-                WithAlpha(WarmGold, 0.42f));
+                new Vector3(0f, 0.45f, 0.8f),
+                -8,
+                WithAlpha(Color.white, 0.54f));
 
-            truckRenderer = CreateTextureRenderer(
+            truckRenderer = CreateArt(
                 "IMG_Truck_Premium",
-                truckTexture,
-                7.8f,
+                truckSprite,
+                6.7f,
                 heroRoot,
-                new Vector3(-0.05f, 0.45f, 0f),
+                new Vector3(0f, 0.18f, 0.1f),
                 6,
                 Color.white);
 
-            truckAltRenderer = CreateTextureRenderer(
+            truckAltRenderer = CreateArt(
                 "IMG_Truck_Premium_Alt",
-                truckAltTexture,
-                7.8f,
+                truckAltSprite,
+                7.4f,
                 heroRoot,
-                new Vector3(-0.05f, 0.45f, 0.05f),
+                new Vector3(0f, 0.15f, 0.05f),
                 7,
                 WithAlpha(Color.white, 0f));
 
             if (truckRenderer == null && truckAltRenderer == null)
             {
-                CreatePremiumText("PREMIUM CARGO", heroRoot, new Vector3(0f, 0.55f, 0f),
-                    64, 0.060f, Gold, 5, FontStyle.Bold);
+                CreatePremiumText(
+                    "PREMIUM CARGO",
+                    heroRoot,
+                    new Vector3(0f, 0.45f, 0f),
+                    62,
+                    0.056f,
+                    Gold,
+                    7,
+                    FontStyle.Bold);
             }
+
+            CreatePremiumText(
+                "PREPARING YOUR WORLD ROUTE",
+                heroRoot,
+                new Vector3(0f, -2.25f, 0f),
+                27,
+                0.036f,
+                WithAlpha(IceWhite, 0.88f),
+                12,
+                FontStyle.Bold);
 
             BuildProgressRoute(heroRoot);
         }
 
         private void BuildProgressRoute(Transform parent)
         {
-            progressTrackWidth = Mathf.Min(8.9f, GetWorldWidth() * 0.64f);
+            progressTrackWidth = Mathf.Min(8.7f, GetWorldWidth() * 0.62f);
             progressTrackStartX = -progressTrackWidth * 0.5f;
 
-            CreateRect("Progress_Track", new Vector2(progressTrackWidth, 0.09f),
-                new Vector3(0f, -2.62f, 0f), WithAlpha(IceWhite, 0.16f), 10, parent);
+            CreateRect(
+                "Progress_Track",
+                new Vector2(progressTrackWidth, 0.10f),
+                new Vector3(0f, -2.86f, 0f),
+                WithAlpha(IceWhite, 0.14f),
+                14,
+                parent);
 
-            progressFillTransform = CreateRect("Progress_Fill", new Vector2(0.01f, 0.09f),
-                new Vector3(progressTrackStartX, -2.62f, -0.05f), Gold, 11, parent).transform;
+            SpriteRenderer fill = CreateRect(
+                "Progress_Fill",
+                new Vector2(0.001f, 0.10f),
+                new Vector3(progressTrackStartX, -2.86f, -0.04f),
+                Gold,
+                15,
+                parent);
 
-            const int dashCount = 18;
-            for (int i = 0; i < dashCount; i++)
-            {
-                float t = i / (float)(dashCount - 1);
-                float x = Mathf.Lerp(progressTrackStartX, -progressTrackStartX, t);
-                CreateRect($"Route_Dash_{i:00}", new Vector2(0.18f, 0.025f),
-                    new Vector3(x, -2.26f, 0f), WithAlpha(IceWhite, 0.20f), 8, parent);
-            }
+            progressFillTransform = fill.transform;
 
-            CreateRouteNode("Route_Start", new Vector3(progressTrackStartX, -2.62f, -0.1f), parent, WithAlpha(IceWhite, 0.74f));
-            CreateRouteNode("Route_Destination", new Vector3(-progressTrackStartX, -2.62f, -0.1f), parent, Gold);
+            CreateRouteNode(
+                "Progress_Start",
+                new Vector3(progressTrackStartX, -2.86f, -0.08f),
+                parent,
+                WithAlpha(IceWhite, 0.72f));
 
-            progressText = CreatePremiumText("0%", parent, new Vector3(0f, -3.30f, 0f),
-                38, 0.050f, IceWhite, 12, FontStyle.Bold);
+            CreateRouteNode(
+                "Progress_End",
+                new Vector3(-progressTrackStartX, -2.86f, -0.08f),
+                parent,
+                Gold);
 
-            CreatePremiumText("LOADING WORLD ROUTE", parent, new Vector3(0f, -3.78f, 0f),
-                24, 0.034f, WithAlpha(IceWhite, 0.66f), 12, FontStyle.Normal);
+            progressText = CreatePremiumText(
+                "0%",
+                parent,
+                new Vector3(0f, -3.45f, 0f),
+                34,
+                0.045f,
+                IceWhite,
+                16,
+                FontStyle.Bold);
         }
 
-        private void BuildWorldMapCheckpoint()
+        private void CreateRouteNode(string name, Vector3 position, Transform parent, Color color)
         {
-            CreatePremiumText("WORLD MAP", null, new Vector3(0f, 0.35f, 0f),
-                80, 0.068f, Gold, 5, FontStyle.Bold);
-
-            CreatePremiumText("TRANSITION TARGET READY", null, new Vector3(0f, -0.65f, 0f),
-                30, 0.040f, WithAlpha(IceWhite, 0.78f), 5, FontStyle.Normal);
+            CreateRect(name + "_Outer", new Vector2(0.20f, 0.20f), position, WithAlpha(color, 0.30f), 16, parent);
+            CreateRect(name + "_Inner", new Vector2(0.085f, 0.085f), position + new Vector3(0f, 0f, -0.02f), color, 17, parent);
         }
 
-        private void BuildRouteConstellation()
+        private void BuildFadeOverlay()
         {
-            float width = Mathf.Min(9.6f, GetWorldWidth() * 0.72f);
-            float y = -4.02f;
-
-            CreateRect("Constellation_Line", new Vector2(width, 0.018f),
-                new Vector3(0f, y, 1.7f), WithAlpha(IceWhite, 0.10f), -8);
-
-            for (int i = 0; i < 5; i++)
-            {
-                float t = i / 4f;
-                float x = Mathf.Lerp(-width * 0.5f, width * 0.5f, t);
-                float size = i == 2 ? 0.085f : 0.055f;
-                CreateRect($"Constellation_Node_{i}", new Vector2(size, size),
-                    new Vector3(x, y + Mathf.Sin(i * 1.7f) * 0.12f, 1.5f),
-                    i == 2 ? WithAlpha(Gold, 0.58f) : WithAlpha(IceWhite, 0.22f), -7);
-            }
-        }
-
-        private void BuildAmbientParticles()
-        {
-            float worldWidth = GetWorldWidth();
-            const int count = 22;
-
-            for (int i = 0; i < count; i++)
-            {
-                float seed = (i + 1) * 1.6180339f;
-                float x = Mathf.Lerp(-worldWidth * 0.46f, worldWidth * 0.46f, Frac(seed * 0.47f));
-                float y = Mathf.Lerp(-3.7f, 4.1f, Frac(seed * 0.83f));
-                float size = Mathf.Lerp(0.018f, 0.055f, Frac(seed * 1.31f));
-                float alpha = Mathf.Lerp(0.08f, 0.30f, Frac(seed * 1.79f));
-                SpriteRenderer renderer = CreateRect($"Ambient_Particle_{i:00}", new Vector2(size, size),
-                    new Vector3(x, y, 2.6f), WithAlpha(i % 4 == 0 ? Gold : IceWhite, alpha), -15);
-
-                particleDots.Add(new ParticleDot
-                {
-                    Renderer = renderer,
-                    BasePosition = renderer.transform.position,
-                    Phase = seed,
-                    Amplitude = Mathf.Lerp(0.025f, 0.10f, Frac(seed * 2.11f)),
-                    Speed = Mathf.Lerp(0.35f, 0.85f, Frac(seed * 2.59f)),
-                    BaseAlpha = alpha,
-                });
-            }
+            fadeRenderer = CreateRect(
+                "Transition_Fade",
+                new Vector2(GetWorldWidth() + 1f, ReferenceHalfHeight * 2f + 1f),
+                new Vector3(0f, 0f, -1.5f),
+                WithAlpha(Navy, 1f),
+                1000);
         }
 
         private void UpdateSplash(float elapsed)
@@ -337,193 +425,175 @@ namespace CargoV2.UI
             float progress = Mathf.Clamp01(elapsed / splashDurationSeconds);
             NormalizedProgress = progress;
 
+            float intro = Smooth01(Mathf.Clamp01(elapsed / 0.72f));
             if (heroRoot != null)
             {
-                float intro = Smooth01(Mathf.Clamp01(elapsed / 0.75f));
-                float scale = Mathf.Lerp(0.94f, 1f, intro);
-                heroRoot.localScale = Vector3.one * scale;
-                heroRoot.position = new Vector3(0f, 0.2f + Mathf.Sin(elapsed * 1.25f) * 0.025f, 0f);
-            }
-
-            if (logoRenderer != null)
-            {
-                float introAlpha = Smooth01(Mathf.Clamp01(elapsed / 0.55f));
-                logoRenderer.color = WithAlpha(Color.white, introAlpha);
+                float pulse = 1f + Mathf.Sin(elapsed * 1.35f) * 0.004f;
+                heroRoot.localScale = Vector3.one * Mathf.Lerp(0.95f, pulse, intro);
+                heroRoot.position = new Vector3(0f, Mathf.Lerp(-0.08f, 0.05f, intro), 0f);
             }
 
             if (glowRenderer != null)
             {
-                float pulse = 0.40f + Mathf.Sin(elapsed * 1.9f) * 0.08f;
-                glowRenderer.color = WithAlpha(WarmGold, pulse);
+                float glow = 0.47f + Mathf.Sin(elapsed * 1.1f) * 0.06f;
+                glowRenderer.color = WithAlpha(Color.white, glow * intro);
+            }
+
+            if (truckRenderer != null)
+            {
+                truckRenderer.transform.localPosition = new Vector3(
+                    0f,
+                    -1.12f + Mathf.Sin(elapsed * 0.9f) * 0.018f,
+                    0.3f);
             }
 
             if (lightSweepRenderer != null)
             {
-                float sweepT = Mathf.Repeat(elapsed / 2.15f, 1f);
-                float x = Mathf.Lerp(-4.2f, 4.2f, Smooth01(sweepT));
-                float alpha = Mathf.Sin(sweepT * Mathf.PI);
-                lightSweepRenderer.transform.localPosition = new Vector3(x, 0.42f, -0.2f);
-                lightSweepRenderer.color = WithAlpha(IceWhite, alpha * 0.14f);
+                float sweepT = Mathf.Repeat(elapsed / 2.7f, 1f);
+                float worldWidth = GetWorldWidth();
+                float x = Mathf.Lerp(-worldWidth * 0.42f, worldWidth * 0.42f, sweepT);
+                float alpha = Mathf.Sin(sweepT * Mathf.PI) * 0.12f;
+                lightSweepRenderer.transform.localPosition = new Vector3(x, 0.55f, -0.2f);
+                lightSweepRenderer.color = WithAlpha(IceWhite, alpha);
             }
 
-            ApplyExitFade(splashDurationSeconds, elapsed);
+            UpdateFade(elapsed, splashDurationSeconds);
 
-            if (!transitionIssued && elapsed >= splashDurationSeconds)
+            if (!transitionIssued && progress >= 1f)
             {
-                TransitionTo(loadingScene);
+                transitionIssued = true;
+                TryLoadScene(loadingScene, "Loading");
             }
         }
 
         private void UpdateLoading(float elapsed)
         {
-            NormalizedProgress = Mathf.Clamp01(elapsed / loadingDurationSeconds);
-            float smooth = Smooth01(NormalizedProgress);
+            float progress = Mathf.Clamp01(elapsed / loadingDurationSeconds);
+            NormalizedProgress = progress;
 
             if (heroRoot != null)
             {
-                heroRoot.position = new Vector3(0f, 0.25f + Mathf.Sin(elapsed * 2.0f) * 0.018f, 0f);
-            }
-
-            if (truckRenderer != null)
-            {
-                float entry = Smooth01(Mathf.Clamp01(elapsed / 0.72f));
-                float x = Mathf.Lerp(-0.55f, -0.05f, entry);
-                float y = 0.45f + Mathf.Sin(elapsed * 2.8f) * 0.035f;
-                truckRenderer.transform.localPosition = new Vector3(x, y, 0f);
-                truckRenderer.color = WithAlpha(Color.white, entry);
-            }
-
-            if (truckAltRenderer != null)
-            {
-                float blend = Smooth01(Mathf.Clamp01((NormalizedProgress - 0.38f) / 0.42f));
-                float y = 0.45f + Mathf.Sin(elapsed * 2.8f + 0.35f) * 0.028f;
-                truckAltRenderer.transform.localPosition = new Vector3(-0.05f, y, 0.05f);
-                truckAltRenderer.color = WithAlpha(Color.white, blend * 0.18f);
+                heroRoot.position = new Vector3(0f, 0.15f + Mathf.Sin(elapsed * 0.85f) * 0.022f, 0f);
             }
 
             if (glowRenderer != null)
             {
-                glowRenderer.color = WithAlpha(WarmGold, 0.34f + Mathf.Sin(elapsed * 2.1f) * 0.07f);
+                glowRenderer.color = WithAlpha(Color.white, 0.45f + Mathf.Sin(elapsed * 1.05f) * 0.045f);
             }
 
+            if (truckRenderer != null && truckAltRenderer != null)
+            {
+                float crossFade = Smooth01(Mathf.InverseLerp(0.42f, 0.82f, progress));
+                truckRenderer.color = WithAlpha(Color.white, 1f - crossFade * 0.82f);
+                truckAltRenderer.color = WithAlpha(Color.white, crossFade);
+            }
+
+            UpdateProgressVisual(progress);
+            UpdateFade(elapsed, loadingDurationSeconds);
+
+            if (!transitionIssued && progress >= 1f)
+            {
+                transitionIssued = true;
+                TryLoadScene(worldMapScene, "WorldMap");
+            }
+        }
+
+        private void UpdateProgressVisual(float progress)
+        {
             if (progressFillTransform != null)
             {
-                float width = Mathf.Max(0.01f, progressTrackWidth * smooth);
-                progressFillTransform.localScale = new Vector3(width, 0.09f, 1f);
-                progressFillTransform.localPosition = new Vector3(progressTrackStartX + width * 0.5f, -2.62f, -0.05f);
+                float width = Mathf.Max(0.001f, progressTrackWidth * progress);
+                progressFillTransform.localScale = new Vector3(width, 0.10f, 1f);
+                progressFillTransform.localPosition = new Vector3(
+                    progressTrackStartX + width * 0.5f,
+                    -2.86f,
+                    -0.04f);
             }
 
             if (progressText != null)
             {
-                progressText.text = $"{Mathf.RoundToInt(NormalizedProgress * 100f)}%";
-            }
-
-            ApplyExitFade(loadingDurationSeconds, elapsed);
-
-            if (!transitionIssued && NormalizedProgress >= 1f)
-            {
-                TransitionTo(worldMapScene);
+                progressText.text = $"{Mathf.RoundToInt(progress * 100f):0}%";
             }
         }
 
-        private void UpdateBackdropMotion(float elapsed)
+        private void UpdateFade(float elapsed, float duration)
         {
-            if (glowRenderer != null)
-            {
-                glowRenderer.color = WithAlpha(WarmGold, 0.30f + Mathf.Sin(elapsed * 1.7f) * 0.05f);
-            }
-        }
-
-        private void UpdateParticles(float elapsed)
-        {
-            for (int i = 0; i < particleDots.Count; i++)
-            {
-                ParticleDot dot = particleDots[i];
-                if (dot.Renderer == null)
-                {
-                    continue;
-                }
-
-                float wave = Mathf.Sin(elapsed * dot.Speed + dot.Phase);
-                Vector3 position = dot.BasePosition;
-                position.y += wave * dot.Amplitude;
-                dot.Renderer.transform.position = position;
-
-                Color color = dot.Renderer.color;
-                color.a = dot.BaseAlpha * (0.65f + (wave + 1f) * 0.175f);
-                dot.Renderer.color = color;
-            }
-        }
-
-        private void ApplyExitFade(float duration, float elapsed)
-        {
-            float fadeStart = Mathf.Max(0f, duration - TransitionFadeSeconds);
-            if (elapsed < fadeStart)
+            if (fadeRenderer == null)
             {
                 return;
             }
 
-            float fade = 1f - Mathf.Clamp01((elapsed - fadeStart) / TransitionFadeSeconds);
-            for (int i = 0; i < sceneRenderers.Count; i++)
-            {
-                SpriteRenderer renderer = sceneRenderers[i];
-                if (renderer == null || renderer.gameObject.name.StartsWith("Backdrop_"))
-                {
-                    continue;
-                }
+            float introAlpha = 1f - Mathf.Clamp01(elapsed / TransitionFadeSeconds);
+            float outroStart = Mathf.Max(TransitionFadeSeconds, duration - TransitionFadeSeconds);
+            float outroAlpha = Mathf.InverseLerp(outroStart, duration, elapsed);
+            float alpha = Mathf.Clamp01(Mathf.Max(introAlpha, outroAlpha));
+            fadeRenderer.color = WithAlpha(Navy, alpha);
+        }
 
-                Color color = renderer.color;
-                color.a = Mathf.Min(color.a, fade);
-                renderer.color = color;
+        private void TryLoadScene(string sceneName, string label)
+        {
+            if (string.IsNullOrWhiteSpace(sceneName))
+            {
+                Debug.LogWarning($"[CARGO V2][UI_TEAM] {label} scene name is empty.");
+                return;
+            }
+
+            if (!Application.CanStreamedLevelBeLoaded(sceneName))
+            {
+                Debug.LogWarning(
+                    $"[CARGO V2][UI_TEAM] {label} scene '{sceneName}' is not yet available in the player build. " +
+                    "The current premium UI checkpoint remains visible for QA.");
+                return;
+            }
+
+            SceneManager.LoadScene(sceneName, LoadSceneMode.Single);
+        }
+
+        private void ValidateRequiredArt()
+        {
+            if (logoSprite == null)
+            {
+                Debug.LogWarning($"[CARGO V2][UI_TEAM] Missing bound logo sprite from {LogoAssetPath}.");
+            }
+
+            if (truckSprite == null)
+            {
+                Debug.LogWarning($"[CARGO V2][UI_TEAM] Missing bound truck sprite from {TruckAssetPath}.");
+            }
+
+            if (glowSprite == null)
+            {
+                Debug.LogWarning($"[CARGO V2][UI_TEAM] Missing bound glow sprite from {GlowAssetPath}.");
             }
         }
 
-        private SpriteRenderer CreateTextureRenderer(
+        private SpriteRenderer CreateArt(
             string name,
-            Texture2D texture,
+            Sprite sprite,
             float targetWidth,
             Transform parent,
             Vector3 localPosition,
             int sortingOrder,
-            Color tint)
+            Color color)
         {
-            if (texture == null)
+            if (sprite == null)
             {
                 return null;
             }
 
-            Sprite sprite = Sprite.Create(
-                texture,
-                new Rect(0f, 0f, texture.width, texture.height),
-                new Vector2(0.5f, 0.5f),
-                100f,
-                0,
-                SpriteMeshType.FullRect);
-
-            sprite.name = $"{name}_RuntimeSprite";
-
             GameObject go = new GameObject(name);
-            Transform t = go.transform;
-            if (parent != null)
-            {
-                t.SetParent(parent, false);
-                t.localPosition = localPosition;
-            }
-            else
-            {
-                t.position = localPosition;
-            }
+            Transform transformRef = go.transform;
+            transformRef.SetParent(parent, false);
+            transformRef.localPosition = localPosition;
 
             SpriteRenderer renderer = go.AddComponent<SpriteRenderer>();
             renderer.sprite = sprite;
-            renderer.color = tint;
             renderer.sortingOrder = sortingOrder;
+            renderer.color = color;
 
-            float nativeWidth = Mathf.Max(0.001f, texture.width / 100f);
-            float scale = targetWidth / nativeWidth;
-            t.localScale = new Vector3(scale, scale, 1f);
-
-            sceneRenderers.Add(renderer);
+            float spriteWidth = Mathf.Max(0.001f, sprite.bounds.size.x);
+            float scale = targetWidth / spriteWidth;
+            transformRef.localScale = new Vector3(scale, scale, 1f);
             return renderer;
         }
 
@@ -536,156 +606,51 @@ namespace CargoV2.UI
             Transform parent = null)
         {
             GameObject go = new GameObject(name);
-            Transform t = go.transform;
-            if (parent != null)
-            {
-                t.SetParent(parent, false);
-                t.localPosition = position;
-            }
-            else
-            {
-                t.position = position;
-            }
+            Transform transformRef = go.transform;
+            transformRef.SetParent(parent, false);
+            transformRef.localPosition = position;
+            transformRef.localScale = new Vector3(size.x, size.y, 1f);
 
             SpriteRenderer renderer = go.AddComponent<SpriteRenderer>();
             renderer.sprite = solidSprite;
             renderer.color = color;
             renderer.sortingOrder = sortingOrder;
-            t.localScale = new Vector3(size.x, size.y, 1f);
-
-            sceneRenderers.Add(renderer);
             return renderer;
         }
 
-        private void CreateRouteNode(string name, Vector3 position, Transform parent, Color color)
-        {
-            CreateRect($"{name}_Outer", new Vector2(0.22f, 0.22f), position, WithAlpha(color, 0.22f), 12, parent);
-            CreateRect($"{name}_Inner", new Vector2(0.085f, 0.085f), new Vector3(position.x, position.y, position.z - 0.02f), color, 13, parent);
-        }
-
-        private static TextMesh CreatePremiumText(
+        private TextMesh CreatePremiumText(
             string text,
             Transform parent,
-            Vector3 position,
+            Vector3 localPosition,
             int fontSize,
             float characterSize,
             Color color,
             int sortingOrder,
             FontStyle style)
         {
-            GameObject go = new GameObject($"TXT_{text.Replace(" ", "_")}");
-            Transform t = go.transform;
-            if (parent != null)
-            {
-                t.SetParent(parent, false);
-                t.localPosition = position;
-            }
-            else
-            {
-                t.position = position;
-            }
+            GameObject go = new GameObject("Text_" + text.Replace(" ", "_"));
+            Transform transformRef = go.transform;
+            transformRef.SetParent(parent, false);
+            transformRef.localPosition = localPosition;
 
             TextMesh mesh = go.AddComponent<TextMesh>();
             mesh.text = text;
-            mesh.anchor = TextAnchor.MiddleCenter;
-            mesh.alignment = TextAlignment.Center;
             mesh.fontSize = fontSize;
             mesh.characterSize = characterSize;
-            mesh.fontStyle = style;
+            mesh.anchor = TextAnchor.MiddleCenter;
+            mesh.alignment = TextAlignment.Center;
             mesh.color = color;
+            mesh.fontStyle = style;
 
-            MeshRenderer renderer = go.GetComponent<MeshRenderer>();
-            if (renderer != null)
-            {
-                renderer.sortingOrder = sortingOrder;
-            }
-
+            MeshRenderer meshRenderer = go.GetComponent<MeshRenderer>();
+            meshRenderer.sortingOrder = sortingOrder;
             return mesh;
-        }
-
-        private void ValidateRequiredArt()
-        {
-            if (sceneMode == SceneMode.Splash)
-            {
-                if (logoTexture == null)
-                {
-                    Debug.LogError("[CARGO V2][UI_TEAM] IMG_Logo_Premium is not bound in 01_Splash.");
-                }
-
-                if (glowTexture == null)
-                {
-                    Debug.LogError("[CARGO V2][UI_TEAM] VFX_Glow_Premium is not bound in 01_Splash.");
-                }
-            }
-
-            if (sceneMode == SceneMode.Loading)
-            {
-                if (truckTexture == null)
-                {
-                    Debug.LogError("[CARGO V2][UI_TEAM] IMG_Truck_Premium is not bound in 02_Loading.");
-                }
-
-                if (truckAltTexture == null)
-                {
-                    Debug.LogWarning("[CARGO V2][UI_TEAM] IMG_Truck_Premium_Alt is not bound; primary truck will remain visible.");
-                }
-
-                if (glowTexture == null)
-                {
-                    Debug.LogError("[CARGO V2][UI_TEAM] VFX_Glow_Premium is not bound in 02_Loading.");
-                }
-            }
-        }
-
-        private void TransitionTo(string sceneName)
-        {
-            if (transitionIssued)
-            {
-                return;
-            }
-
-            transitionIssued = true;
-
-            if (string.IsNullOrWhiteSpace(sceneName))
-            {
-                Debug.LogError("[CARGO V2][UI_TEAM] Transition blocked: target scene is empty.");
-                return;
-            }
-
-            Debug.Log($"[CARGO V2][UI_TEAM] Transition {SceneManager.GetActiveScene().name} -> {sceneName}");
-
-            if (Application.CanStreamedLevelBeLoaded(sceneName))
-            {
-                SceneManager.LoadScene(sceneName, LoadSceneMode.Single);
-                return;
-            }
-
-#if UNITY_EDITOR
-            string editorPath = $"Assets/_Project/Scenes/{sceneName}.unity";
-            UnityEditor.SceneManagement.EditorSceneManager.LoadSceneInPlayMode(
-                editorPath,
-                new LoadSceneParameters(LoadSceneMode.Single));
-#else
-            Debug.LogError($"[CARGO V2][UI_TEAM] Scene '{sceneName}' is not present in Build Settings.");
-#endif
         }
 
         private float GetWorldWidth()
         {
-            float aspect = sceneCamera != null && sceneCamera.aspect > 0.01f
-                ? sceneCamera.aspect
-                : (Screen.height > 0 ? Screen.width / (float)Screen.height : 16f / 9f);
+            float aspect = Mathf.Max(0.6f, (float)Screen.width / Mathf.Max(1f, Screen.height));
             return ReferenceHalfHeight * 2f * aspect;
-        }
-
-        private static float Smooth01(float value)
-        {
-            return value * value * (3f - 2f * value);
-        }
-
-        private static float Frac(float value)
-        {
-            return value - Mathf.Floor(value);
         }
 
         private static Color WithAlpha(Color color, float alpha)
@@ -694,14 +659,9 @@ namespace CargoV2.UI
             return color;
         }
 
-        private sealed class ParticleDot
+        private static float Smooth01(float value)
         {
-            public SpriteRenderer Renderer;
-            public Vector3 BasePosition;
-            public float Phase;
-            public float Amplitude;
-            public float Speed;
-            public float BaseAlpha;
+            return value * value * (3f - 2f * value);
         }
     }
 }

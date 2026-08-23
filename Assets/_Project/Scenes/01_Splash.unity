@@ -47,10 +47,9 @@ MonoBehaviour:
   sceneMode: 0
   splashDurationSeconds: 3.2
   loadingDurationSeconds: 3
-  splashScene: 01_Splash
   loadingScene: 02_Loading
   worldMapScene: 04_WorldMap
-  logoTexture: {fileID: 0}
-  truckTexture: {fileID: 0}
-  truckAltTexture: {fileID: 0}
-  glowTexture: {fileID: 0}
+  logoSprite: {fileID: 0}
+  truckSprite: {fileID: 0}
+  truckAltSprite: {fileID: 0}
+  glowSprite: {fileID: 0}
