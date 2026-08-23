@@ -1,0 +1,4 @@
+CARGO V2 LEAD folder lock.
+Owner: LEAD_COMMANDER
+Scope: docs/
+Rule: team agents must not edit CARGO V2 command-center documentation except through a CAPTAIN-reviewed coordination change.
