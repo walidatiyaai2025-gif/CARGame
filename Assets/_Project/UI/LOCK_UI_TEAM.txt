@@ -1,0 +1,5 @@
+CARGO V2 UI TEAM folder lock.
+Owner: UI_TEAM
+Active P0 override scope: Unity visible checkpoint only.
+Allowed: Assets/_Project/UI/** and Assets/_Project/Scenes/01_Splash.unity, 02_Loading.unity, 04_WorldMap.unity plus their metadata.
+Other teams are on standby until LEAD_COMMANDER releases the override.
