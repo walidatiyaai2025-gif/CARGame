@@ -1,0 +1,6 @@
+CARGO V2 UI TEAM folder lock.
+Owner: UI_TEAM
+Scope: Assets/_Project/UI/
+Assigned: 01_Splash, 02_Loading, 03_Onboarding plus UI runtime controllers.
+Exception: UI_TEAM may edit Assets/_Project/Scenes/01_Splash.unity, 02_Loading.unity, 03_Onboarding.unity for Sprint 1.
+Do not modify another team's locked area without CAPTAIN coordination.
