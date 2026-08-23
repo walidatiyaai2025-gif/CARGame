@@ -122,9 +122,7 @@ namespace CargoV2.UI
 
         private void OnGUI()
         {
-            GUI.backgroundColor = Navy;
             GUI.color = Color.white;
-            GUI.Box(new Rect(0f, 0f, Screen.width, Screen.height), GUIContent.none);
 
             if (sceneMode == SceneMode.Splash)
             {
@@ -147,11 +145,16 @@ namespace CargoV2.UI
         private void DrawProgressBar()
         {
             Rect track = new Rect(Screen.width * 0.14f, Screen.height * 0.72f, Screen.width * 0.72f, Mathf.Max(22f, Screen.height * 0.026f));
-            GUI.color = new Color(1f, 1f, 1f, 0.16f);
-            GUI.Box(track, GUIContent.none);
-            GUI.color = Gold;
-            GUI.Box(new Rect(track.x, track.y, track.width * NormalizedProgress, track.height), GUIContent.none);
+
             GUI.color = Color.white;
+            GUI.backgroundColor = new Color(1f, 1f, 1f, 0.22f);
+            GUI.Box(track, GUIContent.none);
+
+            GUI.color = Color.white;
+            GUI.backgroundColor = Gold;
+            GUI.Box(new Rect(track.x, track.y, track.width * NormalizedProgress, track.height), GUIContent.none);
+
+            GUI.backgroundColor = Color.white;
             DrawCentered($"{Mathf.RoundToInt(NormalizedProgress * 100f)}%", track.y + track.height + 12f, Mathf.Max(15, Screen.height / 44), Color.white);
         }
 
