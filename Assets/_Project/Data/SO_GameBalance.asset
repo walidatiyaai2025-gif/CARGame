@@ -12,6 +12,219 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2a4d7ce5b60b4a918e3d5c10f2b6a901, type: 3}
   m_Name: SO_GameBalance
   m_EditorClassIdentifier: 
-  missions: []
-  storeProducts: []
-  slotTiers: []
+  missions:
+  - missionId: 1
+    city: Cairo
+    cityIndex: 1
+    energyCost: 1
+    timeSeconds: 30
+    coin1Star: 300
+    coin3Star: 500
+    xp: 20
+  - missionId: 2
+    city: Cairo
+    cityIndex: 2
+    energyCost: 1
+    timeSeconds: 35
+    coin1Star: 350
+    coin3Star: 600
+    xp: 25
+  - missionId: 3
+    city: Cairo
+    cityIndex: 3
+    energyCost: 1
+    timeSeconds: 40
+    coin1Star: 400
+    coin3Star: 700
+    xp: 30
+  - missionId: 4
+    city: Cairo
+    cityIndex: 4
+    energyCost: 1
+    timeSeconds: 45
+    coin1Star: 450
+    coin3Star: 800
+    xp: 35
+  - missionId: 5
+    city: Cairo
+    cityIndex: 5
+    energyCost: 1
+    timeSeconds: 50
+    coin1Star: 500
+    coin3Star: 900
+    xp: 40
+  - missionId: 6
+    city: Cairo
+    cityIndex: 6
+    energyCost: 1
+    timeSeconds: 55
+    coin1Star: 550
+    coin3Star: 1000
+    xp: 45
+  - missionId: 7
+    city: Cairo
+    cityIndex: 7
+    energyCost: 1
+    timeSeconds: 60
+    coin1Star: 600
+    coin3Star: 1200
+    xp: 50
+  - missionId: 8
+    city: Cairo
+    cityIndex: 8
+    energyCost: 1
+    timeSeconds: 65
+    coin1Star: 650
+    coin3Star: 1400
+    xp: 55
+  - missionId: 9
+    city: Cairo
+    cityIndex: 9
+    energyCost: 1
+    timeSeconds: 70
+    coin1Star: 700
+    coin3Star: 1600
+    xp: 60
+  - missionId: 10
+    city: Cairo
+    cityIndex: 10
+    energyCost: 1
+    timeSeconds: 75
+    coin1Star: 750
+    coin3Star: 2000
+    xp: 70
+  - missionId: 11
+    city: Dubai
+    cityIndex: 11
+    energyCost: 1
+    timeSeconds: 30
+    coin1Star: 300
+    coin3Star: 500
+    xp: 20
+  - missionId: 12
+    city: Dubai
+    cityIndex: 12
+    energyCost: 1
+    timeSeconds: 35
+    coin1Star: 350
+    coin3Star: 600
+    xp: 25
+  - missionId: 13
+    city: Dubai
+    cityIndex: 13
+    energyCost: 1
+    timeSeconds: 40
+    coin1Star: 400
+    coin3Star: 700
+    xp: 30
+  - missionId: 14
+    city: Dubai
+    cityIndex: 14
+    energyCost: 1
+    timeSeconds: 45
+    coin1Star: 450
+    coin3Star: 800
+    xp: 35
+  - missionId: 15
+    city: Dubai
+    cityIndex: 15
+    energyCost: 1
+    timeSeconds: 50
+    coin1Star: 500
+    coin3Star: 900
+    xp: 40
+  - missionId: 16
+    city: Dubai
+    cityIndex: 16
+    energyCost: 1
+    timeSeconds: 55
+    coin1Star: 550
+    coin3Star: 1000
+    xp: 45
+  - missionId: 17
+    city: Dubai
+    cityIndex: 17
+    energyCost: 1
+    timeSeconds: 60
+    coin1Star: 600
+    coin3Star: 1200
+    xp: 50
+  - missionId: 18
+    city: Dubai
+    cityIndex: 18
+    energyCost: 1
+    timeSeconds: 65
+    coin1Star: 650
+    coin3Star: 1400
+    xp: 55
+  - missionId: 19
+    city: Dubai
+    cityIndex: 19
+    energyCost: 1
+    timeSeconds: 70
+    coin1Star: 700
+    coin3Star: 1600
+    xp: 60
+  - missionId: 20
+    city: Dubai
+    cityIndex: 20
+    energyCost: 1
+    timeSeconds: 75
+    coin1Star: 750
+    coin3Star: 2000
+    xp: 70
+  storeProducts:
+  - id: coins_100k
+    label: 100K Coins
+    coins: 100000
+    usd: 1.99
+    oneTime: 0
+  - id: coins_500k
+    label: 500K Coins
+    coins: 500000
+    usd: 4.99
+    oneTime: 0
+  - id: coins_2m
+    label: 2M Coins
+    coins: 2000000
+    usd: 9.99
+    oneTime: 0
+  - id: coins_10m
+    label: 10M Coins
+    coins: 10000000
+    usd: 39.99
+    oneTime: 0
+  - id: hearts
+    label: Hearts
+    coins: 0
+    usd: 2.99
+    oneTime: 0
+  - id: remove_ads
+    label: Remove Ads
+    coins: 0
+    usd: 4.99
+    oneTime: 0
+  - id: starter
+    label: Starter Pack - 1M Coins
+    coins: 1000000
+    usd: 0.99
+    oneTime: 1
+  slotTiers:
+  - id: x20
+    multiplier: 20
+    costCoins: 200
+    rtp: 0.94
+    bigWinMin: 10000
+    bigWinMax: 100000
+  - id: x50
+    multiplier: 50
+    costCoins: 500
+    rtp: 0.95
+    bigWinMin: 25000
+    bigWinMax: 500000
+  - id: x100
+    multiplier: 100
+    costCoins: 1000
+    rtp: 0.96
+    bigWinMin: 50000
+    bigWinMax: 1000000
