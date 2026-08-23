@@ -1,15 +1,15 @@
-# CARGO V2 REPORT HOUR 4
+# CARGO V2 REPORT HOUR 5
 
 ## STATUS: 48%
 
-Authoritative integration head before this report update: `cargo-v2` @ `26a764fc5f095fa2eb9adc0b7e7766c606c42bfc`.
+Authoritative integration head before this report update: `cargo-v2` @ `2683217db597efa9cb842f5246f98484d4064f8e`.
 
-No new team implementation head and no new QA PASS has landed since Hour 3. Overall status therefore remains **48%**; report-only commits are not counted as product progress.
+No new team implementation head and no new QA PASS has landed since Hour 4. Overall status therefore remains **48%**; report-only commits are not counted as product progress.
 
 ## ASSET_TEAM
 Current Art Pass PR: **#256** (`[CARGO V2][ASSET_TEAM] Premium art pass assets`). State: **OPEN + DRAFT**, head `cargo-v2-asset-team` @ `a56da66b3e6955d34ea5e0774dca27b933f518e0`.
 
-Current branch relation to `cargo-v2`: **DIVERGED — ahead 1 / behind 3**. GitHub reports `mergeable: false`. No merge is authorized because exact-head QA remains HOLD.
+Current branch relation to `cargo-v2`: **DIVERGED — ahead 1 / behind 4**. GitHub reports `mergeable: false`. No merge is authorized because exact-head QA remains HOLD.
 
 Exact-head CI: **Flutter CI run #1141 = SUCCESS**.
 
@@ -26,7 +26,7 @@ Status: **BLOCKED — REFERENCE FIDELITY + UNITY IMPORT READINESS + RECONCILE RE
 ## UI_TEAM
 Current Art Pass PR: **#257** (`[CARGO V2][UI_TEAM] Rebuild premium Splash and Loading`). State: **OPEN + DRAFT**, head `cargo-v2-ui-art-pass` @ `49a2bda9c11e36597d0a7ac05d7d0885f5a16077`.
 
-Current branch relation to `cargo-v2`: **DIVERGED — ahead 2 / behind 2**. GitHub reports `mergeable: false`.
+Current branch relation to `cargo-v2`: **DIVERGED — ahead 2 / behind 3**. GitHub reports `mergeable: false`.
 
 Exact-head CI: **Flutter CI run #1143 = SUCCESS**.
 
@@ -35,21 +35,21 @@ Exact-head CI: **Flutter CI run #1143 = SUCCESS**.
 Status: **WAITING ON APPROVED #256, THEN RECONCILE + UNITY QA**.
 
 ## LOGIC_TEAM
-Branch: `cargo-v2-logic-team`. Relation to `cargo-v2`: **behind 3 / ahead 0**. No active Logic PR exists.
+Branch: `cargo-v2-logic-team`. Relation to `cargo-v2`: **behind 4 / ahead 0**. No active Logic PR exists.
 
 Status: **STANDBY / PREPARE WORLDMAP**. No implementation completion is claimed.
 
 ## DATA_TEAM
-Branch: `cargo-v2-data-team`. Relation to `cargo-v2`: **behind 3 / ahead 0**. Sprint 1 DATA PR **#251** is already merged.
+Branch: `cargo-v2-data-team`. Relation to `cargo-v2`: **behind 4 / ahead 0**. Sprint 1 DATA PR **#251** is already merged.
 
 Status: **STANDBY / PREPARE WORLDMAP**. No new completion is claimed.
 
 ## QA_TEAM
-Branch: `cargo-v2-qa-team`. Relation to `cargo-v2`: **behind 3 / ahead 0**. Governance PR **#250** is already merged.
+Branch: `cargo-v2-qa-team`. Relation to `cargo-v2`: **behind 4 / ahead 0**. Governance PR **#250** is already merged.
 
 Current QA evidence:
 - PR #256 exact head `a56da66b3e6955d34ea5e0774dca27b933f518e0`: **QA HOLD** with the fidelity/import defects above.
-- PR #257 exact head `49a2bda9c11e36597d0a7ac05d7d0885f5a16077`: **NO QA PASS**; visual/runtime acceptance remains blocked by #256.
+- PR #257 exact head `49a2bda9c11e36597d0a7ac05d7d0885f5a16077`: **NO QA PASS**; no submitted PR review/comment provides runtime or visual acceptance evidence.
 - FPS: **NOT MEASURED / NO TRUSTWORTHY CURRENT ART PASS FPS EVIDENCE**.
 - Current Art Pass runtime bugs: **NOT YET VERIFIED** on the final dependency chain because corrected approved assets have not reached Unity Play Mode acceptance.
 
@@ -76,9 +76,9 @@ Historical CARGO V2 PRs #250, #251 and #253 are merged. Historical/superseded UI
 ## BLOCKERS
 1. #256 remains under exact-head QA HOLD for premium reference-fidelity gaps.
 2. #256 lacks deterministic Unity `.meta` ownership and proven SVG import-as-Sprite evidence.
-3. `cargo-v2-asset-team` is 3 commits behind `cargo-v2` and must reconcile.
+3. `cargo-v2-asset-team` is 4 commits behind `cargo-v2` and must reconcile.
 4. #257 cannot complete trustworthy Unity visual/runtime QA until corrected #256 assets pass and are integrated.
-5. `cargo-v2-ui-art-pass` is 2 commits behind `cargo-v2` and must reconcile after the asset gate clears.
+5. `cargo-v2-ui-art-pass` is 3 commits behind `cargo-v2` and must reconcile after the asset gate clears.
 6. No trustworthy current Art Pass FPS measurement exists.
 7. No verified current Art Pass Unity Play Mode video exists on GitHub.
 
@@ -94,4 +94,4 @@ Historical CARGO V2 PRs #250, #251 and #253 are merged. Historical/superseded UI
 ## VIDEO EVIDENCE
 Current premium Art Pass: **PENDING — NO VERIFIED GITHUB VIDEO LINK AVAILABLE**.
 
-No video URL, FPS result, Unity runtime PASS, CI result, or completion evidence is fabricated.
+Repository search found no current Art Pass video artifact/link to promote as evidence. No video URL, FPS result, Unity runtime PASS, CI result, or completion evidence is fabricated.
