@@ -1,0 +1,5 @@
+CARGO V2 DATA TEAM folder lock.
+Owner: DATA_TEAM
+Scope: Assets/_Project/Data/
+Assigned: SO_GameBalance and localization/data contracts.
+Do not modify another team's locked area without CAPTAIN coordination.
