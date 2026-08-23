@@ -1,0 +1,5 @@
+CARGO V2 UI TEAM folder lock.
+Owner: UI_TEAM
+Scope: Assets/_Project/UI/ and approved scenes 01_Splash, 02_Loading, 04_WorldMap.
+Art Pass dependency: ASSET_TEAM premium outputs from Assets/_Project/Generated/.
+Do not modify another team's locked area. CAPTAIN merges only after QA PASS.
