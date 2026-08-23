@@ -1,0 +1,5 @@
+CARGO V2 QA TEAM folder lock.
+Owner: QA_TEAM
+Canonical scope: assets/_project/qa/
+Assigned deliverables: SCR_QATester equivalent, TestPlan, FPSCounter, regression evidence.
+Do not modify another team's locked area without CAPTAIN coordination.
