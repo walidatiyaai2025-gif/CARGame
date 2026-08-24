@@ -1,4 +1,5 @@
 using System;
+using CargoV2.Data;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -70,10 +71,7 @@ namespace CargoV2.Logic
             if (routeController == null || !PlayerPrefs.HasKey(CompletionHandoffKey)) return false;
 
             int missionCount = routeController.MissionCount;
-            if (missionCount <= 0)
-            {
-                return false;
-            }
+            if (missionCount <= 0) return false;
 
             int missionId = PlayerPrefs.GetInt(CompletionHandoffKey, 0);
             if (!WorldMapProgression.IsValidMissionId(missionId, missionCount))
@@ -81,6 +79,14 @@ namespace CargoV2.Logic
                 ClearHandoff();
                 Debug.LogWarning(
                     $"[CARGO V2][LOGIC_TEAM] Rejected invalid mission completion handoff {missionId}; valid range is 1..{missionCount}.");
+                return false;
+            }
+
+            SO_GameBalance.MissionBalance mission = routeController.GetMission(missionId);
+            if (mission == null)
+            {
+                Debug.LogWarning(
+                    $"[CARGO V2][LOGIC_TEAM] Mission {missionId} has no authoritative balance record; completion handoff retained for retry.");
                 return false;
             }
 
@@ -100,12 +106,31 @@ namespace CargoV2.Logic
             {
                 ClearHandoff();
                 Debug.LogWarning(
-                    $"[CARGO V2][LOGIC_TEAM] Rejected non-sequential mission completion handoff {missionId}; progression was not advanced.");
+                    $"[CARGO V2][LOGIC_TEAM] Rejected non-sequential mission completion handoff {missionId}; progression was not advanced and no reward was granted.");
+                return false;
+            }
+
+            if (!SCR_MissionRewardStore.TrySettleMission(
+                    mission,
+                    out bool rewardGranted,
+                    out SCR_MissionRewardStore.Snapshot economy))
+            {
+                Debug.LogWarning(
+                    $"[CARGO V2][LOGIC_TEAM] Progression accepted mission {missionId}, but reward settlement did not persist safely; handoff retained for idempotent retry.");
                 return false;
             }
 
             ClearHandoff();
-            Debug.Log($"[CARGO V2][LOGIC_TEAM] Consumed mission completion handoff {missionId} through authoritative progression.");
+            if (rewardGranted)
+            {
+                Debug.Log(
+                    $"[CARGO V2][LOGIC_TEAM] Mission {missionId} settled approved completion reward: +{mission.coin1Star} coins, +{mission.xp} XP. Totals: {economy.Coins} coins / {economy.Xp} XP.");
+            }
+            else
+            {
+                Debug.Log(
+                    $"[CARGO V2][LOGIC_TEAM] Mission {missionId} completion consumed with reward already settled; totals remain {economy.Coins} coins / {economy.Xp} XP.");
+            }
             return true;
         }
 
