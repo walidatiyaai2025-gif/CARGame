@@ -10,6 +10,18 @@ namespace CargoV2.Logic
 
         private bool initialized;
 
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+        private static void Install()
+        {
+            SCR_WorldMapRouteController controller = FindObjectOfType<SCR_WorldMapRouteController>();
+            if (controller == null) return;
+            if (controller.GetComponent<SCR_WorldMapPersistenceBridge>() != null) return;
+
+            SCR_WorldMapPersistenceBridge bridge =
+                controller.gameObject.AddComponent<SCR_WorldMapPersistenceBridge>();
+            bridge.routeController = controller;
+        }
+
         private void Awake()
         {
             if (routeController == null)
