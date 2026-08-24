@@ -8,6 +8,7 @@ namespace CargoV2.UI
     [DisallowMultipleComponent]
     public sealed class SCR_MissionRuntimeDirector : MonoBehaviour
     {
+        private const string PendingMissionKey = "cargo_v2_pending_mission_id";
         private const string CompletionHandoffKey = "cargo_v2_completed_mission_handoff";
         private static readonly Vector3 MissionOrigin = new Vector3(1000f, 0f, 1000f);
 
@@ -22,28 +23,34 @@ namespace CargoV2.UI
         private float remainingSeconds;
         private bool terminal;
         private bool succeeded;
+        private bool initialized;
+
+        public static bool IsRunning => FindObjectOfType<SCR_MissionRuntimeDirector>() != null;
 
         public static bool LaunchInPlace(int missionId)
         {
             if (missionId < 1 || missionId > 20) return false;
-            if (FindObjectOfType<SCR_MissionRuntimeDirector>() != null) return false;
+            if (IsRunning) return false;
 
             GameObject host = new GameObject("CARGO_V2_InPlaceMissionRuntime");
             SCR_MissionRuntimeDirector director = host.AddComponent<SCR_MissionRuntimeDirector>();
-            return director.Initialize(missionId);
+            bool launched = director.Initialize(missionId);
+            if (!launched && director != null) Destroy(director.gameObject);
+            return launched;
         }
 
         private bool Initialize(int missionId)
         {
+            if (initialized) return false;
+
             balance = ScriptableObject.CreateInstance<SO_GameBalance>();
             balance.ResetToApprovedDefaults();
             mission = balance.GetMission(missionId);
-            if (mission == null)
-            {
-                Destroy(gameObject);
-                return false;
-            }
+            if (mission == null) return false;
 
+            initialized = true;
+            PlayerPrefs.DeleteKey(CompletionHandoffKey);
+            PlayerPrefs.Save();
             remainingSeconds = Mathf.Max(10f, mission.timeSeconds);
             BuildMissionWorld();
             return true;
@@ -51,7 +58,7 @@ namespace CargoV2.UI
 
         private void Update()
         {
-            if (terminal) return;
+            if (!initialized || terminal) return;
             remainingSeconds -= Time.deltaTime;
             if (remainingSeconds <= 0f)
             {
@@ -97,12 +104,14 @@ namespace CargoV2.UI
             }
 
             GameObject gateLeft = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            gateLeft.name = "MissionGateLeft";
             gateLeft.transform.position = MissionOrigin + new Vector3(-4.5f, 2f, 5f);
             gateLeft.transform.localScale = new Vector3(0.5f, 4f, 0.5f);
             SetMaterial(gateLeft, gold);
             spawnedObjects.Add(gateLeft);
 
             GameObject gateRight = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            gateRight.name = "MissionGateRight";
             gateRight.transform.position = MissionOrigin + new Vector3(4.5f, 2f, 5f);
             gateRight.transform.localScale = new Vector3(0.5f, 4f, 0.5f);
             SetMaterial(gateRight, gold);
@@ -138,7 +147,7 @@ namespace CargoV2.UI
 
         internal void Deliver(GameObject cargo)
         {
-            if (terminal || cargo == null || !cargo.activeSelf) return;
+            if (!initialized || terminal || cargo == null || !cargo.activeSelf) return;
             cargo.SetActive(false);
             delivered++;
             if (delivered >= requiredDeliveries)
@@ -152,6 +161,7 @@ namespace CargoV2.UI
 
         private void RetryMission()
         {
+            if (!initialized) return;
             delivered = 0;
             terminal = false;
             succeeded = false;
@@ -166,6 +176,8 @@ namespace CargoV2.UI
 
         private void OnGUI()
         {
+            if (!initialized || mission == null) return;
+
             const int width = 430;
             GUILayout.BeginArea(new Rect(24, 24, width, 260), GUI.skin.box);
             GUILayout.Label($"CARGO V2 — MISSION {mission.missionId:00}");
@@ -185,6 +197,9 @@ namespace CargoV2.UI
 
         private void OnDestroy()
         {
+            PlayerPrefs.DeleteKey(PendingMissionKey);
+            PlayerPrefs.Save();
+
             foreach (GameObject go in spawnedObjects)
             {
                 if (go != null) Destroy(go);
