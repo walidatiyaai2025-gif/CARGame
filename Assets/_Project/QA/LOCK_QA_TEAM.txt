@@ -1,0 +1,6 @@
+CARGO V2 QA_TEAM LOCK
+Owner: QA_TEAM
+Scope: /Assets/_Project/QA/
+Current task: Issue #282 read-only runtime contract probe
+Rule: no edits outside this folder except QA evidence/review comments.
+Runtime rule: structural probe output never substitutes for visual/FPS/gameplay QA evidence.
