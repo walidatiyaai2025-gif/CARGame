@@ -22,6 +22,7 @@ namespace CargoV2.QA.Editor
         };
 
         private const string MissionResourcePath = "CargoV2/Mission/MOD_Mission_CargoDepot";
+        private const string WorldMapResourcePath = "CargoV2/WorldMap/MOD_WorldMap_MarkerPack";
 
         [MenuItem("CARGO V2/QA/Report Integration Preview Readiness")]
         public static void Report()
@@ -41,6 +42,8 @@ namespace CargoV2.QA.Editor
                 Record(FindType(typeName) != null, $"Runtime contract present: {typeName}", ref pass, ref hold);
             }
 
+            Record(Resources.Load<GameObject>(WorldMapResourcePath) != null,
+                $"WorldMap Resources asset resolves: {WorldMapResourcePath}", ref pass, ref hold);
             Record(Resources.Load<GameObject>(MissionResourcePath) != null,
                 $"Mission Resources asset resolves: {MissionResourcePath}", ref pass, ref hold);
 
