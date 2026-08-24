@@ -1,0 +1,50 @@
+# CARGO V2 premium truck materials
+newmtl navy
+Ka 0.02 0.05 0.12
+Kd 0.03 0.18 0.38
+Ks 0.55 0.70 0.95
+Ns 180
+illum 2
+
+newmtl gold
+Ka 0.16 0.08 0.01
+Kd 0.92 0.50 0.04
+Ks 1.00 0.82 0.32
+Ns 220
+illum 2
+
+newmtl chrome
+Ka 0.12 0.12 0.12
+Kd 0.55 0.60 0.66
+Ks 0.95 0.95 0.95
+Ns 300
+illum 2
+
+newmtl glass
+Ka 0.01 0.03 0.05
+Kd 0.05 0.17 0.24
+Ks 0.70 0.88 1.00
+Ns 250
+d 0.82
+illum 4
+
+newmtl dark
+Ka 0.01 0.01 0.015
+Kd 0.04 0.05 0.07
+Ks 0.18 0.20 0.24
+Ns 80
+illum 2
+
+newmtl lamp
+Ka 0.30 0.18 0.02
+Kd 1.00 0.72 0.12
+Ks 1.00 0.95 0.75
+Ns 240
+illum 2
+
+newmtl rubber
+Ka 0.01 0.01 0.01
+Kd 0.025 0.025 0.03
+Ks 0.08 0.08 0.09
+Ns 30
+illum 2
