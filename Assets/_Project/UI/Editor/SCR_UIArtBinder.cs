@@ -31,10 +31,13 @@ namespace CargoV2.UI.Editor
 
         public static void BindPremiumArtOrThrow()
         {
-            Sprite logo = ResolveSprite(SCR_UIManager.LogoAssetPath, required: true);
-            Sprite truckFallback = ResolveSprite(SCR_UIManager.TruckAssetPath, required: false);
-            Sprite truckAlt = ResolveSprite(SCR_UIManager.TruckAltAssetPath, required: false);
-            Sprite glow = ResolveSprite(SCR_UIManager.GlowAssetPath, required: true);
+            // The real source-controlled OBJ is the authoritative truck path. 2D truck SVGs
+            // are intentionally not bound when the 3D model is present so the UI cannot render
+            // a flat duplicate on top of the real truck.
+            Sprite logo = ResolveSprite(SCR_UIManager.LogoAssetPath, required: false);
+            Sprite truckFallback = null;
+            Sprite truckAlt = null;
+            Sprite glow = ResolveSprite(SCR_UIManager.GlowAssetPath, required: false);
             GameObject truckModel = ResolveModel(TruckModelAssetPath);
 
             string activeScenePath = SceneManager.GetActiveScene().path;
@@ -83,6 +86,7 @@ namespace CargoV2.UI.Editor
                         "PR #256 (or its approved replacement) must land before a release build.");
                 }
 
+                Debug.LogWarning($"[CARGO V2][UI_TEAM] Optional Art Pass sprite is unavailable: {assetPath}. Using deterministic runtime fallback.");
                 return null;
             }
 
@@ -112,6 +116,9 @@ namespace CargoV2.UI.Editor
                     "Verify its importer and deterministic .meta files before QA PASS.");
             }
 
+            Debug.LogWarning(
+                $"[CARGO V2][UI_TEAM] Optional Art Pass sprite did not import as Sprite: {assetPath}. " +
+                "Continuing with deterministic runtime fallback while the real 3D truck remains mandatory.");
             return null;
         }
 
