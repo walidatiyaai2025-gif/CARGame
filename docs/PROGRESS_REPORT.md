@@ -50,9 +50,9 @@ Status: **IMPLEMENTED / CI GREEN / UNITY HOLD**.
 - Runtime probe validates required WorldMap named parts: MissionMarker_Base, MissionMarker_GoldRing, MissionMarker_Beacon, RoutePylon, RoutePylon_Cap, CityBeacon_Tower, CityBeacon_Crown, CityBeacon_Core.
 - Mission named-part validation remains: CargoCrate, CargoCrateBand, DepotPallet, RouteGateLeft/Right/Top, CheckpointBeacon.
 - Editor readiness report now checks both runtime 3D Resources packs in addition to enabled Splash/Loading/WorldMap build scenes and required runtime contract types.
-- Current exact-head CI for `08006d372...` has **NOT APPEARED YET** at this report update; prior #1186 success is not inherited.
+- Current exact-head **Flutter CI #1190 is PENDING** for `08006d372...`; prior #1186 success is not inherited.
 
-Status: **QA SOURCE TOOLING EXTENDED FOR BOTH REAL 3D RUNTIME PACKS / STATIC PASS / EXACT-HEAD CI PENDING / UNITY PLAY MODE HOLD**.
+Status: **QA SOURCE TOOLING EXTENDED FOR BOTH REAL 3D RUNTIME PACKS / STATIC PASS / EXACT-HEAD CI #1190 PENDING / UNITY PLAY MODE HOLD**.
 
 ## PLAYABLE PATH
 Source-controlled branches cover:
@@ -75,7 +75,7 @@ This is a materially complete first playable loop in source. Unity assembled obs
 
 ## CURRENT EVIDENCE
 - Flutter CI #1149, #1158, #1160, #1161, #1163, #1166, #1169, #1171, #1172, #1178, #1179, #1182, #1183, #1185, #1186, **#1187, #1188: SUCCESS** on their recorded exact heads.
-- PR #283 new exact head `08006d372...`: fresh CI **NOT VISIBLE YET**; no success is inherited.
+- PR #283 exact head `08006d372...`: **Flutter CI #1190 PENDING**; no success is inherited.
 - Unity 2022.3 integrated runtime PASS: **NOT AVAILABLE**.
 - FPS: **NOT MEASURED**.
 - Current-head Unity runtime video: **NOT AVAILABLE**.
@@ -83,7 +83,7 @@ This is a materially complete first playable loop in source. Unity assembled obs
 No older QA PASS is inherited by a changed head. No Unity import, runtime, FPS or video evidence is fabricated.
 
 ## BLOCKERS
-1. Fresh exact-head CI must run for QA PR #283 head `08006d372...` and be read independently.
+1. Flutter CI #1190 must complete successfully on QA PR #283 exact head `08006d372...` and be read independently.
 2. No Unity 2022.3 assembled Play Mode run has proven the full dependency chain.
 3. Team branches are stacked/diverged; every final candidate requires reconciliation before CAPTAIN integration.
 4. Unity must prove OBJ scale/orientation/materials, both Resources paths, 20 real marker instances, WorldMap touch/locked-node semantics, Deploy, five Mission deliveries, timeout/retry/back/cleanup, Mission 2 unlock, restart persistence and reward replay idempotency.
@@ -92,7 +92,7 @@ No older QA PASS is inherited by a changed head. No Unity import, runtime, FPS o
 7. No trustworthy current-head Unity Play Mode video exists.
 
 ## NEXT ACTIONS
-1. Read fresh exact-head CI for QA PR #283 once it appears; fix only concrete source failures.
+1. Read exact-head CI #1190 and fix only concrete source failures if present.
 2. Reconcile final team candidates from latest `cargo-v2` without bypassing their dependency stack.
 3. Build/reconcile a CAPTAIN QA preview branch containing the full current dependency chain for Play Mode only; it is never a merge bypass.
 4. Run the updated PR #283 Editor readiness report + runtime probe against that exact preview SHA.
