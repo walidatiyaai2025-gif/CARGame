@@ -69,8 +69,13 @@ namespace CargoV2.Logic
         {
             if (routeController == null || !PlayerPrefs.HasKey(CompletionHandoffKey)) return false;
 
-            int missionId = PlayerPrefs.GetInt(CompletionHandoffKey, 0);
             int missionCount = routeController.MissionCount;
+            if (missionCount <= 0)
+            {
+                return false;
+            }
+
+            int missionId = PlayerPrefs.GetInt(CompletionHandoffKey, 0);
             if (!WorldMapProgression.IsValidMissionId(missionId, missionCount))
             {
                 ClearHandoff();
