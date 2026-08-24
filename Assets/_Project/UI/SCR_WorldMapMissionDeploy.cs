@@ -9,18 +9,42 @@ namespace CargoV2.UI
     public sealed class SCR_WorldMapMissionDeploy : MonoBehaviour
     {
         private const string PendingMissionKey = "cargo_v2_pending_mission_id";
+        private static bool sceneHookRegistered;
+
         private object routeController;
         private Type routeControllerType;
         private PropertyInfo selectedMissionIdProperty;
         private MethodInfo getNodeStateMethod;
         private TextMesh statusText;
+        private Material deployMaterial;
         private bool transitionBusy;
 
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-        private static void Install()
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        private static void RegisterSceneHook()
         {
-            Scene scene = SceneManager.GetActiveScene();
-            if (!IsWorldMapScene(scene.name)) return;
+            if (sceneHookRegistered)
+            {
+                SceneManager.sceneLoaded -= OnSceneLoaded;
+            }
+
+            SceneManager.sceneLoaded += OnSceneLoaded;
+            sceneHookRegistered = true;
+        }
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+        private static void InstallInitialScene()
+        {
+            TryInstall(SceneManager.GetActiveScene());
+        }
+
+        private static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            TryInstall(scene);
+        }
+
+        private static void TryInstall(Scene scene)
+        {
+            if (!scene.IsValid() || !scene.isLoaded || !IsWorldMapScene(scene.name)) return;
             if (FindObjectOfType<SCR_WorldMapMissionDeploy>() != null) return;
             new GameObject("CARGO_V2_MissionDeployGateway").AddComponent<SCR_WorldMapMissionDeploy>();
         }
@@ -42,6 +66,15 @@ namespace CargoV2.UI
         {
             if (routeController == null) DiscoverRouteController();
             RefreshStatus();
+        }
+
+        private void OnDestroy()
+        {
+            if (deployMaterial != null)
+            {
+                Destroy(deployMaterial);
+                deployMaterial = null;
+            }
         }
 
         private void DiscoverRouteController()
@@ -67,8 +100,8 @@ namespace CargoV2.UI
             Renderer renderer = button.GetComponent<Renderer>();
             if (renderer != null && shader != null)
             {
-                Material material = new Material(shader) { color = new Color(0.88f, 0.66f, 0.16f) };
-                renderer.material = material;
+                deployMaterial = new Material(shader) { color = new Color(0.88f, 0.66f, 0.16f) };
+                renderer.sharedMaterial = deployMaterial;
             }
 
             DeployClick click = button.AddComponent<DeployClick>();
@@ -137,7 +170,19 @@ namespace CargoV2.UI
             PlayerPrefs.SetInt(PendingMissionKey, missionId);
             PlayerPrefs.Save();
             RefreshStatus($"DEPLOYING MISSION {missionId:00}...");
-            SceneManager.LoadScene(nextScene, LoadSceneMode.Single);
+
+            try
+            {
+                SceneManager.LoadScene(nextScene, LoadSceneMode.Single);
+            }
+            catch (Exception e)
+            {
+                transitionBusy = false;
+                PlayerPrefs.DeleteKey(PendingMissionKey);
+                PlayerPrefs.Save();
+                Debug.LogWarning($"[CARGO V2][UI_TEAM] Mission transition failed safely: {e.Message}");
+                RefreshStatus("DEPLOY FAILED — TRY AGAIN");
+            }
         }
 
         private static string FindMissionScene()
