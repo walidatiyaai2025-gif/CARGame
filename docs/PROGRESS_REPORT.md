@@ -1,17 +1,17 @@
-# CARGO V2 REPORT HOUR 11
+# CARGO V2 REPORT HOUR 12
 
-## STATUS: 56%
+## STATUS: 58%
 
-Authoritative integration head observed before this report commit: `cargo-v2` @ `645f4a5491a3ecb3833969a9474687c9f502571e`.
+Authoritative integration head observed before this report commit: `cargo-v2` @ `e896770a3f12cb71fa98504160ba03d1ae8d5dc8`.
 
-Overall status advances from **55% to 56%** because the current exact ASSET_TEAM head now has completed green CI. This is CI evidence only; no Unity runtime/visual QA PASS is claimed, no team PR is merged, `cargo-v2` is not merged to `main`, and no final APK/AAB is produced.
+Overall status advances from **56% to 58%** because UI_TEAM now contains a real programming checkpoint that instantiates the source-controlled premium OBJ truck into both Splash and Loading scenes and adds runtime 3D presentation logic. This is implementation evidence only. No Unity runtime/visual QA PASS is claimed, no team PR is merged, `cargo-v2` is not merged to `main`, and no final APK/AAB is produced.
 
 ## ASSET_TEAM
 Current Art Pass PR: **#256** — `[CARGO V2][ASSET_TEAM] Premium art pass assets`.
 
-State: **OPEN + DRAFT + MERGEABLE**, head `cargo-v2-asset-team` @ `fcca9f31c8452c5db191a76203ce7c81822c3bb6`.
+State: **OPEN + DRAFT**, head `cargo-v2-asset-team` @ `fcca9f31c8452c5db191a76203ce7c81822c3bb6`.
 
-Relation to current `cargo-v2`: **DIVERGED — ahead 4 / behind 5**.
+Relation to current `cargo-v2`: **DIVERGED — ahead 4 / behind 7**.
 
 Current source-controlled Art Pass includes the four premium SVG assets plus real 3D source assets `MOD_Truck_Premium.obj` / `MOD_Truck_Premium.mtl` and deterministic Unity `.meta` for both 3D files.
 
@@ -22,51 +22,56 @@ QA evidence:
 - historical reviewed head `a56da66...`: **QA HOLD**;
 - current exact head `fcca9f31...`: **NO FRESH QA PASS**.
 
-Current 3D model is real OBJ geometry, but the repository diff shows it is still a relatively simple stylized truck construction rather than final premium production geometry. QA must validate Unity import, scale/orientation, material assignment, missing references and visual fidelity before acceptance.
+The historical QA HOLD remains relevant to truck/logo reference fidelity and SVG import proof. Deterministic OBJ/MTL metadata is now present, but Unity import, scale/orientation, material assignment and visual fidelity are not yet verified on the exact current head.
 
-Status: **ACTIVE — REAL 3D ASSET PRESENT + CURRENT CI GREEN; UNITY/REFERENCE QA STILL BLOCKING MERGE**.
+Status: **ACTIVE — REAL 3D ASSET PRESENT + EXACT-HEAD CI GREEN; UNITY/REFERENCE QA STILL BLOCKING MERGE**.
 
 ## UI_TEAM
 Current Art Pass PR: **#257** — `[CARGO V2][UI_TEAM] Rebuild premium Splash and Loading`.
 
-State: **OPEN + DRAFT + MERGEABLE**, head `cargo-v2-ui-art-pass` @ `49a2bda9c11e36597d0a7ac05d7d0885f5a16077`.
+State: **OPEN + DRAFT + MERGEABLE**, head `cargo-v2-ui-art-pass` @ `3ddd8d75c9b3056fe04dc0915e2d094600dd2311`.
 
-Relation to current `cargo-v2`: **DIVERGED — ahead 2 / behind 10**.
+Relation to current `cargo-v2`: **DIVERGED — ahead 5 / behind 12**.
+
+Implementation advanced this cycle:
+- `SCR_UIArtBinder` now imports `Assets/_Project/Generated/MOD_Truck_Premium.obj` as a real Unity `GameObject` dependency;
+- the binder instantiates a `PremiumTruck3D` root into both `01_Splash` and `02_Loading` instead of relying on a truck SVG as the only runtime truck path;
+- new runtime component `SCR_PremiumTruck3D` normalizes the imported model from renderer bounds, places it per scene, adds restrained idle yaw/bob and warm-key/cool-rim lighting;
+- deterministic `.meta` for the new runtime component is committed;
+- truck SVG is now optional fallback, while logo/glow SVG import proof remains required before QA PASS.
 
 Exact-head CI:
-- **Flutter CI #1143 / run 32633339843 = SUCCESS**.
+- **Flutter CI #1152 / run 32692407490 = IN PROGRESS** at the latest check.
 
-Implementation already contains rebuilt `01_Splash`, `02_Loading`, `SCR_UIManager` and `SCR_UIArtBinder`. The binder still consumes the four SVG Art Pass files as Sprites and therefore still depends on an unproven SVG/vector-import path. The real OBJ/MTL truck from #256 is not yet integrated into Splash/Loading runtime composition.
+QA: **NO EXACT-HEAD QA PASS**. No verified Unity compile/Play Mode result, no measured FPS and no current premium Art Pass video evidence are present.
 
-QA: **NO EXACT-HEAD QA PASS**. No verified Unity Play Mode result, no measured FPS and no current premium Art Pass video evidence are present.
-
-Status: **WAITING ON APPROVED #256, THEN RECONCILE + REAL 3D INTEGRATION + PLAY MODE QA**.
+Status: **ACTIVE — REAL 3D TRUCK RUNTIME INTEGRATION IMPLEMENTED; RECONCILE + UNITY QA STILL REQUIRED**.
 
 ## LOGIC_TEAM
-Branch: `cargo-v2-logic-team` @ `adad1189d65b48fdd2f37606d922c146f19e8de3`.
+Branch: `cargo-v2-logic-team` @ merge base `adad1189d65b48fdd2f37606d922c146f19e8de3`.
 
-Relation to current `cargo-v2`: **behind 11 / ahead 0**.
+Relation to current `cargo-v2`: **behind 13 / ahead 0**.
 
 Status: **STANDBY / PREPARE WORLDMAP**. No active Logic PR and no new gameplay completion evidence exist on this branch.
 
 ## DATA_TEAM
-Branch: `cargo-v2-data-team` @ `adad1189d65b48fdd2f37606d922c146f19e8de3`.
+Branch: `cargo-v2-data-team` @ merge base `adad1189d65b48fdd2f37606d922c146f19e8de3`.
 
-Relation to current `cargo-v2`: **behind 11 / ahead 0**.
+Relation to current `cargo-v2`: **behind 13 / ahead 0**.
 
 Historical DATA PR **#251** remains merged. No new Data PR or new WorldMap implementation evidence exists this cycle.
 
 Status: **STANDBY / PREPARE WORLDMAP**.
 
 ## QA_TEAM
-Branch: `cargo-v2-qa-team` @ `adad1189d65b48fdd2f37606d922c146f19e8de3`.
+Branch: `cargo-v2-qa-team` @ merge base `adad1189d65b48fdd2f37606d922c146f19e8de3`.
 
-Relation to current `cargo-v2`: **behind 11 / ahead 0**.
+Relation to current `cargo-v2`: **behind 13 / ahead 0**.
 
 Current evidence:
 - #256 historical reviewed head: **QA HOLD**;
 - #256 current exact head `fcca9f31...`: **NO FRESH QA VERDICT**;
-- #257 current exact head `49a2bda...`: **NO QA PASS**;
+- #257 current exact head `3ddd8d75...`: **NO QA PASS**;
 - FPS: **NOT MEASURED / NO TRUSTWORTHY CURRENT ART PASS FPS EVIDENCE**;
 - premium Play Mode video: **NOT AVAILABLE ON GITHUB**.
 
@@ -74,35 +79,41 @@ Historical QA evidence is not promoted as current-head acceptance.
 
 ## CI STATUS
 - PR #256 exact head `fcca9f31...`: **Flutter CI #1149 = SUCCESS**.
-- PR #257 exact head `49a2bda...`: **Flutter CI #1143 = SUCCESS**.
+- PR #257 exact head `3ddd8d75...`: **Flutter CI #1152 = IN PROGRESS**.
 - CI green does **not** replace Unity runtime/visual QA.
 
 ## PROGRAMMING / PLAYABLE-GAME GAP REVIEW
-Highest-priority real gaps toward a playable premium 3D checkpoint:
-1. run exact-head Unity import/visual QA on #256;
-2. reconcile #256 to current `cargo-v2` and obtain exact-head QA PASS;
-3. integrate `MOD_Truck_Premium.obj`/`.mtl` into #257 instead of shipping an SVG-only truck path;
-4. remove, isolate or prove the mandatory SVG importer dependency used by `SCR_UIArtBinder`;
-5. reconcile #257 and verify Splash → Loading → WorldMap in Unity Play Mode;
+Completed in this command-center cycle:
+1. removed the real truck runtime dependency from the SVG-only path by making the OBJ model mandatory in `SCR_UIArtBinder`;
+2. instantiated the source-controlled real 3D truck into both Splash and Loading scenes during deterministic Art Pass binding;
+3. added runtime model normalization, positioning, subtle motion and presentation lighting through `SCR_PremiumTruck3D`;
+4. updated PR #257 documentation to reflect the real 3D runtime path and exact current head.
+
+Highest-priority remaining gaps toward a playable premium 3D checkpoint:
+1. wait for exact-head CI #1152 to complete and fix any real failure;
+2. run Unity 2022.3 compile/import/Play Mode QA on #256 and #257 exact heads;
+3. reconcile #256 to current `cargo-v2`, obtain exact-head QA PASS, then allow CAPTAIN-only merge;
+4. reconcile #257 after approved #256 integration and verify that OBJ/MTL import, materials, 3D scale and scene composition are correct;
+5. verify Splash → Loading → WorldMap transition in Play Mode;
 6. record actual FPS and video only from the tested exact head;
 7. refresh Logic/Data from current `cargo-v2` and start the smallest dependency-safe WorldMap gameplay slice.
 
 ## BLOCKERS
 1. No fresh Unity QA exists on #256 current exact head despite green CI.
-2. Premium truck/logo reference fidelity is still unproven.
-3. The real 3D truck is not yet used by #257 runtime composition.
-4. SVG/vector importer proof remains unresolved for the required 2D Art Pass assets.
-5. #256 is behind current `cargo-v2` by 5 commits; #257 is behind by 10 commits.
+2. Premium truck/logo reference fidelity is still unproven in Unity.
+3. #257 now contains real 3D runtime integration, but it is not yet Unity-tested and is behind current `cargo-v2` by 12 commits.
+4. Logo/glow SVG importer proof remains unresolved.
+5. #256 is behind current `cargo-v2` by 7 commits.
 6. No trustworthy current FPS measurement exists.
 7. No verified premium Art Pass Play Mode video exists on GitHub.
-8. WorldMap Logic/Data branches remain stale and have no current implementation PR.
+8. WorldMap Logic/Data/QA branches remain stale by 13 commits and have no current implementation PR.
 
 ## NEXT ACTIONS
-1. **QA_TEAM / #256:** validate Unity 2022.3 import of OBJ/MTL on exact head `fcca9f31...`, including scale, orientation, materials and missing references; record PASS/HOLD against that exact SHA.
-2. **ASSET_TEAM:** if visual fidelity fails, continue refining the actual 3D model/materials rather than substituting placeholder art.
+1. **CI / #257:** complete exact-head Flutter CI #1152 and repair any failure before promotion.
+2. **QA_TEAM / #256:** validate Unity 2022.3 import of OBJ/MTL on exact head `fcca9f31...`, including scale, orientation, materials, missing references and reference fidelity; record PASS/HOLD against that SHA.
 3. **CAPTAIN:** reconcile and merge #256 only after exact-head QA PASS.
-4. **UI_TEAM / #257:** after approved #256 integration, reconcile to current `cargo-v2`, bind/use the real 3D truck in Splash/Loading and make the SVG-only path non-blocking unless the importer is proven.
-5. **QA_TEAM / #257:** verify Splash → Loading → WorldMap in Play Mode and record real bugs, real FPS and real video evidence only if observed.
+4. **UI_TEAM / #257:** after approved #256 integration, reconcile to current `cargo-v2` and keep the real OBJ truck as the primary runtime truck path.
+5. **QA_TEAM / #257:** verify Unity compile plus Splash → Loading → WorldMap in Play Mode, imported model visibility, material response and no broken references; record real bugs, FPS and video evidence only if observed.
 6. **LOGIC_TEAM + DATA_TEAM:** refresh from current `cargo-v2` and begin the first playable WorldMap slice after the Art Pass dependency is stable.
 7. **CAPTAIN:** merge #257 only after exact-head QA PASS.
 
