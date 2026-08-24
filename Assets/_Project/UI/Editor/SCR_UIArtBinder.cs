@@ -12,6 +12,8 @@ namespace CargoV2.UI.Editor
     {
         private const string SplashScenePath = "Assets/_Project/Scenes/01_Splash.unity";
         private const string LoadingScenePath = "Assets/_Project/Scenes/02_Loading.unity";
+        private const string TruckModelAssetPath = "Assets/_Project/Generated/MOD_Truck_Premium.obj";
+        private const string TruckModelRootName = "PremiumTruck3D";
 
         public int callbackOrder => -500;
 
@@ -24,23 +26,24 @@ namespace CargoV2.UI.Editor
         public static void BindPremiumArtMenu()
         {
             BindPremiumArtOrThrow();
-            Debug.Log("[CARGO V2][UI_TEAM] Premium SVG art bound into Splash + Loading scenes.");
+            Debug.Log("[CARGO V2][UI_TEAM] Premium art + real 3D truck bound into Splash + Loading scenes.");
         }
 
         public static void BindPremiumArtOrThrow()
         {
             Sprite logo = ResolveSprite(SCR_UIManager.LogoAssetPath, required: true);
-            Sprite truck = ResolveSprite(SCR_UIManager.TruckAssetPath, required: true);
+            Sprite truckFallback = ResolveSprite(SCR_UIManager.TruckAssetPath, required: false);
             Sprite truckAlt = ResolveSprite(SCR_UIManager.TruckAltAssetPath, required: false);
             Sprite glow = ResolveSprite(SCR_UIManager.GlowAssetPath, required: true);
+            GameObject truckModel = ResolveModel(TruckModelAssetPath);
 
             string activeScenePath = SceneManager.GetActiveScene().path;
             bool activeSceneWasSaved = !string.IsNullOrWhiteSpace(activeScenePath);
 
             try
             {
-                BindScene(SplashScenePath, logo, truck, truckAlt, glow);
-                BindScene(LoadingScenePath, logo, truck, truckAlt, glow);
+                BindScene(SplashScenePath, logo, truckFallback, truckAlt, glow, truckModel);
+                BindScene(LoadingScenePath, logo, truckFallback, truckAlt, glow, truckModel);
                 AssetDatabase.SaveAssets();
             }
             finally
@@ -50,6 +53,23 @@ namespace CargoV2.UI.Editor
                     EditorSceneManager.OpenScene(activeScenePath, OpenSceneMode.Single);
                 }
             }
+        }
+
+        private static GameObject ResolveModel(string assetPath)
+        {
+            AssetDatabase.ImportAsset(
+                assetPath,
+                ImportAssetOptions.ForceSynchronousImport | ImportAssetOptions.ForceUpdate);
+
+            GameObject model = AssetDatabase.LoadAssetAtPath<GameObject>(assetPath);
+            if (model == null)
+            {
+                throw new BuildFailedException(
+                    $"[CARGO V2][UI_TEAM] Required real 3D truck model is missing or failed Unity import: {assetPath}. " +
+                    "PR #256 must provide a valid source-controlled OBJ/MTL checkpoint before release QA.");
+            }
+
+            return model;
         }
 
         private static Sprite ResolveSprite(string assetPath, bool required)
@@ -89,7 +109,7 @@ namespace CargoV2.UI.Editor
             {
                 throw new BuildFailedException(
                     $"[CARGO V2][UI_TEAM] '{assetPath}' exists but Unity did not import it as a Sprite. " +
-                    "Verify SVG importer/vector-graphics support and commit deterministic .meta files before QA PASS.");
+                    "Verify its importer and deterministic .meta files before QA PASS.");
             }
 
             return null;
@@ -98,9 +118,10 @@ namespace CargoV2.UI.Editor
         private static void BindScene(
             string scenePath,
             Sprite logo,
-            Sprite truck,
+            Sprite truckFallback,
             Sprite truckAlt,
-            Sprite glow)
+            Sprite glow,
+            GameObject truckModel)
         {
             SceneAsset sceneAsset = AssetDatabase.LoadAssetAtPath<SceneAsset>(scenePath);
             if (sceneAsset == null)
@@ -118,14 +139,45 @@ namespace CargoV2.UI.Editor
 
             SerializedObject serialized = new SerializedObject(manager);
             SetSprite(serialized, "logoSprite", logo);
-            SetSprite(serialized, "truckSprite", truck);
+            SetSprite(serialized, "truckSprite", truckFallback);
             SetSprite(serialized, "truckAltSprite", truckAlt);
             SetSprite(serialized, "glowSprite", glow);
             serialized.ApplyModifiedPropertiesWithoutUndo();
 
+            EnsureRealTruck(scene, scenePath, truckModel);
+
             EditorUtility.SetDirty(manager);
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);
+        }
+
+        private static void EnsureRealTruck(Scene scene, string scenePath, GameObject modelAsset)
+        {
+            GameObject existing = GameObject.Find(TruckModelRootName);
+            if (existing != null)
+            {
+                UnityEngine.Object.DestroyImmediate(existing);
+            }
+
+            GameObject root = new GameObject(TruckModelRootName);
+            SceneManager.MoveGameObjectToScene(root, scene);
+
+            GameObject instance = (GameObject)PrefabUtility.InstantiatePrefab(modelAsset, scene);
+            if (instance == null)
+            {
+                UnityEngine.Object.DestroyImmediate(root);
+                throw new BuildFailedException(
+                    $"[CARGO V2][UI_TEAM] Unity could not instantiate the real truck model in {scenePath}.");
+            }
+
+            instance.name = "MOD_Truck_Premium_Instance";
+            instance.transform.SetParent(root.transform, false);
+
+            SCR_PremiumTruck3D presenter = root.AddComponent<SCR_PremiumTruck3D>();
+            presenter.Configure(scenePath == LoadingScenePath);
+
+            EditorUtility.SetDirty(root);
+            EditorUtility.SetDirty(presenter);
         }
 
         private static void SetSprite(SerializedObject serialized, string propertyName, Sprite sprite)
