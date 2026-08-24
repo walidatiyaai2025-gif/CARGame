@@ -1,10 +1,10 @@
-# CARGO V2 REPORT HOUR 20
+# CARGO V2 REPORT HOUR 21
 
-## STATUS: 90%
+## STATUS: 93%
 
-Authoritative integration branch verified before this report update: `cargo-v2` was `45f6a25e1ae72c456c17b72661d577e53ca06043`. No team PR was merged during this cycle. This report commit only advances LEAD documentation. `cargo-v2` is not merged to `main`, and no final APK/AAB is produced.
+Authoritative integration branch before this report update: `cargo-v2` @ `5d8c442b3ad41030982006c22f75672466d5eca9`. No team PR was merged during this cycle. This commit updates LEAD documentation only. `cargo-v2` is not merged to `main`, and no final APK/AAB is produced.
 
-Progress increased because the two previously-running playable-flow CIs are now green, the Mission completion -> authoritative WorldMap progression bridge is source-complete, and the real Mission OBJ/MTL pack now has an explicit Unity Resources admission path plus runtime code that prefers the real model over primitive fallback.
+Progress moved from 90% to 93% because the previously-pending real playable Mission exact-head CI and real Mission Resources admission CI are now green, and the next concrete gameplay gap — mission completion rewards — has been implemented as a separately QA-gated LOGIC follow-up instead of being left for owner return.
 
 ## ASSET_TEAM
 ### PR #256 — Premium Art Pass assets
@@ -21,7 +21,7 @@ Status: **IMPLEMENTED / CI PASS / UNITY QA HOLD**.
 - Issue #266.
 - Head: `5b504709cd5505d4d0c25380a3b8d0aa7ac9ba41`.
 - Flutter CI #1163: **SUCCESS**.
-- Actual-depth OBJ/MTL mission marker, route pylon and city beacon committed.
+- Actual-depth OBJ/MTL mission marker, route pylon and city beacon.
 - Unity import/scale/material QA pending.
 
 Status: **IMPLEMENTED / CI PASS / UNITY QA HOLD**.
@@ -30,22 +30,22 @@ Status: **IMPLEMENTED / CI PASS / UNITY QA HOLD**.
 - Issue #272.
 - Head: `bba3567a94e4ee998235b0b20bed437e2eea2fd0`.
 - Flutter CI #1172: **SUCCESS**.
-- Real project-original OBJ/MTL geometry: CargoCrate, CargoCrateBand, DepotPallet, route gate and checkpoint beacon.
+- Project-original actual-depth CargoCrate, CargoCrateBand, DepotPallet, route gate and checkpoint beacon.
 - Navy / Cargo Gold / Chrome / Beacon material separation and deterministic Unity metadata.
 - Unity import/scale/material QA pending.
 
 Status: **IMPLEMENTED / CI PASS / UNITY QA HOLD**.
 
 ### PR #279 — Runtime-admitted Mission 3D pack
-- New issue #278.
+- Issue #278.
 - Stacked on PR #273.
 - Exact head: `c34d4f7ea7dd75f2fe846161ded97d6f1e8967a4`.
-- Adds the same project-original Mission OBJ/MTL under `Assets/Resources/CargoV2/Mission/` with new deterministic importer GUIDs.
-- Intended runtime path: `Resources.Load<GameObject>("CargoV2/Mission/MOD_Mission_CargoDepot")`.
-- Exact-head CI has not yet produced a result at this report checkpoint.
+- Flutter CI #1179: **SUCCESS**.
+- Real Mission OBJ/MTL is additionally admitted under `Assets/Resources/CargoV2/Mission/` with deterministic importer GUIDs.
+- Intended runtime path remains `Resources.Load<GameObject>("CargoV2/Mission/MOD_Mission_CargoDepot")`.
 - Unity Resources import/load is **NOT** claimed until observed.
 
-Status: **IMPLEMENTED / CI PENDING / UNITY QA HOLD**.
+Status: **IMPLEMENTED / CI PASS / STACKED UNITY QA HOLD**.
 
 ## UI_TEAM
 ### PR #257 — Premium Splash + Loading
@@ -73,26 +73,26 @@ Status: **IMPLEMENTED / CI PASS / UNITY QA HOLD**.
 - Head: `0aeabec78ea0f15c099fc2d76117765bd6d5c2bd`.
 - Flutter CI #1171: **SUCCESS**.
 - QA: **STATIC PASS / UNITY HOLD**.
-- Visible deploy CTA, locked/invalid rejection, duplicate-deploy protection, scene-load lifecycle hook and safe pending-state rollback.
+- Visible deploy CTA, authoritative locked/invalid rejection, duplicate-deploy protection, scene-load lifecycle hook and safe pending-state rollback.
 
 Status: **IMPLEMENTED / CI PASS / STACKED UNITY QA HOLD**.
 
-### PR #275 — First playable in-place Mission runtime + real 3D binding
+### PR #275 — First playable in-place Mission runtime + mobile WorldMap touch + real 3D binding
 - Issue #274.
 - Stacked on PR #271.
-- Previous hardened head `6d0748205f2792e2eff54399e5b44274a23ad569`: Flutter CI #1176 **SUCCESS**.
-- New exact head after real-asset runtime binding: `2a7bbae4b874fad143944eecbd2e1484a2a725ae`.
-- New exact-head CI has not yet produced a result at this checkpoint; #1176 is not inherited.
-- Runtime still provides deploy -> five cargo interactions -> timer -> success/fail -> retry/back.
-- Success emits only transient `cargo_v2_completed_mission_handoff`; no reward/economy authority is invented.
-- New runtime behavior prefers `Resources.Load<GameObject>("CargoV2/Mission/MOD_Mission_CargoDepot")`.
-- It validates all named model parts before switching to the real model.
-- Real `DepotPallet`, route gate and checkpoint beacon are instantiated from the admitted model.
-- Five clickable cargo hosts are built from real `CargoCrate` + `CargoCrateBand` meshes with explicit colliders.
-- HUD states whether REAL 3D pack or SAFE PRIMITIVE FALLBACK is active.
-- Primitive fallback remains if the runtime resource is missing/incomplete.
+- Exact head: `106ccb171304891790b20cb6bd7d8df408e196af`.
+- Flutter CI #1182: **SUCCESS**.
+- QA: **STATIC PASS / UNITY HOLD**.
+- Runtime path: deploy -> five cargo deliveries -> timer -> success/fail -> retry/back.
+- Mission cargo supports explicit touch-end camera raycasts and desktop/Editor mouse input.
+- HUD touch exclusion prevents cargo delivery behind the Mission overlay.
+- Android Back / Escape exits unfinished runtime without fake completion.
+- `SCR_WorldMapTouchInputBridge` adds explicit mobile touch selection/deploy on WorldMap and disables map touches while Mission runtime is active.
+- Runtime prefers `Resources.Load<GameObject>("CargoV2/Mission/MOD_Mission_CargoDepot")` and validates named parts before using the actual 3D pack.
+- Real crate/band meshes receive explicit colliders; safe primitive fallback remains when resource admission is absent/incomplete.
+- Success writes only transient `cargo_v2_completed_mission_handoff`; UI does not own progression or rewards.
 
-Status: **IMPLEMENTED / PREVIOUS CI PASS / NEW EXACT-HEAD CI PENDING / UNITY QA HOLD**.
+Status: **IMPLEMENTED / EXACT-HEAD CI PASS / STACKED UNITY QA HOLD**.
 
 ## LOGIC_TEAM
 ### PR #259 — WorldMap progression core
@@ -108,9 +108,8 @@ Status: **IMPLEMENTED / CI PASS / UNITY QA HOLD**.
 - Head: `7e1cb74584bc9c1f8b6187dd91c831ba803f35e4`.
 - Flutter CI #1169: **SUCCESS**.
 - Stacked on #259.
-- Persists only schema-v1 highest-completed + selected mission state.
+- Persists schema-v1 highest-completed + selected mission only.
 - Corrupt/future/out-of-range state fails safely.
-- No coin/XP/reward replay.
 
 Status: **IMPLEMENTED / CI PASS / STACKED UNITY QA HOLD**.
 
@@ -119,15 +118,27 @@ Status: **IMPLEMENTED / CI PASS / STACKED UNITY QA HOLD**.
 - Exact head: `841496f6c81b4cee3a2214b5b1cf2e25cd3f9e7c`.
 - Flutter CI #1178: **SUCCESS**.
 - QA: **STATIC PASS / UNITY HOLD**.
-- Consumes only `cargo_v2_completed_mission_handoff`.
-- Retains a valid handoff while route catalog is temporarily unavailable.
-- Validates against authoritative mission count.
-- Advances only through `SCR_WorldMapRouteController.TryCompleteMission`.
-- PR #269 remains persistence owner through `ProgressChanged`.
-- Valid/already-completed success is consumed once; invalid/out-of-range/gap-skipping handoffs are rejected/cleared.
-- No coin/XP/reward grant or replay.
+- Consumes `cargo_v2_completed_mission_handoff` through authoritative `SCR_WorldMapRouteController.TryCompleteMission` only.
+- Retains valid handoff while route catalog is temporarily unavailable.
+- Invalid/out-of-range/gap-skipping handoffs are rejected.
+- PR #269 remains progress persistence owner.
 
 Status: **IMPLEMENTED / CI PASS / STACKED UNITY QA HOLD**.
+
+### PR #281 — Idempotent mission reward settlement
+- New issue #280.
+- Stacked on PR #277 -> #269 -> #259.
+- Exact head: `eb4252363ebc25130a69664d1187d988502376d2`.
+- Flutter CI #1183: **QUEUED** at this checkpoint; no PASS is claimed yet.
+- Adds schema-v1 `SCR_MissionRewardStore` for mission-earned Coins + XP + rewarded mission IDs.
+- Reward values are read only from authoritative `SO_GameBalance.MissionBalance`.
+- First authoritative completion settles exactly the approved minimum `coin1Star + xp`; no invented 2-star/3-star scoring or multiplier.
+- Reward settlement is idempotent per mission ID; replay/restart/duplicate handoff cannot double-grant.
+- Corrupt/future/negative/duplicate reward payload and overflow fail closed without granting.
+- Completion handoff is retained if reward persistence cannot be completed safely, allowing idempotent retry after progression has already accepted the mission.
+- Invalid/non-sequential completion still grants zero.
+
+Status: **IMPLEMENTED / EXACT-HEAD CI PENDING / STATIC QA PENDING / STACKED UNITY QA HOLD**.
 
 ## DATA_TEAM
 ### PR #265 — WorldMap presentation metadata
@@ -135,7 +146,7 @@ Status: **IMPLEMENTED / CI PASS / STACKED UNITY QA HOLD**.
 - Flutter CI #1161: **SUCCESS**.
 - QA: **STATIC PASS / UNITY HOLD**.
 - Exactly 20 deterministic records: Cairo 1-10 / Dubai 11-20.
-- Layout only; no mission economy copied.
+- Presentation layout only; no mission economy copied.
 
 Status: **IMPLEMENTED / CI PASS / UNITY QA HOLD**.
 
@@ -152,38 +163,48 @@ Current truthful evidence:
 - #269: **CI SUCCESS / STACKED UNITY HOLD**.
 - #271: **STATIC PASS + CI SUCCESS / STACKED UNITY HOLD**.
 - #273: **REAL 3D MISSION ASSETS + CI SUCCESS / UNITY IMPORT QA HOLD**.
-- #275 previous hardened head: **STATIC PASS + CI #1176 SUCCESS**; new real-asset-binding head `2a7bbae...`: **CI PENDING / UNITY HOLD**.
+- #275 exact head `106ccb171...`: **STATIC PASS + CI #1182 SUCCESS / UNITY HOLD**.
 - #277: **STATIC PASS + CI #1178 SUCCESS / STACKED UNITY HOLD**.
-- #279: **REAL RESOURCES 3D ADMISSION / CI PENDING / UNITY HOLD**.
+- #279 exact head `c34d4f7e...`: **REAL RESOURCES 3D ADMISSION + CI #1179 SUCCESS / UNITY Resources.Load HOLD**.
+- #281 exact head `eb425236...`: **SOURCE IMPLEMENTED / CI #1183 QUEUED / UNITY HOLD**.
 - FPS: **NOT MEASURED**.
 - Current-head Unity runtime video: **NOT AVAILABLE**.
+
+### QA bugs / source defects resolved to date
+- Splash/Loading SVG import was removed as a hard blocker for the authoritative 3D truck path; real OBJ remains the truck authority.
+- Persistence/deploy/completion installers were hardened against Splash -> Loading -> WorldMap lifecycle misses using scene-load hooks.
+- Mission completion handoff is retained while authoritative route data is not ready.
+- Mobile Mission input no longer depends only on `OnMouseUpAsButton`; explicit touch raycast + HUD exclusion + Android Back are source-covered.
+- Mobile WorldMap selection/deploy no longer depends only on mouse callbacks; explicit touch routing is source-covered and blocked behind the active Mission overlay.
+- Reward gap identified this cycle: progression completion previously unlocked the next mission but granted no Coins/XP. PR #281 now implements the minimum approved idempotent reward settlement from `SO_GameBalance`; CI/Unity evidence remains pending.
 
 No QA PASS is inherited from older SHAs. No FPS, video, Unity import, Resources.Load or runtime evidence is fabricated.
 
 ## PLAYABLE PATH
 Source-controlled implementation now covers:
 
-`Splash/Loading (#257 + #256) -> WorldMap route (#268 + #267) -> mission metadata (#265) -> progression (#259) -> persistence (#269) -> DEPLOY (#271) -> playable Mission (#275) -> completion handoff (#277) -> Mission completed / next mission available`, with real Mission 3D geometry from #273 and runtime Resources admission in #279.
+`Splash/Loading (#257 + #256) -> WorldMap route (#268 + #267) -> mission metadata (#265) -> progression (#259) -> progression persistence (#269) -> DEPLOY (#271) -> playable touch/click Mission (#275) -> completion handoff (#277) -> Mission completed / next mission available -> minimum approved Coins + XP settlement (#281)`, with real Mission 3D geometry from #273 and runtime Resources admission in #279.
 
-The remaining real-3D source integration is explicitly coded: when #279's Resources asset is present, #275 prefers the actual OBJ meshes for depot/gate/beacon and all five clickable cargo items; otherwise it remains safely playable with primitives.
+The current source boundary is materially playable, but final truth still depends on Unity Play Mode evidence for actual import/render/input/runtime composition. The reward step intentionally uses only the approved `coin1Star + xp` values; higher-star scoring remains unimplemented rather than invented.
 
 ## BLOCKERS
-1. No Unity 2022.3 exact-head runtime QA PASS yet for any active CARGO V2 integration chain.
-2. Direct report commits advance `cargo-v2`; team PRs must be reconciled before final CAPTAIN merge consideration.
-3. #269 -> #277 depend on #259; #271 -> #275 depend on #268; #279 depends on #273. Stacked PRs cannot bypass parent gates.
-4. New #275 exact head `2a7bbae...` needs fresh CI; prior #1176 applies only to the previous head.
-5. #279 exact head `c34d4f7...` needs CI and Unity Resources import/load observation.
-6. Actual OBJ scale/material/collider/readability and runtime composition still require Unity Play Mode verification.
+1. No Unity 2022.3 exact-head runtime QA PASS yet for the integrated CARGO V2 chain.
+2. Direct LEAD/report commits keep advancing `cargo-v2`; team PRs must be reconciled before final CAPTAIN merge consideration.
+3. Stacked dependencies remain: #269 -> #259; #277 -> #269; #281 -> #277; #271 -> #268; #275 -> #271; #279 -> #273. No child may bypass its parent gate.
+4. PR #281 exact-head Flutter CI #1183 is queued; no source-green claim yet.
+5. Actual OBJ scale/orientation/materials, `Resources.Load`, collider readability, touch behavior and full runtime composition require Unity Play Mode observation.
+6. No authoritative higher-star scoring/result calculation exists yet; this cycle deliberately grants only the approved minimum completion reward rather than inventing a scoring formula.
 7. No measured FPS evidence exists.
 8. No trustworthy current-head Unity Play Mode video exists.
 
 ## NEXT ACTIONS
-1. Read fresh CI for #275 `2a7bbae...` and #279 `c34d4f7...`; fix any source failure immediately.
-2. QA Unity 2022.3 on a reconciled integration preview: Splash -> Loading -> WorldMap -> Deploy -> Mission -> real Resources asset load -> five deliveries -> completion -> WorldMap Mission 2 unlock -> restart persistence.
-3. Verify real OBJ import scale/orientation/materials and real cargo click colliders; confirm fallback activates only when resource admission is absent/incomplete.
-4. Verify completion replay idempotency, gap-skip rejection, delayed route readiness and PlayerPrefs persistence.
-5. Record FPS only from measured Play Mode evidence and video only from a real current-head recording.
-6. CAPTAIN alone merges exact-head QA-PASS team PRs into `cargo-v2`.
+1. Read exact-head CI #1183 for PR #281; if source failure appears, fix it on the same LOGIC branch before any further feature work.
+2. Static-QA PR #281 for idempotency/fail-closed behavior, then retain Unity HOLD until actual Play Mode observation.
+3. Build a reconciled CAPTAIN QA preview only — not a merge bypass — containing the approved current heads needed for `Splash -> Loading -> WorldMap -> Deploy -> real 3D Mission -> completion -> Mission 2 unlock -> persistence -> Coins/XP once`.
+4. Unity QA must verify real Mission Resources load, actual crate colliders, touch/click delivery, HUD exclusion, Android-back-equivalent behavior, success/fail/retry/back cleanup, completion replay idempotency and reward replay idempotency.
+5. Verify restart restores progression and that a previously rewarded mission does not grant Coins/XP again.
+6. Record FPS only from measured current-head Play Mode evidence and video only from a real current-head recording.
+7. CAPTAIN alone merges exact-head QA-PASS team PRs into `cargo-v2`.
 
 ## CAPTAIN GOVERNANCE
 **CAPTAIN alone may merge team PRs into `cargo-v2`, and only after QA evidence is recorded against the exact head being merged.**
@@ -191,7 +212,7 @@ The remaining real-3D source integration is explicitly coded: when #279's Resour
 No merge of `cargo-v2` to `main`. No final APK/AAB build.
 
 ## VIDEO
-**PENDING — no current-head Unity Play Mode recording exists, so no video link is claimed.**
+**PENDING — no trustworthy current-head Unity Play Mode recording exists, so no video link is claimed.**
 
 ## FPS
-**PENDING — no measured current-head Play Mode FPS evidence exists.**
+**PENDING — no measured current-head Unity Play Mode FPS evidence exists.**
