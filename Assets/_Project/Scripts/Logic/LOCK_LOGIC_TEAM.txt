@@ -1,6 +1,6 @@
 CARGO V2 LOGIC_TEAM LOCK
 Owner: LOGIC_TEAM
 Scope: /Assets/_Project/Scripts/Logic/
-Current task: Issue #276 Mission completion handoff consumer
-Stacked dependency: PR #269 -> PR #259
+Current task: Issue #280 Idempotent mission reward settlement
+Stacked dependency: PR #277 -> PR #269 -> PR #259
 Rule: no edits outside this folder without CAPTAIN approval.
