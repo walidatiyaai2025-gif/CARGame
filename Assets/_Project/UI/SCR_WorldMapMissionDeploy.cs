@@ -137,6 +137,12 @@ namespace CargoV2.UI
         internal void TryDeploy()
         {
             if (transitionBusy) return;
+            if (SCR_MissionRuntimeDirector.IsRunning)
+            {
+                RefreshStatus("MISSION ALREADY ACTIVE");
+                return;
+            }
+
             int missionId = ResolveSelectedMissionId();
             if (!IsDeployable(missionId))
             {
@@ -204,7 +210,9 @@ namespace CargoV2.UI
             int missionId = ResolveSelectedMissionId();
             statusText.text = transitionBusy
                 ? $"DEPLOYING MISSION {missionId:00}..."
-                : IsDeployable(missionId) ? $"DEPLOY MISSION {missionId:00}" : "MISSION LOCKED";
+                : SCR_MissionRuntimeDirector.IsRunning
+                    ? "MISSION ACTIVE"
+                    : IsDeployable(missionId) ? $"DEPLOY MISSION {missionId:00}" : "MISSION LOCKED";
         }
 
         private sealed class DeployClick : MonoBehaviour
