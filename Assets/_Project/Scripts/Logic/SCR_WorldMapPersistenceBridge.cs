@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace CargoV2.Logic
 {
@@ -10,8 +11,21 @@ namespace CargoV2.Logic
 
         private bool initialized;
 
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-        private static void Install()
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        private static void RegisterSceneInstall()
+        {
+            // Domain reload can be disabled in the Editor. Remove first so repeated
+            // play sessions never accumulate duplicate static sceneLoaded handlers.
+            SceneManager.sceneLoaded -= HandleSceneLoaded;
+            SceneManager.sceneLoaded += HandleSceneLoaded;
+        }
+
+        private static void HandleSceneLoaded(Scene _, LoadSceneMode __)
+        {
+            InstallInLoadedScene();
+        }
+
+        private static void InstallInLoadedScene()
         {
             SCR_WorldMapRouteController controller = FindObjectOfType<SCR_WorldMapRouteController>();
             if (controller == null) return;
