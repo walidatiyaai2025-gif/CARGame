@@ -11,6 +11,7 @@ namespace CargoV2.UI
         private const string PendingMissionKey = "cargo_v2_pending_mission_id";
         private const string CompletionHandoffKey = "cargo_v2_completed_mission_handoff";
         private static readonly Vector3 MissionOrigin = new Vector3(1000f, 0f, 1000f);
+        private static SCR_MissionRuntimeDirector activeInstance;
 
         private readonly List<GameObject> spawnedObjects = new List<GameObject>();
         private readonly List<Material> runtimeMaterials = new List<Material>();
@@ -25,7 +26,7 @@ namespace CargoV2.UI
         private bool succeeded;
         private bool initialized;
 
-        public static bool IsRunning => FindObjectOfType<SCR_MissionRuntimeDirector>() != null;
+        public static bool IsRunning => activeInstance != null;
 
         public static bool LaunchInPlace(int missionId)
         {
@@ -41,7 +42,7 @@ namespace CargoV2.UI
 
         private bool Initialize(int missionId)
         {
-            if (initialized) return false;
+            if (initialized || activeInstance != null) return false;
 
             balance = ScriptableObject.CreateInstance<SO_GameBalance>();
             balance.ResetToApprovedDefaults();
@@ -49,6 +50,7 @@ namespace CargoV2.UI
             if (mission == null) return false;
 
             initialized = true;
+            activeInstance = this;
             PlayerPrefs.DeleteKey(CompletionHandoffKey);
             PlayerPrefs.Save();
             remainingSeconds = Mathf.Max(10f, mission.timeSeconds);
@@ -197,6 +199,7 @@ namespace CargoV2.UI
 
         private void OnDestroy()
         {
+            if (activeInstance == this) activeInstance = null;
             PlayerPrefs.DeleteKey(PendingMissionKey);
             PlayerPrefs.Save();
 
