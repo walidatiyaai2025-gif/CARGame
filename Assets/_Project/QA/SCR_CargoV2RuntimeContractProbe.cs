@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using UnityEngine;
 
@@ -12,12 +11,25 @@ namespace CargoV2.QA
         {
             "CargoV2.Logic.SCR_WorldMapRouteController",
             "CargoV2.Logic.SCR_WorldMapPersistenceBridge",
-            "CargoV2.Logic.SCR_MissionCompletionHandoffConsumer",
+            "CargoV2.Logic.SCR_MissionCompletionHandoffBridge",
             "CargoV2.Logic.SCR_MissionRewardStore",
             "CargoV2.UI.SCR_WorldMapMissionDeployGateway",
             "CargoV2.UI.SCR_WorldMapTouchInputBridge",
             "CargoV2.UI.SCR_MissionRuntimeDirector",
         };
+
+        private static readonly string[] RequiredMissionModelParts =
+        {
+            "CargoCrate",
+            "CargoCrateBand",
+            "DepotPallet",
+            "RouteGateLeft",
+            "RouteGateRight",
+            "RouteGateTop",
+            "CheckpointBeacon",
+        };
+
+        private const string MissionResourcePath = "CargoV2/Mission/MOD_Mission_CargoDepot";
 
         [ContextMenu("Run CARGO V2 Runtime Contract Probe")]
         public void RunProbe()
@@ -40,7 +52,7 @@ namespace CargoV2.QA
 
             InspectWorldMapController(ref pass, ref hold);
             InspectRewardStore(ref pass, ref hold);
-            InspectMissionResources(ref pass, ref hold);
+            InspectMissionResource(ref pass, ref hold);
 
             Debug.Log($"[CARGO V2][QA] READ-ONLY CONTRACT PROBE COMPLETE — PASS={pass}, HOLD={hold}. This is structural runtime evidence only; it is not visual/FPS/gameplay QA PASS.");
         }
@@ -98,26 +110,37 @@ namespace CargoV2.QA
             Debug.Log("[CARGO V2][QA][PASS] Mission reward store exposes read-only snapshot inspection. Probe intentionally does not invoke settlement or mutate PlayerPrefs.");
         }
 
-        private static void InspectMissionResources(ref int pass, ref int hold)
+        private static void InspectMissionResource(ref int pass, ref int hold)
         {
-            string[] resourcePaths =
+            GameObject prefab = Resources.Load<GameObject>(MissionResourcePath);
+            if (prefab == null)
             {
-                "CargoV2/Mission/MOD_CargoCrate",
-                "CargoV2/Mission/MOD_Depot",
-            };
+                hold++;
+                Debug.LogWarning($"[CARGO V2][QA][HOLD] Runtime Mission model does not resolve at Resources path: {MissionResourcePath}");
+                return;
+            }
 
-            foreach (string path in resourcePaths)
+            pass++;
+            Debug.Log($"[CARGO V2][QA][PASS] Runtime Mission model resolves: {MissionResourcePath}");
+
+            var names = new HashSet<string>(StringComparer.Ordinal);
+            Transform[] transforms = prefab.GetComponentsInChildren<Transform>(true);
+            foreach (Transform transform in transforms)
             {
-                UnityEngine.Object asset = Resources.Load(path);
-                if (asset == null)
+                if (transform != null && !string.IsNullOrEmpty(transform.name)) names.Add(transform.name);
+            }
+
+            foreach (string requiredPart in RequiredMissionModelParts)
+            {
+                if (names.Contains(requiredPart))
                 {
-                    hold++;
-                    Debug.LogWarning($"[CARGO V2][QA][HOLD] Runtime mission resource not loaded at Resources path: {path}");
+                    pass++;
+                    Debug.Log($"[CARGO V2][QA][PASS] Runtime Mission model contains required named part: {requiredPart}");
                 }
                 else
                 {
-                    pass++;
-                    Debug.Log($"[CARGO V2][QA][PASS] Runtime mission resource resolves: {path}");
+                    hold++;
+                    Debug.LogWarning($"[CARGO V2][QA][HOLD] Runtime Mission model is missing required named part: {requiredPart}");
                 }
             }
         }
