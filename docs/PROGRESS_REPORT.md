@@ -23,7 +23,7 @@ The OBJ/MTL pair is actual source-controlled 3D geometry rather than a screensho
 
 CI evidence:
 - Prior 3D head `5597c8dee2902b63b24a755687ff9e7fb79840b3`: **Flutter CI run #1145 = SUCCESS**.
-- Current reconciled exact head `a029889c30f9c277e4c8776c1187c276a00ee158`: **NO PR WORKFLOW RUN RECORDED YET** at report time.
+- Current reconciled exact head `a029889c30f9c277e4c8776c1187c276a00ee158`: **Flutter CI run #1146 = IN PROGRESS** at report time.
 
 QA evidence:
 - Historical exact-head review on `a56da66...`: **QA HOLD**.
@@ -77,13 +77,13 @@ Historical paused QA/FPS work is not promoted as evidence for current heads.
 
 ## CI STATUS
 - PR #256 prior 3D head `5597c8d...`: Flutter CI **run #1145 = SUCCESS**.
-- PR #256 current reconciled head `a029889...`: **NO PR WORKFLOW RUN RECORDED YET**.
+- PR #256 current reconciled head `a029889...`: Flutter CI **run #1146 = IN PROGRESS**.
 - PR #257 exact head `49a2bda...`: Flutter CI **run #1143 = SUCCESS**.
 - CI success does **not** replace Unity runtime/visual QA evidence.
 
 ## PR / BRANCH CONTROL
 Active Art Pass PRs:
-- **#256 — ASSET_TEAM — OPEN + DRAFT — AHEAD 1 / BEHIND 0 — FRESH QA REQUIRED**.
+- **#256 — ASSET_TEAM — OPEN + DRAFT — AHEAD 1 / BEHIND 0 — CI RUNNING — FRESH QA REQUIRED**.
 - **#257 — UI_TEAM — OPEN + DRAFT — DIVERGED — NO QA PASS**.
 
 Historical CARGO V2 PRs #250, #251 and #253 are merged. Historical/superseded UI PRs #254 and #255 are closed/not current acceptance candidates. No active Logic or new Data PR exists.
@@ -94,7 +94,7 @@ Historical CARGO V2 PRs #250, #251 and #253 are merged. Historical/superseded UI
 `cargo-v2` must **NOT** be merged to `main` in this phase. COMMAND_CENTER does **not** produce a final APK/AAB build.
 
 ## BLOCKERS
-1. #256 reconciled exact head `a029889...` needs a fresh CI run/status and fresh exact-head QA.
+1. #256 exact head `a029889...` has CI run #1146 in progress and still needs fresh exact-head QA.
 2. Premium 2D truck/logo fidelity has not yet been re-proven against the locked references.
 3. The named locked premium reference PNGs are not currently reproducible from the source-controlled GitHub paths previously cited by QA.
 4. #256 still lacks deterministic `.meta` ownership/proven Unity Sprite import for the four SVG assets.
@@ -104,15 +104,16 @@ Historical CARGO V2 PRs #250, #251 and #253 are merged. Historical/superseded UI
 8. No verified current Art Pass Unity Play Mode video exists on GitHub.
 
 ## NEXT ACTIONS
-1. **QA_TEAM / #256:** review exact head `a029889...`; validate the six current Art Pass files including actual OBJ/MTL Unity import behavior. Keep HOLD unless premium/reference/import gates are proven.
-2. **ASSET_TEAM:** source-control or durably attach the locked reference images; add deterministic Unity import metadata/evidence for the SVG assets; continue premium truck/logo fidelity improvements rather than falling back to placeholder art.
-3. **CAPTAIN:** merge #256 into `cargo-v2` only after exact-head QA PASS.
-4. **UI_TEAM / #257:** after approved #256 integration, reconcile onto the new `cargo-v2`, bind approved Art Pass assets and integrate the real 3D truck where technically appropriate.
-5. **QA_TEAM:** run Unity Play Mode acceptance on #257; record actual bugs and measured FPS only if observed; attach/link real video evidence if produced.
-6. **CAPTAIN:** merge #257 only after exact-head QA PASS.
-7. **LOGIC_TEAM + DATA_TEAM:** continue dependency-safe WorldMap preparation, but do not invent completion or merge conflicting gameplay work before the Art Pass dependency chain is accepted.
+1. **CI / #256:** complete Flutter CI run #1146 on exact head `a029889...`; do not promote prior run #1145 as current-head evidence.
+2. **QA_TEAM / #256:** review exact head `a029889...`; validate the six current Art Pass files including actual OBJ/MTL Unity import behavior. Keep HOLD unless premium/reference/import gates are proven.
+3. **ASSET_TEAM:** source-control or durably attach the locked reference images; add deterministic Unity import metadata/evidence for the SVG assets; continue premium truck/logo fidelity improvements rather than falling back to placeholder art.
+4. **CAPTAIN:** merge #256 into `cargo-v2` only after exact-head QA PASS.
+5. **UI_TEAM / #257:** after approved #256 integration, reconcile onto the new `cargo-v2`, bind approved Art Pass assets and integrate the real 3D truck where technically appropriate.
+6. **QA_TEAM:** run Unity Play Mode acceptance on #257; record actual bugs and measured FPS only if observed; attach/link real video evidence if produced.
+7. **CAPTAIN:** merge #257 only after exact-head QA PASS.
+8. **LOGIC_TEAM + DATA_TEAM:** continue dependency-safe WorldMap preparation, but do not invent completion or merge conflicting gameplay work before the Art Pass dependency chain is accepted.
 
 ## VIDEO EVIDENCE
 Current premium Art Pass: **PENDING — NO VERIFIED GITHUB VIDEO LINK AVAILABLE**.
 
-No video URL, FPS result, Unity runtime PASS, current-head CI success for `a029889...`, or QA PASS is fabricated in this report.
+No video URL, FPS result, Unity runtime PASS, completed current-head CI for `a029889...`, or QA PASS is fabricated in this report.
