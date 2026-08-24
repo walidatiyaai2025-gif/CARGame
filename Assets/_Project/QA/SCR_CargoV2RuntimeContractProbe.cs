@@ -29,7 +29,20 @@ namespace CargoV2.QA
             "CheckpointBeacon",
         };
 
+        private static readonly string[] RequiredWorldMapModelParts =
+        {
+            "MissionMarker_Base",
+            "MissionMarker_GoldRing",
+            "MissionMarker_Beacon",
+            "RoutePylon",
+            "RoutePylon_Cap",
+            "CityBeacon_Tower",
+            "CityBeacon_Crown",
+            "CityBeacon_Core",
+        };
+
         private const string MissionResourcePath = "CargoV2/Mission/MOD_Mission_CargoDepot";
+        private const string WorldMapResourcePath = "CargoV2/WorldMap/MOD_WorldMap_MarkerPack";
 
         [ContextMenu("Run CARGO V2 Runtime Contract Probe")]
         public void RunProbe()
@@ -52,7 +65,8 @@ namespace CargoV2.QA
 
             InspectWorldMapController(ref pass, ref hold);
             InspectRewardStore(ref pass, ref hold);
-            InspectMissionResource(ref pass, ref hold);
+            InspectResource(WorldMapResourcePath, "WorldMap marker", RequiredWorldMapModelParts, ref pass, ref hold);
+            InspectResource(MissionResourcePath, "Mission", RequiredMissionModelParts, ref pass, ref hold);
 
             Debug.Log($"[CARGO V2][QA] READ-ONLY CONTRACT PROBE COMPLETE — PASS={pass}, HOLD={hold}. This is structural runtime evidence only; it is not visual/FPS/gameplay QA PASS.");
         }
@@ -110,18 +124,23 @@ namespace CargoV2.QA
             Debug.Log("[CARGO V2][QA][PASS] Mission reward store exposes read-only snapshot inspection. Probe intentionally does not invoke settlement or mutate PlayerPrefs.");
         }
 
-        private static void InspectMissionResource(ref int pass, ref int hold)
+        private static void InspectResource(
+            string resourcePath,
+            string label,
+            IReadOnlyList<string> requiredParts,
+            ref int pass,
+            ref int hold)
         {
-            GameObject prefab = Resources.Load<GameObject>(MissionResourcePath);
+            GameObject prefab = Resources.Load<GameObject>(resourcePath);
             if (prefab == null)
             {
                 hold++;
-                Debug.LogWarning($"[CARGO V2][QA][HOLD] Runtime Mission model does not resolve at Resources path: {MissionResourcePath}");
+                Debug.LogWarning($"[CARGO V2][QA][HOLD] Runtime {label} model does not resolve at Resources path: {resourcePath}");
                 return;
             }
 
             pass++;
-            Debug.Log($"[CARGO V2][QA][PASS] Runtime Mission model resolves: {MissionResourcePath}");
+            Debug.Log($"[CARGO V2][QA][PASS] Runtime {label} model resolves: {resourcePath}");
 
             var names = new HashSet<string>(StringComparer.Ordinal);
             Transform[] transforms = prefab.GetComponentsInChildren<Transform>(true);
@@ -130,17 +149,17 @@ namespace CargoV2.QA
                 if (transform != null && !string.IsNullOrEmpty(transform.name)) names.Add(transform.name);
             }
 
-            foreach (string requiredPart in RequiredMissionModelParts)
+            foreach (string requiredPart in requiredParts)
             {
                 if (names.Contains(requiredPart))
                 {
                     pass++;
-                    Debug.Log($"[CARGO V2][QA][PASS] Runtime Mission model contains required named part: {requiredPart}");
+                    Debug.Log($"[CARGO V2][QA][PASS] Runtime {label} model contains required named part: {requiredPart}");
                 }
                 else
                 {
                     hold++;
-                    Debug.LogWarning($"[CARGO V2][QA][HOLD] Runtime Mission model is missing required named part: {requiredPart}");
+                    Debug.LogWarning($"[CARGO V2][QA][HOLD] Runtime {label} model is missing required named part: {requiredPart}");
                 }
             }
         }
