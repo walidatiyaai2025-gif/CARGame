@@ -22,25 +22,15 @@ namespace CargoV2.UI
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void RegisterSceneHook()
         {
-            if (sceneHookRegistered)
-            {
-                SceneManager.sceneLoaded -= OnSceneLoaded;
-            }
-
+            if (sceneHookRegistered) SceneManager.sceneLoaded -= OnSceneLoaded;
             SceneManager.sceneLoaded += OnSceneLoaded;
             sceneHookRegistered = true;
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-        private static void InstallInitialScene()
-        {
-            TryInstall(SceneManager.GetActiveScene());
-        }
+        private static void InstallInitialScene() { TryInstall(SceneManager.GetActiveScene()); }
 
-        private static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
-        {
-            TryInstall(scene);
-        }
+        private static void OnSceneLoaded(Scene scene, LoadSceneMode mode) { TryInstall(scene); }
 
         private static void TryInstall(Scene scene)
         {
@@ -70,11 +60,8 @@ namespace CargoV2.UI
 
         private void OnDestroy()
         {
-            if (deployMaterial != null)
-            {
-                Destroy(deployMaterial);
-                deployMaterial = null;
-            }
+            if (deployMaterial != null) Destroy(deployMaterial);
+            deployMaterial = null;
         }
 
         private void DiscoverRouteController()
@@ -153,24 +140,32 @@ namespace CargoV2.UI
             int missionId = ResolveSelectedMissionId();
             if (!IsDeployable(missionId))
             {
-                Debug.Log($"[CARGO V2][UI_TEAM] Mission {missionId} deploy rejected because it is locked or unavailable.");
                 RefreshStatus("LOCKED — COMPLETE PREVIOUS MISSION");
-                return;
-            }
-
-            string nextScene = FindMissionScene();
-            if (string.IsNullOrWhiteSpace(nextScene))
-            {
-                Debug.LogWarning("[CARGO V2][UI_TEAM] No Mission/Briefing/05_ scene exists in build settings; remaining safely on WorldMap.");
-                RefreshStatus("BRIEFING SCENE NOT YET ADMITTED");
                 return;
             }
 
             transitionBusy = true;
             PlayerPrefs.SetInt(PendingMissionKey, missionId);
             PlayerPrefs.Save();
-            RefreshStatus($"DEPLOYING MISSION {missionId:00}...");
 
+            string nextScene = FindMissionScene();
+            if (string.IsNullOrWhiteSpace(nextScene))
+            {
+                bool launched = SCR_MissionRuntimeDirector.LaunchInPlace(missionId);
+                transitionBusy = false;
+                if (launched)
+                {
+                    RefreshStatus($"MISSION {missionId:00} ACTIVE");
+                    return;
+                }
+
+                PlayerPrefs.DeleteKey(PendingMissionKey);
+                PlayerPrefs.Save();
+                RefreshStatus("MISSION START FAILED — TRY AGAIN");
+                return;
+            }
+
+            RefreshStatus($"DEPLOYING MISSION {missionId:00}...");
             try
             {
                 SceneManager.LoadScene(nextScene, LoadSceneMode.Single);
@@ -193,10 +188,7 @@ namespace CargoV2.UI
                 string name = System.IO.Path.GetFileNameWithoutExtension(path);
                 if (name.IndexOf("Briefing", StringComparison.OrdinalIgnoreCase) >= 0 ||
                     name.IndexOf("Mission", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                    name.StartsWith("05_", StringComparison.OrdinalIgnoreCase))
-                {
-                    return name;
-                }
+                    name.StartsWith("05_", StringComparison.OrdinalIgnoreCase)) return name;
             }
             return null;
         }
@@ -212,9 +204,7 @@ namespace CargoV2.UI
             int missionId = ResolveSelectedMissionId();
             statusText.text = transitionBusy
                 ? $"DEPLOYING MISSION {missionId:00}..."
-                : IsDeployable(missionId)
-                    ? $"DEPLOY MISSION {missionId:00}"
-                    : "MISSION LOCKED";
+                : IsDeployable(missionId) ? $"DEPLOY MISSION {missionId:00}" : "MISSION LOCKED";
         }
 
         private sealed class DeployClick : MonoBehaviour
