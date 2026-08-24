@@ -11,6 +11,10 @@ namespace CargoV2.UI
         private const string PendingMissionKey = "cargo_v2_pending_mission_id";
         private const string CompletionHandoffKey = "cargo_v2_completed_mission_handoff";
         private const string MissionAssetResourcePath = "CargoV2/Mission/MOD_Mission_CargoDepot";
+        private const float HudX = 24f;
+        private const float HudY = 24f;
+        private const float HudWidth = 430f;
+        private const float HudHeight = 280f;
         private static readonly Vector3 MissionOrigin = new Vector3(1000f, 0f, 1000f);
         private static SCR_MissionRuntimeDirector activeInstance;
 
@@ -62,14 +66,43 @@ namespace CargoV2.UI
 
         private void Update()
         {
-            if (!initialized || terminal) return;
-            remainingSeconds -= Time.deltaTime;
-            if (remainingSeconds <= 0f)
+            if (!initialized) return;
+
+            if (Input.GetKeyDown(KeyCode.Escape))
             {
-                remainingSeconds = 0f;
-                terminal = true;
-                succeeded = false;
+                Destroy(gameObject);
+                return;
             }
+
+            if (!terminal)
+            {
+                HandleTouchInput();
+                remainingSeconds -= Time.deltaTime;
+                if (remainingSeconds <= 0f)
+                {
+                    remainingSeconds = 0f;
+                    terminal = true;
+                    succeeded = false;
+                }
+            }
+        }
+
+        private void HandleTouchInput()
+        {
+            if (missionCamera == null || Input.touchCount <= 0) return;
+
+            Touch touch = Input.GetTouch(0);
+            if (touch.phase != TouchPhase.Ended) return;
+
+            Vector2 guiPoint = new Vector2(touch.position.x, Screen.height - touch.position.y);
+            if (new Rect(HudX, HudY, HudWidth, HudHeight).Contains(guiPoint)) return;
+
+            Ray ray = missionCamera.ScreenPointToRay(touch.position);
+            if (!Physics.Raycast(ray, out RaycastHit hit, 250f)) return;
+
+            MissionCargoClick cargoClick = hit.collider.GetComponent<MissionCargoClick>();
+            if (cargoClick == null) cargoClick = hit.collider.GetComponentInParent<MissionCargoClick>();
+            cargoClick?.TryDeliver();
         }
 
         private void BuildMissionWorld()
@@ -262,8 +295,7 @@ namespace CargoV2.UI
         {
             if (!initialized || mission == null) return;
 
-            const int width = 430;
-            GUILayout.BeginArea(new Rect(24, 24, width, 280), GUI.skin.box);
+            GUILayout.BeginArea(new Rect(HudX, HudY, HudWidth, HudHeight), GUI.skin.box);
             GUILayout.Label($"CARGO V2 — MISSION {mission.missionId:00}");
             GUILayout.Label($"{mission.city}  |  Time {Mathf.CeilToInt(remainingSeconds)}s");
             GUILayout.Label($"Delivered: {delivered}/{requiredDeliveries}");
@@ -304,7 +336,16 @@ namespace CargoV2.UI
         private sealed class MissionCargoClick : MonoBehaviour
         {
             public SCR_MissionRuntimeDirector Owner;
-            private void OnMouseUpAsButton() { Owner?.Deliver(gameObject); }
+
+            public void TryDeliver()
+            {
+                Owner?.Deliver(gameObject);
+            }
+
+            private void OnMouseUpAsButton()
+            {
+                TryDeliver();
+            }
         }
     }
 }
