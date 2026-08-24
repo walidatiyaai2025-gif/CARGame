@@ -10,6 +10,8 @@ namespace CargoV2.UI
     [DisallowMultipleComponent]
     public sealed class SCR_WorldMapRuntimeDirector : MonoBehaviour
     {
+        private const string MarkerResourcePath = "CargoV2/WorldMap/MOD_WorldMap_MarkerPack";
+
         private sealed class NodeView
         {
             public int MissionId;
@@ -27,6 +29,7 @@ namespace CargoV2.UI
         [SerializeField] private float width = 18f;
         [SerializeField] private float height = 9f;
         [SerializeField] private float refreshIntervalSeconds = 0.12f;
+        [SerializeField] private float realMarkerScale = 0.82f;
 
         private readonly List<NodeView> nodes = new List<NodeView>(20);
         private object routeController;
@@ -42,6 +45,9 @@ namespace CargoV2.UI
         private Material selectedMaterial;
         private Material routeMaterial;
         private TextMesh detailText;
+        private GameObject markerPackPrefab;
+        private bool markerLoadAttempted;
+        private bool markerWarningLogged;
         private int previewSelectedMissionId = 1;
         private float nextRefreshAt;
         private int lastDetailMissionId = -1;
@@ -68,6 +74,7 @@ namespace CargoV2.UI
             if (!autoBuildOnWorldMapScene) return;
             EnsureBalance();
             CreateSharedMaterials();
+            EnsureMarkerPack();
             DiscoverLogicController();
             BuildWorldMap();
         }
@@ -110,6 +117,94 @@ namespace CargoV2.UI
             completedMaterial = MakeMaterial(new Color(0.12f, 0.50f, 0.34f));
             selectedMaterial = MakeMaterial(Color.white);
             routeMaterial = MakeMaterial(new Color(0.88f, 0.66f, 0.16f));
+        }
+
+        private void EnsureMarkerPack()
+        {
+            if (markerLoadAttempted) return;
+            markerLoadAttempted = true;
+            markerPackPrefab = Resources.Load<GameObject>(MarkerResourcePath);
+            if (markerPackPrefab == null)
+            {
+                LogMarkerFallbackOnce($"Resources marker pack not found at {MarkerResourcePath}; primitive node fallback remains active.");
+                return;
+            }
+
+            string[] requiredParts = { "MissionMarker_Base", "MissionMarker_GoldRing", "MissionMarker_Beacon" };
+            for (int i = 0; i < requiredParts.Length; i++)
+            {
+                if (FindDescendant(markerPackPrefab.transform, requiredParts[i]) != null) continue;
+                LogMarkerFallbackOnce($"Resources marker pack is missing required part {requiredParts[i]}; primitive node fallback remains active.");
+                markerPackPrefab = null;
+                return;
+            }
+        }
+
+        private void LogMarkerFallbackOnce(string message)
+        {
+            if (markerWarningLogged) return;
+            markerWarningLogged = true;
+            Debug.LogWarning($"[CARGO V2][UI_TEAM] {message}");
+        }
+
+        private static Transform FindDescendant(Transform root, string targetName)
+        {
+            if (root == null || string.IsNullOrWhiteSpace(targetName)) return null;
+            Transform[] transforms = root.GetComponentsInChildren<Transform>(true);
+            for (int i = 0; i < transforms.Length; i++)
+            {
+                if (string.Equals(transforms[i].name, targetName, StringComparison.Ordinal)) return transforms[i];
+            }
+            return null;
+        }
+
+        private void TryAttachMissionMarker(GameObject nodeObject, int missionId)
+        {
+            if (nodeObject == null) return;
+            EnsureMarkerPack();
+            if (markerPackPrefab == null) return;
+
+            try
+            {
+                GameObject markerInstance = Instantiate(markerPackPrefab, nodeObject.transform, false);
+                markerInstance.name = $"MissionMarkerVisual_{missionId:00}";
+                markerInstance.transform.localPosition = Vector3.zero;
+                markerInstance.transform.localRotation = Quaternion.identity;
+                markerInstance.transform.localScale = Vector3.one * Mathf.Clamp(realMarkerScale, 0.1f, 4f);
+
+                Renderer[] renderers = markerInstance.GetComponentsInChildren<Renderer>(true);
+                int enabledMissionRenderers = 0;
+                for (int i = 0; i < renderers.Length; i++)
+                {
+                    bool keep = IsMissionMarkerPart(renderers[i].transform, markerInstance.transform);
+                    renderers[i].enabled = keep;
+                    if (keep) enabledMissionRenderers++;
+                }
+
+                Collider[] colliders = markerInstance.GetComponentsInChildren<Collider>(true);
+                for (int i = 0; i < colliders.Length; i++) colliders[i].enabled = false;
+
+                if (enabledMissionRenderers == 0)
+                {
+                    Destroy(markerInstance);
+                    LogMarkerFallbackOnce("Resources marker pack contained no renderable MissionMarker geometry; primitive node fallback remains active.");
+                }
+            }
+            catch (Exception e)
+            {
+                LogMarkerFallbackOnce($"Resources marker instantiation failed safely: {e.Message}");
+            }
+        }
+
+        private static bool IsMissionMarkerPart(Transform current, Transform instanceRoot)
+        {
+            Transform cursor = current;
+            while (cursor != null && cursor != instanceRoot)
+            {
+                if (cursor.name.StartsWith("MissionMarker_", StringComparison.Ordinal)) return true;
+                cursor = cursor.parent;
+            }
+            return false;
         }
 
         private void DiscoverLogicController()
@@ -183,6 +278,7 @@ namespace CargoV2.UI
                 nodeObject.transform.localScale = new Vector3(0.72f, 0.18f, 0.72f);
                 WorldMapNodeClick fallbackClick = nodeObject.AddComponent<WorldMapNodeClick>();
                 fallbackClick.Configure(this, missionId);
+                TryAttachMissionMarker(nodeObject, missionId);
 
                 GameObject labelObject = new GameObject("Label");
                 labelObject.transform.SetParent(nodeObject.transform, false);
