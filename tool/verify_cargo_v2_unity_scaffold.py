@@ -24,6 +24,9 @@ REQUIRED_FILES = [
     "Assets/_Project/UI/SCR_MissionRuntimeDirector.World.cs",
     "Assets/_Project/UI/SCR_MissionRuntimeDirector.Hud.cs",
     "Assets/_Project/Scripts/Logic/SCR_WorldMapRouteController.cs",
+    "Assets/_Project/Scripts/Logic/SCR_WorldMapPersistenceBridge.cs",
+    "Assets/_Project/Scripts/Logic/SCR_MissionCompletionHandoffBridge.cs",
+    "Assets/_Project/Scripts/Logic/SCR_MissionRewardStore.cs",
     "Assets/_Project/Scripts/Logic/SCR_ActiveDeliveryStore.cs",
     "Assets/_Project/Scripts/Logic/SCR_CompanyProgressStore.cs",
     "Assets/Resources/CargoV2/Mission/MOD_Mission_CargoDepot.obj",
@@ -41,6 +44,13 @@ def read(path: str) -> str:
     if not target.is_file():
         fail(f"missing required file: {path}")
     return target.read_text(encoding="utf-8")
+
+
+def require_tokens(path: str, tokens: tuple[str, ...]) -> None:
+    content = read(path)
+    for token in tokens:
+        if token not in content:
+            fail(f"{path} contract missing: {token}")
 
 
 def main() -> None:
@@ -84,27 +94,29 @@ def main() -> None:
     if "guid: 70e8e61f984d4f92aa1c2e1fb230ef04" not in world_meta:
         fail("04_WorldMap scene GUID mismatch")
 
-    bootstrap = read("Assets/_Project/UI/SCR_WorldMapSceneBootstrap.cs")
-    for token in (
-        "SCR_WorldMapRouteController",
-        'new GameObject("Main Camera")',
-        'new GameObject("CARGO_V2_WorldMapKeyLight")',
-        "Application.targetFrameRate = 60",
-    ):
-        if token not in bootstrap:
-            fail(f"WorldMap bootstrap contract missing: {token}")
+    require_tokens(
+        "Assets/_Project/UI/SCR_WorldMapSceneBootstrap.cs",
+        (
+            "SCR_WorldMapRouteController",
+            "SCR_WorldMapPersistenceBridge",
+            "SCR_MissionCompletionHandoffBridge",
+            'new GameObject("Main Camera")',
+            'new GameObject("CARGO_V2_WorldMapKeyLight")',
+            "Application.targetFrameRate = 60",
+        ),
+    )
 
-    build_tool = read("Assets/_Project/UI/Editor/SCR_CargoV2Build.cs")
-    for token in (
-        "BuildAndroidBatch",
-        "ValidateBatch",
-        'CargoV2/Mission/MOD_Mission_CargoDepot',
-        'CargoV2/WorldMap/MOD_WorldMap_MarkerPack',
-        'CargoV2/Truck/MOD_Truck_Premium',
-        'com.walka.cargov2',
-    ):
-        if token not in build_tool:
-            fail(f"Unity build contract missing: {token}")
+    require_tokens(
+        "Assets/_Project/UI/Editor/SCR_CargoV2Build.cs",
+        (
+            "BuildAndroidBatch",
+            "ValidateBatch",
+            'CargoV2/Mission/MOD_Mission_CargoDepot',
+            'CargoV2/WorldMap/MOD_WorldMap_MarkerPack',
+            'CargoV2/Truck/MOD_Truck_Premium',
+            'com.walka.cargov2',
+        ),
+    )
 
     mission_core = read("Assets/_Project/UI/SCR_MissionRuntimeDirector.cs")
     if "partial class SCR_MissionRuntimeDirector" not in mission_core:
@@ -116,6 +128,53 @@ def main() -> None:
     ):
         if "partial class SCR_MissionRuntimeDirector" not in read(sibling):
             fail(f"Mission runtime partial contract missing: {sibling}")
+
+    require_tokens(
+        "Assets/_Project/UI/SCR_MissionRuntimeDirector.cs",
+        (
+            "ActiveDeliveryRunKey",
+            "CompletionDeliveryRunKey",
+            "Guid.NewGuid().ToString(\"N\")",
+            "Rigidbody",
+            "FixedUpdate()",
+        ),
+    )
+    require_tokens(
+        "Assets/_Project/UI/SCR_MissionRuntimeDirector.Driving.cs",
+        (
+            "if (!cargoLoaded) return;",
+            "int expectedCheckpoint = checkpointIndex + 1;",
+            "checkpoint != expectedCheckpoint",
+            "checkpointIndex < CheckpointPositions.Length - 1",
+            "PlayerPrefs.SetString(CompletionDeliveryRunKey, deliveryRunId)",
+        ),
+    )
+    require_tokens(
+        "Assets/_Project/Scripts/Logic/SCR_ActiveDeliveryStore.cs",
+        (
+            "MaxCheckpointIndex = 3",
+            "(!cargoLoaded && checkpointIndex != 0)",
+            "payload.checkpointIndex > MaxCheckpointIndex",
+        ),
+    )
+    require_tokens(
+        "Assets/_Project/Scripts/Logic/SCR_MissionRewardStore.cs",
+        (
+            "TrySettleDelivery",
+            "settledDeliveryIds",
+            "MaxSettledDeliveryIds = 256",
+            "Guid.TryParseExact(deliveryRunId, \"N\"",
+        ),
+    )
+    require_tokens(
+        "Assets/_Project/Scripts/Logic/SCR_MissionCompletionHandoffBridge.cs",
+        (
+            "CompletionDeliveryRunKey",
+            "TrySettleDelivery",
+            "TrySettleMission",
+            "ClearHandoff()",
+        ),
+    )
 
     guid_to_path: dict[str, Path] = {}
     duplicate_guids: list[str] = []
@@ -141,7 +200,8 @@ def main() -> None:
     print(
         "CARGO V2 UNITY SCAFFOLD PASS: "
         f"Unity {EXPECTED_VERSION} ({EXPECTED_REVISION}), 3 build scenes, "
-        f"{len(guid_to_path)} unique governed Unity GUIDs, trucking runtime + Android batch build contract present."
+        f"{len(guid_to_path)} unique governed Unity GUIDs, ordered trucking runtime + "
+        "repeatable idempotent delivery economy + Android batch build contract present."
     )
 
 
