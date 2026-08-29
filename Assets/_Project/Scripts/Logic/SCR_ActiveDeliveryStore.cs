@@ -9,6 +9,7 @@ namespace CargoV2.Logic
         private const string ActiveDeliveryKey = "cargo_v2_active_delivery_v1";
         private const string CorruptBackupKey = "cargo_v2_active_delivery_corrupt_v1";
         private const int SchemaVersion = 1;
+        private const int MaxCheckpointIndex = 3;
         private static readonly Vector3 MissionOrigin = new Vector3(1000f, 0f, 1000f);
 
         [Serializable]
@@ -87,7 +88,8 @@ namespace CargoV2.Logic
         {
             if (missionId < 1 || missionId > 20 || CargoV2LogisticsCatalog.GetTruck(truckId) == null ||
                 !Finite(position.x) || !Finite(position.y) || !Finite(position.z) || !Finite(yaw) ||
-                !Finite(remainingSeconds) || !Finite(damage))
+                !Finite(remainingSeconds) || !Finite(damage) || checkpointIndex < 0 || checkpointIndex > MaxCheckpointIndex ||
+                (!cargoLoaded && checkpointIndex != 0))
             {
                 return false;
             }
@@ -104,7 +106,7 @@ namespace CargoV2.Logic
                 remainingSeconds = Mathf.Clamp(remainingSeconds, 0f, 3600f),
                 damage = Mathf.Clamp(damage, 0f, 100f),
                 cargoLoaded = cargoLoaded,
-                checkpointIndex = Mathf.Clamp(checkpointIndex, 0, 8),
+                checkpointIndex = checkpointIndex,
                 savedUtcTicks = DateTime.UtcNow.Ticks,
             };
 
@@ -180,7 +182,8 @@ namespace CargoV2.Logic
             if (!Finite(payload.x) || !Finite(payload.y) || !Finite(payload.z) || !Finite(payload.yaw) ||
                 !Finite(payload.remainingSeconds) || !Finite(payload.damage)) return false;
             if (payload.remainingSeconds < 0f || payload.remainingSeconds > 3600f || payload.damage < 0f || payload.damage > 100f) return false;
-            if (payload.checkpointIndex < 0 || payload.checkpointIndex > 8) return false;
+            if (payload.checkpointIndex < 0 || payload.checkpointIndex > MaxCheckpointIndex) return false;
+            if (!payload.cargoLoaded && payload.checkpointIndex != 0) return false;
 
             Vector3 position = new Vector3(payload.x, payload.y, payload.z);
             if (Vector3.Distance(position, MissionOrigin) > 650f) return false;
