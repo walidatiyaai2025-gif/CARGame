@@ -14,6 +14,7 @@ SCENES = [
     ("Assets/_Project/Scenes/04_WorldMap.unity", "70e8e61f984d4f92aa1c2e1fb230ef04"),
 ]
 REQUIRED_FILES = [
+    ".gitignore",
     "ProjectSettings/ProjectVersion.txt",
     "ProjectSettings/EditorBuildSettings.asset",
     "Packages/manifest.json",
@@ -59,6 +60,19 @@ def main() -> None:
     for path in REQUIRED_FILES:
         if not (ROOT / path).is_file():
             fail(f"missing required file: {path}")
+
+    require_tokens(
+        ".gitignore",
+        (
+            "[Ll]ibrary/",
+            "[Tt]emp/",
+            "[Oo]bj/",
+            "[Ll]ogs/",
+            "[Uu]ser[Ss]ettings/",
+            "[Bb]uilds/",
+            "BuildLogs/",
+        ),
+    )
 
     version = read("ProjectSettings/ProjectVersion.txt")
     if f"m_EditorVersion: {EXPECTED_VERSION}" not in version:
@@ -117,6 +131,10 @@ def main() -> None:
             'CargoV2/WorldMap/MOD_WorldMap_MarkerPack',
             'CargoV2/Truck/MOD_Truck_Premium',
             'com.walka.cargov2',
+            "UIOrientation.LandscapeLeft",
+            "AndroidArchitecture.ARM64",
+            "ScriptingImplementation.IL2CPP",
+            "EditorUserBuildSettings.buildAppBundle = false",
         ),
     )
 
@@ -186,6 +204,7 @@ def main() -> None:
             "settledDeliveryIds",
             "MaxSettledDeliveryIds = 256",
             "Guid.TryParseExact(deliveryRunId, \"N\"",
+            "payload.rewardedMissionIds.Add(mission.missionId)",
         ),
     )
     require_tokens(
@@ -215,7 +234,10 @@ def main() -> None:
     if duplicate_guids:
         fail("duplicate Unity GUIDs: " + "; ".join(duplicate_guids))
 
-    forbidden = [name for name in ("Library", "Temp", "Logs", "UserSettings") if (ROOT / name).exists()]
+    forbidden = [
+        name for name in ("Library", "Temp", "Obj", "Logs", "UserSettings", "Builds", "BuildLogs")
+        if (ROOT / name).exists()
+    ]
     if forbidden:
         fail("generated Unity directories are tracked/present: " + ", ".join(forbidden))
 
@@ -223,7 +245,7 @@ def main() -> None:
         "CARGO V2 UNITY SCAFFOLD PASS: "
         f"Unity {EXPECTED_VERSION} ({EXPECTED_REVISION}), 3 build scenes, "
         f"{len(guid_to_path)} unique governed Unity GUIDs, ordered trucking runtime + "
-        "repeatable idempotent delivery economy + one-command Android closure build present."
+        "repeatable idempotent delivery economy + ARM64 landscape Android closure build present."
     )
 
 
