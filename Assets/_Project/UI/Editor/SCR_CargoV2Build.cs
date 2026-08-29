@@ -97,10 +97,13 @@ namespace CargoV2.EditorTools
             PlayerSettings.companyName = "WALKA";
             PlayerSettings.SetApplicationIdentifier(BuildTargetGroup.Android, "com.walka.cargov2");
             PlayerSettings.bundleVersion = "2.0.0";
+            PlayerSettings.defaultInterfaceOrientation = UIOrientation.LandscapeLeft;
             PlayerSettings.Android.bundleVersionCode = 20000;
             PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel23;
+            PlayerSettings.Android.targetArchitectures = AndroidArchitecture.ARM64;
             PlayerSettings.SetScriptingBackend(BuildTargetGroup.Android, ScriptingImplementation.IL2CPP);
             PlayerSettings.colorSpace = ColorSpace.Linear;
+            EditorUserBuildSettings.buildAppBundle = false;
 
             string output = Environment.GetEnvironmentVariable("CARGO_V2_ANDROID_OUTPUT");
             if (string.IsNullOrWhiteSpace(output)) output = "Builds/CargoV2/CARGO-V2.apk";
