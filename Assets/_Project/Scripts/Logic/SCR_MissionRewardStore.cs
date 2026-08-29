@@ -94,6 +94,17 @@ namespace CargoV2.Logic
 
             if (!ApplyReward(payload, mission, stars)) return false;
             payload.settledDeliveryIds.Add(deliveryRunId);
+
+            // Once a modern delivery has paid this mission, also seal the legacy
+            // one-time ledger entry. This prevents an old no-run-id handoff from
+            // paying the same completion again after migration, while modern replay
+            // remains repeatable through unique deliveryRunId values.
+            if (!payload.rewardedMissionIds.Contains(mission.missionId))
+            {
+                payload.rewardedMissionIds.Add(mission.missionId);
+                payload.rewardedMissionIds.Sort();
+            }
+
             if (payload.settledDeliveryIds.Count > MaxSettledDeliveryIds)
             {
                 payload.settledDeliveryIds.RemoveRange(0, payload.settledDeliveryIds.Count - MaxSettledDeliveryIds);
