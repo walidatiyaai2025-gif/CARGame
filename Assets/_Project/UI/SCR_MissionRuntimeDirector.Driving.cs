@@ -40,6 +40,7 @@ namespace CargoV2.UI
                 if (!cargoLoaded)
                 {
                     cargoLoaded = true;
+                    checkpointIndex = 0;
                     AttachCargoToTruck();
                     if (pickupCargoVisual != null) pickupCargoVisual.SetActive(false);
                     SaveActiveDelivery();
@@ -49,15 +50,27 @@ namespace CargoV2.UI
 
             if (kind == TriggerKind.Checkpoint)
             {
-                if (checkpoint > checkpointIndex)
-                {
-                    checkpointIndex = checkpoint;
-                    SaveActiveDelivery();
-                }
+                // A route checkpoint is authoritative only after the cargo has been
+                // collected and only when reached in sequence. This prevents a player
+                // from banking a downstream recovery point before pickup or skipping
+                // route obligations by approaching checkpoints out of order.
+                if (!cargoLoaded) return;
+                int expectedCheckpoint = checkpointIndex + 1;
+                if (checkpoint != expectedCheckpoint) return;
+                if (checkpoint < 1 || checkpoint >= CheckpointPositions.Length) return;
+
+                checkpointIndex = checkpoint;
+                SaveActiveDelivery();
                 return;
             }
 
-            if (kind == TriggerKind.Delivery && cargoLoaded) CompleteMission();
+            if (kind == TriggerKind.Delivery)
+            {
+                // Delivery requires both cargo and the final route checkpoint. Entering
+                // the destination early is intentionally a no-op rather than a success.
+                if (!cargoLoaded || checkpointIndex < CheckpointPositions.Length - 1) return;
+                CompleteMission();
+            }
         }
 
         private void CompleteMission()
@@ -124,6 +137,7 @@ namespace CargoV2.UI
             if (!keepCargo && safeIndex == 0)
             {
                 cargoLoaded = false;
+                checkpointIndex = 0;
                 if (pickupCargoVisual != null) pickupCargoVisual.SetActive(true);
                 if (loadedCargoVisual != null)
                 {
@@ -139,6 +153,10 @@ namespace CargoV2.UI
             remainingSeconds = Mathf.Clamp(active.RemainingSeconds, 1f, Mathf.Max(25f, mission.timeSeconds));
             damage = Mathf.Clamp(active.Damage, 0f, 99f);
             cargoLoaded = active.CargoLoaded;
+
+            // Corrupt/legacy state must never restore a downstream checkpoint without
+            // cargo. Collapse it to the route start rather than granting free progress.
+            if (!cargoLoaded && checkpointIndex != 0) checkpointIndex = 0;
 
             truckBody.position = active.Position;
             truckBody.rotation = Quaternion.Euler(0f, active.Yaw, 0f);
