@@ -96,18 +96,26 @@ namespace CargoV2.Logic
                 return false;
             }
 
-            bool settled = hasDeliveryRun
-                ? SCR_MissionRewardStore.TrySettleDelivery(
+            bool rewardGranted;
+            SCR_MissionRewardStore.Snapshot economy;
+            bool settled;
+            if (hasDeliveryRun)
+            {
+                settled = SCR_MissionRewardStore.TrySettleDelivery(
                     mission,
                     stars,
                     deliveryRunId,
-                    out bool rewardGranted,
-                    out SCR_MissionRewardStore.Snapshot economy)
-                : SCR_MissionRewardStore.TrySettleMission(
+                    out rewardGranted,
+                    out economy);
+            }
+            else
+            {
+                settled = SCR_MissionRewardStore.TrySettleMission(
                     mission,
                     stars,
                     out rewardGranted,
                     out economy);
+            }
 
             if (!settled)
             {
