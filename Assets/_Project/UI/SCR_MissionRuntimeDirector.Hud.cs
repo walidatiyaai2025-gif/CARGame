@@ -15,7 +15,9 @@ namespace CargoV2.UI
             GUILayout.Label($"{contract.origin}  →  {contract.destination}");
             GUILayout.Label($"{contract.cargoLabel} • {contract.cargoWeightTons:0.0} t • {contract.distanceKm} km");
             GUILayout.Label($"{truckStats.DisplayName} • {Mathf.Abs(GetForwardSpeed()) * 3.6f:0} km/h • Damage {damage:0}% • Time {Mathf.CeilToInt(remainingSeconds)}s");
-            GUILayout.Label(cargoLoaded ? "Cargo: LOADED — proceed to gold delivery zone." : "Cargo: DRIVE INTO THE CYAN PICKUP ZONE.");
+            GUILayout.Label(cargoLoaded
+                ? $"Cargo: LOADED — checkpoint {checkpointIndex}/3, then gold delivery zone."
+                : "Cargo: DRIVE INTO THE CYAN PICKUP ZONE.");
             GUILayout.Label(usingRealTruckAsset && usingRealMissionAsset ? "3D assets: premium truck + cargo/depot pack" : "3D assets: safe generated fallback active");
 
             if (contract.cargoWeightTons > truckStats.CargoCapacityTons)
@@ -157,6 +159,7 @@ namespace CargoV2.UI
             if (!applicationQuitting && (succeeded || abandonRequested))
             {
                 PlayerPrefs.DeleteKey(PendingMissionKey);
+                if (abandonRequested) PlayerPrefs.DeleteKey(ActiveDeliveryRunKey);
                 PlayerPrefs.Save();
             }
 
