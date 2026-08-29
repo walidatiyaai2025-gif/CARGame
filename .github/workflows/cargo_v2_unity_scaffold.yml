@@ -1,0 +1,24 @@
+name: CARGO V2 Unity Scaffold
+
+on:
+  pull_request:
+    paths:
+      - 'Assets/**'
+      - 'Packages/**'
+      - 'ProjectSettings/**'
+      - 'tool/verify_cargo_v2_unity_scaffold.py'
+      - '.github/workflows/cargo_v2_unity_scaffold.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scaffold:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Verify CARGO V2 Unity scaffold
+        run: python3 tool/verify_cargo_v2_unity_scaffold.py
