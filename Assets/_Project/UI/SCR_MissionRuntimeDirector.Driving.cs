@@ -1,3 +1,4 @@
+using System;
 using CargoV2.Logic;
 using UnityEngine;
 
@@ -50,10 +51,6 @@ namespace CargoV2.UI
 
             if (kind == TriggerKind.Checkpoint)
             {
-                // A route checkpoint is authoritative only after the cargo has been
-                // collected and only when reached in sequence. This prevents a player
-                // from banking a downstream recovery point before pickup or skipping
-                // route obligations by approaching checkpoints out of order.
                 if (!cargoLoaded) return;
                 int expectedCheckpoint = checkpointIndex + 1;
                 if (checkpoint != expectedCheckpoint) return;
@@ -66,8 +63,6 @@ namespace CargoV2.UI
 
             if (kind == TriggerKind.Delivery)
             {
-                // Delivery requires both cargo and the final route checkpoint. Entering
-                // the destination early is intentionally a no-op rather than a success.
                 if (!cargoLoaded || checkpointIndex < CheckpointPositions.Length - 1) return;
                 CompleteMission();
             }
@@ -75,7 +70,7 @@ namespace CargoV2.UI
 
         private void CompleteMission()
         {
-            if (terminal) return;
+            if (terminal || !Guid.TryParseExact(deliveryRunId, "N", out _)) return;
             terminal = true;
             succeeded = true;
             throttleInput = 0f;
@@ -87,6 +82,7 @@ namespace CargoV2.UI
 
             PlayerPrefs.SetInt(CompletionHandoffKey, mission.missionId);
             PlayerPrefs.SetInt(CompletionStarsKey, completionStars);
+            PlayerPrefs.SetString(CompletionDeliveryRunKey, deliveryRunId);
             PlayerPrefs.Save();
             SCR_ActiveDeliveryStore.Clear();
         }
@@ -154,8 +150,6 @@ namespace CargoV2.UI
             damage = Mathf.Clamp(active.Damage, 0f, 99f);
             cargoLoaded = active.CargoLoaded;
 
-            // Corrupt/legacy state must never restore a downstream checkpoint without
-            // cargo. Collapse it to the route start rather than granting free progress.
             if (!cargoLoaded && checkpointIndex != 0) checkpointIndex = 0;
 
             truckBody.position = active.Position;
@@ -180,9 +174,12 @@ namespace CargoV2.UI
             damage = 0f;
             checkpointIndex = 0;
             remainingSeconds = Mathf.Max(25f, mission.timeSeconds);
+            deliveryRunId = Guid.NewGuid().ToString("N");
 
             PlayerPrefs.DeleteKey(CompletionHandoffKey);
             PlayerPrefs.DeleteKey(CompletionStarsKey);
+            PlayerPrefs.DeleteKey(CompletionDeliveryRunKey);
+            PlayerPrefs.SetString(ActiveDeliveryRunKey, deliveryRunId);
             PlayerPrefs.Save();
 
             ResetTruckToCheckpoint(0, false);
@@ -195,6 +192,7 @@ namespace CargoV2.UI
             abandonRequested = true;
             SCR_ActiveDeliveryStore.Clear();
             PlayerPrefs.DeleteKey(PendingMissionKey);
+            PlayerPrefs.DeleteKey(ActiveDeliveryRunKey);
             PlayerPrefs.Save();
             Time.timeScale = 1f;
             Destroy(gameObject);
