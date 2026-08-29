@@ -10,8 +10,10 @@ namespace CargoV2.UI
     public sealed partial class SCR_MissionRuntimeDirector : MonoBehaviour
     {
         private const string PendingMissionKey = "cargo_v2_pending_mission_id";
+        private const string ActiveDeliveryRunKey = "cargo_v2_active_delivery_run_id_v1";
         private const string CompletionHandoffKey = "cargo_v2_completed_mission_handoff";
         private const string CompletionStarsKey = "cargo_v2_completed_mission_stars";
+        private const string CompletionDeliveryRunKey = "cargo_v2_completed_delivery_run_id";
         private const string TruckResourcePath = "CargoV2/Truck/MOD_Truck_Premium";
         private const string MissionResourcePath = "CargoV2/Mission/MOD_Mission_CargoDepot";
         private const float RouteLength = 190f;
@@ -58,6 +60,7 @@ namespace CargoV2.UI
         private float nextAutosave;
         private int checkpointIndex;
         private int completionStars;
+        private string deliveryRunId = string.Empty;
         private string statusReason = string.Empty;
         private float throttleInput;
         private float steeringInput;
@@ -101,6 +104,9 @@ namespace CargoV2.UI
             }
 
             bool hasResume = SCR_ActiveDeliveryStore.TryLoad(missionId, out SCR_ActiveDeliveryStore.Snapshot resume);
+            deliveryRunId = ResolveDeliveryRunId(hasResume);
+            if (string.IsNullOrEmpty(deliveryRunId)) return false;
+
             truckStats = ResolveTruckStats(hasResume ? resume.TruckId : SCR_CompanyProgressStore.GetSelectedTruckId());
             if (string.IsNullOrEmpty(truckStats.Id)) return false;
 
@@ -110,6 +116,7 @@ namespace CargoV2.UI
             PlayerPrefs.SetInt(PendingMissionKey, missionId);
             PlayerPrefs.DeleteKey(CompletionHandoffKey);
             PlayerPrefs.DeleteKey(CompletionStarsKey);
+            PlayerPrefs.DeleteKey(CompletionDeliveryRunKey);
             PlayerPrefs.Save();
 
             remainingSeconds = Mathf.Max(25f, mission.timeSeconds);
@@ -125,6 +132,28 @@ namespace CargoV2.UI
 
             nextAutosave = Time.unscaledTime + 2f;
             return true;
+        }
+
+        private static string ResolveDeliveryRunId(bool hasResume)
+        {
+            if (hasResume && PlayerPrefs.HasKey(ActiveDeliveryRunKey))
+            {
+                string existing = PlayerPrefs.GetString(ActiveDeliveryRunKey, string.Empty);
+                if (Guid.TryParseExact(existing, "N", out _)) return existing;
+            }
+
+            string created = Guid.NewGuid().ToString("N");
+            try
+            {
+                PlayerPrefs.SetString(ActiveDeliveryRunKey, created);
+                PlayerPrefs.Save();
+                return created;
+            }
+            catch (Exception exception)
+            {
+                Debug.LogWarning($"[CARGO V2][MISSION] Could not persist delivery run id: {exception.Message}");
+                return string.Empty;
+            }
         }
 
         private CargoV2TruckRuntimeStats ResolveTruckStats(string truckId)
