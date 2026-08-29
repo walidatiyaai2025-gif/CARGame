@@ -17,6 +17,8 @@ REQUIRED_FILES = [
     "ProjectSettings/ProjectVersion.txt",
     "ProjectSettings/EditorBuildSettings.asset",
     "Packages/manifest.json",
+    "BUILD_CARGO_V2_UNITY.ps1",
+    "BUILD_CARGO_V2_UNITY.bat",
     "Assets/_Project/UI/SCR_WorldMapSceneBootstrap.cs",
     "Assets/_Project/UI/Editor/SCR_CargoV2Build.cs",
     "Assets/_Project/UI/SCR_MissionRuntimeDirector.cs",
@@ -118,6 +120,26 @@ def main() -> None:
         ),
     )
 
+    require_tokens(
+        "BUILD_CARGO_V2_UNITY.ps1",
+        (
+            '2022.3.75f1',
+            'SCR_CargoV2Build.ValidateBatch',
+            'SCR_CargoV2Build.BuildAndroidBatch',
+            'CARGO_V2_ANDROID_OUTPUT',
+            'Get-FileHash',
+            'SHA256',
+        ),
+    )
+    require_tokens(
+        "BUILD_CARGO_V2_UNITY.bat",
+        (
+            'BUILD_CARGO_V2_UNITY.ps1',
+            'ExecutionPolicy Bypass',
+            'exit /b %EXIT_CODE%',
+        ),
+    )
+
     mission_core = read("Assets/_Project/UI/SCR_MissionRuntimeDirector.cs")
     if "partial class SCR_MissionRuntimeDirector" not in mission_core:
         fail("Mission runtime is not the composed partial trucking runtime")
@@ -201,7 +223,7 @@ def main() -> None:
         "CARGO V2 UNITY SCAFFOLD PASS: "
         f"Unity {EXPECTED_VERSION} ({EXPECTED_REVISION}), 3 build scenes, "
         f"{len(guid_to_path)} unique governed Unity GUIDs, ordered trucking runtime + "
-        "repeatable idempotent delivery economy + Android batch build contract present."
+        "repeatable idempotent delivery economy + one-command Android closure build present."
     )
 
 
