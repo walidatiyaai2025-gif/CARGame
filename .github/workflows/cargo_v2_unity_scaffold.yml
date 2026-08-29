@@ -6,6 +6,8 @@ on:
       - 'Assets/**'
       - 'Packages/**'
       - 'ProjectSettings/**'
+      - 'BUILD_CARGO_V2_UNITY.ps1'
+      - 'BUILD_CARGO_V2_UNITY.bat'
       - 'tool/verify_cargo_v2_unity_scaffold.py'
       - '.github/workflows/cargo_v2_unity_scaffold.yml'
   workflow_dispatch:
