@@ -135,7 +135,7 @@ namespace CargoV2.UI
                             selectedTruck.cargoCapacityTons >= contract.cargoWeightTons;
             GUILayout.Label(canCarry
                 ? $"Selected: {selectedTruck.displayName} — capacity OK"
-                : "Selected truck is under-capacity. Choose or buy a heavier truck before deploying.");
+                : "Selected truck is under-capacity — deployment stays available with reduced speed and acceleration.");
         }
 
         private void DrawResumeButton()
