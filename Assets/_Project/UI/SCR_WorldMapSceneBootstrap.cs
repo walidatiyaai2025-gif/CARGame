@@ -7,8 +7,8 @@ namespace CargoV2.UI
 {
     /// <summary>
     /// Deterministic runtime bootstrap for the source-controlled 04_WorldMap scene.
-    /// Keeps the scene itself intentionally minimal while guaranteeing the authoritative
-    /// progression controller and a usable 3D camera/light rig exist before Start().
+    /// Keeps the scene intentionally minimal while guaranteeing progression,
+    /// persistence/completion bridges and a usable 3D camera/light rig are wired.
     /// </summary>
     public static class SCR_WorldMapSceneBootstrap
     {
@@ -39,10 +39,23 @@ namespace CargoV2.UI
 
             Application.targetFrameRate = 60;
 
-            if (UnityEngine.Object.FindObjectOfType<SCR_WorldMapRouteController>() == null)
+            SCR_WorldMapRouteController controller = UnityEngine.Object.FindObjectOfType<SCR_WorldMapRouteController>();
+            if (controller == null)
             {
                 GameObject controllerHost = new GameObject("CARGO_V2_WorldMapRouteController");
-                controllerHost.AddComponent<SCR_WorldMapRouteController>();
+                controller = controllerHost.AddComponent<SCR_WorldMapRouteController>();
+            }
+
+            // Do not rely on ordering between independent RuntimeInitialize hooks.
+            // These bridges are required for first-frame save restoration and for a
+            // completion handoff that may already exist after a crash/relaunch.
+            if (controller.GetComponent<SCR_WorldMapPersistenceBridge>() == null)
+            {
+                controller.gameObject.AddComponent<SCR_WorldMapPersistenceBridge>();
+            }
+            if (controller.GetComponent<SCR_MissionCompletionHandoffBridge>() == null)
+            {
+                controller.gameObject.AddComponent<SCR_MissionCompletionHandoffBridge>();
             }
 
             Camera camera = Camera.main;
