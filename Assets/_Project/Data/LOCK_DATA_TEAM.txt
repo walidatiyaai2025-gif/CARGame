@@ -1,5 +1,6 @@
-CARGO V2 DATA TEAM folder lock.
+CARGO V2 DATA_TEAM LOCK
 Owner: DATA_TEAM
-Scope: Assets/_Project/Data/
-Assigned: SO_GameBalance and localization/data contracts.
-Do not modify another team's locked area without CAPTAIN coordination.
+Scope: /Assets/_Project/Data/
+Current task: Issue #262 WorldMap presentation metadata
+Base: cargo-v2
+Rule: presentation metadata only; SO_GameBalance remains authoritative for mission/economy values.

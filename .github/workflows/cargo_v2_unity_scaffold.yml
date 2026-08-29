@@ -1,0 +1,38 @@
+name: CARGO V2 Unity Scaffold
+
+on:
+  pull_request:
+    paths:
+      - 'Assets/**'
+      - 'Packages/**'
+      - 'ProjectSettings/**'
+      - 'BUILD_CARGO_V2_UNITY.ps1'
+      - 'BUILD_CARGO_V2_UNITY.bat'
+      - 'tool/verify_cargo_v2_unity_scaffold.py'
+      - '.github/workflows/cargo_v2_unity_scaffold.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scaffold:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Verify CARGO V2 Unity scaffold
+        run: python3 tool/verify_cargo_v2_unity_scaffold.py
+      - name: Parse Windows Unity closure script
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $errors = $null
+          $path = (Resolve-Path './BUILD_CARGO_V2_UNITY.ps1').Path
+          [System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$tokens, [ref]$errors) | Out-Null
+          if ($errors.Count -gt 0) {
+            $errors | ForEach-Object { Write-Error $_.Message }
+            exit 1
+          }
+          Write-Host "CARGO V2 Windows Unity launcher syntax PASS."
