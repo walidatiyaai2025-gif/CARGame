@@ -1,49 +1,87 @@
 using System;
 using System.Collections.Generic;
 using CargoV2.Data;
+using CargoV2.Logic;
 using UnityEngine;
 
 namespace CargoV2.UI
 {
     [DisallowMultipleComponent]
-    public sealed class SCR_MissionRuntimeDirector : MonoBehaviour
+    public sealed partial class SCR_MissionRuntimeDirector : MonoBehaviour
     {
         private const string PendingMissionKey = "cargo_v2_pending_mission_id";
         private const string CompletionHandoffKey = "cargo_v2_completed_mission_handoff";
-        private const string MissionAssetResourcePath = "CargoV2/Mission/MOD_Mission_CargoDepot";
-        private const float HudX = 24f;
-        private const float HudY = 24f;
-        private const float HudWidth = 430f;
-        private const float HudHeight = 280f;
+        private const string CompletionStarsKey = "cargo_v2_completed_mission_stars";
+        private const string TruckResourcePath = "CargoV2/Truck/MOD_Truck_Premium";
+        private const string MissionResourcePath = "CargoV2/Mission/MOD_Mission_CargoDepot";
+        private const float RouteLength = 190f;
+        private const float HudX = 18f;
+        private const float HudY = 18f;
+        private const float HudWidth = 500f;
+        private const float HudHeight = 300f;
         private static readonly Vector3 MissionOrigin = new Vector3(1000f, 0f, 1000f);
-        private static SCR_MissionRuntimeDirector activeInstance;
+        private static readonly Vector3[] CheckpointPositions =
+        {
+            MissionOrigin + new Vector3(0f, 0.7f, 2f),
+            MissionOrigin + new Vector3(0f, 0.7f, 60f),
+            MissionOrigin + new Vector3(0f, 0.7f, 110f),
+            MissionOrigin + new Vector3(0f, 0.7f, 155f),
+        };
 
+        private static SCR_MissionRuntimeDirector activeInstance;
         private readonly List<GameObject> spawnedObjects = new List<GameObject>();
         private readonly List<Material> runtimeMaterials = new List<Material>();
 
         private SO_GameBalance balance;
         private SO_GameBalance.MissionBalance mission;
+        private CargoV2ContractSpec contract;
+        private CargoV2TruckRuntimeStats truckStats;
+        private Rigidbody truckBody;
         private Camera missionCamera;
-        private int delivered;
-        private int requiredDeliveries = 5;
-        private float remainingSeconds;
+        private GameObject pickupCargoVisual;
+        private GameObject loadedCargoVisual;
+        private Material navy;
+        private Material gold;
+        private Material cyan;
+        private Material road;
+        private bool initialized;
         private bool terminal;
         private bool succeeded;
-        private bool initialized;
-        private bool usingRealAssetPack;
+        private bool paused;
+        private bool cargoLoaded;
+        private bool usingRealTruckAsset;
+        private bool usingRealMissionAsset;
+        private bool abandonRequested;
+        private bool applicationQuitting;
+        private float remainingSeconds;
+        private float damage;
+        private float nextAutosave;
+        private int checkpointIndex;
+        private int completionStars;
+        private string statusReason = string.Empty;
+        private float throttleInput;
+        private float steeringInput;
+        private bool hardBrake;
 
         public static bool IsRunning => activeInstance != null;
 
         public static bool LaunchInPlace(int missionId)
         {
-            if (missionId < 1 || missionId > 20) return false;
-            if (IsRunning) return false;
+            if (missionId < 1 || missionId > 20 || IsRunning) return false;
 
-            GameObject host = new GameObject("CARGO_V2_InPlaceMissionRuntime");
+            if (SCR_ActiveDeliveryStore.TryLoadAny(out SCR_ActiveDeliveryStore.Snapshot active) &&
+                active.MissionId != missionId)
+            {
+                Debug.LogWarning(
+                    $"[CARGO V2][MISSION] Delivery {active.MissionId:00} is already active; resume or abandon it before starting {missionId:00}.");
+                return false;
+            }
+
+            GameObject host = new GameObject("CARGO_V2_DrivingMissionRuntime");
             SCR_MissionRuntimeDirector director = host.AddComponent<SCR_MissionRuntimeDirector>();
-            bool launched = director.Initialize(missionId);
-            if (!launched && director != null) Destroy(director.gameObject);
-            return launched;
+            if (director.Initialize(missionId)) return true;
+            Destroy(host);
+            return false;
         }
 
         private bool Initialize(int missionId)
@@ -51,301 +89,146 @@ namespace CargoV2.UI
             if (initialized || activeInstance != null) return false;
 
             balance = ScriptableObject.CreateInstance<SO_GameBalance>();
+            balance.name = "SO_GameBalance_MissionRuntime";
             balance.ResetToApprovedDefaults();
             mission = balance.GetMission(missionId);
-            if (mission == null) return false;
+            contract = CargoV2LogisticsCatalog.BuildContract(mission);
+            if (mission == null || contract == null) return false;
+            if (!CargoV2LogisticsCatalog.Validate(out string catalogError))
+            {
+                Debug.LogError($"[CARGO V2][MISSION] Logistics catalog invalid: {catalogError}");
+                return false;
+            }
+
+            bool hasResume = SCR_ActiveDeliveryStore.TryLoad(missionId, out SCR_ActiveDeliveryStore.Snapshot resume);
+            truckStats = ResolveTruckStats(hasResume ? resume.TruckId : SCR_CompanyProgressStore.GetSelectedTruckId());
+            if (string.IsNullOrEmpty(truckStats.Id)) return false;
 
             initialized = true;
             activeInstance = this;
+            Time.timeScale = 1f;
+            PlayerPrefs.SetInt(PendingMissionKey, missionId);
             PlayerPrefs.DeleteKey(CompletionHandoffKey);
+            PlayerPrefs.DeleteKey(CompletionStarsKey);
             PlayerPrefs.Save();
-            remainingSeconds = Mathf.Max(10f, mission.timeSeconds);
-            BuildMissionWorld();
+
+            remainingSeconds = Mathf.Max(25f, mission.timeSeconds);
+            BuildWorld();
+            if (truckBody == null || missionCamera == null) return false;
+
+            if (hasResume) RestoreActiveDelivery(resume);
+            else
+            {
+                ResetTruckToCheckpoint(0, false);
+                SaveActiveDelivery();
+            }
+
+            nextAutosave = Time.unscaledTime + 2f;
             return true;
+        }
+
+        private CargoV2TruckRuntimeStats ResolveTruckStats(string truckId)
+        {
+            CargoV2TruckSpec spec = CargoV2LogisticsCatalog.GetTruck(truckId);
+            if (spec != null &&
+                SCR_CompanyProgressStore.TryGetTruckState(truckId, out SCR_CompanyProgressStore.TruckState state))
+            {
+                return CargoV2LogisticsCatalog.GetRuntimeStats(
+                    spec, state.EngineLevel, state.HandlingLevel, state.DurabilityLevel);
+            }
+            return SCR_CompanyProgressStore.GetSelectedRuntimeStats();
         }
 
         private void Update()
         {
             if (!initialized) return;
 
-            if (Input.GetKeyDown(KeyCode.Escape))
+            if (Input.GetKeyDown(KeyCode.Escape) || Input.GetKeyDown(KeyCode.P)) TogglePause();
+            if (!terminal && !paused && Input.GetKeyDown(KeyCode.R)) RecoverTruck();
+
+            if (terminal || paused)
             {
-                Destroy(gameObject);
+                throttleInput = 0f;
+                steeringInput = 0f;
+                hardBrake = false;
                 return;
             }
 
-            if (!terminal)
+            ReadInput();
+            remainingSeconds -= Time.deltaTime;
+            if (remainingSeconds <= 0f)
             {
-                HandleTouchInput();
-                remainingSeconds -= Time.deltaTime;
-                if (remainingSeconds <= 0f)
-                {
-                    remainingSeconds = 0f;
-                    terminal = true;
-                    succeeded = false;
-                }
+                remainingSeconds = 0f;
+                FailMission("CONTRACT TIME EXPIRED");
+                return;
+            }
+
+            if (truckBody != null &&
+                (truckBody.position.y < MissionOrigin.y - 5f ||
+                 Vector3.Distance(truckBody.position, MissionOrigin) > 320f))
+            {
+                RecoverTruck();
+            }
+
+            if (Time.unscaledTime >= nextAutosave)
+            {
+                nextAutosave = Time.unscaledTime + 2f;
+                SaveActiveDelivery();
             }
         }
 
-        private void HandleTouchInput()
+        private void FixedUpdate()
         {
-            if (missionCamera == null || Input.touchCount <= 0) return;
+            if (!initialized || terminal || paused || truckBody == null) return;
 
-            Touch touch = Input.GetTouch(0);
-            if (touch.phase != TouchPhase.Ended) return;
+            Vector3 forward = truckBody.transform.forward;
+            Vector3 right = truckBody.transform.right;
+            float forwardSpeed = Vector3.Dot(truckBody.velocity, forward);
+            float overload = contract.cargoWeightTons > truckStats.CargoCapacityTons ? 0.72f : 1f;
+            float maxForward = truckStats.TopSpeedMetersPerSecond * overload;
+            float maxReverse = Mathf.Min(5f, maxForward * 0.42f);
+            float acceleration = truckStats.AccelerationMetersPerSecondSquared * overload;
 
-            Vector2 guiPoint = new Vector2(touch.position.x, Screen.height - touch.position.y);
-            if (new Rect(HudX, HudY, HudWidth, HudHeight).Contains(guiPoint)) return;
-
-            Ray ray = missionCamera.ScreenPointToRay(touch.position);
-            if (!Physics.Raycast(ray, out RaycastHit hit, 250f)) return;
-
-            MissionCargoClick cargoClick = hit.collider.GetComponent<MissionCargoClick>();
-            if (cargoClick == null) cargoClick = hit.collider.GetComponentInParent<MissionCargoClick>();
-            cargoClick?.TryDeliver();
-        }
-
-        private void BuildMissionWorld()
-        {
-            Shader shader = Shader.Find("Standard") ?? Shader.Find("Universal Render Pipeline/Lit");
-            Material navy = CreateMaterial(shader, new Color(0.02f, 0.07f, 0.17f));
-            Material gold = CreateMaterial(shader, new Color(0.78f, 0.52f, 0.08f));
-            Material chrome = CreateMaterial(shader, new Color(0.42f, 0.44f, 0.48f));
-
-            GameObject ground = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            ground.name = "MissionGround";
-            ground.transform.position = MissionOrigin + new Vector3(0f, -0.3f, 2f);
-            ground.transform.localScale = new Vector3(18f, 0.4f, 16f);
-            SetMaterial(ground, navy);
-            spawnedObjects.Add(ground);
-
-            usingRealAssetPack = TryBuildRealAssetProps();
-            if (!usingRealAssetPack)
+            if (hardBrake || (throttleInput < -0.05f && forwardSpeed > 0.75f))
             {
-                BuildFallbackMissionProps(gold, chrome);
+                Vector3 planar = new Vector3(truckBody.velocity.x, 0f, truckBody.velocity.z);
+                truckBody.AddForce(-planar * 4.8f, ForceMode.Acceleration);
+            }
+            else if (Mathf.Abs(throttleInput) > 0.02f)
+            {
+                truckBody.AddForce(forward * (throttleInput * acceleration), ForceMode.Acceleration);
             }
 
-            GameObject cameraGo = new GameObject("MissionRuntimeCamera");
-            missionCamera = cameraGo.AddComponent<Camera>();
-            missionCamera.depth = 100f;
-            missionCamera.transform.position = MissionOrigin + new Vector3(0f, 8f, -11f);
-            missionCamera.transform.LookAt(MissionOrigin + new Vector3(0f, 0.8f, 2f));
-            spawnedObjects.Add(cameraGo);
+            float direction = Mathf.Abs(forwardSpeed) < 0.25f ? 1f : Mathf.Sign(forwardSpeed);
+            float authority = Mathf.Clamp01(Mathf.Abs(forwardSpeed) / 3f + 0.25f);
+            float yaw = steeringInput * truckStats.SteeringDegreesPerSecond *
+                        authority * direction * Time.fixedDeltaTime;
+            truckBody.MoveRotation(truckBody.rotation * Quaternion.Euler(0f, yaw, 0f));
 
-            Light key = new GameObject("MissionKeyLight").AddComponent<Light>();
-            key.type = LightType.Directional;
-            key.intensity = 1.1f;
-            key.transform.rotation = Quaternion.Euler(45f, -35f, 0f);
-            spawnedObjects.Add(key.gameObject);
-        }
+            float lateralSpeed = Vector3.Dot(truckBody.velocity, right);
+            truckBody.AddForce(-right * lateralSpeed * 3.1f, ForceMode.Acceleration);
 
-        private bool TryBuildRealAssetProps()
-        {
-            GameObject source = Resources.Load<GameObject>(MissionAssetResourcePath);
-            if (source == null) return false;
-
-            Transform cargoSource = FindChildRecursive(source.transform, "CargoCrate");
-            Transform bandSource = FindChildRecursive(source.transform, "CargoCrateBand");
-            Transform depotSource = FindChildRecursive(source.transform, "DepotPallet");
-            Transform gateLeftSource = FindChildRecursive(source.transform, "RouteGateLeft");
-            Transform gateRightSource = FindChildRecursive(source.transform, "RouteGateRight");
-            Transform gateTopSource = FindChildRecursive(source.transform, "RouteGateTop");
-            Transform beaconSource = FindChildRecursive(source.transform, "CheckpointBeacon");
-
-            if (cargoSource == null || bandSource == null || depotSource == null ||
-                gateLeftSource == null || gateRightSource == null || gateTopSource == null || beaconSource == null)
+            Vector3 velocity = truckBody.velocity;
+            Vector3 horizontal = new Vector3(velocity.x, 0f, velocity.z);
+            float signedSpeed = Vector3.Dot(horizontal, truckBody.transform.forward);
+            float allowed = signedSpeed < 0f ? maxReverse : maxForward;
+            if (horizontal.magnitude > allowed)
             {
-                Debug.LogWarning("CARGO V2 Mission asset exists but required named parts are incomplete; using primitive fallback.");
-                return false;
-            }
-
-            GameObject environment = new GameObject("MissionReal3DEnvironment");
-            environment.transform.position = MissionOrigin + new Vector3(0f, 0.15f, 5f);
-            spawnedObjects.Add(environment);
-            CloneModelPart(depotSource, environment.transform, "MissionReal_DepotPallet");
-            CloneModelPart(gateLeftSource, environment.transform, "MissionReal_GateLeft");
-            CloneModelPart(gateRightSource, environment.transform, "MissionReal_GateRight");
-            CloneModelPart(gateTopSource, environment.transform, "MissionReal_GateTop");
-            CloneModelPart(beaconSource, environment.transform, "MissionReal_CheckpointBeacon");
-
-            for (int i = 0; i < requiredDeliveries; i++)
-            {
-                GameObject cargoHost = new GameObject($"MissionCargo_{i + 1:00}");
-                float x = -4f + (i % 3) * 4f;
-                float z = -2f + (i / 3) * 3f;
-                cargoHost.transform.position = MissionOrigin + new Vector3(x, 0.15f, z);
-                cargoHost.transform.localScale = Vector3.one * 1.35f;
-                CloneModelPart(cargoSource, cargoHost.transform, "CargoCrateMesh");
-                CloneModelPart(bandSource, cargoHost.transform, "CargoCrateBandMesh");
-                BoxCollider collider = cargoHost.AddComponent<BoxCollider>();
-                collider.center = new Vector3(0f, 0.45f, 0f);
-                collider.size = new Vector3(1.35f, 1.05f, 1.05f);
-                MissionCargoClick click = cargoHost.AddComponent<MissionCargoClick>();
-                click.Owner = this;
-                spawnedObjects.Add(cargoHost);
-            }
-
-            return true;
-        }
-
-        private static GameObject CloneModelPart(Transform source, Transform parent, string objectName)
-        {
-            GameObject clone = Instantiate(source.gameObject, parent);
-            clone.name = objectName;
-            clone.transform.localPosition = Vector3.zero;
-            clone.transform.localRotation = Quaternion.identity;
-            clone.transform.localScale = Vector3.one;
-            return clone;
-        }
-
-        private static Transform FindChildRecursive(Transform root, string childName)
-        {
-            if (root == null) return null;
-            if (string.Equals(root.name, childName, StringComparison.Ordinal)) return root;
-            for (int i = 0; i < root.childCount; i++)
-            {
-                Transform match = FindChildRecursive(root.GetChild(i), childName);
-                if (match != null) return match;
-            }
-            return null;
-        }
-
-        private void BuildFallbackMissionProps(Material gold, Material chrome)
-        {
-            GameObject depot = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            depot.name = "MissionDepot_Fallback";
-            depot.transform.position = MissionOrigin + new Vector3(0f, 1.2f, 7f);
-            depot.transform.localScale = new Vector3(7f, 2.4f, 1.4f);
-            SetMaterial(depot, chrome);
-            spawnedObjects.Add(depot);
-
-            for (int i = 0; i < requiredDeliveries; i++)
-            {
-                GameObject cargo = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                cargo.name = $"MissionCargo_{i + 1:00}";
-                float x = -4f + (i % 3) * 4f;
-                float z = -2f + (i / 3) * 3f;
-                cargo.transform.position = MissionOrigin + new Vector3(x, 0.8f, z);
-                cargo.transform.localScale = new Vector3(1.5f, 1.5f, 1.5f);
-                SetMaterial(cargo, gold);
-                MissionCargoClick click = cargo.AddComponent<MissionCargoClick>();
-                click.Owner = this;
-                spawnedObjects.Add(cargo);
-            }
-
-            GameObject gateLeft = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            gateLeft.name = "MissionGateLeft_Fallback";
-            gateLeft.transform.position = MissionOrigin + new Vector3(-4.5f, 2f, 5f);
-            gateLeft.transform.localScale = new Vector3(0.5f, 4f, 0.5f);
-            SetMaterial(gateLeft, gold);
-            spawnedObjects.Add(gateLeft);
-
-            GameObject gateRight = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            gateRight.name = "MissionGateRight_Fallback";
-            gateRight.transform.position = MissionOrigin + new Vector3(4.5f, 2f, 5f);
-            gateRight.transform.localScale = new Vector3(0.5f, 4f, 0.5f);
-            SetMaterial(gateRight, gold);
-            spawnedObjects.Add(gateRight);
-        }
-
-        private Material CreateMaterial(Shader shader, Color color)
-        {
-            if (shader == null) return null;
-            Material material = new Material(shader) { color = color };
-            runtimeMaterials.Add(material);
-            return material;
-        }
-
-        private static void SetMaterial(GameObject go, Material material)
-        {
-            Renderer renderer = go.GetComponent<Renderer>();
-            if (renderer != null && material != null) renderer.sharedMaterial = material;
-        }
-
-        internal void Deliver(GameObject cargo)
-        {
-            if (!initialized || terminal || cargo == null || !cargo.activeSelf) return;
-            cargo.SetActive(false);
-            delivered++;
-            if (delivered >= requiredDeliveries)
-            {
-                terminal = true;
-                succeeded = true;
-                PlayerPrefs.SetInt(CompletionHandoffKey, mission.missionId);
-                PlayerPrefs.Save();
+                horizontal = horizontal.normalized * allowed;
+                truckBody.velocity = new Vector3(horizontal.x, velocity.y, horizontal.z);
             }
         }
 
-        private void RetryMission()
+        private void LateUpdate()
         {
-            if (!initialized) return;
-            delivered = 0;
-            terminal = false;
-            succeeded = false;
-            remainingSeconds = Mathf.Max(10f, mission.timeSeconds);
-            foreach (GameObject go in spawnedObjects)
-            {
-                if (go != null && go.name.StartsWith("MissionCargo_", StringComparison.Ordinal)) go.SetActive(true);
-            }
-            PlayerPrefs.DeleteKey(CompletionHandoffKey);
-            PlayerPrefs.Save();
-        }
-
-        private void OnGUI()
-        {
-            if (!initialized || mission == null) return;
-
-            GUILayout.BeginArea(new Rect(HudX, HudY, HudWidth, HudHeight), GUI.skin.box);
-            GUILayout.Label($"CARGO V2 — MISSION {mission.missionId:00}");
-            GUILayout.Label($"{mission.city}  |  Time {Mathf.CeilToInt(remainingSeconds)}s");
-            GUILayout.Label($"Delivered: {delivered}/{requiredDeliveries}");
-            GUILayout.Label(usingRealAssetPack ? "Visuals: REAL 3D MISSION ASSET PACK" : "Visuals: SAFE PRIMITIVE FALLBACK");
-            GUILayout.Label("Tap/click each cargo crate to deliver it to the depot.");
-
-            if (terminal)
-            {
-                GUILayout.Space(8);
-                GUILayout.Label(succeeded ? "MISSION COMPLETE — HANDOFF READY" : "TIME EXPIRED");
-                if (GUILayout.Button("RETRY")) RetryMission();
-                if (GUILayout.Button("BACK TO MAP")) Destroy(gameObject);
-            }
-            GUILayout.EndArea();
-        }
-
-        private void OnDestroy()
-        {
-            if (activeInstance == this) activeInstance = null;
-            PlayerPrefs.DeleteKey(PendingMissionKey);
-            PlayerPrefs.Save();
-
-            foreach (GameObject go in spawnedObjects)
-            {
-                if (go != null) Destroy(go);
-            }
-            spawnedObjects.Clear();
-
-            foreach (Material material in runtimeMaterials)
-            {
-                if (material != null) Destroy(material);
-            }
-            runtimeMaterials.Clear();
-
-            if (balance != null) Destroy(balance);
-        }
-
-        private sealed class MissionCargoClick : MonoBehaviour
-        {
-            public SCR_MissionRuntimeDirector Owner;
-
-            public void TryDeliver()
-            {
-                Owner?.Deliver(gameObject);
-            }
-
-            private void OnMouseUpAsButton()
-            {
-                TryDeliver();
-            }
+            if (missionCamera == null || truckBody == null) return;
+            Vector3 target = truckBody.position + Vector3.up * 1.6f;
+            Vector3 desired = target - truckBody.transform.forward * 10.5f + Vector3.up * 5.2f;
+            float positionT = 1f - Mathf.Exp(-6f * Time.unscaledDeltaTime);
+            float rotationT = 1f - Mathf.Exp(-8f * Time.unscaledDeltaTime);
+            missionCamera.transform.position = Vector3.Lerp(missionCamera.transform.position, desired, positionT);
+            Quaternion look = Quaternion.LookRotation(target - missionCamera.transform.position, Vector3.up);
+            missionCamera.transform.rotation = Quaternion.Slerp(missionCamera.transform.rotation, look, rotationT);
         }
     }
 }

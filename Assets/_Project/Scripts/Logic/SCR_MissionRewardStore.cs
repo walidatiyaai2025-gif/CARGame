@@ -36,9 +36,18 @@ namespace CargoV2.Logic
             out bool granted,
             out Snapshot snapshot)
         {
+            return TrySettleMission(mission, 1, out granted, out snapshot);
+        }
+
+        public static bool TrySettleMission(
+            SO_GameBalance.MissionBalance mission,
+            int stars,
+            out bool granted,
+            out Snapshot snapshot)
+        {
             granted = false;
             snapshot = new Snapshot(0, 0);
-            if (mission == null || mission.missionId <= 0 || mission.coin1Star < 0 || mission.xp < 0)
+            if (mission == null || mission.missionId <= 0 || mission.coin1Star < 0 || mission.coin3Star < 0 || mission.xp < 0)
             {
                 return false;
             }
@@ -54,11 +63,12 @@ namespace CargoV2.Logic
                 return true;
             }
 
+            long coinReward = GetCoinReward(mission, stars);
             try
             {
                 checked
                 {
-                    payload.coins += mission.coin1Star;
+                    payload.coins += coinReward;
                     payload.xp += mission.xp;
                 }
             }
@@ -75,6 +85,55 @@ namespace CargoV2.Logic
             }
 
             granted = true;
+            snapshot = new Snapshot(payload.coins, payload.xp);
+            return true;
+        }
+
+        public static long GetCoinReward(SO_GameBalance.MissionBalance mission, int stars)
+        {
+            if (mission == null) return 0;
+            if (stars >= 3) return Math.Max(0, mission.coin3Star);
+            if (stars == 2)
+            {
+                long low = Math.Max(0, mission.coin1Star);
+                long high = Math.Max(low, mission.coin3Star);
+                return low + ((high - low) / 2L);
+            }
+            return Math.Max(0, mission.coin1Star);
+        }
+
+        public static bool TrySpendCoins(long amount, out Snapshot snapshot)
+        {
+            snapshot = new Snapshot(0, 0);
+            if (amount < 0) return false;
+            if (!TryLoad(out EconomyPayload payload)) return false;
+            if (payload.coins < amount)
+            {
+                snapshot = new Snapshot(payload.coins, payload.xp);
+                return false;
+            }
+
+            payload.coins -= amount;
+            if (!TrySave(payload)) return false;
+            snapshot = new Snapshot(payload.coins, payload.xp);
+            return true;
+        }
+
+        public static bool TryCreditCoins(long amount, out Snapshot snapshot)
+        {
+            snapshot = new Snapshot(0, 0);
+            if (amount < 0) return false;
+            if (!TryLoad(out EconomyPayload payload)) return false;
+            try
+            {
+                checked { payload.coins += amount; }
+            }
+            catch (OverflowException)
+            {
+                return false;
+            }
+
+            if (!TrySave(payload)) return false;
             snapshot = new Snapshot(payload.coins, payload.xp);
             return true;
         }
@@ -128,7 +187,7 @@ namespace CargoV2.Logic
             }
             catch (Exception exception)
             {
-                Debug.LogWarning($"[CARGO V2][LOGIC_TEAM] Mission reward payload read failed safely: {exception.Message}");
+                Debug.LogWarning($"[CARGO V2][LOGIC] Economy payload read failed safely: {exception.Message}");
                 payload = null;
                 return false;
             }
@@ -146,7 +205,7 @@ namespace CargoV2.Logic
             }
             catch (Exception exception)
             {
-                Debug.LogWarning($"[CARGO V2][LOGIC_TEAM] Mission reward payload write failed safely: {exception.Message}");
+                Debug.LogWarning($"[CARGO V2][LOGIC] Economy payload write failed safely: {exception.Message}");
                 return false;
             }
         }

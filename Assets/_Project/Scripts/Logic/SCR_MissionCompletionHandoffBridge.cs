@@ -9,6 +9,7 @@ namespace CargoV2.Logic
     public sealed class SCR_MissionCompletionHandoffBridge : MonoBehaviour
     {
         private const string CompletionHandoffKey = "cargo_v2_completed_mission_handoff";
+        private const string CompletionStarsKey = "cargo_v2_completed_mission_stars";
         private const float PollIntervalSeconds = 0.2f;
         private static bool sceneHookRegistered;
 
@@ -24,40 +25,24 @@ namespace CargoV2.Logic
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-        private static void InstallInitialScene()
-        {
-            TryInstall();
-        }
+        private static void InstallInitialScene() => TryInstall();
 
-        private static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
-        {
-            TryInstall();
-        }
+        private static void OnSceneLoaded(Scene scene, LoadSceneMode mode) => TryInstall();
 
         private static void TryInstall()
         {
             SCR_WorldMapRouteController controller = FindObjectOfType<SCR_WorldMapRouteController>();
-            if (controller == null) return;
-
-            SCR_MissionCompletionHandoffBridge existing = controller.GetComponent<SCR_MissionCompletionHandoffBridge>();
-            if (existing != null) return;
-
+            if (controller == null || controller.GetComponent<SCR_MissionCompletionHandoffBridge>() != null) return;
             SCR_MissionCompletionHandoffBridge bridge = controller.gameObject.AddComponent<SCR_MissionCompletionHandoffBridge>();
             bridge.routeController = controller;
         }
 
         private void Awake()
         {
-            if (routeController == null)
-            {
-                routeController = GetComponent<SCR_WorldMapRouteController>();
-            }
+            if (routeController == null) routeController = GetComponent<SCR_WorldMapRouteController>();
         }
 
-        private void Start()
-        {
-            ConsumePendingHandoff();
-        }
+        private void Start() => ConsumePendingHandoff();
 
         private void Update()
         {
@@ -71,22 +56,21 @@ namespace CargoV2.Logic
             if (routeController == null || !PlayerPrefs.HasKey(CompletionHandoffKey)) return false;
 
             int missionCount = routeController.MissionCount;
-            if (missionCount <= 0) return false;
-
             int missionId = PlayerPrefs.GetInt(CompletionHandoffKey, 0);
+            int stars = Mathf.Clamp(PlayerPrefs.GetInt(CompletionStarsKey, 1), 1, 3);
+
+            if (missionCount <= 0) return false;
             if (!WorldMapProgression.IsValidMissionId(missionId, missionCount))
             {
                 ClearHandoff();
-                Debug.LogWarning(
-                    $"[CARGO V2][LOGIC_TEAM] Rejected invalid mission completion handoff {missionId}; valid range is 1..{missionCount}.");
+                Debug.LogWarning($"[CARGO V2][LOGIC] Rejected invalid mission completion handoff {missionId}; valid range is 1..{missionCount}.");
                 return false;
             }
 
             SO_GameBalance.MissionBalance mission = routeController.GetMission(missionId);
             if (mission == null)
             {
-                Debug.LogWarning(
-                    $"[CARGO V2][LOGIC_TEAM] Mission {missionId} has no authoritative balance record; completion handoff retained for retry.");
+                Debug.LogWarning($"[CARGO V2][LOGIC] Mission {missionId} has no authoritative balance record; handoff retained for retry.");
                 return false;
             }
 
@@ -97,39 +81,36 @@ namespace CargoV2.Logic
             }
             catch (Exception exception)
             {
-                Debug.LogWarning(
-                    $"[CARGO V2][LOGIC_TEAM] Mission completion handoff failed safely: {exception.Message}");
+                Debug.LogWarning($"[CARGO V2][LOGIC] Mission completion handoff failed safely: {exception.Message}");
                 return false;
             }
 
             if (!accepted)
             {
                 ClearHandoff();
-                Debug.LogWarning(
-                    $"[CARGO V2][LOGIC_TEAM] Rejected non-sequential mission completion handoff {missionId}; progression was not advanced and no reward was granted.");
+                Debug.LogWarning($"[CARGO V2][LOGIC] Rejected non-sequential mission completion {missionId}; progression and reward were not advanced.");
                 return false;
             }
 
             if (!SCR_MissionRewardStore.TrySettleMission(
                     mission,
+                    stars,
                     out bool rewardGranted,
                     out SCR_MissionRewardStore.Snapshot economy))
             {
-                Debug.LogWarning(
-                    $"[CARGO V2][LOGIC_TEAM] Progression accepted mission {missionId}, but reward settlement did not persist safely; handoff retained for idempotent retry.");
+                Debug.LogWarning($"[CARGO V2][LOGIC] Mission {missionId} progression was accepted but settlement did not persist; handoff retained for idempotent retry.");
                 return false;
             }
 
             ClearHandoff();
             if (rewardGranted)
             {
-                Debug.Log(
-                    $"[CARGO V2][LOGIC_TEAM] Mission {missionId} settled approved completion reward: +{mission.coin1Star} coins, +{mission.xp} XP. Totals: {economy.Coins} coins / {economy.Xp} XP.");
+                long coins = SCR_MissionRewardStore.GetCoinReward(mission, stars);
+                Debug.Log($"[CARGO V2][LOGIC] Mission {missionId} settled at {stars} star(s): +{coins} coins, +{mission.xp} XP. Totals {economy.Coins} coins / {economy.Xp} XP.");
             }
             else
             {
-                Debug.Log(
-                    $"[CARGO V2][LOGIC_TEAM] Mission {missionId} completion consumed with reward already settled; totals remain {economy.Coins} coins / {economy.Xp} XP.");
+                Debug.Log($"[CARGO V2][LOGIC] Mission {missionId} completion consumed with reward already settled; totals remain {economy.Coins} coins / {economy.Xp} XP.");
             }
             return true;
         }
@@ -137,6 +118,7 @@ namespace CargoV2.Logic
         private static void ClearHandoff()
         {
             PlayerPrefs.DeleteKey(CompletionHandoffKey);
+            PlayerPrefs.DeleteKey(CompletionStarsKey);
             PlayerPrefs.Save();
         }
     }
