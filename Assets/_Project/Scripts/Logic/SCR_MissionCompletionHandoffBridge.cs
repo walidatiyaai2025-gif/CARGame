@@ -10,6 +10,8 @@ namespace CargoV2.Logic
     {
         private const string CompletionHandoffKey = "cargo_v2_completed_mission_handoff";
         private const string CompletionStarsKey = "cargo_v2_completed_mission_stars";
+        private const string CompletionDeliveryRunKey = "cargo_v2_completed_delivery_run_id";
+        private const string ActiveDeliveryRunKey = "cargo_v2_active_delivery_run_id_v1";
         private const float PollIntervalSeconds = 0.2f;
         private static bool sceneHookRegistered;
 
@@ -58,6 +60,8 @@ namespace CargoV2.Logic
             int missionCount = routeController.MissionCount;
             int missionId = PlayerPrefs.GetInt(CompletionHandoffKey, 0);
             int stars = Mathf.Clamp(PlayerPrefs.GetInt(CompletionStarsKey, 1), 1, 3);
+            string deliveryRunId = PlayerPrefs.GetString(CompletionDeliveryRunKey, string.Empty);
+            bool hasDeliveryRun = Guid.TryParseExact(deliveryRunId, "N", out _);
 
             if (missionCount <= 0) return false;
             if (!WorldMapProgression.IsValidMissionId(missionId, missionCount))
@@ -92,11 +96,20 @@ namespace CargoV2.Logic
                 return false;
             }
 
-            if (!SCR_MissionRewardStore.TrySettleMission(
+            bool settled = hasDeliveryRun
+                ? SCR_MissionRewardStore.TrySettleDelivery(
                     mission,
                     stars,
+                    deliveryRunId,
                     out bool rewardGranted,
-                    out SCR_MissionRewardStore.Snapshot economy))
+                    out SCR_MissionRewardStore.Snapshot economy)
+                : SCR_MissionRewardStore.TrySettleMission(
+                    mission,
+                    stars,
+                    out rewardGranted,
+                    out economy);
+
+            if (!settled)
             {
                 Debug.LogWarning($"[CARGO V2][LOGIC] Mission {missionId} progression was accepted but settlement did not persist; handoff retained for idempotent retry.");
                 return false;
@@ -106,11 +119,12 @@ namespace CargoV2.Logic
             if (rewardGranted)
             {
                 long coins = SCR_MissionRewardStore.GetCoinReward(mission, stars);
-                Debug.Log($"[CARGO V2][LOGIC] Mission {missionId} settled at {stars} star(s): +{coins} coins, +{mission.xp} XP. Totals {economy.Coins} coins / {economy.Xp} XP.");
+                string mode = hasDeliveryRun ? "delivery" : "legacy mission";
+                Debug.Log($"[CARGO V2][LOGIC] {mode} {missionId} settled at {stars} star(s): +{coins} coins, +{mission.xp} XP. Totals {economy.Coins} coins / {economy.Xp} XP.");
             }
             else
             {
-                Debug.Log($"[CARGO V2][LOGIC] Mission {missionId} completion consumed with reward already settled; totals remain {economy.Coins} coins / {economy.Xp} XP.");
+                Debug.Log($"[CARGO V2][LOGIC] Mission {missionId} completion consumed with this settlement already applied; totals remain {economy.Coins} coins / {economy.Xp} XP.");
             }
             return true;
         }
@@ -119,6 +133,8 @@ namespace CargoV2.Logic
         {
             PlayerPrefs.DeleteKey(CompletionHandoffKey);
             PlayerPrefs.DeleteKey(CompletionStarsKey);
+            PlayerPrefs.DeleteKey(CompletionDeliveryRunKey);
+            PlayerPrefs.DeleteKey(ActiveDeliveryRunKey);
             PlayerPrefs.Save();
         }
     }
