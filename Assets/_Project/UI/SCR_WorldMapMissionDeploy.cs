@@ -1,5 +1,6 @@
 using System;
 using System.Reflection;
+using CargoV2.Data;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -77,6 +78,8 @@ namespace CargoV2.UI
 
         private void BuildDeployControl()
         {
+            // Geometry remains owned by the production-visual branch. This component
+            // only owns deploy behavior, state copy and localized feedback.
             GameObject button = GameObject.CreatePrimitive(PrimitiveType.Cube);
             button.name = "DeployMissionButton";
             button.transform.SetParent(transform, false);
@@ -139,20 +142,23 @@ namespace CargoV2.UI
             if (transitionBusy) return;
             if (SCR_MissionRuntimeDirector.IsRunning)
             {
-                RefreshStatus("MISSION ALREADY ACTIVE");
+                RefreshStatus(L("deploy.alreadyActive"));
+                SCR_PlayerFeedback.Play(SCR_PlayerFeedback.Cue.Error);
                 return;
             }
 
             int missionId = ResolveSelectedMissionId();
             if (!IsDeployable(missionId))
             {
-                RefreshStatus("LOCKED — COMPLETE PREVIOUS MISSION");
+                RefreshStatus(L("deploy.lockedPrevious"));
+                SCR_PlayerFeedback.Play(SCR_PlayerFeedback.Cue.Error);
                 return;
             }
 
             transitionBusy = true;
             PlayerPrefs.SetInt(PendingMissionKey, missionId);
             PlayerPrefs.Save();
+            SCR_PlayerFeedback.Play(SCR_PlayerFeedback.Cue.Ui);
 
             string nextScene = FindMissionScene();
             if (string.IsNullOrWhiteSpace(nextScene))
@@ -161,17 +167,18 @@ namespace CargoV2.UI
                 transitionBusy = false;
                 if (launched)
                 {
-                    RefreshStatus($"MISSION {missionId:00} ACTIVE");
+                    RefreshStatus(L("deploy.active"));
                     return;
                 }
 
                 PlayerPrefs.DeleteKey(PendingMissionKey);
                 PlayerPrefs.Save();
-                RefreshStatus("MISSION START FAILED — TRY AGAIN");
+                RefreshStatus(L("deploy.startFailed"));
+                SCR_PlayerFeedback.Play(SCR_PlayerFeedback.Cue.Error);
                 return;
             }
 
-            RefreshStatus($"DEPLOYING MISSION {missionId:00}...");
+            RefreshStatus(F("deploy.starting", Two(missionId)));
             try
             {
                 SceneManager.LoadScene(nextScene, LoadSceneMode.Single);
@@ -182,7 +189,8 @@ namespace CargoV2.UI
                 PlayerPrefs.DeleteKey(PendingMissionKey);
                 PlayerPrefs.Save();
                 Debug.LogWarning($"[CARGO V2][UI_TEAM] Mission transition failed safely: {e.Message}");
-                RefreshStatus("DEPLOY FAILED — TRY AGAIN");
+                RefreshStatus(L("deploy.failed"));
+                SCR_PlayerFeedback.Play(SCR_PlayerFeedback.Cue.Error);
             }
         }
 
@@ -207,12 +215,32 @@ namespace CargoV2.UI
                 statusText.text = overrideText;
                 return;
             }
+
             int missionId = ResolveSelectedMissionId();
             statusText.text = transitionBusy
-                ? $"DEPLOYING MISSION {missionId:00}..."
+                ? F("deploy.starting", Two(missionId))
                 : SCR_MissionRuntimeDirector.IsRunning
-                    ? "MISSION ACTIVE"
-                    : IsDeployable(missionId) ? $"DEPLOY MISSION {missionId:00}" : "MISSION LOCKED";
+                    ? L("deploy.active")
+                    : IsDeployable(missionId) ? F("deploy.action", Two(missionId)) : L("deploy.locked");
+        }
+
+        private static string L(string key)
+        {
+            SCR_LocalizationManager manager = SCR_LocalizationManager.Instance;
+            return manager != null ? manager.Get(key) : key;
+        }
+
+        private static string F(string key, params object[] args)
+        {
+            SCR_LocalizationManager manager = SCR_LocalizationManager.Instance;
+            return manager != null ? manager.Format(key, args) : string.Format(L(key), args);
+        }
+
+        private static string Two(int missionId)
+        {
+            string raw = Mathf.Clamp(missionId, 1, 99).ToString("00");
+            SCR_LocalizationManager manager = SCR_LocalizationManager.Instance;
+            return manager != null ? manager.LocalizeDigits(raw) : raw;
         }
 
         private sealed class DeployClick : MonoBehaviour
