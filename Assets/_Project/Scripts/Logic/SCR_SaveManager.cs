@@ -14,10 +14,7 @@ namespace CargoV2.Logic
         }
 
         [Serializable]
-        private sealed class SchemaProbe
-        {
-            public int schemaVersion;
-        }
+        private sealed class SchemaProbe { public int schemaVersion; }
 
         public enum ProgressLoadState
         {
@@ -43,7 +40,6 @@ namespace CargoV2.Logic
         public ProgressPayload LoadProgress(int missionCount)
         {
             ProgressPayload fallback = CreateSafePayload(0, 1, missionCount);
-
             try
             {
                 if (!PlayerPrefs.HasKey(ProgressKey))
@@ -55,83 +51,54 @@ namespace CargoV2.Logic
                 string raw = PlayerPrefs.GetString(ProgressKey, string.Empty);
                 if (!TryReadSchema(raw, out int schemaVersion))
                 {
-                    PreserveCorrupt(raw);
-                    if (TryLoadBackup(missionCount, out ProgressPayload recovered, out string backupRaw))
-                    {
-                        RestorePrimaryBestEffort(backupRaw);
-                        LastLoadState = ProgressLoadState.RecoveredBackup;
-                        return recovered;
-                    }
-
-                    LastLoadState = ProgressLoadState.CorruptBlocked;
-                    Debug.LogWarning("[CARGO V2][LOGIC_TEAM] Progress is corrupt and no valid last-known-good snapshot exists; raw data is preserved and write-back is blocked.");
-                    return fallback;
+                    return RecoverOrBlock(raw, missionCount, fallback);
                 }
-
                 if (schemaVersion > CurrentSchemaVersion)
                 {
                     LastLoadState = ProgressLoadState.FutureSchemaBlocked;
-                    Debug.LogWarning(
-                        $"[CARGO V2][LOGIC_TEAM] Progress schema {schemaVersion} is newer than supported {CurrentSchemaVersion}; preserving it untouched and blocking write-back.");
+                    Debug.LogWarning($"[CARGO V2][LOGIC_TEAM] Progress schema {schemaVersion} is newer than supported {CurrentSchemaVersion}; preserving it untouched and blocking write-back.");
                     return fallback;
                 }
-
                 if (schemaVersion < CurrentSchemaVersion)
                 {
                     LastLoadState = ProgressLoadState.UnsupportedLegacyBlocked;
-                    Debug.LogWarning(
-                        $"[CARGO V2][LOGIC_TEAM] Progress schema {schemaVersion} has no registered migration to {CurrentSchemaVersion}; preserving it untouched and blocking write-back.");
+                    Debug.LogWarning($"[CARGO V2][LOGIC_TEAM] Progress schema {schemaVersion} has no registered migration to {CurrentSchemaVersion}; preserving it untouched and blocking write-back.");
                     return fallback;
                 }
 
                 ProgressPayload payload = JsonUtility.FromJson<ProgressPayload>(raw);
-                if (payload == null)
+                if (payload == null) return RecoverOrBlock(raw, missionCount, fallback);
+
+                ProgressPayload normalized = CreateSafePayload(payload.highestCompletedMissionId, payload.selectedMissionId, missionCount);
+                if (normalized.highestCompletedMissionId != payload.highestCompletedMissionId || normalized.selectedMissionId != payload.selectedMissionId)
                 {
                     PreserveCorrupt(raw);
-                    if (TryLoadBackup(missionCount, out ProgressPayload recovered, out string backupRaw))
-                    {
-                        RestorePrimaryBestEffort(backupRaw);
-                        LastLoadState = ProgressLoadState.RecoveredBackup;
-                        return recovered;
-                    }
-
-                    LastLoadState = ProgressLoadState.CorruptBlocked;
-                    return fallback;
+                    Debug.LogWarning("[CARGO V2][LOGIC_TEAM] Current-schema progress contained impossible values; normalized state will be persisted only after normal WorldMap initialization.");
                 }
-
                 LastLoadState = ProgressLoadState.Current;
-                return CreateSafePayload(
-                    payload.highestCompletedMissionId,
-                    payload.selectedMissionId,
-                    missionCount);
+                return normalized;
             }
             catch (Exception exception)
             {
                 Debug.LogWarning($"[CARGO V2][LOGIC_TEAM] Progress load failed safely: {exception.Message}");
-                string raw = SafeRead(ProgressKey);
-                PreserveCorrupt(raw);
-                if (TryLoadBackup(missionCount, out ProgressPayload recovered, out string backupRaw))
-                {
-                    RestorePrimaryBestEffort(backupRaw);
-                    LastLoadState = ProgressLoadState.RecoveredBackup;
-                    return recovered;
-                }
-
-                LastLoadState = ProgressLoadState.CorruptBlocked;
-                return fallback;
+                return RecoverOrBlock(SafeRead(ProgressKey), missionCount, fallback);
             }
         }
 
         public bool SaveProgress(int highestCompletedMissionId, int selectedMissionId, int missionCount)
         {
+            // A caller is not allowed to skip the read/classification boundary. If a
+            // primary already exists while this component still looks Fresh, classify
+            // it first so direct writes cannot overwrite future/corrupt schemas.
+            if (LastLoadState == ProgressLoadState.Fresh && PlayerPrefs.HasKey(ProgressKey))
+            {
+                LoadProgress(missionCount);
+            }
             if (!CanPersistLoadedState) return false;
 
             try
             {
-                ProgressPayload payload = CreateSafePayload(
-                    highestCompletedMissionId,
-                    selectedMissionId,
-                    missionCount);
+                ProgressPayload payload = CreateSafePayload(highestCompletedMissionId, selectedMissionId, missionCount);
                 string raw = JsonUtility.ToJson(payload);
                 if (string.IsNullOrWhiteSpace(raw)) return false;
 
@@ -143,9 +110,7 @@ namespace CargoV2.Logic
                 }
                 else if (!PlayerPrefs.HasKey(ProgressBackupKey))
                 {
-                    PlayerPrefs.SetString(
-                        ProgressBackupKey,
-                        JsonUtility.ToJson(CreateSafePayload(0, 1, missionCount)));
+                    PlayerPrefs.SetString(ProgressBackupKey, JsonUtility.ToJson(CreateSafePayload(0, 1, missionCount)));
                     PlayerPrefs.Save();
                 }
 
@@ -179,12 +144,25 @@ namespace CargoV2.Logic
             }
         }
 
+        private ProgressPayload RecoverOrBlock(string raw, int missionCount, ProgressPayload fallback)
+        {
+            PreserveCorrupt(raw);
+            if (TryLoadBackup(missionCount, out ProgressPayload recovered, out string backupRaw))
+            {
+                RestorePrimaryBestEffort(backupRaw);
+                LastLoadState = ProgressLoadState.RecoveredBackup;
+                return recovered;
+            }
+            LastLoadState = ProgressLoadState.CorruptBlocked;
+            Debug.LogWarning("[CARGO V2][LOGIC_TEAM] Progress is corrupt and no valid last-known-good snapshot exists; raw data is preserved and write-back is blocked.");
+            return fallback;
+        }
+
         private static bool TryLoadBackup(int missionCount, out ProgressPayload payload, out string raw)
         {
             payload = null;
             raw = SafeRead(ProgressBackupKey);
             if (!IsCurrentSchemaPayload(raw)) return false;
-
             try
             {
                 ProgressPayload parsed = JsonUtility.FromJson<ProgressPayload>(raw);
@@ -192,11 +170,7 @@ namespace CargoV2.Logic
                 payload = CreateSafePayload(parsed.highestCompletedMissionId, parsed.selectedMissionId, missionCount);
                 return true;
             }
-            catch (Exception)
-            {
-                payload = null;
-                return false;
-            }
+            catch (Exception) { return false; }
         }
 
         private static bool IsCurrentSchemaPayload(string raw)
@@ -217,10 +191,7 @@ namespace CargoV2.Logic
                 schemaVersion = probe.schemaVersion;
                 return true;
             }
-            catch (Exception)
-            {
-                return false;
-            }
+            catch (Exception) { return false; }
         }
 
         private static string SafeRead(string key)
@@ -232,35 +203,18 @@ namespace CargoV2.Logic
         private static void PreserveCorrupt(string raw)
         {
             if (string.IsNullOrWhiteSpace(raw)) return;
-            try
-            {
-                PlayerPrefs.SetString(CorruptBackupKey, raw);
-                PlayerPrefs.Save();
-            }
-            catch (Exception exception)
-            {
-                Debug.LogWarning($"[CARGO V2][LOGIC_TEAM] Could not preserve corrupt progress payload: {exception.Message}");
-            }
+            try { PlayerPrefs.SetString(CorruptBackupKey, raw); PlayerPrefs.Save(); }
+            catch (Exception exception) { Debug.LogWarning($"[CARGO V2][LOGIC_TEAM] Could not preserve corrupt progress payload: {exception.Message}"); }
         }
 
         private static void RestorePrimaryBestEffort(string raw)
         {
             if (string.IsNullOrWhiteSpace(raw)) return;
-            try
-            {
-                PlayerPrefs.SetString(ProgressKey, raw);
-                PlayerPrefs.Save();
-            }
-            catch (Exception exception)
-            {
-                Debug.LogWarning($"[CARGO V2][LOGIC_TEAM] Recovered progress is usable in memory but primary restore failed: {exception.Message}");
-            }
+            try { PlayerPrefs.SetString(ProgressKey, raw); PlayerPrefs.Save(); }
+            catch (Exception exception) { Debug.LogWarning($"[CARGO V2][LOGIC_TEAM] Recovered progress is usable in memory but primary restore failed: {exception.Message}"); }
         }
 
-        private static ProgressPayload CreateSafePayload(
-            int highestCompletedMissionId,
-            int selectedMissionId,
-            int missionCount)
+        private static ProgressPayload CreateSafePayload(int highestCompletedMissionId, int selectedMissionId, int missionCount)
         {
             int boundedCompleted = WorldMapProgression.ClampHighestCompleted(highestCompletedMissionId, missionCount);
             int boundedSelected = selectedMissionId;
@@ -269,7 +223,6 @@ namespace CargoV2.Logic
                 boundedSelected = WorldMapProgression.GetHighestUnlockedMissionId(boundedCompleted, missionCount);
             }
             if (missionCount <= 0) boundedSelected = 0;
-
             return new ProgressPayload
             {
                 schemaVersion = CurrentSchemaVersion,
