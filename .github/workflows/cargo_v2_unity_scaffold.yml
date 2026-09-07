@@ -180,7 +180,14 @@ jobs:
           command="$3"
           if [[ "$command" == "install" ]]; then echo 'Success'; exit 0; fi
           if [[ "$command" == "logcat" ]]; then
-            if [[ " $* " == *" -d "* ]]; then echo 'I/Unity ( 4242): com.walka.cargov2 launch healthy'; fi
+            if [[ " $* " == *" -d "* ]]; then
+              if [[ "${CARGO_V2_FAKE_ADB_SCENARIO:-}" == "crash" ]]; then
+                # Deliberately omits the package name so the harness must correlate by PID.
+                echo 'E/AndroidRuntime( 4242): FATAL EXCEPTION: main'
+              else
+                echo 'I/Unity ( 4242): com.walka.cargov2 launch healthy'
+              fi
+            fi
             exit 0
           fi
           if [[ "$command" != "shell" || $# -lt 4 ]]; then exit 3; fi
@@ -221,11 +228,25 @@ jobs:
           if (-not $positive.archiveContractPassed -or -not $positive.installExecuted -or -not $positive.installPassed -or -not $positive.launchExecuted -or -not $positive.launchPassed -or -not $positive.processObserved -or -not $positive.foregroundObserved -or -not $positive.smokePassed) {
             throw "Positive fake-ADB evidence did not record the expected install/launch truth fields."
           }
-          if ($positive.deviceSerial -ne 'FAKE001' -or $positive.abi -ne 'arm64-v8a') {
-            throw "Positive fake-ADB evidence did not preserve dynamic device metadata."
+          if ($positive.deviceSerial -ne 'FAKE001' -or $positive.abi -ne 'arm64-v8a' -or @($positive.processIds) -notcontains '4242') {
+            throw "Positive fake-ADB evidence did not preserve dynamic device/process metadata."
+          }
+          if ($positive.crashMarkersObserved -ne $false -or $positive.crashMarkerCount -ne 0) {
+            throw "Healthy fake-ADB launch incorrectly recorded a crash marker."
           }
           if ($positive.limitation -notmatch 'does not prove gameplay') {
             throw "Android smoke evidence lost its truth-boundary limitation."
+          }
+
+          $env:CARGO_V2_FAKE_ADB_SCENARIO = 'crash'
+          $crashEvidence = Join-Path $env:RUNNER_TEMP 'cargo-v2-smoke-pid-crash.json'
+          & pwsh -NoProfile -File ./SMOKE_CARGO_V2_ANDROID.ps1 -ApkPath $fixtureApk -AdbPath $fakeAdb -LaunchWaitSeconds 0 -EvidenceJson $crashEvidence 2>$null
+          if ($LASTEXITCODE -eq 0) {
+            throw "PID-correlated fatal-exception fake ADB scenario unexpectedly passed."
+          }
+          $crash = Get-Content -LiteralPath $crashEvidence -Raw | ConvertFrom-Json
+          if (-not $crash.processObserved -or $crash.crashMarkersObserved -ne $true -or $crash.crashMarkerCount -lt 1 -or $crash.smokePassed -ne $false -or $crash.error -notmatch 'package/PID-correlated') {
+            throw "PID-correlated crash scenario did not fail closed with preserved evidence."
           }
 
           $env:CARGO_V2_FAKE_ADB_SCENARIO = 'multi'
@@ -240,4 +261,4 @@ jobs:
           }
 
           $global:LASTEXITCODE = 0
-          Write-Host "CARGO V2 Android smoke orchestration positive/negative contract PASS (fake ADB only; no device/runtime claim)."
+          Write-Host "CARGO V2 Android smoke orchestration healthy/crash/multi-device contract PASS (fake ADB only; no device/runtime claim)."
