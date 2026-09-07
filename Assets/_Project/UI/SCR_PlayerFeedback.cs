@@ -185,15 +185,14 @@ namespace CargoV2.UI
 
         private void PlayInternal(Cue cue, float intensity, bool haptic)
         {
-            if (sfxSource == null || lifecycleMuted || settings.Muted || settings.MasterVolume <= 0f || settings.SfxVolume <= 0f) return;
-
-            AudioClip clip = ResolveClip(cue);
-            if (clip != null) sfxSource.PlayOneShot(clip, Mathf.Lerp(0.45f, 1f, intensity));
-
-            if (haptic && settings.Haptics && Application.isMobilePlatform)
+            if (haptic && !lifecycleMuted && settings.Haptics && Application.isMobilePlatform)
             {
                 Handheld.Vibrate();
             }
+
+            if (sfxSource == null || lifecycleMuted || settings.Muted || settings.MasterVolume <= 0f || settings.SfxVolume <= 0f) return;
+            AudioClip clip = ResolveClip(cue);
+            if (clip != null) sfxSource.PlayOneShot(clip, Mathf.Lerp(0.45f, 1f, intensity));
         }
 
         private AudioClip ResolveClip(Cue cue)
