@@ -1,4 +1,5 @@
 using System;
+using CargoV2.Data;
 using CargoV2.Logic;
 using UnityEngine;
 
@@ -6,84 +7,229 @@ namespace CargoV2.UI
 {
     public sealed partial class SCR_MissionRuntimeDirector
     {
+        private GUIStyle hudLabelStyle;
+        private GUIStyle hudHeaderStyle;
+        private GUIStyle hudButtonStyle;
+        private GUIStyle hudBoxStyle;
+
         private void OnGUI()
         {
-            if (!initialized || mission == null || contract == null) return;
+            if (!initialized || mission == null || contract == null || SCR_PlayerExperienceRuntime.HasModalOpen) return;
 
-            GUILayout.BeginArea(new Rect(HudX, HudY, HudWidth, HudHeight), GUI.skin.box);
-            GUILayout.Label($"CARGO V2 — CONTRACT {mission.missionId:00}");
-            GUILayout.Label($"{contract.origin}  →  {contract.destination}");
-            GUILayout.Label($"{contract.cargoLabel} • {contract.cargoWeightTons:0.0} t • {contract.distanceKm} km");
-            GUILayout.Label($"{truckStats.DisplayName} • {Mathf.Abs(GetForwardSpeed()) * 3.6f:0} km/h • Damage {damage:0}% • Time {Mathf.CeilToInt(remainingSeconds)}s");
+            Rect safe = CargoV2UiLayout.SafeGuiRect;
+            float scale = CargoV2UiLayout.Scale(safe, playerSettings.LargeText);
+            BuildHudStyles(scale);
+            Rect hudRect = GetHudRect(safe, scale);
+
+            GUILayout.BeginArea(hudRect, hudBoxStyle);
+            GUILayout.Label(F("hud.contract", Two(mission.missionId)), hudHeaderStyle);
+            GUILayout.Label($"{contract.origin}  →  {contract.destination}", hudLabelStyle);
+            GUILayout.Label($"{contract.cargoLabel} • {Dec(contract.cargoWeightTons, "0.0")} t • {Num(contract.distanceKm)} km", hudLabelStyle);
+            GUILayout.Label(
+                $"{truckStats.DisplayName} • {Dec(Mathf.Abs(GetForwardSpeed()) * 3.6f, "0")} km/h • {L("hud.damage")} {Dec(damage, "0")}% • {L("hud.time")} {Num(Mathf.CeilToInt(remainingSeconds))}s",
+                hudLabelStyle);
             GUILayout.Label(cargoLoaded
-                ? $"Cargo: LOADED — checkpoint {checkpointIndex}/3, then gold delivery zone."
-                : "Cargo: DRIVE INTO THE CYAN PICKUP ZONE.");
-            GUILayout.Label(usingRealTruckAsset && usingRealMissionAsset ? "3D assets: premium truck + cargo/depot pack" : "3D assets: safe generated fallback active");
+                ? F("hud.cargoLoaded", Num(checkpointIndex))
+                : L("hud.pickup"), hudLabelStyle);
 
             if (contract.cargoWeightTons > truckStats.CargoCapacityTons)
             {
-                GUILayout.Label($"OVER CAPACITY: {contract.cargoWeightTons:0.0} t / {truckStats.CargoCapacityTons:0.0} t — reduced performance.");
+                GUILayout.Label(F("hud.overCapacity",
+                    Dec(contract.cargoWeightTons, "0.0"),
+                    Dec(truckStats.CargoCapacityTons, "0.0")), hudLabelStyle);
             }
 
             if (terminal)
             {
-                GUILayout.Space(6f);
-                if (succeeded)
-                {
-                    long reward = SCR_MissionRewardStore.GetCoinReward(mission, completionStars);
-                    GUILayout.Label($"DELIVERY COMPLETE — {new string('★', completionStars)}");
-                    GUILayout.Label($"Settlement queued: {reward:N0} coins + {mission.xp} XP");
-                }
-                else
-                {
-                    GUILayout.Label(string.IsNullOrEmpty(statusReason) ? "DELIVERY FAILED" : statusReason);
-                    if (GUILayout.Button("RETRY")) RetryMission();
-                }
-
-                if (GUILayout.Button("BACK TO WORLD MAP"))
-                {
-                    if (succeeded)
-                    {
-                        PlayerPrefs.DeleteKey(PendingMissionKey);
-                        PlayerPrefs.Save();
-                        Time.timeScale = 1f;
-                        Destroy(gameObject);
-                    }
-                    else
-                    {
-                        AbandonMission();
-                    }
-                }
+                DrawResultPanel(scale);
             }
             else if (paused)
             {
-                GUILayout.Label("PAUSED");
-                if (GUILayout.Button("RESUME")) TogglePause();
-                if (GUILayout.Button("ABANDON CONTRACT")) AbandonMission();
-            }
-            else
-            {
-                GUILayout.Label("Keyboard: W/S throttle • A/D steer • SPACE brake • R recover • P pause");
+                DrawPausePanel(scale);
             }
             GUILayout.EndArea();
 
             if (!terminal && !paused)
             {
-                GUI.Box(GetLeftRect(), "◀");
-                GUI.Box(GetRightRect(), "▶");
-                GUI.Box(GetBrakeRect(), "BRAKE / REV");
-                GUI.Box(GetThrottleRect(), "THROTTLE");
-                if (GUI.Button(GetRecoverRect(), "RECOVER")) RecoverTruck();
-                if (GUI.Button(GetPauseRect(), "PAUSE")) TogglePause();
+                GUI.Box(GetLeftRect(), "◀", hudButtonStyle);
+                GUI.Box(GetRightRect(), "▶", hudButtonStyle);
+                GUI.Box(GetBrakeRect(), L("hud.brakeReverse"), hudButtonStyle);
+                GUI.Box(GetThrottleRect(), L("hud.throttle"), hudButtonStyle);
+                if (GUI.Button(GetRecoverRect(), L("hud.recover"), hudButtonStyle)) RecoverTruck();
+                if (GUI.Button(GetPauseRect(), L("hud.pause"), hudButtonStyle)) TogglePause();
             }
         }
 
-        private static Rect GetLeftRect() => new Rect(18f, Screen.height - 118f, 96f, 96f);
-        private static Rect GetRightRect() => new Rect(122f, Screen.height - 118f, 96f, 96f);
-        private static Rect GetBrakeRect() => new Rect(Screen.width - 222f, Screen.height - 118f, 96f, 96f);
-        private static Rect GetThrottleRect() => new Rect(Screen.width - 118f, Screen.height - 118f, 96f, 96f);
-        private static Rect GetRecoverRect() => new Rect(Screen.width - 224f, 18f, 100f, 42f);
-        private static Rect GetPauseRect() => new Rect(Screen.width - 116f, 18f, 98f, 42f);
+        private void DrawResultPanel(float scale)
+        {
+            GUILayout.Space(6f * scale);
+            if (succeeded)
+            {
+                long reward = SCR_MissionRewardStore.GetCoinReward(mission, completionStars);
+                string stars = new string('★', Mathf.Clamp(completionStars, 1, 3));
+                GUILayout.Label($"{L("hud.complete")} • {stars}", hudHeaderStyle);
+                GUILayout.Label(F("hud.reward", Num(reward), Num(mission.xp)), hudLabelStyle);
+            }
+            else
+            {
+                string reason = ResolveStatusReason();
+                GUILayout.Label(string.IsNullOrEmpty(reason) ? L("hud.failed") : reason, hudHeaderStyle);
+                if (GUILayout.Button(L("hud.retry"), hudButtonStyle, GUILayout.Height(HudButtonHeight(scale))))
+                {
+                    RetryMission();
+                }
+            }
+
+            if (GUILayout.Button(L("hud.worldMap"), hudButtonStyle, GUILayout.Height(HudButtonHeight(scale))))
+            {
+                ReturnToWorldMapFromResult();
+            }
+        }
+
+        private void DrawPausePanel(float scale)
+        {
+            GUILayout.Space(5f * scale);
+            GUILayout.Label(L("hud.paused"), hudHeaderStyle);
+            if (GUILayout.Button(L("hud.resume"), hudButtonStyle, GUILayout.Height(HudButtonHeight(scale)))) TogglePause();
+            if (GUILayout.Button(L("settings.title"), hudButtonStyle, GUILayout.Height(HudButtonHeight(scale))))
+            {
+                SCR_PlayerExperienceRuntime.OpenSettings();
+            }
+            if (GUILayout.Button(L("help.title"), hudButtonStyle, GUILayout.Height(HudButtonHeight(scale))))
+            {
+                SCR_PlayerExperienceRuntime.OpenHelp();
+            }
+            if (GUILayout.Button(L("hud.abandon"), hudButtonStyle, GUILayout.Height(HudButtonHeight(scale)))) AbandonMission();
+        }
+
+        private Rect GetHudRect(Rect safe, float scale)
+        {
+            float margin = CargoV2UiLayout.Margin(scale);
+            float width = Mathf.Min(safe.width * 0.58f, Mathf.Max(390f, 590f * scale));
+            float height;
+            if (terminal || paused)
+            {
+                height = Mathf.Min(safe.height - margin * 2f, Mathf.Max(390f, 510f * scale));
+            }
+            else
+            {
+                height = Mathf.Min(safe.height * 0.46f, Mathf.Max(230f, 310f * scale));
+            }
+            return CargoV2UiLayout.TopLeftPanel(safe, width, height, scale);
+        }
+
+        private float HudButtonHeight(float scale)
+        {
+            return Mathf.Max(44f, 52f * scale);
+        }
+
+        private Rect GetLeftRect()
+        {
+            Rect safe = CargoV2UiLayout.SafeGuiRect;
+            float scale = CargoV2UiLayout.Scale(safe, playerSettings.LargeText);
+            return CargoV2UiLayout.BottomLeftTouch(safe, 0, scale);
+        }
+
+        private Rect GetRightRect()
+        {
+            Rect safe = CargoV2UiLayout.SafeGuiRect;
+            float scale = CargoV2UiLayout.Scale(safe, playerSettings.LargeText);
+            return CargoV2UiLayout.BottomLeftTouch(safe, 1, scale);
+        }
+
+        private Rect GetBrakeRect()
+        {
+            Rect safe = CargoV2UiLayout.SafeGuiRect;
+            float scale = CargoV2UiLayout.Scale(safe, playerSettings.LargeText);
+            return CargoV2UiLayout.BottomRightTouch(safe, 1, scale);
+        }
+
+        private Rect GetThrottleRect()
+        {
+            Rect safe = CargoV2UiLayout.SafeGuiRect;
+            float scale = CargoV2UiLayout.Scale(safe, playerSettings.LargeText);
+            return CargoV2UiLayout.BottomRightTouch(safe, 0, scale);
+        }
+
+        private Rect GetRecoverRect()
+        {
+            Rect safe = CargoV2UiLayout.SafeGuiRect;
+            float scale = CargoV2UiLayout.Scale(safe, playerSettings.LargeText);
+            return CargoV2UiLayout.TopRightTouch(safe, 1, scale);
+        }
+
+        private Rect GetPauseRect()
+        {
+            Rect safe = CargoV2UiLayout.SafeGuiRect;
+            float scale = CargoV2UiLayout.Scale(safe, playerSettings.LargeText);
+            return CargoV2UiLayout.TopRightTouch(safe, 0, scale);
+        }
+
+        private void BuildHudStyles(float scale)
+        {
+            bool rtl = SCR_LocalizationManager.Instance != null && SCR_LocalizationManager.Instance.IsRtl;
+            hudLabelStyle = new GUIStyle(GUI.skin.label)
+            {
+                fontSize = Mathf.Clamp(Mathf.RoundToInt(18f * scale), 15, 31),
+                alignment = rtl ? TextAnchor.MiddleRight : TextAnchor.MiddleLeft,
+                wordWrap = true,
+            };
+            hudHeaderStyle = new GUIStyle(hudLabelStyle)
+            {
+                fontSize = Mathf.Clamp(Mathf.RoundToInt(21f * scale), 17, 34),
+                fontStyle = FontStyle.Bold,
+            };
+            hudButtonStyle = new GUIStyle(GUI.skin.button)
+            {
+                fontSize = Mathf.Clamp(Mathf.RoundToInt(17f * scale), 15, 28),
+                fontStyle = FontStyle.Bold,
+                alignment = TextAnchor.MiddleCenter,
+                wordWrap = true,
+            };
+            hudBoxStyle = new GUIStyle(GUI.skin.box)
+            {
+                padding = new RectOffset(
+                    Mathf.RoundToInt(12f * scale), Mathf.RoundToInt(12f * scale),
+                    Mathf.RoundToInt(10f * scale), Mathf.RoundToInt(10f * scale)),
+            };
+        }
+
+        private string ResolveStatusReason()
+        {
+            if (string.IsNullOrWhiteSpace(statusReason)) return string.Empty;
+            return statusReason.StartsWith("hud.", StringComparison.Ordinal) ? L(statusReason) : statusReason;
+        }
+
+        private static string L(string key)
+        {
+            SCR_LocalizationManager manager = SCR_LocalizationManager.Instance;
+            return manager != null ? manager.Get(key) : key;
+        }
+
+        private static string F(string key, params object[] args)
+        {
+            SCR_LocalizationManager manager = SCR_LocalizationManager.Instance;
+            return manager != null ? manager.Format(key, args) : string.Format(L(key), args);
+        }
+
+        private static string Num(long value)
+        {
+            SCR_LocalizationManager manager = SCR_LocalizationManager.Instance;
+            return manager != null ? manager.FormatInteger(value) : value.ToString("N0");
+        }
+
+        private static string Dec(float value, string format)
+        {
+            SCR_LocalizationManager manager = SCR_LocalizationManager.Instance;
+            return manager != null ? manager.FormatDecimal(value, format) : value.ToString(format);
+        }
+
+        private static string Two(int value)
+        {
+            string raw = Mathf.Clamp(value, 0, 99).ToString("00");
+            SCR_LocalizationManager manager = SCR_LocalizationManager.Instance;
+            return manager != null ? manager.LocalizeDigits(raw) : raw;
+        }
 
         private Material CreateMaterial(Shader shader, Color color)
         {
@@ -141,17 +287,27 @@ namespace CargoV2.UI
 
         private void OnApplicationPause(bool pauseStatus)
         {
-            if (pauseStatus) SaveActiveDelivery();
+            if (!pauseStatus || !initialized || terminal) return;
+            if (!paused)
+            {
+                paused = true;
+                Time.timeScale = 0f;
+            }
+            SaveActiveDelivery();
+            SCR_PlayerFeedback.StopEngine();
         }
 
         private void OnApplicationQuit()
         {
             applicationQuitting = true;
             SaveActiveDelivery();
+            SCR_PlayerFeedback.StopEngine();
         }
 
         private void OnDestroy()
         {
+            CargoV2PlayerSettings.Changed -= HandlePlayerSettingsChanged;
+            SCR_PlayerFeedback.StopEngine();
             if (activeInstance == this) activeInstance = null;
 
             if (!terminal && !abandonRequested && !applicationQuitting && initialized) SaveActiveDelivery();
