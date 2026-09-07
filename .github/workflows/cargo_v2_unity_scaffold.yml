@@ -111,4 +111,7 @@ jobs:
             throw "Negative APK verifier fixture with x86_64 unexpectedly passed."
           }
 
+          # The non-zero exit is the expected negative-test result. Clear it so
+          # GitHub's pwsh wrapper does not convert a successful assertion into a failed step.
+          $global:LASTEXITCODE = 0
           Write-Host "CARGO V2 APK artifact verifier positive/negative contract PASS (synthetic archives only; no Unity/runtime claim)."
