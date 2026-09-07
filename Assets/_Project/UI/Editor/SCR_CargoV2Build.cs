@@ -36,20 +36,12 @@ namespace CargoV2.EditorTools
         }
 
         [MenuItem("CARGO V2/Build/Build Android APK")]
-        public static void BuildAndroidMenu()
-        {
-            BuildAndroid();
-        }
-
-        public static void BuildAndroidBatch()
-        {
-            BuildAndroid();
-        }
+        public static void BuildAndroidMenu() => BuildAndroid();
+        public static void BuildAndroidBatch() => BuildAndroid();
 
         private static void ValidateOrThrow()
         {
             AssetDatabase.Refresh();
-
             foreach (string scene in Scenes)
             {
                 if (!File.Exists(scene)) throw new InvalidOperationException($"Missing required scene: {scene}");
@@ -70,13 +62,9 @@ namespace CargoV2.EditorTools
             RequireResource(WorldMapResourcePath);
             RequireResource(TruckResourcePath);
 
-            // Completion/persistence ordering must stay commit-before-pay.
             CargoV2.QA.EditorTools.SCR_CargoV2CompletionRecoveryRegression.ValidateOrThrow();
-
-            // Player settings must remain isolated from gameplay/economy persistence,
-            // corrupt preferences must recover safely, and representative landscape/
-            // cutout layouts must keep HUD and touch controls inside the safe area.
             CargoV2.QA.EditorTools.SCR_CargoV2PlayerExperienceRegression.ValidateOrThrow();
+            CargoV2.QA.EditorTools.SCR_CargoV2HostileStateRegression.ValidateOrThrow();
 
             EditorBuildSettings.scenes = new[]
             {
@@ -97,7 +85,6 @@ namespace CargoV2.EditorTools
         private static void BuildAndroid()
         {
             ValidateOrThrow();
-
             if (!EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTargetGroup.Android, BuildTarget.Android))
             {
                 throw new InvalidOperationException("Unable to switch Unity build target to Android. Install Android Build Support for Unity 2022.3.75f1.");
