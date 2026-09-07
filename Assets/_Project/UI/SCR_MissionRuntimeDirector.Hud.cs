@@ -23,8 +23,8 @@ namespace CargoV2.UI
 
             GUILayout.BeginArea(hudRect, hudBoxStyle);
             GUILayout.Label(F("hud.contract", Two(mission.missionId)), hudHeaderStyle);
-            GUILayout.Label($"{contract.origin}  →  {contract.destination}", hudLabelStyle);
-            GUILayout.Label($"{contract.cargoLabel} • {Dec(contract.cargoWeightTons, "0.0")} t • {Num(contract.distanceKm)} km", hudLabelStyle);
+            GUILayout.Label($"{Term(contract.origin)}  →  {Term(contract.destination)}", hudLabelStyle);
+            GUILayout.Label($"{Term(contract.cargoLabel)} • {Dec(contract.cargoWeightTons, "0.0")} t • {Num(contract.distanceKm)} km", hudLabelStyle);
             GUILayout.Label(
                 $"{truckStats.DisplayName} • {Dec(Mathf.Abs(GetForwardSpeed()) * 3.6f, "0")} km/h • {L("hud.damage")} {Dec(damage, "0")}% • {L("hud.time")} {Num(Mathf.CeilToInt(remainingSeconds))}s",
                 hudLabelStyle);
@@ -229,6 +229,11 @@ namespace CargoV2.UI
             string raw = Mathf.Clamp(value, 0, 99).ToString("00");
             SCR_LocalizationManager manager = SCR_LocalizationManager.Instance;
             return manager != null ? manager.LocalizeDigits(raw) : raw;
+        }
+
+        private static string Term(string value)
+        {
+            return CargoV2LocalizationTerms.Term(value);
         }
 
         private Material CreateMaterial(Shader shader, Color color)
