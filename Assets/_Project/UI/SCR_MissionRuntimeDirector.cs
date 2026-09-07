@@ -201,7 +201,7 @@ namespace CargoV2.UI
                 throttleInput = 0f;
                 steeringInput = 0f;
                 hardBrake = false;
-                SCR_PlayerFeedback.SetEngineState(0f, 0f);
+                SCR_PlayerFeedback.StopEngine();
                 return;
             }
 
