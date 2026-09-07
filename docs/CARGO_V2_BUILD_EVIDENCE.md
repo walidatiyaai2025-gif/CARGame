@@ -1,6 +1,6 @@
 # CARGO V2 Android Build Evidence Contract
 
-This document defines the machine-verifiable evidence emitted by the autonomous CARGO V2 Android build path. It does not, by itself, declare the game runtime accepted.
+This document defines the machine-verifiable evidence emitted by the autonomous CARGO V2 Android build and smoke paths. It does not, by itself, declare the game runtime accepted.
 
 ## Authoritative closure line
 
@@ -46,9 +46,9 @@ A verified CARGO V2 APK must contain at least:
 
 Every native `.so` entry under `lib/<abi>/` must resolve to `arm64-v8a`; an APK that also contains x86, x86_64, armeabi-v7a, or another ABI is rejected.
 
-## Evidence JSON semantics
+## Build evidence JSON semantics
 
-The JSON record includes:
+The build JSON record includes:
 
 - schema version;
 - artifact kind and verification mode;
@@ -64,15 +64,40 @@ The JSON record includes:
 
 Archive verification is intentionally narrower than runtime acceptance. It must never be interpreted as proof of APK installation, application launch, Play Mode behavior, visual quality, signing identity, device FPS, or device stability.
 
-## CI contract test
+## Android install/launch smoke path
 
-`CARGO V2 Unity Scaffold` executes the artifact-verifier logic using synthetic APK-shaped ZIP fixtures:
+`SMOKE_CARGO_V2_ANDROID.ps1` is the fail-closed ADB smoke harness for a real APK after the archive/ABI contract passes.
 
-- a valid ARM64-only fixture must pass and emit evidence;
-- a fixture containing an extra x86_64 native library must fail.
+It:
 
-These fixture checks prove the verifier logic is executable and fail-closed. They are not Unity build or gameplay evidence.
+1. reruns `BUILD_CARGO_V2_UNITY.ps1 -VerifyApkOnly` before touching a device;
+2. discovers authorized ADB targets dynamically;
+3. automatically selects only when exactly one authorized target exists, or validates an explicitly supplied `-Serial` when several are connected;
+4. installs with `adb install -r` so the smoke path does not destructively uninstall saved state;
+5. verifies `com.walka.cargov2` exists after installation;
+6. clears pre-launch logcat, force-stops the package, and sends one bounded launcher intent;
+7. verifies the package process is present and the package appears in resumed activity state;
+8. captures package-correlated logcat and fails on observed fatal-exception, ANR, fatal-signal, or process-died markers;
+9. writes machine-readable smoke evidence including APK SHA-256 and dynamically observed device metadata.
+
+The default smoke evidence path is:
+
+`BuildLogs/CargoV2/CARGO-V2-android-smoke-evidence.json`
+
+A smoke PASS is scoped only to the APK archive contract plus the observed install and initial launch on that exact ADB target. It does **not** prove gameplay completion, control quality, visual quality, sustained FPS, thermal behavior, long-run stability, or production signing.
+
+## CI contract tests
+
+`CARGO V2 Unity Scaffold` exercises fail-closed build/smoke automation without fabricating Unity or device evidence:
+
+- a valid synthetic ARM64-only APK-shaped fixture must pass the archive verifier;
+- a fixture containing an extra x86_64 native library must fail;
+- the Android smoke source contract verifier rejects hard-coded emulator serials, destructive uninstall, and widened PASS claims;
+- a fake-ADB single-device scenario must exercise the install/launch orchestration and emit all expected truth fields;
+- a fake-ADB multi-device scenario must fail before installation unless an explicit serial is supplied.
+
+Synthetic fixture/fake-ADB checks prove the automation logic is executable and fail-closed. Their output is not a real APK build, real device run, gameplay test, or FPS measurement.
 
 ## Remaining runtime evidence categories
 
-Final product closure still requires evidence produced by actual execution on the exact candidate for the relevant gate, including Unity compile/import, gameplay/Play Mode, Android build, install/launch, device smoke, and performance/visual acceptance. No CI fixture or static check substitutes for those runtime results.
+Final product closure still requires evidence produced by actual execution on the exact candidate for the relevant gate, including Unity compile/import, gameplay/Play Mode, Android build, install/launch on a real device/emulator, device smoke, and performance/visual acceptance. No CI fixture or static check substitutes for those runtime results.
