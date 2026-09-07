@@ -96,7 +96,7 @@ A smoke PASS is scoped only to the APK archive contract plus the observed instal
 - a fake-ADB single-device scenario must exercise the install/launch orchestration and emit all expected truth fields;
 - a fake-ADB multi-device scenario must fail before installation unless an explicit serial is supplied.
 
-Synthetic fixture/fake-ADB checks prove the automation logic is executable and fail-closed. Their output is not a real APK build, real device run, gameplay test, or FPS measurement.
+Synthetic fixture/fake-ADB checks prove the automation logic is executable and fail-closed. They are not Unity build or gameplay evidence. Their output is not a real APK build, real device run, gameplay test, or FPS measurement.
 
 ## Remaining runtime evidence categories
 
