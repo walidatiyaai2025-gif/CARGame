@@ -24,7 +24,7 @@ namespace CargoV2.Logic
             Fresh = 0,
             Current = 1,
             RecoveredBackup = 2,
-            CorruptReset = 3,
+            CorruptBlocked = 3,
             FutureSchemaBlocked = 4,
             UnsupportedLegacyBlocked = 5,
         }
@@ -36,8 +36,9 @@ namespace CargoV2.Logic
 
         public ProgressLoadState LastLoadState { get; private set; } = ProgressLoadState.Fresh;
         public bool CanPersistLoadedState =>
-            LastLoadState != ProgressLoadState.FutureSchemaBlocked &&
-            LastLoadState != ProgressLoadState.UnsupportedLegacyBlocked;
+            LastLoadState == ProgressLoadState.Fresh ||
+            LastLoadState == ProgressLoadState.Current ||
+            LastLoadState == ProgressLoadState.RecoveredBackup;
 
         public ProgressPayload LoadProgress(int missionCount)
         {
@@ -62,7 +63,8 @@ namespace CargoV2.Logic
                         return recovered;
                     }
 
-                    LastLoadState = ProgressLoadState.CorruptReset;
+                    LastLoadState = ProgressLoadState.CorruptBlocked;
+                    Debug.LogWarning("[CARGO V2][LOGIC_TEAM] Progress is corrupt and no valid last-known-good snapshot exists; raw data is preserved and write-back is blocked.");
                     return fallback;
                 }
 
@@ -93,7 +95,7 @@ namespace CargoV2.Logic
                         return recovered;
                     }
 
-                    LastLoadState = ProgressLoadState.CorruptReset;
+                    LastLoadState = ProgressLoadState.CorruptBlocked;
                     return fallback;
                 }
 
@@ -115,7 +117,7 @@ namespace CargoV2.Logic
                     return recovered;
                 }
 
-                LastLoadState = ProgressLoadState.CorruptReset;
+                LastLoadState = ProgressLoadState.CorruptBlocked;
                 return fallback;
             }
         }
@@ -133,8 +135,6 @@ namespace CargoV2.Logic
                 string raw = JsonUtility.ToJson(payload);
                 if (string.IsNullOrWhiteSpace(raw)) return false;
 
-                // Write the previous known-good primary first. If the process dies
-                // during the primary write, recovery still has a durable prior state.
                 string currentRaw = SafeRead(ProgressKey);
                 if (IsCurrentSchemaPayload(currentRaw))
                 {
@@ -151,8 +151,6 @@ namespace CargoV2.Logic
 
                 PlayerPrefs.SetString(ProgressKey, raw);
                 PlayerPrefs.Save();
-
-                // Refresh the LKG only after the primary commit succeeds.
                 PlayerPrefs.SetString(ProgressBackupKey, raw);
                 PlayerPrefs.Save();
                 LastLoadState = ProgressLoadState.Current;
@@ -191,10 +189,7 @@ namespace CargoV2.Logic
             {
                 ProgressPayload parsed = JsonUtility.FromJson<ProgressPayload>(raw);
                 if (parsed == null) return false;
-                payload = CreateSafePayload(
-                    parsed.highestCompletedMissionId,
-                    parsed.selectedMissionId,
-                    missionCount);
+                payload = CreateSafePayload(parsed.highestCompletedMissionId, parsed.selectedMissionId, missionCount);
                 return true;
             }
             catch (Exception)
@@ -267,21 +262,12 @@ namespace CargoV2.Logic
             int selectedMissionId,
             int missionCount)
         {
-            int boundedCompleted = WorldMapProgression.ClampHighestCompleted(
-                highestCompletedMissionId,
-                missionCount);
-
+            int boundedCompleted = WorldMapProgression.ClampHighestCompleted(highestCompletedMissionId, missionCount);
             int boundedSelected = selectedMissionId;
-            if (!WorldMapProgression.CanSelect(
-                    boundedSelected,
-                    boundedCompleted,
-                    missionCount))
+            if (!WorldMapProgression.CanSelect(boundedSelected, boundedCompleted, missionCount))
             {
-                boundedSelected = WorldMapProgression.GetHighestUnlockedMissionId(
-                    boundedCompleted,
-                    missionCount);
+                boundedSelected = WorldMapProgression.GetHighestUnlockedMissionId(boundedCompleted, missionCount);
             }
-
             if (missionCount <= 0) boundedSelected = 0;
 
             return new ProgressPayload
