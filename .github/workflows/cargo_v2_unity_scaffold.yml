@@ -10,6 +10,7 @@ on:
       - 'BUILD_CARGO_V2_UNITY.bat'
       - 'docs/CARGO_V2_BUILD_EVIDENCE.md'
       - 'tool/verify_cargo_v2_unity_scaffold.py'
+      - 'tool/verify_cargo_v2_company_transactions.py'
       - '.github/workflows/cargo_v2_unity_scaffold.yml'
   workflow_dispatch:
 
@@ -25,6 +26,8 @@ jobs:
         uses: actions/checkout@v4
       - name: Verify CARGO V2 Unity scaffold
         run: python3 tool/verify_cargo_v2_unity_scaffold.py
+      - name: Verify company transaction crash recovery
+        run: python3 tool/verify_cargo_v2_company_transactions.py
       - name: Parse Windows Unity closure script
         shell: pwsh
         run: |

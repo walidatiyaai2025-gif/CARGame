@@ -9,8 +9,13 @@ namespace CargoV2.Logic
     {
         private const string CompanyKey = "cargo_v2_company_profile_v1";
         private const string CorruptBackupKey = "cargo_v2_company_profile_corrupt_v1";
+        private const string PendingTransactionKey = "cargo_v2_company_transaction_v1";
+        private const string CorruptTransactionBackupKey = "cargo_v2_company_transaction_corrupt_v1";
         private const int SchemaVersion = 1;
+        private const int TransactionSchemaVersion = 1;
         private const int MaxUpgradeLevel = 3;
+        private const int PurchaseTransactionKind = 1;
+        private const int UpgradeTransactionKind = 2;
 
         [Serializable]
         private sealed class OwnedTruckPayload
@@ -27,6 +32,19 @@ namespace CargoV2.Logic
             public int schemaVersion = SchemaVersion;
             public string selectedTruckId;
             public List<OwnedTruckPayload> ownedTrucks = new List<OwnedTruckPayload>();
+        }
+
+        [Serializable]
+        private sealed class PendingTransactionPayload
+        {
+            public int schemaVersion = TransactionSchemaVersion;
+            public string operationId;
+            public int kind;
+            public string truckId;
+            public int upgrade = -1;
+            public int fromLevel;
+            public int toLevel;
+            public long coinCost;
         }
 
         public readonly struct TruckState
@@ -162,27 +180,32 @@ namespace CargoV2.Logic
                 return false;
             }
 
-            if (!SCR_MissionRewardStore.TrySpendCoins(truck.purchasePrice, out _))
+            PendingTransactionPayload pending = new PendingTransactionPayload
             {
-                reason = "Purchase payment could not be committed.";
+                operationId = Guid.NewGuid().ToString("N"),
+                kind = PurchaseTransactionKind,
+                truckId = truckId,
+                upgrade = -1,
+                fromLevel = 0,
+                toLevel = 0,
+                coinCost = truck.purchasePrice,
+            };
+
+            if (!TryWritePendingTransaction(pending))
+            {
+                reason = "Purchase recovery journal could not be saved.";
                 return false;
             }
 
-            payload.ownedTrucks.Add(NewOwned(truckId));
-            payload.selectedTruckId = truckId;
-            if (TrySave(payload))
+            if (!TryResolvePendingTransaction(payload, pending, out bool applied, out reason))
             {
-                reason = $"{truck.displayName} purchased and selected.";
-                return true;
+                if (string.IsNullOrWhiteSpace(reason)) reason = "Purchase remains pending recovery.";
+                return false;
             }
 
-            payload.ownedTrucks.RemoveAll(item => item != null && string.Equals(item.truckId, truckId, StringComparison.Ordinal));
-            if (!SCR_MissionRewardStore.TryCreditCoins(truck.purchasePrice, out _))
-            {
-                Debug.LogError($"[CARGO V2][LOGIC] Critical purchase rollback failure for {truckId}; manual economy recovery may be required.");
-            }
-            reason = "Company save failed; purchase was rolled back.";
-            return false;
+            if (!applied) return false;
+            reason = $"{truck.displayName} purchased and selected.";
+            return true;
         }
 
         public static bool TryUpgradeSelected(CargoV2TruckUpgrade upgrade, out string reason)
@@ -222,26 +245,32 @@ namespace CargoV2.Logic
                 return false;
             }
 
-            if (!SCR_MissionRewardStore.TrySpendCoins(cost, out _))
+            PendingTransactionPayload pending = new PendingTransactionPayload
             {
-                reason = "Upgrade payment could not be committed.";
+                operationId = Guid.NewGuid().ToString("N"),
+                kind = UpgradeTransactionKind,
+                truckId = truck.id,
+                upgrade = (int)upgrade,
+                fromLevel = current,
+                toLevel = current + 1,
+                coinCost = cost,
+            };
+
+            if (!TryWritePendingTransaction(pending))
+            {
+                reason = "Upgrade recovery journal could not be saved.";
                 return false;
             }
 
-            SetUpgradeLevel(owned, upgrade, current + 1);
-            if (TrySave(payload))
+            if (!TryResolvePendingTransaction(payload, pending, out bool applied, out reason))
             {
-                reason = $"{truck.displayName} {upgrade} upgraded to Lv.{current + 1}.";
-                return true;
+                if (string.IsNullOrWhiteSpace(reason)) reason = "Upgrade remains pending recovery.";
+                return false;
             }
 
-            SetUpgradeLevel(owned, upgrade, current);
-            if (!SCR_MissionRewardStore.TryCreditCoins(cost, out _))
-            {
-                Debug.LogError($"[CARGO V2][LOGIC] Critical upgrade rollback failure for {truck.id}; manual economy recovery may be required.");
-            }
-            reason = "Company save failed; upgrade was rolled back.";
-            return false;
+            if (!applied) return false;
+            reason = $"{truck.displayName} {upgrade} upgraded to Lv.{current + 1}.";
+            return true;
         }
 
         private static bool TryLoad(out CompanyPayload payload)
@@ -252,7 +281,8 @@ namespace CargoV2.Logic
                 if (!PlayerPrefs.HasKey(CompanyKey))
                 {
                     payload = NewPayload();
-                    return TrySave(payload);
+                    if (!TrySave(payload)) return false;
+                    return TryRecoverPendingTransaction(payload);
                 }
 
                 string json = PlayerPrefs.GetString(CompanyKey, string.Empty);
@@ -261,23 +291,239 @@ namespace CargoV2.Logic
                 {
                     BackupCorrupt(json);
                     payload = NewPayload();
-                    return TrySave(payload);
+                    if (!TrySave(payload)) return false;
+                    return TryRecoverPendingTransaction(payload);
                 }
 
                 EnsureStarter(payload);
                 if (FindOwned(payload, payload.selectedTruckId) == null)
                 {
                     payload.selectedTruckId = CargoV2LogisticsCatalog.StarterTruckId;
-                    TrySave(payload);
+                    if (!TrySave(payload)) return false;
                 }
-                return true;
+
+                return TryRecoverPendingTransaction(payload);
             }
             catch (Exception exception)
             {
                 Debug.LogWarning($"[CARGO V2][LOGIC] Company profile read failed; using safe starter state: {exception.Message}");
                 payload = NewPayload();
-                return TrySave(payload);
+                if (!TrySave(payload)) return false;
+                return TryRecoverPendingTransaction(payload);
             }
+        }
+
+        private static bool TryRecoverPendingTransaction(CompanyPayload payload)
+        {
+            if (!PlayerPrefs.HasKey(PendingTransactionKey)) return true;
+
+            string json = PlayerPrefs.GetString(PendingTransactionKey, string.Empty);
+            PendingTransactionPayload pending = null;
+            try
+            {
+                pending = string.IsNullOrWhiteSpace(json)
+                    ? null
+                    : JsonUtility.FromJson<PendingTransactionPayload>(json);
+            }
+            catch (Exception exception)
+            {
+                Debug.LogWarning($"[CARGO V2][LOGIC] Company transaction journal parse failed: {exception.Message}");
+            }
+
+            if (!ValidatePendingTransaction(pending))
+            {
+                BackupCorruptTransaction(json);
+                Debug.LogWarning("[CARGO V2][LOGIC] Corrupt company transaction journal was quarantined; no new debit was attempted.");
+                return true;
+            }
+
+            if (!TryResolvePendingTransaction(payload, pending, out bool applied, out string reason))
+            {
+                Debug.LogWarning($"[CARGO V2][LOGIC] Company transaction recovery is still pending: {reason}");
+                return false;
+            }
+
+            if (applied)
+            {
+                Debug.Log($"[CARGO V2][LOGIC] Recovered company transaction {pending.operationId} without duplicate coin spend.");
+            }
+            return true;
+        }
+
+        private static bool TryResolvePendingTransaction(
+            CompanyPayload payload,
+            PendingTransactionPayload pending,
+            out bool applied,
+            out string reason)
+        {
+            applied = false;
+            reason = string.Empty;
+            if (!Validate(payload) || !ValidatePendingTransaction(pending))
+            {
+                reason = "Company transaction journal is invalid.";
+                return false;
+            }
+
+            CargoV2TruckSpec truck = CargoV2LogisticsCatalog.GetTruck(pending.truckId);
+            if (truck == null)
+            {
+                reason = "Pending transaction truck is unavailable.";
+                return false;
+            }
+
+            CargoV2TruckUpgrade upgrade = CargoV2TruckUpgrade.Engine;
+            if (pending.kind == PurchaseTransactionKind)
+            {
+                if (truck.purchasePrice <= 0 || truck.purchasePrice != pending.coinCost)
+                {
+                    reason = "Pending purchase price no longer matches the authoritative catalog.";
+                    return false;
+                }
+
+                if (!SCR_MissionRewardStore.TryReadSnapshot(out SCR_MissionRewardStore.Snapshot economy) ||
+                    economy.Xp < truck.unlockXp)
+                {
+                    reason = "Pending purchase no longer satisfies the authoritative unlock state.";
+                    return false;
+                }
+            }
+            else
+            {
+                upgrade = (CargoV2TruckUpgrade)pending.upgrade;
+                long expectedCost = CargoV2LogisticsCatalog.GetUpgradeCost(truck, upgrade, pending.fromLevel);
+                if (expectedCost <= 0 || expectedCost != pending.coinCost)
+                {
+                    reason = "Pending upgrade cost no longer matches the authoritative catalog.";
+                    return false;
+                }
+
+                OwnedTruckPayload existing = FindOwned(payload, pending.truckId);
+                if (existing == null)
+                {
+                    reason = "Pending upgrade truck is no longer owned.";
+                    return false;
+                }
+
+                int level = GetUpgradeLevel(existing, upgrade);
+                if (level != pending.fromLevel && level != pending.toLevel)
+                {
+                    reason = "Pending upgrade level no longer matches the recoverable state.";
+                    return false;
+                }
+            }
+
+            if (!SCR_MissionRewardStore.TryEnsureCoinSpend(
+                    pending.coinCost,
+                    pending.operationId,
+                    out bool paymentCommitted,
+                    out _))
+            {
+                reason = "Transaction payment state could not be persisted.";
+                return false;
+            }
+
+            if (!paymentCommitted)
+            {
+                if (!TryClearPendingTransaction())
+                {
+                    reason = "Insufficient funds and transaction journal could not be cleared.";
+                    return false;
+                }
+                reason = $"Requires {pending.coinCost:N0} coins.";
+                return true;
+            }
+
+            if (pending.kind == PurchaseTransactionKind)
+            {
+                if (FindOwned(payload, pending.truckId) == null)
+                {
+                    payload.ownedTrucks.Add(NewOwned(pending.truckId));
+                }
+                payload.selectedTruckId = pending.truckId;
+            }
+            else
+            {
+                OwnedTruckPayload owned = FindOwned(payload, pending.truckId);
+                int level = GetUpgradeLevel(owned, upgrade);
+                if (level == pending.fromLevel)
+                {
+                    SetUpgradeLevel(owned, upgrade, pending.toLevel);
+                }
+            }
+
+            if (!TrySave(payload))
+            {
+                reason = "Payment is committed; company state remains pending idempotent recovery.";
+                return false;
+            }
+
+            if (!TryClearPendingTransaction())
+            {
+                Debug.LogWarning($"[CARGO V2][LOGIC] Company transaction {pending.operationId} committed but journal cleanup will retry later.");
+            }
+
+            applied = true;
+            return true;
+        }
+
+        private static bool TryWritePendingTransaction(PendingTransactionPayload pending)
+        {
+            if (!ValidatePendingTransaction(pending) || PlayerPrefs.HasKey(PendingTransactionKey)) return false;
+            try
+            {
+                string json = JsonUtility.ToJson(pending);
+                if (string.IsNullOrWhiteSpace(json)) return false;
+                PlayerPrefs.SetString(PendingTransactionKey, json);
+                PlayerPrefs.Save();
+                return true;
+            }
+            catch (Exception exception)
+            {
+                Debug.LogWarning($"[CARGO V2][LOGIC] Company transaction journal write failed safely: {exception.Message}");
+                return false;
+            }
+        }
+
+        private static bool TryClearPendingTransaction()
+        {
+            try
+            {
+                PlayerPrefs.DeleteKey(PendingTransactionKey);
+                PlayerPrefs.Save();
+                return true;
+            }
+            catch (Exception exception)
+            {
+                Debug.LogWarning($"[CARGO V2][LOGIC] Company transaction journal cleanup failed safely: {exception.Message}");
+                return false;
+            }
+        }
+
+        private static bool ValidatePendingTransaction(PendingTransactionPayload pending)
+        {
+            if (pending == null || pending.schemaVersion != TransactionSchemaVersion ||
+                string.IsNullOrWhiteSpace(pending.operationId) ||
+                !Guid.TryParseExact(pending.operationId, "N", out _) ||
+                string.IsNullOrWhiteSpace(pending.truckId) ||
+                CargoV2LogisticsCatalog.GetTruck(pending.truckId) == null ||
+                pending.coinCost <= 0)
+            {
+                return false;
+            }
+
+            if (pending.kind == PurchaseTransactionKind)
+            {
+                return pending.upgrade == -1 && pending.fromLevel == 0 && pending.toLevel == 0;
+            }
+
+            if (pending.kind != UpgradeTransactionKind || pending.upgrade < (int)CargoV2TruckUpgrade.Engine ||
+                pending.upgrade > (int)CargoV2TruckUpgrade.Durability ||
+                pending.fromLevel < 0 || pending.fromLevel >= MaxUpgradeLevel)
+            {
+                return false;
+            }
+
+            return pending.toLevel == pending.fromLevel + 1 && pending.toLevel <= MaxUpgradeLevel;
         }
 
         private static bool TrySave(CompanyPayload payload)
@@ -382,6 +628,20 @@ namespace CargoV2.Logic
             catch (Exception exception)
             {
                 Debug.LogWarning($"[CARGO V2][LOGIC] Could not preserve corrupt company payload: {exception.Message}");
+            }
+        }
+
+        private static void BackupCorruptTransaction(string json)
+        {
+            try
+            {
+                if (!string.IsNullOrWhiteSpace(json)) PlayerPrefs.SetString(CorruptTransactionBackupKey, json);
+                PlayerPrefs.DeleteKey(PendingTransactionKey);
+                PlayerPrefs.Save();
+            }
+            catch (Exception exception)
+            {
+                Debug.LogWarning($"[CARGO V2][LOGIC] Could not quarantine corrupt company transaction: {exception.Message}");
             }
         }
     }
