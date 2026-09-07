@@ -61,6 +61,10 @@ namespace CargoV2.Data
                 case "hq.coins": return rtl ? "عملة" : "coins";
                 case "hq.upgraded": return rtl ? "تمت ترقيته" : "upgraded";
                 case "hq.bonus": return rtl ? "إضافي" : "bonus";
+                case "hq.resumed": return rtl ? "تم استكمال التوصيل" : "Delivery resumed";
+                case "splash.network": return rtl ? "شبكة شحن عالمية مميزة" : "PREMIUM GLOBAL CARGO NETWORK";
+                case "splash.motto": return rtl ? "سلّم • توسع • تقدّم" : "DELIVER  ·  EXPAND  ·  DOMINATE";
+                case "loading.route": return rtl ? "جاري تجهيز مسارك العالمي" : "PREPARING YOUR WORLD ROUTE";
                 default: return key;
             }
         }
