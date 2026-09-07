@@ -20,6 +20,7 @@ REQUIRED_FILES = [
     "Packages/manifest.json",
     "BUILD_CARGO_V2_UNITY.ps1",
     "BUILD_CARGO_V2_UNITY.bat",
+    "docs/CARGO_V2_BUILD_EVIDENCE.md",
     "Assets/_Project/UI/SCR_WorldMapSceneBootstrap.cs",
     "Assets/_Project/UI/Editor/SCR_CargoV2Build.cs",
     "Assets/_Project/UI/SCR_MissionRuntimeDirector.cs",
@@ -141,20 +142,52 @@ def main() -> None:
     require_tokens(
         "BUILD_CARGO_V2_UNITY.ps1",
         (
-            '2022.3.75f1',
-            'SCR_CargoV2Build.ValidateBatch',
-            'SCR_CargoV2Build.BuildAndroidBatch',
-            'CARGO_V2_ANDROID_OUTPUT',
-            'Get-FileHash',
-            'SHA256',
+            "2022.3.75f1",
+            "SCR_CargoV2Build.ValidateBatch",
+            "SCR_CargoV2Build.BuildAndroidBatch",
+            "CARGO_V2_ANDROID_OUTPUT",
+            "VerifyApkOnly",
+            "System.IO.Compression.ZipFile",
+            "assets/bin/Data/globalgamemanagers",
+            "lib/arm64-v8a/libmain.so",
+            "lib/arm64-v8a/libunity.so",
+            "lib/arm64-v8a/libil2cpp.so",
+            "apk-archive-contract",
+            "nativeArchitectures",
+            "runtimeInstallExecuted",
+            "CARGO-V2-build-evidence.json",
+            "Get-FileHash",
+            "SHA256",
         ),
     )
     require_tokens(
         "BUILD_CARGO_V2_UNITY.bat",
         (
-            'BUILD_CARGO_V2_UNITY.ps1',
-            'ExecutionPolicy Bypass',
-            'exit /b %EXIT_CODE%',
+            "BUILD_CARGO_V2_UNITY.ps1",
+            "ExecutionPolicy Bypass",
+            "exit /b %EXIT_CODE%",
+        ),
+    )
+    require_tokens(
+        ".github/workflows/cargo_v2_unity_scaffold.yml",
+        (
+            "Exercise APK artifact verifier contract",
+            "New-CargoV2ApkFixture",
+            "IncludeWrongArchitecture",
+            "lib/x86_64/libunity.so",
+            "synthetic archives only; no Unity/runtime claim",
+        ),
+    )
+    require_tokens(
+        "docs/CARGO_V2_BUILD_EVIDENCE.md",
+        (
+            "CARGO V2 Android Build Evidence Contract",
+            "ARM64 only",
+            "IL2CPP",
+            "CARGO-V2-build-evidence.json",
+            "runtimeInstallExecuted=false",
+            "x86_64",
+            "not Unity build or gameplay evidence",
         ),
     )
 
@@ -174,7 +207,7 @@ def main() -> None:
         (
             "ActiveDeliveryRunKey",
             "CompletionDeliveryRunKey",
-            "Guid.NewGuid().ToString(\"N\")",
+            'Guid.NewGuid().ToString("N")',
             "Rigidbody",
             "FixedUpdate()",
         ),
@@ -203,7 +236,7 @@ def main() -> None:
             "TrySettleDelivery",
             "settledDeliveryIds",
             "MaxSettledDeliveryIds = 256",
-            "Guid.TryParseExact(deliveryRunId, \"N\"",
+            'Guid.TryParseExact(deliveryRunId, "N"',
             "payload.rewardedMissionIds.Add(mission.missionId)",
         ),
     )
@@ -245,7 +278,7 @@ def main() -> None:
         "CARGO V2 UNITY SCAFFOLD PASS: "
         f"Unity {EXPECTED_VERSION} ({EXPECTED_REVISION}), 3 build scenes, "
         f"{len(guid_to_path)} unique governed Unity GUIDs, ordered trucking runtime + "
-        "repeatable idempotent delivery economy + ARM64 landscape Android closure build present."
+        "repeatable idempotent delivery economy + ARM64 IL2CPP APK artifact verifier present."
     )
 
 

@@ -8,6 +8,7 @@ on:
       - 'ProjectSettings/**'
       - 'BUILD_CARGO_V2_UNITY.ps1'
       - 'BUILD_CARGO_V2_UNITY.bat'
+      - 'docs/CARGO_V2_BUILD_EVIDENCE.md'
       - 'tool/verify_cargo_v2_unity_scaffold.py'
       - '.github/workflows/cargo_v2_unity_scaffold.yml'
   workflow_dispatch:
@@ -36,3 +37,78 @@ jobs:
             exit 1
           }
           Write-Host "CARGO V2 Windows Unity launcher syntax PASS."
+      - name: Exercise APK artifact verifier contract
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          function New-CargoV2ApkFixture {
+            param(
+              [Parameter(Mandatory = $true)][string]$Root,
+              [Parameter(Mandatory = $true)][string]$Destination,
+              [switch]$IncludeWrongArchitecture
+            )
+
+            Remove-Item -LiteralPath $Root -Recurse -Force -ErrorAction SilentlyContinue
+            Remove-Item -LiteralPath $Destination -Force -ErrorAction SilentlyContinue
+            $zipPath = "$Destination.zip"
+            Remove-Item -LiteralPath $zipPath -Force -ErrorAction SilentlyContinue
+
+            $relativeFiles = @(
+              'AndroidManifest.xml',
+              'classes.dex',
+              'assets/bin/Data/globalgamemanagers',
+              'lib/arm64-v8a/libmain.so',
+              'lib/arm64-v8a/libunity.so',
+              'lib/arm64-v8a/libil2cpp.so'
+            )
+            if ($IncludeWrongArchitecture) {
+              $relativeFiles += 'lib/x86_64/libunity.so'
+            }
+
+            foreach ($relativeFile in $relativeFiles) {
+              $target = Join-Path $Root $relativeFile
+              New-Item -ItemType Directory -Force -Path (Split-Path -Parent $target) | Out-Null
+              Set-Content -LiteralPath $target -Value "CARGO V2 verifier fixture: $relativeFile" -Encoding ASCII
+            }
+
+            Compress-Archive -Path (Join-Path $Root '*') -DestinationPath $zipPath -Force
+            Move-Item -LiteralPath $zipPath -Destination $Destination
+          }
+
+          $validRoot = Join-Path $env:RUNNER_TEMP 'cargo-v2-valid-apk'
+          $validApk = Join-Path $env:RUNNER_TEMP 'cargo-v2-valid.apk'
+          $validEvidence = Join-Path $env:RUNNER_TEMP 'cargo-v2-valid-evidence.json'
+          New-CargoV2ApkFixture -Root $validRoot -Destination $validApk
+
+          & pwsh -NoProfile -File ./BUILD_CARGO_V2_UNITY.ps1 -VerifyApkOnly -OutputApk $validApk -EvidenceJson $validEvidence
+          if ($LASTEXITCODE -ne 0) {
+            throw "Positive APK verifier fixture unexpectedly failed with exit code $LASTEXITCODE."
+          }
+
+          $record = Get-Content -LiteralPath $validEvidence -Raw | ConvertFrom-Json
+          if ($record.verificationMode -ne 'apk-archive-contract') {
+            throw "APK verifier evidence mode mismatch."
+          }
+          if ($record.sha256 -notmatch '^[0-9a-f]{64}$') {
+            throw "APK verifier did not emit a lowercase SHA-256 digest."
+          }
+          $architectures = @($record.nativeArchitectures)
+          if ($architectures.Count -ne 1 -or $architectures[0] -ne 'arm64-v8a') {
+            throw "APK verifier evidence did not preserve the ARM64-only contract."
+          }
+          if ($record.runtimeInstallExecuted -ne $false -or $record.runtimeLaunchExecuted -ne $false) {
+            throw "Archive verification must never fabricate runtime install/launch evidence."
+          }
+
+          $invalidRoot = Join-Path $env:RUNNER_TEMP 'cargo-v2-invalid-apk'
+          $invalidApk = Join-Path $env:RUNNER_TEMP 'cargo-v2-invalid.apk'
+          $invalidEvidence = Join-Path $env:RUNNER_TEMP 'cargo-v2-invalid-evidence.json'
+          New-CargoV2ApkFixture -Root $invalidRoot -Destination $invalidApk -IncludeWrongArchitecture
+
+          & pwsh -NoProfile -File ./BUILD_CARGO_V2_UNITY.ps1 -VerifyApkOnly -OutputApk $invalidApk -EvidenceJson $invalidEvidence 2>$null
+          if ($LASTEXITCODE -eq 0) {
+            throw "Negative APK verifier fixture with x86_64 unexpectedly passed."
+          }
+
+          Write-Host "CARGO V2 APK artifact verifier positive/negative contract PASS (synthetic archives only; no Unity/runtime claim)."
