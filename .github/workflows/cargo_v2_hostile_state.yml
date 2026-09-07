@@ -1,0 +1,38 @@
+name: CARGO V2 Hostile State Guard
+
+on:
+  pull_request:
+    branches:
+      - cargo-v2-player-experience-closure
+      - cargo-v2-autonomous-closure
+      - cargo-v2
+    paths:
+      - 'Assets/_Project/Scripts/Logic/SCR_SaveManager.cs'
+      - 'Assets/_Project/Scripts/Logic/SCR_WorldMapPersistenceBridge.cs'
+      - 'Assets/_Project/Scripts/Logic/SCR_MissionRewardStore.cs'
+      - 'Assets/_Project/Scripts/Logic/SCR_CompanyProgressStore.cs'
+      - 'Assets/_Project/Scripts/Logic/SCR_ActiveDeliveryStore.cs'
+      - 'Assets/_Project/Scripts/Logic/SCR_MissionCompletionHandoffBridge.cs'
+      - 'Assets/_Project/Data/CargoV2LogisticsCatalog.cs'
+      - 'Assets/_Project/QA/Editor/SCR_CargoV2HostileStateRegression.cs'
+      - 'Assets/_Project/UI/Editor/SCR_CargoV2Build.cs'
+      - 'tool/verify_cargo_v2_hostile_state.py'
+      - '.github/workflows/cargo_v2_hostile_state.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout exact candidate
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify hostile-state persistence contracts
+        run: python tool/verify_cargo_v2_hostile_state.py
