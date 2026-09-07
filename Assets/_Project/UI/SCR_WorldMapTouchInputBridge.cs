@@ -55,6 +55,13 @@ namespace CargoV2.UI
             Touch touch = Input.GetTouch(0);
             if (touch.phase != TouchPhase.Ended) return;
 
+            Vector2 guiPoint = new Vector2(touch.position.x, Screen.height - touch.position.y);
+            if (SCR_PlayerExperienceRuntime.IsPointOverOverlay(guiPoint) ||
+                SCR_LogisticsBusinessRuntime.IsPointOverUi(guiPoint))
+            {
+                return;
+            }
+
             Camera camera = ResolveCamera();
             if (camera == null) return;
 
