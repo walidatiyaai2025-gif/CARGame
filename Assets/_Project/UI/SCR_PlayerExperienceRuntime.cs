@@ -39,6 +39,16 @@ namespace CargoV2.UI
             DontDestroyOnLoad(gameObject);
         }
 
+        private void Update()
+        {
+            // Mission runtime consumes Back first while a contract is active so a
+            // modal close can never also resume/abandon the contract in the same key press.
+            if (!SCR_MissionRuntimeDirector.IsRunning && HasModalOpen && Input.GetKeyDown(KeyCode.Escape))
+            {
+                TryHandleBack();
+            }
+        }
+
         private void OnDestroy()
         {
             if (instance == this) instance = null;
@@ -66,6 +76,13 @@ namespace CargoV2.UI
             instance.settingsOpen = false;
             instance.helpOpen = false;
             SCR_PlayerFeedback.Play(SCR_PlayerFeedback.Cue.Ui);
+        }
+
+        public static bool TryHandleBack()
+        {
+            if (!HasModalOpen) return false;
+            CloseModal();
+            return true;
         }
 
         public static bool IsPointOverOverlay(Vector2 guiPoint)
