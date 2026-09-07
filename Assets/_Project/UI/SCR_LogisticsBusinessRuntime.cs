@@ -172,9 +172,9 @@ namespace CargoV2.UI
 
             GUILayout.Space(7f * currentScale);
             GUILayout.Label(F("hq.contract", Two(contract.missionId)), headerStyle);
-            GUILayout.Label($"{contract.origin}  →  {contract.destination}", labelStyle);
-            GUILayout.Label($"{contract.cargoLabel} • {Dec(contract.cargoWeightTons, "0.0")} t • {Num(contract.distanceKm)} km", labelStyle);
-            GUILayout.Label($"{L("reward")}: {Num(contract.payoutCoins)} + {Num(contract.bonusCoins)} bonus • {Num(contract.xp)} XP", labelStyle);
+            GUILayout.Label($"{Term(contract.origin)}  →  {Term(contract.destination)}", labelStyle);
+            GUILayout.Label($"{Term(contract.cargoLabel)} • {Dec(contract.cargoWeightTons, "0.0")} t • {Num(contract.distanceKm)} km", labelStyle);
+            GUILayout.Label($"{L("reward")}: {Num(contract.payoutCoins)} + {Num(contract.bonusCoins)} {L("hq.bonus")} • {Num(contract.xp)} XP", labelStyle);
 
             bool canCarry = selectedTruck != null && selectedTruck.cargoCapacityTons >= contract.cargoWeightTons;
             GUILayout.Label(canCarry && selectedTruck != null
@@ -191,7 +191,7 @@ namespace CargoV2.UI
                 if (SCR_MissionRuntimeDirector.LaunchInPlace(active.MissionId))
                 {
                     expanded = false;
-                    SetStatus("Delivery resumed.", false);
+                    SetStatus(L("hq.resumed"), false);
                 }
                 else
                 {
@@ -322,7 +322,9 @@ namespace CargoV2.UI
         private static string L(string key)
         {
             SCR_LocalizationManager manager = SCR_LocalizationManager.Instance;
-            return manager != null ? manager.Get(key) : key;
+            string value = manager != null ? manager.Get(key) : key;
+            if (!string.Equals(value, key, System.StringComparison.Ordinal)) return value;
+            return CargoV2LocalizationTerms.LogisticsLabel(key);
         }
 
         private static string F(string key, params object[] args)
@@ -348,6 +350,11 @@ namespace CargoV2.UI
             string raw = Mathf.Clamp(value, 0, 99).ToString("00");
             SCR_LocalizationManager manager = SCR_LocalizationManager.Instance;
             return manager != null ? manager.LocalizeDigits(raw) : raw;
+        }
+
+        private static string Term(string value)
+        {
+            return CargoV2LocalizationTerms.Term(value);
         }
     }
 }
