@@ -88,6 +88,13 @@ namespace CargoV2.Logic
             if (routeController == null || saveManager == null) return false;
 
             SCR_SaveManager.ProgressPayload payload = saveManager.LoadProgress(routeController.MissionCount);
+            if (!saveManager.CanPersistLoadedState)
+            {
+                Debug.LogWarning(
+                    $"[CARGO V2][LOGIC] WorldMap persistence blocked for {saveManager.LastLoadState}; unsupported progress data is preserved untouched.");
+                return false;
+            }
+
             routeController.SetProgress(payload.highestCompletedMissionId);
             if (payload.selectedMissionId > 0)
             {
@@ -109,7 +116,7 @@ namespace CargoV2.Logic
 
         public bool PersistCurrentState()
         {
-            if (!initialized || routeController == null || saveManager == null) return false;
+            if (!initialized || routeController == null || saveManager == null || !saveManager.CanPersistLoadedState) return false;
             return saveManager.SaveProgress(
                 routeController.HighestCompletedMissionId,
                 routeController.SelectedMissionId,
