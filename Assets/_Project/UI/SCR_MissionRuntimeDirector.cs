@@ -136,10 +136,21 @@ namespace CargoV2.UI
 
         private static string ResolveDeliveryRunId(bool hasResume)
         {
-            if (hasResume && PlayerPrefs.HasKey(ActiveDeliveryRunKey))
+            if (hasResume)
             {
-                string existing = PlayerPrefs.GetString(ActiveDeliveryRunKey, string.Empty);
-                if (Guid.TryParseExact(existing, "N", out _)) return existing;
+                if (PlayerPrefs.HasKey(ActiveDeliveryRunKey))
+                {
+                    string existing = PlayerPrefs.GetString(ActiveDeliveryRunKey, string.Empty);
+                    if (Guid.TryParseExact(existing, "N", out _)) return existing;
+                }
+
+                // A resumable checkpoint and its run id form one logical record. Never
+                // mint a new id for an orphaned checkpoint: doing so could turn a stale
+                // post-settlement checkpoint into a second payable delivery.
+                Debug.LogWarning(
+                    "[CARGO V2][MISSION] Active delivery checkpoint has no valid delivery run id; quarantining the orphaned resume to prevent duplicate settlement.");
+                SCR_ActiveDeliveryStore.Clear();
+                return string.Empty;
             }
 
             string created = Guid.NewGuid().ToString("N");
