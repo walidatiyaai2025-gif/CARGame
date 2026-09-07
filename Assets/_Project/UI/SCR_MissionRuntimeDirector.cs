@@ -17,10 +17,6 @@ namespace CargoV2.UI
         private const string TruckResourcePath = "CargoV2/Truck/MOD_Truck_Premium";
         private const string MissionResourcePath = "CargoV2/Mission/MOD_Mission_CargoDepot";
         private const float RouteLength = 190f;
-        private const float HudX = 18f;
-        private const float HudY = 18f;
-        private const float HudWidth = 500f;
-        private const float HudHeight = 300f;
         private static readonly Vector3 MissionOrigin = new Vector3(1000f, 0f, 1000f);
         private static readonly Vector3[] CheckpointPositions =
         {
@@ -38,6 +34,7 @@ namespace CargoV2.UI
         private SO_GameBalance.MissionBalance mission;
         private CargoV2ContractSpec contract;
         private CargoV2TruckRuntimeStats truckStats;
+        private CargoV2PlayerSettings.Snapshot playerSettings;
         private Rigidbody truckBody;
         private Camera missionCamera;
         private GameObject pickupCargoVisual;
@@ -110,6 +107,8 @@ namespace CargoV2.UI
             truckStats = ResolveTruckStats(hasResume ? resume.TruckId : SCR_CompanyProgressStore.GetSelectedTruckId());
             if (string.IsNullOrEmpty(truckStats.Id)) return false;
 
+            playerSettings = CargoV2PlayerSettings.Load();
+            CargoV2PlayerSettings.Changed += HandlePlayerSettingsChanged;
             initialized = true;
             activeInstance = this;
             Time.timeScale = 1f;
@@ -131,6 +130,7 @@ namespace CargoV2.UI
             }
 
             nextAutosave = Time.unscaledTime + 2f;
+            SCR_PlayerFeedback.StartEngine();
             return true;
         }
 
@@ -144,9 +144,6 @@ namespace CargoV2.UI
                     if (Guid.TryParseExact(existing, "N", out _)) return existing;
                 }
 
-                // A resumable checkpoint and its run id form one logical record. Never
-                // mint a new id for an orphaned checkpoint: doing so could turn a stale
-                // post-settlement checkpoint into a second payable delivery.
                 Debug.LogWarning(
                     "[CARGO V2][MISSION] Active delivery checkpoint has no valid delivery run id; quarantining the orphaned resume to prevent duplicate settlement.");
                 SCR_ActiveDeliveryStore.Clear();
@@ -179,18 +176,32 @@ namespace CargoV2.UI
             return SCR_CompanyProgressStore.GetSelectedRuntimeStats();
         }
 
+        private void HandlePlayerSettingsChanged(CargoV2PlayerSettings.Snapshot snapshot)
+        {
+            playerSettings = snapshot;
+        }
+
         private void Update()
         {
             if (!initialized) return;
 
-            if (Input.GetKeyDown(KeyCode.Escape) || Input.GetKeyDown(KeyCode.P)) TogglePause();
-            if (!terminal && !paused && Input.GetKeyDown(KeyCode.R)) RecoverTruck();
+            if (Input.GetKeyDown(KeyCode.Escape))
+            {
+                if (!SCR_PlayerExperienceRuntime.TryHandleBack())
+                {
+                    if (terminal) ReturnToWorldMapFromResult();
+                    else TogglePause();
+                }
+            }
+            if (!terminal && !SCR_PlayerExperienceRuntime.HasModalOpen && Input.GetKeyDown(KeyCode.P)) TogglePause();
+            if (!terminal && !paused && !SCR_PlayerExperienceRuntime.HasModalOpen && Input.GetKeyDown(KeyCode.R)) RecoverTruck();
 
-            if (terminal || paused)
+            if (terminal || paused || SCR_PlayerExperienceRuntime.HasModalOpen)
             {
                 throttleInput = 0f;
                 steeringInput = 0f;
                 hardBrake = false;
+                SCR_PlayerFeedback.SetEngineState(0f, 0f);
                 return;
             }
 
@@ -199,7 +210,7 @@ namespace CargoV2.UI
             if (remainingSeconds <= 0f)
             {
                 remainingSeconds = 0f;
-                FailMission("CONTRACT TIME EXPIRED");
+                FailMission("hud.expired");
                 return;
             }
 
@@ -210,6 +221,11 @@ namespace CargoV2.UI
                 RecoverTruck();
             }
 
+            float normalizedSpeed = truckBody == null
+                ? 0f
+                : Mathf.Clamp01(Mathf.Abs(GetForwardSpeed()) / Mathf.Max(1f, truckStats.TopSpeedMetersPerSecond));
+            SCR_PlayerFeedback.SetEngineState(normalizedSpeed, throttleInput);
+
             if (Time.unscaledTime >= nextAutosave)
             {
                 nextAutosave = Time.unscaledTime + 2f;
@@ -219,7 +235,7 @@ namespace CargoV2.UI
 
         private void FixedUpdate()
         {
-            if (!initialized || terminal || paused || truckBody == null) return;
+            if (!initialized || terminal || paused || SCR_PlayerExperienceRuntime.HasModalOpen || truckBody == null) return;
 
             Vector3 forward = truckBody.transform.forward;
             Vector3 right = truckBody.transform.right;
@@ -241,8 +257,7 @@ namespace CargoV2.UI
 
             float direction = Mathf.Abs(forwardSpeed) < 0.25f ? 1f : Mathf.Sign(forwardSpeed);
             float authority = Mathf.Clamp01(Mathf.Abs(forwardSpeed) / 3f + 0.25f);
-            float yaw = steeringInput * truckStats.SteeringDegreesPerSecond *
-                        authority * direction * Time.fixedDeltaTime;
+            float yaw = steeringInput * truckStats.SteeringDegreesPerSecond * authority * direction * Time.fixedDeltaTime;
             truckBody.MoveRotation(truckBody.rotation * Quaternion.Euler(0f, yaw, 0f));
 
             float lateralSpeed = Vector3.Dot(truckBody.velocity, right);
@@ -262,13 +277,56 @@ namespace CargoV2.UI
         private void LateUpdate()
         {
             if (missionCamera == null || truckBody == null) return;
+
+            bool reducedMotion = playerSettings.ReducedMotion;
             Vector3 target = truckBody.position + Vector3.up * 1.6f;
-            Vector3 desired = target - truckBody.transform.forward * 10.5f + Vector3.up * 5.2f;
-            float positionT = 1f - Mathf.Exp(-6f * Time.unscaledDeltaTime);
-            float rotationT = 1f - Mathf.Exp(-8f * Time.unscaledDeltaTime);
+            float distance = reducedMotion ? 9.4f : 10.5f;
+            float height = reducedMotion ? 4.7f : 5.2f;
+            Vector3 desired = target - truckBody.transform.forward * distance + Vector3.up * height;
+            desired = ResolveUnobstructedCameraPosition(target, desired);
+
+            float positionResponse = reducedMotion ? 10f : 6f;
+            float rotationResponse = reducedMotion ? 11f : 8f;
+            float positionT = 1f - Mathf.Exp(-positionResponse * Time.unscaledDeltaTime);
+            float rotationT = 1f - Mathf.Exp(-rotationResponse * Time.unscaledDeltaTime);
             missionCamera.transform.position = Vector3.Lerp(missionCamera.transform.position, desired, positionT);
-            Quaternion look = Quaternion.LookRotation(target - missionCamera.transform.position, Vector3.up);
-            missionCamera.transform.rotation = Quaternion.Slerp(missionCamera.transform.rotation, look, rotationT);
+
+            Vector3 lookDirection = target - missionCamera.transform.position;
+            if (lookDirection.sqrMagnitude > 0.01f)
+            {
+                Quaternion look = Quaternion.LookRotation(lookDirection, Vector3.up);
+                missionCamera.transform.rotation = Quaternion.Slerp(missionCamera.transform.rotation, look, rotationT);
+            }
+
+            float targetFov = reducedMotion ? 54f : 58f;
+            missionCamera.fieldOfView = Mathf.Lerp(missionCamera.fieldOfView, targetFov, positionT);
+        }
+
+        private Vector3 ResolveUnobstructedCameraPosition(Vector3 target, Vector3 desired)
+        {
+            Vector3 offset = desired - target;
+            float distance = offset.magnitude;
+            if (distance <= 1.25f) return desired;
+
+            Vector3 direction = offset / distance;
+            RaycastHit[] hits = Physics.SphereCastAll(
+                target,
+                0.32f,
+                direction,
+                distance,
+                Physics.DefaultRaycastLayers,
+                QueryTriggerInteraction.Ignore);
+
+            float allowedDistance = distance;
+            for (int i = 0; i < hits.Length; i++)
+            {
+                Collider collider = hits[i].collider;
+                if (collider == null || collider.attachedRigidbody == truckBody) continue;
+                float candidate = Mathf.Max(1.35f, hits[i].distance - 0.38f);
+                if (candidate < allowedDistance) allowedDistance = candidate;
+            }
+
+            return target + direction * allowedDistance;
         }
     }
 }
