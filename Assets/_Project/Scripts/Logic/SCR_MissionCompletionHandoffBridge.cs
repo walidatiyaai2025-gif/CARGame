@@ -8,10 +8,10 @@ namespace CargoV2.Logic
     [DisallowMultipleComponent]
     public sealed class SCR_MissionCompletionHandoffBridge : MonoBehaviour
     {
-        private const string CompletionHandoffKey = "cargo_v2_completed_mission_handoff";
-        private const string CompletionStarsKey = "cargo_v2_completed_mission_stars";
-        private const string CompletionDeliveryRunKey = "cargo_v2_completed_delivery_run_id";
-        private const string ActiveDeliveryRunKey = "cargo_v2_active_delivery_run_id_v1";
+        public const string CompletionHandoffKey = "cargo_v2_completed_mission_handoff";
+        public const string CompletionStarsKey = "cargo_v2_completed_mission_stars";
+        public const string CompletionDeliveryRunKey = "cargo_v2_completed_delivery_run_id";
+        public const string ActiveDeliveryRunKey = "cargo_v2_active_delivery_run_id_v1";
         private const float PollIntervalSeconds = 0.2f;
         private static bool sceneHookRegistered;
 
@@ -93,8 +93,8 @@ namespace CargoV2.Logic
             if (missionCount <= 0) return false;
             if (!WorldMapProgression.IsValidMissionId(missionId, missionCount))
             {
-                ClearHandoff();
-                Debug.LogWarning($"[CARGO V2][LOGIC] Rejected invalid mission completion handoff {missionId}; valid range is 1..{missionCount}.");
+                ClearCompletionKeysOnly();
+                Debug.LogWarning($"[CARGO V2][LOGIC] Rejected invalid mission completion handoff {missionId}; active delivery identity was preserved.");
                 return false;
             }
 
@@ -118,8 +118,8 @@ namespace CargoV2.Logic
 
             if (!accepted)
             {
-                ClearHandoff();
-                Debug.LogWarning($"[CARGO V2][LOGIC] Rejected non-sequential mission completion {missionId}; progression and reward were not advanced.");
+                ClearCompletionKeysOnly();
+                Debug.LogWarning($"[CARGO V2][LOGIC] Rejected non-sequential mission completion {missionId}; active delivery identity was preserved and no reward advanced.");
                 return false;
             }
 
@@ -160,7 +160,13 @@ namespace CargoV2.Logic
                 return false;
             }
 
-            ClearHandoff();
+            // Only a fully committed progression+settlement may retire the delivery
+            // session. A process kill after mission-side handoff creation but before
+            // its local active-store clear therefore converges here without exposing
+            // a stale Resume button or minting a second delivery identity.
+            SCR_ActiveDeliveryStore.Clear();
+            ClearSettledDeliveryKeys();
+
             if (rewardGranted)
             {
                 long coins = SCR_MissionRewardStore.GetCoinReward(mission, stars);
@@ -174,7 +180,15 @@ namespace CargoV2.Logic
             return true;
         }
 
-        private static void ClearHandoff()
+        private static void ClearCompletionKeysOnly()
+        {
+            PlayerPrefs.DeleteKey(CompletionHandoffKey);
+            PlayerPrefs.DeleteKey(CompletionStarsKey);
+            PlayerPrefs.DeleteKey(CompletionDeliveryRunKey);
+            PlayerPrefs.Save();
+        }
+
+        private static void ClearSettledDeliveryKeys()
         {
             PlayerPrefs.DeleteKey(CompletionHandoffKey);
             PlayerPrefs.DeleteKey(CompletionStarsKey);
