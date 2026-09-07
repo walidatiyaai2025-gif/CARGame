@@ -10,6 +10,14 @@ namespace CargoV2.Logic
         private const string EconomyKey = "cargo_v2_mission_economy_v1";
         private const int SchemaVersion = 1;
         private const int MaxSettledDeliveryIds = 256;
+        private const int MaxSpendReceipts = 128;
+
+        [Serializable]
+        private sealed class SpendReceiptPayload
+        {
+            public string operationId;
+            public long amount;
+        }
 
         [Serializable]
         private sealed class EconomyPayload
@@ -19,6 +27,7 @@ namespace CargoV2.Logic
             public long xp;
             public List<int> rewardedMissionIds = new List<int>();
             public List<string> settledDeliveryIds = new List<string>();
+            public List<SpendReceiptPayload> spendReceipts = new List<SpendReceiptPayload>();
         }
 
         public readonly struct Snapshot
@@ -145,6 +154,54 @@ namespace CargoV2.Logic
             return true;
         }
 
+        // Crash-safe company transactions use a stable operation id. Replaying the
+        // same id after a process interruption observes the persisted receipt and
+        // never charges the same purchase/upgrade twice.
+        public static bool TryEnsureCoinSpend(
+            long amount,
+            string operationId,
+            out bool committed,
+            out Snapshot snapshot)
+        {
+            committed = false;
+            snapshot = new Snapshot(0, 0);
+            if (amount <= 0 || !ValidOperationId(operationId) || !TryLoad(out EconomyPayload payload))
+            {
+                return false;
+            }
+
+            SpendReceiptPayload receipt = FindSpendReceipt(payload, operationId);
+            if (receipt != null)
+            {
+                if (receipt.amount != amount) return false;
+                committed = true;
+                snapshot = new Snapshot(payload.coins, payload.xp);
+                return true;
+            }
+
+            if (payload.coins < amount)
+            {
+                snapshot = new Snapshot(payload.coins, payload.xp);
+                return true;
+            }
+
+            payload.coins -= amount;
+            if (payload.spendReceipts.Count >= MaxSpendReceipts)
+            {
+                payload.spendReceipts.RemoveAt(0);
+            }
+            payload.spendReceipts.Add(new SpendReceiptPayload
+            {
+                operationId = operationId,
+                amount = amount,
+            });
+
+            if (!TrySave(payload)) return false;
+            committed = true;
+            snapshot = new Snapshot(payload.coins, payload.xp);
+            return true;
+        }
+
         public static bool TryCreditCoins(long amount, out Snapshot snapshot)
         {
             snapshot = new Snapshot(0, 0);
@@ -201,6 +258,26 @@ namespace CargoV2.Logic
                    Guid.TryParseExact(deliveryRunId, "N", out _);
         }
 
+        private static bool ValidOperationId(string operationId)
+        {
+            return !string.IsNullOrWhiteSpace(operationId) &&
+                   Guid.TryParseExact(operationId, "N", out _);
+        }
+
+        private static SpendReceiptPayload FindSpendReceipt(EconomyPayload payload, string operationId)
+        {
+            if (payload == null || payload.spendReceipts == null || string.IsNullOrWhiteSpace(operationId)) return null;
+            for (int i = 0; i < payload.spendReceipts.Count; i++)
+            {
+                SpendReceiptPayload receipt = payload.spendReceipts[i];
+                if (receipt != null && string.Equals(receipt.operationId, operationId, StringComparison.Ordinal))
+                {
+                    return receipt;
+                }
+            }
+            return null;
+        }
+
         private static bool TryLoad(out EconomyPayload payload)
         {
             payload = null;
@@ -223,6 +300,7 @@ namespace CargoV2.Logic
 
                 if (payload.rewardedMissionIds == null) payload.rewardedMissionIds = new List<int>();
                 if (payload.settledDeliveryIds == null) payload.settledDeliveryIds = new List<string>();
+                if (payload.spendReceipts == null) payload.spendReceipts = new List<SpendReceiptPayload>();
 
                 var missionIds = new HashSet<int>();
                 for (int i = 0; i < payload.rewardedMissionIds.Count; i++)
@@ -246,6 +324,23 @@ namespace CargoV2.Logic
                     }
                 }
                 if (payload.settledDeliveryIds.Count > MaxSettledDeliveryIds)
+                {
+                    payload = null;
+                    return false;
+                }
+
+                var spendIds = new HashSet<string>(StringComparer.Ordinal);
+                for (int i = 0; i < payload.spendReceipts.Count; i++)
+                {
+                    SpendReceiptPayload receipt = payload.spendReceipts[i];
+                    if (receipt == null || receipt.amount <= 0 || !ValidOperationId(receipt.operationId) ||
+                        !spendIds.Add(receipt.operationId))
+                    {
+                        payload = null;
+                        return false;
+                    }
+                }
+                if (payload.spendReceipts.Count > MaxSpendReceipts)
                 {
                     payload = null;
                     return false;
@@ -288,6 +383,7 @@ namespace CargoV2.Logic
                 xp = 0,
                 rewardedMissionIds = new List<int>(),
                 settledDeliveryIds = new List<string>(),
+                spendReceipts = new List<SpendReceiptPayload>(),
             };
         }
     }
