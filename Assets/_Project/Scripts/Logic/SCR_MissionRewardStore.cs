@@ -7,10 +7,19 @@ namespace CargoV2.Logic
 {
     public static class SCR_MissionRewardStore
     {
-        private const string EconomyKey = "cargo_v2_mission_economy_v1";
+        public const string EconomyKey = "cargo_v2_mission_economy_v1";
+        public const string EconomyBackupKey = "cargo_v2_mission_economy_v1.lkg";
+        public const string CorruptBackupKey = "cargo_v2_mission_economy_v1.corrupt";
+        public const string UnsupportedBackupKey = "cargo_v2_mission_economy_v1.unsupported";
         private const int SchemaVersion = 1;
-        private const int MaxSettledDeliveryIds = 256;
+        private const int MaxSettledDeliveryIds = 4096;
         private const int MaxSpendReceipts = 128;
+
+        [Serializable]
+        private sealed class SchemaProbe
+        {
+            public int schemaVersion;
+        }
 
         [Serializable]
         private sealed class SpendReceiptPayload
@@ -78,8 +87,9 @@ namespace CargoV2.Logic
         }
 
         // Current trucking settlement. A contract can be replayed, but a specific
-        // delivery run id is paid at most once. This gives the logistics economy a
-        // renewable income loop without turning crash/retry handoffs into double-grants.
+        // delivery run id is paid at most once. Once the durable id ledger reaches
+        // its defensive bound, settlement fails closed rather than evicting old ids
+        // and making an ancient crash handoff payable again.
         public static bool TrySettleDelivery(
             SO_GameBalance.MissionBalance mission,
             int stars,
@@ -101,6 +111,7 @@ namespace CargoV2.Logic
                 return true;
             }
 
+            if (payload.settledDeliveryIds.Count >= MaxSettledDeliveryIds) return false;
             if (!ApplyReward(payload, mission, stars)) return false;
             payload.settledDeliveryIds.Add(deliveryRunId);
 
@@ -112,11 +123,6 @@ namespace CargoV2.Logic
             {
                 payload.rewardedMissionIds.Add(mission.missionId);
                 payload.rewardedMissionIds.Sort();
-            }
-
-            if (payload.settledDeliveryIds.Count > MaxSettledDeliveryIds)
-            {
-                payload.settledDeliveryIds.RemoveRange(0, payload.settledDeliveryIds.Count - MaxSettledDeliveryIds);
             }
 
             if (!TrySave(payload)) return false;
@@ -154,6 +160,27 @@ namespace CargoV2.Logic
             return true;
         }
 
+        public static bool TryReadSpendCommit(
+            long amount,
+            string operationId,
+            out bool committed,
+            out Snapshot snapshot)
+        {
+            committed = false;
+            snapshot = new Snapshot(0, 0);
+            if (amount <= 0 || !ValidOperationId(operationId) || !TryLoad(out EconomyPayload payload)) return false;
+
+            SpendReceiptPayload receipt = FindSpendReceipt(payload, operationId);
+            if (receipt != null)
+            {
+                if (receipt.amount != amount) return false;
+                committed = true;
+            }
+
+            snapshot = new Snapshot(payload.coins, payload.xp);
+            return true;
+        }
+
         // Crash-safe company transactions use a stable operation id. Replaying the
         // same id after a process interruption observes the persisted receipt and
         // never charges the same purchase/upgrade twice.
@@ -185,11 +212,11 @@ namespace CargoV2.Logic
                 return true;
             }
 
+            // Canonical fleet has far fewer than 128 possible purchase/upgrade
+            // operations. Never evict an idempotency receipt merely to make room.
+            if (payload.spendReceipts.Count >= MaxSpendReceipts) return false;
+
             payload.coins -= amount;
-            if (payload.spendReceipts.Count >= MaxSpendReceipts)
-            {
-                payload.spendReceipts.RemoveAt(0);
-            }
             payload.spendReceipts.Add(new SpendReceiptPayload
             {
                 operationId = operationId,
@@ -249,7 +276,7 @@ namespace CargoV2.Logic
         private static bool ValidMission(SO_GameBalance.MissionBalance mission)
         {
             return mission != null && mission.missionId >= 1 && mission.missionId <= 20 &&
-                   mission.coin1Star >= 0 && mission.coin3Star >= 0 && mission.xp >= 0;
+                   mission.coin1Star >= 0 && mission.coin3Star >= mission.coin1Star && mission.xp >= 0;
         }
 
         private static bool ValidDeliveryRunId(string deliveryRunId)
@@ -290,80 +317,178 @@ namespace CargoV2.Logic
                 }
 
                 string json = PlayerPrefs.GetString(EconomyKey, string.Empty);
-                if (string.IsNullOrWhiteSpace(json)) return false;
-                payload = JsonUtility.FromJson<EconomyPayload>(json);
-                if (payload == null || payload.schemaVersion != SchemaVersion || payload.coins < 0 || payload.xp < 0)
+                if (!TryReadSchema(json, out int schemaVersion))
                 {
-                    payload = null;
+                    return RecoverFromBackup(json, out payload);
+                }
+
+                if (schemaVersion != SchemaVersion)
+                {
+                    PreserveUnsupported(json);
+                    Debug.LogWarning(
+                        $"[CARGO V2][LOGIC] Economy schema {schemaVersion} is unsupported by schema {SchemaVersion}; preserving it untouched and blocking mutations.");
                     return false;
                 }
 
-                if (payload.rewardedMissionIds == null) payload.rewardedMissionIds = new List<int>();
-                if (payload.settledDeliveryIds == null) payload.settledDeliveryIds = new List<string>();
-                if (payload.spendReceipts == null) payload.spendReceipts = new List<SpendReceiptPayload>();
-
-                var missionIds = new HashSet<int>();
-                for (int i = 0; i < payload.rewardedMissionIds.Count; i++)
+                EconomyPayload parsed = JsonUtility.FromJson<EconomyPayload>(json);
+                if (!TryNormalize(parsed, out bool repaired))
                 {
-                    int missionId = payload.rewardedMissionIds[i];
-                    if (missionId < 1 || missionId > 20 || !missionIds.Add(missionId))
-                    {
-                        payload = null;
-                        return false;
-                    }
+                    return RecoverFromBackup(json, out payload);
                 }
 
-                var deliveryIds = new HashSet<string>(StringComparer.Ordinal);
-                for (int i = 0; i < payload.settledDeliveryIds.Count; i++)
+                payload = parsed;
+                if (repaired)
                 {
-                    string deliveryId = payload.settledDeliveryIds[i];
-                    if (!ValidDeliveryRunId(deliveryId) || !deliveryIds.Add(deliveryId))
-                    {
-                        payload = null;
-                        return false;
-                    }
+                    PreserveCorrupt(json);
+                    if (!TryWritePayload(payload, false)) return false;
                 }
-                if (payload.settledDeliveryIds.Count > MaxSettledDeliveryIds)
-                {
-                    payload = null;
-                    return false;
-                }
-
-                var spendIds = new HashSet<string>(StringComparer.Ordinal);
-                for (int i = 0; i < payload.spendReceipts.Count; i++)
-                {
-                    SpendReceiptPayload receipt = payload.spendReceipts[i];
-                    if (receipt == null || receipt.amount <= 0 || !ValidOperationId(receipt.operationId) ||
-                        !spendIds.Add(receipt.operationId))
-                    {
-                        payload = null;
-                        return false;
-                    }
-                }
-                if (payload.spendReceipts.Count > MaxSpendReceipts)
-                {
-                    payload = null;
-                    return false;
-                }
-
-                payload.rewardedMissionIds.Sort();
                 return true;
             }
             catch (Exception exception)
             {
                 Debug.LogWarning($"[CARGO V2][LOGIC] Economy payload read failed safely: {exception.Message}");
-                payload = null;
+                string raw = SafeRead(EconomyKey);
+                return RecoverFromBackup(raw, out payload);
+            }
+        }
+
+        private static bool TryNormalize(EconomyPayload payload, out bool repaired)
+        {
+            repaired = false;
+            if (payload == null || payload.schemaVersion != SchemaVersion || payload.coins < 0 || payload.xp < 0) return false;
+
+            if (payload.rewardedMissionIds == null)
+            {
+                payload.rewardedMissionIds = new List<int>();
+                repaired = true;
+            }
+            if (payload.settledDeliveryIds == null)
+            {
+                payload.settledDeliveryIds = new List<string>();
+                repaired = true;
+            }
+            if (payload.spendReceipts == null)
+            {
+                payload.spendReceipts = new List<SpendReceiptPayload>();
+                repaired = true;
+            }
+
+            var missionIds = new HashSet<int>();
+            var normalizedMissions = new List<int>();
+            for (int i = 0; i < payload.rewardedMissionIds.Count; i++)
+            {
+                int missionId = payload.rewardedMissionIds[i];
+                if (missionId < 1 || missionId > 20)
+                {
+                    repaired = true;
+                    continue;
+                }
+                if (!missionIds.Add(missionId))
+                {
+                    repaired = true;
+                    continue;
+                }
+                normalizedMissions.Add(missionId);
+            }
+            normalizedMissions.Sort();
+            if (normalizedMissions.Count != payload.rewardedMissionIds.Count) repaired = true;
+            payload.rewardedMissionIds = normalizedMissions;
+
+            var deliveryIds = new HashSet<string>(StringComparer.Ordinal);
+            var normalizedDeliveries = new List<string>();
+            for (int i = 0; i < payload.settledDeliveryIds.Count; i++)
+            {
+                string deliveryId = payload.settledDeliveryIds[i];
+                if (!ValidDeliveryRunId(deliveryId)) return false;
+                if (!deliveryIds.Add(deliveryId))
+                {
+                    repaired = true;
+                    continue;
+                }
+                normalizedDeliveries.Add(deliveryId);
+            }
+            if (normalizedDeliveries.Count > MaxSettledDeliveryIds) return false;
+            payload.settledDeliveryIds = normalizedDeliveries;
+
+            var spendById = new Dictionary<string, SpendReceiptPayload>(StringComparer.Ordinal);
+            var normalizedReceipts = new List<SpendReceiptPayload>();
+            for (int i = 0; i < payload.spendReceipts.Count; i++)
+            {
+                SpendReceiptPayload receipt = payload.spendReceipts[i];
+                if (receipt == null || receipt.amount <= 0 || !ValidOperationId(receipt.operationId)) return false;
+
+                if (spendById.TryGetValue(receipt.operationId, out SpendReceiptPayload existing))
+                {
+                    if (existing.amount != receipt.amount) return false;
+                    repaired = true;
+                    continue;
+                }
+
+                spendById.Add(receipt.operationId, receipt);
+                normalizedReceipts.Add(receipt);
+            }
+            if (normalizedReceipts.Count > MaxSpendReceipts) return false;
+            payload.spendReceipts = normalizedReceipts;
+            return true;
+        }
+
+        private static bool RecoverFromBackup(string badPrimary, out EconomyPayload payload)
+        {
+            payload = null;
+            PreserveCorrupt(badPrimary);
+            string backupRaw = SafeRead(EconomyBackupKey);
+            if (!TryParseCanonical(backupRaw, out EconomyPayload backup))
+            {
+                Debug.LogWarning("[CARGO V2][LOGIC] Economy primary is corrupt and no valid last-known-good snapshot exists; mutations are blocked to prevent balance loss.");
                 return false;
             }
+
+            payload = backup;
+            try
+            {
+                PlayerPrefs.SetString(EconomyKey, backupRaw);
+                PlayerPrefs.Save();
+                Debug.LogWarning("[CARGO V2][LOGIC] Economy primary recovered from last-known-good snapshot.");
+            }
+            catch (Exception exception)
+            {
+                Debug.LogWarning($"[CARGO V2][LOGIC] Economy LKG is usable in memory but primary restore failed: {exception.Message}");
+            }
+            return true;
         }
 
         private static bool TrySave(EconomyPayload payload)
         {
+            return TryWritePayload(payload, true);
+        }
+
+        private static bool TryWritePayload(EconomyPayload payload, bool backupCurrent)
+        {
+            if (!TryNormalize(payload, out _)) return false;
+
             try
             {
                 string json = JsonUtility.ToJson(payload);
                 if (string.IsNullOrWhiteSpace(json)) return false;
+
+                if (backupCurrent)
+                {
+                    string currentRaw = SafeRead(EconomyKey);
+                    if (TryParseCanonical(currentRaw, out _))
+                    {
+                        PlayerPrefs.SetString(EconomyBackupKey, currentRaw);
+                        PlayerPrefs.Save();
+                    }
+                    else if (!PlayerPrefs.HasKey(EconomyBackupKey))
+                    {
+                        PlayerPrefs.SetString(EconomyBackupKey, JsonUtility.ToJson(NewPayload()));
+                        PlayerPrefs.Save();
+                    }
+                }
+
                 PlayerPrefs.SetString(EconomyKey, json);
+                PlayerPrefs.Save();
+                PlayerPrefs.SetString(EconomyBackupKey, json);
                 PlayerPrefs.Save();
                 return true;
             }
@@ -371,6 +496,74 @@ namespace CargoV2.Logic
             {
                 Debug.LogWarning($"[CARGO V2][LOGIC] Economy payload write failed safely: {exception.Message}");
                 return false;
+            }
+        }
+
+        private static bool TryParseCanonical(string raw, out EconomyPayload payload)
+        {
+            payload = null;
+            if (!TryReadSchema(raw, out int schemaVersion) || schemaVersion != SchemaVersion) return false;
+            try
+            {
+                EconomyPayload parsed = JsonUtility.FromJson<EconomyPayload>(raw);
+                if (!TryNormalize(parsed, out bool repaired) || repaired) return false;
+                payload = parsed;
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        private static bool TryReadSchema(string raw, out int schemaVersion)
+        {
+            schemaVersion = 0;
+            if (string.IsNullOrWhiteSpace(raw)) return false;
+            try
+            {
+                SchemaProbe probe = JsonUtility.FromJson<SchemaProbe>(raw);
+                if (probe == null) return false;
+                schemaVersion = probe.schemaVersion;
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        private static string SafeRead(string key)
+        {
+            try { return PlayerPrefs.HasKey(key) ? PlayerPrefs.GetString(key, string.Empty) : string.Empty; }
+            catch (Exception) { return string.Empty; }
+        }
+
+        private static void PreserveCorrupt(string raw)
+        {
+            if (string.IsNullOrWhiteSpace(raw)) return;
+            try
+            {
+                PlayerPrefs.SetString(CorruptBackupKey, raw);
+                PlayerPrefs.Save();
+            }
+            catch (Exception exception)
+            {
+                Debug.LogWarning($"[CARGO V2][LOGIC] Could not preserve corrupt economy payload: {exception.Message}");
+            }
+        }
+
+        private static void PreserveUnsupported(string raw)
+        {
+            if (string.IsNullOrWhiteSpace(raw)) return;
+            try
+            {
+                PlayerPrefs.SetString(UnsupportedBackupKey, raw);
+                PlayerPrefs.Save();
+            }
+            catch (Exception exception)
+            {
+                Debug.LogWarning($"[CARGO V2][LOGIC] Could not preserve unsupported economy payload: {exception.Message}");
             }
         }
 
