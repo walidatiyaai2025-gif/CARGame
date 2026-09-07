@@ -16,6 +16,7 @@ namespace CargoV2.Logic
         private static bool sceneHookRegistered;
 
         private SCR_WorldMapRouteController routeController;
+        private SCR_WorldMapPersistenceBridge persistenceBridge;
         private float nextPollTime;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
@@ -53,9 +54,35 @@ namespace CargoV2.Logic
             ConsumePendingHandoff();
         }
 
+        private bool EnsurePersistenceReady()
+        {
+            if (routeController == null) return false;
+
+            if (persistenceBridge == null)
+            {
+                persistenceBridge = routeController.GetComponent<SCR_WorldMapPersistenceBridge>();
+                if (persistenceBridge == null)
+                {
+                    persistenceBridge = routeController.gameObject.AddComponent<SCR_WorldMapPersistenceBridge>();
+                }
+            }
+
+            if (persistenceBridge.Initialize() && persistenceBridge.IsInitialized) return true;
+
+            Debug.LogWarning(
+                "[CARGO V2][LOGIC] Completion handoff retained because WorldMap persistence is not durably initialized yet.");
+            return false;
+        }
+
         internal bool ConsumePendingHandoff()
         {
             if (routeController == null || !PlayerPrefs.HasKey(CompletionHandoffKey)) return false;
+
+            // Unity does not guarantee Start ordering between independently installed
+            // bridges. Load and normalize the durable progression snapshot first so a
+            // crash-recovered completion can never pay and then be overwritten by an
+            // older progress payload later in the same frame.
+            if (!EnsurePersistenceReady()) return false;
 
             int missionCount = routeController.MissionCount;
             int missionId = PlayerPrefs.GetInt(CompletionHandoffKey, 0);
@@ -93,6 +120,16 @@ namespace CargoV2.Logic
             {
                 ClearHandoff();
                 Debug.LogWarning($"[CARGO V2][LOGIC] Rejected non-sequential mission completion {missionId}; progression and reward were not advanced.");
+                return false;
+            }
+
+            // Progression persistence is the commit-before-pay boundary. If the
+            // normalized/completed WorldMap state cannot be durably written, keep the
+            // handoff and retry later; never settle economy first.
+            if (persistenceBridge == null || !persistenceBridge.PersistCurrentState())
+            {
+                Debug.LogWarning(
+                    $"[CARGO V2][LOGIC] Mission {missionId} completion is in memory but durable progression save failed; settlement deferred and handoff retained.");
                 return false;
             }
 

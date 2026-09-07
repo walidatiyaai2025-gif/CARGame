@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Fail-closed source verifier for CARGO V2 delivery resume identity safety.
+"""Fail-closed source verifier for CARGO V2 crash/restart delivery safety.
 
-This is deliberately a structural regression guard, not Unity/runtime evidence.
-It protects the invariant that a persisted delivery checkpoint may only resume
-with the exact durable delivery-run identity that created it.
+This is structural/unit-level source evidence, not Unity runtime evidence. It protects
+both durable run identity and the commit-before-pay ordering between WorldMap
+progression persistence and delivery settlement.
 """
 
 from pathlib import Path
@@ -13,11 +13,21 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 DIRECTOR = ROOT / "Assets/_Project/UI/SCR_MissionRuntimeDirector.cs"
 BRIDGE = ROOT / "Assets/_Project/Scripts/Logic/SCR_MissionCompletionHandoffBridge.cs"
+PERSISTENCE = ROOT / "Assets/_Project/Scripts/Logic/SCR_WorldMapPersistenceBridge.cs"
+EDITMODE = ROOT / "Assets/_Project/QA/Editor/SCR_CargoV2CompletionRecoveryRegression.cs"
+PLAYMODE = ROOT / "Assets/_Project/QA/SCR_CargoV2CompletionRecoveryPlayModeProbe.cs"
+BUILD = ROOT / "Assets/_Project/UI/Editor/SCR_CargoV2Build.cs"
 
 
 def fail(message: str) -> None:
     print(f"[CARGO V2][DELIVERY RECOVERY][FAIL] {message}")
     raise SystemExit(1)
+
+
+def read(path: Path) -> str:
+    if not path.is_file():
+        fail(f"missing required file: {path.relative_to(ROOT)}")
+    return path.read_text(encoding="utf-8")
 
 
 def extract_method(source: str, signature: str) -> str:
@@ -41,55 +51,152 @@ def extract_method(source: str, signature: str) -> str:
     return ""
 
 
+def require_tokens(label: str, source: str, tokens: tuple[str, ...]) -> None:
+    for token in tokens:
+        if token not in source:
+            fail(f"{label} missing required recovery token: {token}")
+
+
 def main() -> int:
-    if not DIRECTOR.is_file():
-        fail(f"missing director: {DIRECTOR.relative_to(ROOT)}")
-    if not BRIDGE.is_file():
-        fail(f"missing completion bridge: {BRIDGE.relative_to(ROOT)}")
+    director = read(DIRECTOR)
+    bridge = read(BRIDGE)
+    persistence = read(PERSISTENCE)
+    editmode = read(EDITMODE)
+    playmode = read(PLAYMODE)
+    build = read(BUILD)
 
-    director = DIRECTOR.read_text(encoding="utf-8")
-    bridge = BRIDGE.read_text(encoding="utf-8")
-    method = extract_method(director, "private static string ResolveDeliveryRunId(bool hasResume)")
-
-    required = (
-        "if (hasResume)",
-        "PlayerPrefs.HasKey(ActiveDeliveryRunKey)",
-        'Guid.TryParseExact(existing, "N", out _)',
-        "SCR_ActiveDeliveryStore.Clear();",
-        "return string.Empty;",
-        'Guid.NewGuid().ToString("N")',
+    # Existing durable-run identity invariant: a checkpoint without its original
+    # run id is quarantined; it must never mint a fresh payable identity.
+    run_id_method = extract_method(director, "private static string ResolveDeliveryRunId(bool hasResume)")
+    require_tokens(
+        "ResolveDeliveryRunId",
+        run_id_method,
+        (
+            "if (hasResume)",
+            "PlayerPrefs.HasKey(ActiveDeliveryRunKey)",
+            'Guid.TryParseExact(existing, "N", out _)',
+            "SCR_ActiveDeliveryStore.Clear();",
+            "return string.Empty;",
+            'Guid.NewGuid().ToString("N")',
+        ),
     )
-    for token in required:
-        if token not in method:
-            fail(f"ResolveDeliveryRunId missing required recovery token: {token}")
-
-    if "if (hasResume && PlayerPrefs.HasKey(ActiveDeliveryRunKey))" in method:
+    if "if (hasResume && PlayerPrefs.HasKey(ActiveDeliveryRunKey))" in run_id_method:
         fail("legacy resume fallback is present; it can mint a fresh run id for an orphaned checkpoint")
 
-    resume_start = method.find("if (hasResume)")
-    fresh_id = method.find('Guid.NewGuid().ToString("N")')
-    quarantine = method.find("SCR_ActiveDeliveryStore.Clear();", resume_start)
-    reject = method.find("return string.Empty;", quarantine)
+    resume_start = run_id_method.find("if (hasResume)")
+    fresh_id = run_id_method.find('Guid.NewGuid().ToString("N")')
+    quarantine = run_id_method.find("SCR_ActiveDeliveryStore.Clear();", resume_start)
+    reject = run_id_method.find("return string.Empty;", quarantine)
     if not (0 <= resume_start < quarantine < reject < fresh_id):
         fail("orphaned resume is not rejected before fresh run-id creation")
 
-    warning_pattern = re.compile(
-        r"Active delivery checkpoint has no valid delivery run id.*duplicate settlement",
-        re.IGNORECASE | re.DOTALL,
-    )
-    if not warning_pattern.search(method):
+    if not re.search(r"Active delivery checkpoint has no valid delivery run id.*duplicate settlement", run_id_method, re.I | re.S):
         fail("orphaned-resume duplicate-settlement warning is missing")
 
-    # The completion bridge intentionally removes the active run identity after
-    # successful/idempotent settlement. Therefore stale checkpoints must never be
-    # allowed to synthesize a replacement identity on resume.
-    if "PlayerPrefs.DeleteKey(ActiveDeliveryRunKey);" not in bridge:
-        fail("completion bridge no longer exposes the settlement identity lifecycle expected by this guard")
-    if "TrySettleDelivery(" not in bridge:
-        fail("delivery-run-id settlement contract is missing")
+    # New commit-before-pay invariant.
+    ensure = extract_method(bridge, "private bool EnsurePersistenceReady()")
+    consume = extract_method(bridge, "internal bool ConsumePendingHandoff()")
+    initialize = extract_method(persistence, "public bool Initialize()")
+    persist = extract_method(persistence, "public bool PersistCurrentState()")
 
-    print("[CARGO V2][DELIVERY RECOVERY][PASS] orphaned checkpoints cannot mint a replacement payable delivery run id")
-    print("[CARGO V2][DELIVERY RECOVERY] structural source evidence only; Unity Play Mode/device execution is not claimed")
+    require_tokens(
+        "EnsurePersistenceReady",
+        ensure,
+        (
+            "GetComponent<SCR_WorldMapPersistenceBridge>()",
+            "AddComponent<SCR_WorldMapPersistenceBridge>()",
+            "persistenceBridge.Initialize()",
+            "persistenceBridge.IsInitialized",
+            "return false;",
+        ),
+    )
+    require_tokens(
+        "WorldMap persistence Initialize",
+        initialize,
+        (
+            "saveManager.LoadProgress(routeController.MissionCount)",
+            "routeController.SetProgress(payload.highestCompletedMissionId)",
+            "initialized = true;",
+            "Subscribe();",
+            "if (PersistCurrentState()) return true;",
+            "initialized = false;",
+            "Unsubscribe();",
+            "return false;",
+        ),
+    )
+    require_tokens(
+        "PersistCurrentState",
+        persist,
+        (
+            "if (!initialized || routeController == null || saveManager == null) return false;",
+            "return saveManager.SaveProgress(",
+            "routeController.HighestCompletedMissionId",
+            "routeController.SelectedMissionId",
+        ),
+    )
+
+    ensure_pos = consume.find("EnsurePersistenceReady()")
+    complete_pos = consume.find("routeController.TryCompleteMission(missionId)")
+    durable_pos = consume.find("persistenceBridge.PersistCurrentState()")
+    settle_delivery_pos = consume.find("SCR_MissionRewardStore.TrySettleDelivery(")
+    settle_legacy_pos = consume.find("SCR_MissionRewardStore.TrySettleMission(")
+    clear_pos = consume.find("ClearHandoff();", durable_pos)
+    if not (0 <= ensure_pos < complete_pos < durable_pos < settle_delivery_pos):
+        fail("completion ordering is not persistence-ready -> progress -> durable save -> delivery settlement")
+    if settle_legacy_pos < durable_pos:
+        fail("legacy settlement can execute before durable progression save")
+    if clear_pos >= 0 and clear_pos < settle_delivery_pos:
+        fail("handoff can be cleared before settlement is durably attempted")
+
+    durable_guard = consume[complete_pos:settle_delivery_pos]
+    require_tokens(
+        "durable progression guard",
+        durable_guard,
+        (
+            "if (persistenceBridge == null || !persistenceBridge.PersistCurrentState())",
+            "settlement deferred and handoff retained",
+            "return false;",
+        ),
+    )
+
+    # Regression coverage must exercise the exact reversed ordering and duplicate
+    # handoff/run identity in EditMode, plus a real next-frame PlayMode Start path.
+    require_tokens(
+        "EditMode regression",
+        editmode,
+        (
+            "Run Completion Recovery Ordering Regression",
+            "SaveProgress(0, 1, route.MissionCount)",
+            "root.AddComponent<SCR_MissionCompletionHandoffBridge>()",
+            "progress.highestCompletedMissionId != 1",
+            "progress.selectedMissionId != 2",
+            "secondEconomy.Coins != firstEconomy.Coins",
+            "secondEconomy.Xp != firstEconomy.Xp",
+        ),
+    )
+    require_tokens(
+        "PlayMode probe",
+        playmode,
+        (
+            "CARGO_V2_RUN_COMPLETION_RECOVERY_PROBE",
+            "root.AddComponent<SCR_MissionCompletionHandoffBridge>()",
+            "yield return null;",
+            "progress.highestCompletedMissionId != 1",
+            "progress.selectedMissionId != 2",
+            "[CARGO V2][QA][PLAYMODE][PASS]",
+        ),
+    )
+    if "root.AddComponent<SCR_WorldMapPersistenceBridge>()" in playmode:
+        fail("PlayMode probe manually pre-installs persistence and no longer reproduces reversed bridge ordering")
+
+    if "SCR_CargoV2CompletionRecoveryRegression.ValidateOrThrow();" not in build:
+        fail("Unity build validation does not execute the EditMode completion recovery regression")
+
+    if "PlayerPrefs.DeleteKey(ActiveDeliveryRunKey);" not in bridge or "TrySettleDelivery(" not in bridge:
+        fail("delivery settlement identity lifecycle is missing")
+
+    print("[CARGO V2][DELIVERY RECOVERY][PASS] run identity and commit-before-pay ordering are structurally guarded")
+    print("[CARGO V2][DELIVERY RECOVERY] unit/source evidence only; EditMode/PlayMode execution still requires Unity")
     return 0
 
 

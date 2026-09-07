@@ -68,6 +68,12 @@ namespace CargoV2.EditorTools
             RequireResource(WorldMapResourcePath);
             RequireResource(TruckResourcePath);
 
+            // This EditMode regression deliberately consumes a crash completion
+            // before any persistence bridge has been initialized. Build validation
+            // must fail if progression can be paid and then rolled back by a later
+            // persistence load.
+            CargoV2.QA.EditorTools.SCR_CargoV2CompletionRecoveryRegression.ValidateOrThrow();
+
             EditorBuildSettings.scenes = new[]
             {
                 new EditorBuildSettingsScene(Scenes[0], true),
