@@ -65,6 +65,7 @@ namespace CargoV2.Data
                 case "splash.network": return rtl ? "شبكة شحن عالمية مميزة" : "PREMIUM GLOBAL CARGO NETWORK";
                 case "splash.motto": return rtl ? "سلّم • توسع • تقدّم" : "DELIVER  ·  EXPAND  ·  DOMINATE";
                 case "loading.route": return rtl ? "جاري تجهيز مسارك العالمي" : "PREPARING YOUR WORLD ROUTE";
+                case "loading.retrying": return rtl ? "تعذر فتح المرحلة التالية • إعادة المحاولة…" : "NEXT STAGE UNAVAILABLE • RETRYING…";
                 default: return key;
             }
         }
