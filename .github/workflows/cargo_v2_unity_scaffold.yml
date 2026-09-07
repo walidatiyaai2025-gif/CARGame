@@ -162,47 +162,50 @@ jobs:
             Move-Item -LiteralPath $zipPath -Destination $Destination
           }
 
-          $fakeAdb = Join-Path $env:RUNNER_TEMP 'fake-cargo-v2-adb.ps1'
+          $fakeAdb = Join-Path $env:RUNNER_TEMP 'fake-cargo-v2-adb'
           @'
-          param([Parameter(ValueFromRemainingArguments = $true)][string[]]$Remaining)
-          if ($Remaining.Count -ge 1 -and $Remaining[0] -eq 'devices') {
-            Write-Output 'List of devices attached'
-            if ($env:CARGO_V2_FAKE_ADB_SCENARIO -eq 'multi') {
-              Write-Output 'FAKE001 device product:qa model:Cargo_QA_One device:qa transport_id:1'
-              Write-Output 'FAKE002 device product:qa model:Cargo_QA_Two device:qa transport_id:2'
-            } else {
-              Write-Output 'FAKE001 device product:qa model:Cargo_QA_One device:qa transport_id:1'
-            }
+          #!/usr/bin/env bash
+          set -u
+          if [[ $# -ge 1 && "$1" == "devices" ]]; then
+            echo 'List of devices attached'
+            if [[ "${CARGO_V2_FAKE_ADB_SCENARIO:-}" == "multi" ]]; then
+              echo 'FAKE001 device product:qa model:Cargo_QA_One device:qa transport_id:1'
+              echo 'FAKE002 device product:qa model:Cargo_QA_Two device:qa transport_id:2'
+            else
+              echo 'FAKE001 device product:qa model:Cargo_QA_One device:qa transport_id:1'
+            fi
             exit 0
-          }
-          if ($Remaining.Count -lt 3 -or $Remaining[0] -ne '-s') { exit 2 }
-          $command = $Remaining[2]
-          if ($command -eq 'install') { Write-Output 'Success'; exit 0 }
-          if ($command -eq 'logcat') {
-            if ($Remaining -contains '-d') { Write-Output 'I/Unity ( 4242): com.walka.cargov2 launch healthy' }
+          fi
+          if [[ $# -lt 3 || "$1" != "-s" ]]; then exit 2; fi
+          command="$3"
+          if [[ "$command" == "install" ]]; then echo 'Success'; exit 0; fi
+          if [[ "$command" == "logcat" ]]; then
+            if [[ " $* " == *" -d "* ]]; then echo 'I/Unity ( 4242): com.walka.cargov2 launch healthy'; fi
             exit 0
-          }
-          if ($command -ne 'shell' -or $Remaining.Count -lt 4) { exit 3 }
-          $shell = $Remaining[3]
-          if ($shell -eq 'getprop') {
-            switch ($Remaining[4]) {
-              'ro.product.manufacturer' { Write-Output 'OpenAI-QA' }
-              'ro.product.model' { Write-Output 'Cargo-Fake-Device' }
-              'ro.build.version.sdk' { Write-Output '35' }
-              'ro.product.cpu.abi' { Write-Output 'arm64-v8a' }
-            }
+          fi
+          if [[ "$command" != "shell" || $# -lt 4 ]]; then exit 3; fi
+          shell_command="$4"
+          if [[ "$shell_command" == "getprop" ]]; then
+            case "${5:-}" in
+              ro.product.manufacturer) echo 'OpenAI-QA' ;;
+              ro.product.model) echo 'Cargo-Fake-Device' ;;
+              ro.build.version.sdk) echo '35' ;;
+              ro.product.cpu.abi) echo 'arm64-v8a' ;;
+            esac
             exit 0
-          }
-          if ($shell -eq 'pm') { Write-Output 'package:/data/app/com.walka.cargov2/base.apk'; exit 0 }
-          if ($shell -eq 'am') { exit 0 }
-          if ($shell -eq 'monkey') { Write-Output 'Events injected: 1'; exit 0 }
-          if ($shell -eq 'pidof') { Write-Output '4242'; exit 0 }
-          if ($shell -eq 'dumpsys') {
-            Write-Output 'mResumedActivity: ActivityRecord{qa u0 com.walka.cargov2/com.unity3d.player.UnityPlayerActivity t1}'
+          fi
+          if [[ "$shell_command" == "pm" ]]; then echo 'package:/data/app/com.walka.cargov2/base.apk'; exit 0; fi
+          if [[ "$shell_command" == "am" ]]; then exit 0; fi
+          if [[ "$shell_command" == "monkey" ]]; then echo 'Events injected: 1'; exit 0; fi
+          if [[ "$shell_command" == "pidof" ]]; then echo '4242'; exit 0; fi
+          if [[ "$shell_command" == "dumpsys" ]]; then
+            echo 'mResumedActivity: ActivityRecord{qa u0 com.walka.cargov2/com.unity3d.player.UnityPlayerActivity t1}'
             exit 0
-          }
+          fi
           exit 4
           '@ | Set-Content -LiteralPath $fakeAdb -Encoding UTF8
+          & chmod +x $fakeAdb
+          if ($LASTEXITCODE -ne 0) { throw 'Failed to make fake ADB fixture executable.' }
 
           $fixtureRoot = Join-Path $env:RUNNER_TEMP 'cargo-v2-smoke-apk'
           $fixtureApk = Join-Path $env:RUNNER_TEMP 'cargo-v2-smoke.apk'
