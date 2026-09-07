@@ -8,9 +8,11 @@ on:
       - 'ProjectSettings/**'
       - 'BUILD_CARGO_V2_UNITY.ps1'
       - 'BUILD_CARGO_V2_UNITY.bat'
+      - 'SMOKE_CARGO_V2_ANDROID.ps1'
       - 'docs/CARGO_V2_BUILD_EVIDENCE.md'
       - 'tool/verify_cargo_v2_unity_scaffold.py'
       - 'tool/verify_cargo_v2_company_transactions.py'
+      - 'tool/verify_cargo_v2_android_smoke.py'
       - '.github/workflows/cargo_v2_unity_scaffold.yml'
   workflow_dispatch:
 
@@ -28,6 +30,8 @@ jobs:
         run: python3 tool/verify_cargo_v2_unity_scaffold.py
       - name: Verify company transaction crash recovery
         run: python3 tool/verify_cargo_v2_company_transactions.py
+      - name: Verify Android install launch smoke source contract
+        run: python3 tool/verify_cargo_v2_android_smoke.py
       - name: Parse Windows Unity closure script
         shell: pwsh
         run: |
@@ -40,6 +44,18 @@ jobs:
             exit 1
           }
           Write-Host "CARGO V2 Windows Unity launcher syntax PASS."
+      - name: Parse Android smoke script
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $errors = $null
+          $path = (Resolve-Path './SMOKE_CARGO_V2_ANDROID.ps1').Path
+          [System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$tokens, [ref]$errors) | Out-Null
+          if ($errors.Count -gt 0) {
+            $errors | ForEach-Object { Write-Error $_.Message }
+            exit 1
+          }
+          Write-Host "CARGO V2 Android smoke harness syntax PASS."
       - name: Exercise APK artifact verifier contract
         shell: pwsh
         run: |
@@ -114,7 +130,135 @@ jobs:
             throw "Negative APK verifier fixture with x86_64 unexpectedly passed."
           }
 
-          # The non-zero exit is the expected negative-test result. Clear it so
-          # GitHub's pwsh wrapper does not convert a successful assertion into a failed step.
           $global:LASTEXITCODE = 0
           Write-Host "CARGO V2 APK artifact verifier positive/negative contract PASS (synthetic archives only; no Unity/runtime claim)."
+      - name: Exercise Android smoke orchestration with fake ADB
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          function New-CargoV2ApkFixture {
+            param(
+              [Parameter(Mandatory = $true)][string]$Root,
+              [Parameter(Mandatory = $true)][string]$Destination
+            )
+            Remove-Item -LiteralPath $Root -Recurse -Force -ErrorAction SilentlyContinue
+            Remove-Item -LiteralPath $Destination -Force -ErrorAction SilentlyContinue
+            $zipPath = "$Destination.zip"
+            Remove-Item -LiteralPath $zipPath -Force -ErrorAction SilentlyContinue
+            foreach ($relativeFile in @(
+              'AndroidManifest.xml',
+              'classes.dex',
+              'assets/bin/Data/globalgamemanagers',
+              'lib/arm64-v8a/libmain.so',
+              'lib/arm64-v8a/libunity.so',
+              'lib/arm64-v8a/libil2cpp.so'
+            )) {
+              $target = Join-Path $Root $relativeFile
+              New-Item -ItemType Directory -Force -Path (Split-Path -Parent $target) | Out-Null
+              Set-Content -LiteralPath $target -Value "CARGO V2 smoke fixture: $relativeFile" -Encoding ASCII
+            }
+            Compress-Archive -Path (Join-Path $Root '*') -DestinationPath $zipPath -Force
+            Move-Item -LiteralPath $zipPath -Destination $Destination
+          }
+
+          $fakeAdb = Join-Path $env:RUNNER_TEMP 'fake-cargo-v2-adb'
+          @'
+          #!/usr/bin/env bash
+          set -u
+          if [[ $# -ge 1 && "$1" == "devices" ]]; then
+            echo 'List of devices attached'
+            if [[ "${CARGO_V2_FAKE_ADB_SCENARIO:-}" == "multi" ]]; then
+              echo 'FAKE001 device product:qa model:Cargo_QA_One device:qa transport_id:1'
+              echo 'FAKE002 device product:qa model:Cargo_QA_Two device:qa transport_id:2'
+            else
+              echo 'FAKE001 device product:qa model:Cargo_QA_One device:qa transport_id:1'
+            fi
+            exit 0
+          fi
+          if [[ $# -lt 3 || "$1" != "-s" ]]; then exit 2; fi
+          command="$3"
+          if [[ "$command" == "install" ]]; then echo 'Success'; exit 0; fi
+          if [[ "$command" == "logcat" ]]; then
+            if [[ " $* " == *" -d "* ]]; then
+              if [[ "${CARGO_V2_FAKE_ADB_SCENARIO:-}" == "crash" ]]; then
+                # Deliberately omits the package name so the harness must correlate by PID.
+                echo 'E/AndroidRuntime( 4242): FATAL EXCEPTION: main'
+              else
+                echo 'I/Unity ( 4242): com.walka.cargov2 launch healthy'
+              fi
+            fi
+            exit 0
+          fi
+          if [[ "$command" != "shell" || $# -lt 4 ]]; then exit 3; fi
+          shell_command="$4"
+          if [[ "$shell_command" == "getprop" ]]; then
+            case "${5:-}" in
+              ro.product.manufacturer) echo 'OpenAI-QA' ;;
+              ro.product.model) echo 'Cargo-Fake-Device' ;;
+              ro.build.version.sdk) echo '35' ;;
+              ro.product.cpu.abi) echo 'arm64-v8a' ;;
+            esac
+            exit 0
+          fi
+          if [[ "$shell_command" == "pm" ]]; then echo 'package:/data/app/com.walka.cargov2/base.apk'; exit 0; fi
+          if [[ "$shell_command" == "am" ]]; then exit 0; fi
+          if [[ "$shell_command" == "monkey" ]]; then echo 'Events injected: 1'; exit 0; fi
+          if [[ "$shell_command" == "pidof" ]]; then echo '4242'; exit 0; fi
+          if [[ "$shell_command" == "dumpsys" ]]; then
+            echo 'mResumedActivity: ActivityRecord{qa u0 com.walka.cargov2/com.unity3d.player.UnityPlayerActivity t1}'
+            exit 0
+          fi
+          exit 4
+          '@ | Set-Content -LiteralPath $fakeAdb -Encoding UTF8
+          & chmod +x $fakeAdb
+          if ($LASTEXITCODE -ne 0) { throw 'Failed to make fake ADB fixture executable.' }
+
+          $fixtureRoot = Join-Path $env:RUNNER_TEMP 'cargo-v2-smoke-apk'
+          $fixtureApk = Join-Path $env:RUNNER_TEMP 'cargo-v2-smoke.apk'
+          New-CargoV2ApkFixture -Root $fixtureRoot -Destination $fixtureApk
+
+          $positiveEvidence = Join-Path $env:RUNNER_TEMP 'cargo-v2-smoke-positive.json'
+          Remove-Item Env:CARGO_V2_FAKE_ADB_SCENARIO -ErrorAction SilentlyContinue
+          & pwsh -NoProfile -File ./SMOKE_CARGO_V2_ANDROID.ps1 -ApkPath $fixtureApk -AdbPath $fakeAdb -LaunchWaitSeconds 0 -EvidenceJson $positiveEvidence
+          if ($LASTEXITCODE -ne 0) {
+            throw "Positive fake-ADB smoke unexpectedly failed with exit code $LASTEXITCODE."
+          }
+          $positive = Get-Content -LiteralPath $positiveEvidence -Raw | ConvertFrom-Json
+          if (-not $positive.archiveContractPassed -or -not $positive.installExecuted -or -not $positive.installPassed -or -not $positive.launchExecuted -or -not $positive.launchPassed -or -not $positive.processObserved -or -not $positive.foregroundObserved -or -not $positive.smokePassed) {
+            throw "Positive fake-ADB evidence did not record the expected install/launch truth fields."
+          }
+          if ($positive.deviceSerial -ne 'FAKE001' -or $positive.abi -ne 'arm64-v8a' -or @($positive.processIds) -notcontains '4242') {
+            throw "Positive fake-ADB evidence did not preserve dynamic device/process metadata."
+          }
+          if ($positive.crashMarkersObserved -ne $false -or $positive.crashMarkerCount -ne 0) {
+            throw "Healthy fake-ADB launch incorrectly recorded a crash marker."
+          }
+          if ($positive.limitation -notmatch 'does not prove gameplay') {
+            throw "Android smoke evidence lost its truth-boundary limitation."
+          }
+
+          $env:CARGO_V2_FAKE_ADB_SCENARIO = 'crash'
+          $crashEvidence = Join-Path $env:RUNNER_TEMP 'cargo-v2-smoke-pid-crash.json'
+          & pwsh -NoProfile -File ./SMOKE_CARGO_V2_ANDROID.ps1 -ApkPath $fixtureApk -AdbPath $fakeAdb -LaunchWaitSeconds 0 -EvidenceJson $crashEvidence 2>$null
+          if ($LASTEXITCODE -eq 0) {
+            throw "PID-correlated fatal-exception fake ADB scenario unexpectedly passed."
+          }
+          $crash = Get-Content -LiteralPath $crashEvidence -Raw | ConvertFrom-Json
+          if (-not $crash.processObserved -or $crash.crashMarkersObserved -ne $true -or $crash.crashMarkerCount -lt 1 -or $crash.smokePassed -ne $false -or $crash.error -notmatch 'package/PID-correlated') {
+            throw "PID-correlated crash scenario did not fail closed with preserved evidence."
+          }
+
+          $env:CARGO_V2_FAKE_ADB_SCENARIO = 'multi'
+          $negativeEvidence = Join-Path $env:RUNNER_TEMP 'cargo-v2-smoke-multiple-devices.json'
+          & pwsh -NoProfile -File ./SMOKE_CARGO_V2_ANDROID.ps1 -ApkPath $fixtureApk -AdbPath $fakeAdb -LaunchWaitSeconds 0 -EvidenceJson $negativeEvidence 2>$null
+          if ($LASTEXITCODE -eq 0) {
+            throw "Multiple-device fake ADB scenario unexpectedly passed without explicit -Serial."
+          }
+          $negative = Get-Content -LiteralPath $negativeEvidence -Raw | ConvertFrom-Json
+          if ($negative.smokePassed -ne $false -or $negative.installExecuted -ne $false -or $negative.error -notmatch 'Multiple authorized Android devices') {
+            throw "Multiple-device failure did not fail closed before installation."
+          }
+
+          $global:LASTEXITCODE = 0
+          Write-Host "CARGO V2 Android smoke orchestration healthy/crash/multi-device contract PASS (fake ADB only; no device/runtime claim)."
