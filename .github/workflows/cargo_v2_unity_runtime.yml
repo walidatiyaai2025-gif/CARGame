@@ -40,11 +40,36 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if [[ -z "${UNITY_EMAIL:-}" || -z "${UNITY_PASSWORD:-}" ]]; then
+          mkdir -p BuildLogs/CargoV2
+
+          license_configured=false
+          serial_configured=false
+          email_configured=false
+          password_configured=false
+          [[ -n "${UNITY_LICENSE:-}" ]] && license_configured=true
+          [[ -n "${UNITY_SERIAL:-}" ]] && serial_configured=true
+          [[ -n "${UNITY_EMAIL:-}" ]] && email_configured=true
+          [[ -n "${UNITY_PASSWORD:-}" ]] && password_configured=true
+
+          cat > BuildLogs/CargoV2/unity-activation-preflight.json <<EOF
+          {
+            "schemaVersion": 1,
+            "candidateSha": "${GITHUB_SHA}",
+            "observedAtUtc": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "unityVersion": "2022.3.75f1",
+            "licenseConfigured": ${license_configured},
+            "serialConfigured": ${serial_configured},
+            "emailConfigured": ${email_configured},
+            "passwordConfigured": ${password_configured},
+            "secretValuesIncluded": false
+          }
+          EOF
+
+          if [[ "${email_configured}" != true || "${password_configured}" != true ]]; then
             echo '::error::Unity runtime gate cannot execute: UNITY_EMAIL and UNITY_PASSWORD are not configured for this repository.'
             exit 20
           fi
-          if [[ -z "${UNITY_LICENSE:-}" && -z "${UNITY_SERIAL:-}" ]]; then
+          if [[ "${license_configured}" != true && "${serial_configured}" != true ]]; then
             echo '::error::Unity runtime gate cannot execute: configure UNITY_LICENSE or UNITY_SERIAL for GameCI activation.'
             exit 21
           fi
@@ -89,6 +114,7 @@ jobs:
             Builds/CargoV2/CARGO-V2.apk
             BuildLogs/CargoV2/CARGO-V2-ci-evidence.json
             BuildLogs/CargoV2/CARGO-V2.apk.sha256
+            BuildLogs/CargoV2/unity-activation-preflight.json
             BuildLogs/CargoV2/unity-validate.log
             BuildLogs/CargoV2/unity-android-build.log
 
@@ -97,7 +123,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: CARGO-V2-Unity-diagnostics-${{ github.sha }}
-          if-no-files-found: warn
+          if-no-files-found: error
           retention-days: 7
           path: |
             BuildLogs/CargoV2/**
