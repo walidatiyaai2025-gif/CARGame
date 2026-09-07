@@ -65,6 +65,8 @@ namespace CargoV2.EditorTools
             CargoV2.QA.EditorTools.SCR_CargoV2CompletionRecoveryRegression.ValidateOrThrow();
             CargoV2.QA.EditorTools.SCR_CargoV2PlayerExperienceRegression.ValidateOrThrow();
             CargoV2.QA.EditorTools.SCR_CargoV2HostileStateRegression.ValidateOrThrow();
+            CargoV2.QA.EditorTools.SCR_CargoV2TransactionCrashRegression.ValidateOrThrow();
+            CargoV2.QA.EditorTools.SCR_CargoV2ActiveDeliveryLifecycleRegression.ValidateOrThrow();
 
             EditorBuildSettings.scenes = new[]
             {
