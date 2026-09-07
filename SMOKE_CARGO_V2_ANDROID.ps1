@@ -191,8 +191,8 @@ try {
         Start-Sleep -Seconds $LaunchWaitSeconds
     }
 
-    $pid = Invoke-CargoV2Adb -Arguments @("-s", $script:SelectedSerial, "shell", "pidof", $PackageId) -AllowFailure
-    $record.processObserved = ($pid.ExitCode -eq 0 -and $pid.Text.Trim() -match '^\d+(?:\s+\d+)*$')
+    $processIdResult = Invoke-CargoV2Adb -Arguments @("-s", $script:SelectedSerial, "shell", "pidof", $PackageId) -AllowFailure
+    $record.processObserved = ($processIdResult.ExitCode -eq 0 -and $processIdResult.Text.Trim() -match '^\d+(?:\s+\d+)*$')
     if (-not $record.processObserved) {
         throw "CARGO V2 process '$PackageId' was not observed after launch."
     }
