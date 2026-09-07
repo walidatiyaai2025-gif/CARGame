@@ -96,6 +96,37 @@ function Read-DeviceProperty {
     return $result.Text.Trim()
 }
 
+function Get-CrashMarkers {
+    param(
+        [Parameter(Mandatory = $true)][string[]]$LogLines,
+        [Parameter(Mandatory = $true)][string[]]$ObservedProcessIds
+    )
+
+    $packagePattern = [regex]::Escape($PackageId)
+    $crashPattern = '(?i)(FATAL EXCEPTION|ANR in|Fatal signal|Process .* has died)'
+    $markers = @()
+
+    foreach ($line in $LogLines) {
+        $correlated = $line -match $packagePattern
+        if (-not $correlated) {
+            foreach ($observedProcessId in $ObservedProcessIds) {
+                # `adb logcat -v brief` prefixes records like E/AndroidRuntime( 4242): ...
+                $pidPattern = "\(\s*$([regex]::Escape($observedProcessId))\s*\):"
+                if ($line -match $pidPattern) {
+                    $correlated = $true
+                    break
+                }
+            }
+        }
+
+        if ($correlated -and $line -match $crashPattern) {
+            $markers += $line
+        }
+    }
+
+    return @($markers)
+}
+
 $resolvedApk = Resolve-CargoV2Path -PathValue $ApkPath
 $sourceSha = if ([string]::IsNullOrWhiteSpace($env:GITHUB_SHA)) { $null } else { $env:GITHUB_SHA }
 $record = [ordered]@{
@@ -117,8 +148,11 @@ $record = [ordered]@{
     launchExecuted = $false
     launchPassed = $false
     processObserved = $false
+    processIds = @()
     foregroundObserved = $false
     crashMarkersObserved = $null
+    crashMarkerCount = 0
+    logcatPath = $null
     smokePassed = $false
     observedUtc = [DateTimeOffset]::UtcNow.ToString("o")
     error = $null
@@ -192,25 +226,32 @@ try {
     }
 
     $processIdResult = Invoke-CargoV2Adb -Arguments @("-s", $script:SelectedSerial, "shell", "pidof", $PackageId) -AllowFailure
-    $record.processObserved = ($processIdResult.ExitCode -eq 0 -and $processIdResult.Text.Trim() -match '^\d+(?:\s+\d+)*$')
-    if (-not $record.processObserved) {
-        throw "CARGO V2 process '$PackageId' was not observed after launch."
+    $observedProcessIds = @()
+    if ($processIdResult.ExitCode -eq 0) {
+        $observedProcessIds = @($processIdResult.Text -split '\s+' | Where-Object { $_ -match '^\d+$' } | Sort-Object -Unique)
     }
+    $record.processIds = @($observedProcessIds)
+    $record.processObserved = $observedProcessIds.Count -gt 0
 
     $activities = Invoke-CargoV2Adb -Arguments @("-s", $script:SelectedSerial, "shell", "dumpsys", "activity", "activities") -AllowFailure
     $record.foregroundObserved = ($activities.ExitCode -eq 0 -and $activities.Text -match [regex]::Escape($PackageId))
-    if (-not $record.foregroundObserved) {
-        throw "CARGO V2 package was running but not observed in the resumed activity state."
-    }
 
     $logcat = Invoke-CargoV2Adb -Arguments @("-s", $script:SelectedSerial, "logcat", "-d", "-v", "brief") -AllowFailure
     $logPath = Join-Path $LogDir "CARGO-V2-android-smoke-logcat.txt"
     $logcat.Output | Set-Content -LiteralPath $logPath -Encoding UTF8
-    $packageLogLines = @($logcat.Output | Where-Object { $_ -match [regex]::Escape($PackageId) })
-    $crashPattern = '(?i)(FATAL EXCEPTION|ANR in|Fatal signal|Process .* has died)'
-    $record.crashMarkersObserved = [bool]($packageLogLines | Where-Object { $_ -match $crashPattern } | Select-Object -First 1)
+    $record.logcatPath = [System.IO.Path]::GetFullPath($logPath)
+    $crashMarkers = @(Get-CrashMarkers -LogLines $logcat.Output -ObservedProcessIds $observedProcessIds)
+    $record.crashMarkerCount = $crashMarkers.Count
+    $record.crashMarkersObserved = $crashMarkers.Count -gt 0
+
+    if (-not $record.processObserved) {
+        throw "CARGO V2 process '$PackageId' was not observed after launch."
+    }
+    if (-not $record.foregroundObserved) {
+        throw "CARGO V2 package was running but not observed in the resumed activity state."
+    }
     if ($record.crashMarkersObserved) {
-        throw "CARGO V2 crash/ANR marker was observed in package-correlated logcat after launch."
+        throw "CARGO V2 crash/ANR marker was observed in package/PID-correlated logcat after launch."
     }
 
     $record.launchPassed = $true
