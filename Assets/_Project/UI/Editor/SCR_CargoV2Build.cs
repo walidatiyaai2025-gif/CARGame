@@ -59,7 +59,9 @@ namespace CargoV2.EditorTools
                 typeof(SCR_WorldMapRuntimeDirector) == null ||
                 typeof(SCR_WorldMapMissionDeploy) == null ||
                 typeof(SCR_MissionRuntimeDirector) == null ||
-                typeof(SCR_LogisticsBusinessRuntime) == null)
+                typeof(SCR_LogisticsBusinessRuntime) == null ||
+                typeof(SCR_PlayerExperienceRuntime) == null ||
+                typeof(SCR_PlayerFeedback) == null)
             {
                 throw new InvalidOperationException("Required CARGO V2 runtime contract failed to compile.");
             }
@@ -68,11 +70,13 @@ namespace CargoV2.EditorTools
             RequireResource(WorldMapResourcePath);
             RequireResource(TruckResourcePath);
 
-            // This EditMode regression deliberately consumes a crash completion
-            // before any persistence bridge has been initialized. Build validation
-            // must fail if progression can be paid and then rolled back by a later
-            // persistence load.
+            // Completion/persistence ordering must stay commit-before-pay.
             CargoV2.QA.EditorTools.SCR_CargoV2CompletionRecoveryRegression.ValidateOrThrow();
+
+            // Player settings must remain isolated from gameplay/economy persistence,
+            // corrupt preferences must recover safely, and representative landscape/
+            // cutout layouts must keep HUD and touch controls inside the safe area.
+            CargoV2.QA.EditorTools.SCR_CargoV2PlayerExperienceRegression.ValidateOrThrow();
 
             EditorBuildSettings.scenes = new[]
             {
