@@ -50,13 +50,18 @@ def main() -> int:
         "foreground observation": '"shell", "dumpsys", "activity", "activities"',
         "log reset": '"logcat", "-c"',
         "log collection": '"logcat", "-d", "-v", "brief"',
+        "PID crash correlation helper": "function Get-CrashMarkers",
+        "PID correlation pattern": '$pidPattern = "\\(\\s*$([regex]::Escape($observedProcessId))\\s*\\):"',
         "crash marker": "FATAL EXCEPTION",
         "ANR marker": "ANR in",
         "evidence mode": 'verificationMode = "adb-install-launch-smoke"',
         "install execution truth": "installExecuted = $false",
         "launch execution truth": "launchExecuted = $false",
         "process truth": "processObserved = $false",
+        "process ids evidence": "processIds = @()",
         "foreground truth": "foregroundObserved = $false",
+        "crash count evidence": "crashMarkerCount = 0",
+        "logcat evidence": "logcatPath = $null",
         "smoke truth": "smokePassed = $false",
         "evidence on failure": "Write-SmokeEvidence -Record $record",
         "truth boundary": "gameplay completion, controls, visual quality, sustained FPS",
@@ -81,6 +86,16 @@ def main() -> int:
     for label, pattern in forbidden.items():
         if re.search(pattern, smoke):
             fail(f"forbidden {label}: {pattern}")
+
+    # Capture diagnostics before the process/foreground verdict so a failed launch
+    # cannot discard the log evidence needed to distinguish crash from no-start.
+    log_capture = smoke.find('$logcat = Invoke-CargoV2Adb -Arguments @("-s", $script:SelectedSerial, "logcat", "-d", "-v", "brief")')
+    process_verdict = smoke.find("if (-not $record.processObserved)")
+    foreground_verdict = smoke.find("if (-not $record.foregroundObserved)")
+    if min(log_capture, process_verdict, foreground_verdict) < 0:
+        fail("unable to locate log/process/foreground verdict ordering")
+    if not (log_capture < process_verdict < foreground_verdict):
+        fail("logcat must be captured before process/foreground launch verdicts")
 
     # The PASS line must remain scoped to ADB install/launch smoke, never generic QA.
     pass_lines = [line.strip() for line in smoke.splitlines() if " PASS" in line]
