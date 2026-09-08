@@ -171,11 +171,7 @@ namespace CargoV2.Data
             int cargoIndex = (mission.missionId - 1) % CargoLabels.Length;
             float weight = 3.5f + (routeIndex * 1.15f) + (cairo ? 0f : 1.4f);
             int distance = 24 + routeIndex * 19 + (cairo ? 0 : 34);
-            string recommendedTruck = weight > 16f
-                ? "mammoth_6x4"
-                : weight > 10f
-                    ? "titan_x"
-                    : StarterTruckId;
+            string recommendedTruck = SelectRecommendedTruckId(weight);
 
             return new CargoV2ContractSpec
             {
@@ -285,7 +281,8 @@ namespace CargoV2.Data
                 CargoV2ContractSpec contract = BuildContract(mission);
                 if (contract == null || contract.missionId != missionId || string.IsNullOrWhiteSpace(contract.destination) ||
                     contract.cargoWeightTons <= 0f || contract.distanceKm <= 0 || contract.timeSeconds <= 0 ||
-                    GetTruck(contract.recommendedTruckId) == null)
+                    GetTruck(contract.recommendedTruckId) == null ||
+                    !CanTruckCarry(contract.recommendedTruckId, contract))
                 {
                     error = $"mission {missionId} does not map to a valid logistics contract";
                     return false;
@@ -294,6 +291,25 @@ namespace CargoV2.Data
 
             error = string.Empty;
             return true;
+        }
+
+        private static string SelectRecommendedTruckId(float cargoWeightTons)
+        {
+            CargoV2TruckSpec best = null;
+            for (int i = 0; i < Trucks.Length; i++)
+            {
+                CargoV2TruckSpec truck = Trucks[i];
+                if (truck == null || truck.cargoCapacityTons < cargoWeightTons) continue;
+
+                if (best == null ||
+                    truck.purchasePrice < best.purchasePrice ||
+                    (truck.purchasePrice == best.purchasePrice && truck.cargoCapacityTons < best.cargoCapacityTons))
+                {
+                    best = truck;
+                }
+            }
+
+            return best == null ? string.Empty : best.id;
         }
 
         private static CargoV2TruckSpec Truck(
