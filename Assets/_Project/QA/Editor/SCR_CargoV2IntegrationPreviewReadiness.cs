@@ -16,7 +16,7 @@ namespace CargoV2.QA.Editor
             "CargoV2.Logic.SCR_WorldMapPersistenceBridge",
             "CargoV2.Logic.SCR_MissionCompletionHandoffBridge",
             "CargoV2.Logic.SCR_MissionRewardStore",
-            "CargoV2.UI.SCR_WorldMapMissionDeployGateway",
+            "CargoV2.UI.SCR_WorldMapMissionDeploy",
             "CargoV2.UI.SCR_WorldMapTouchInputBridge",
             "CargoV2.UI.SCR_MissionRuntimeDirector",
         };
