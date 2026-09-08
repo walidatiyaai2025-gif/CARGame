@@ -1,6 +1,8 @@
 CARGO V2 DATA_TEAM LOCK
-Owner: DATA_TEAM
-Scope: /Assets/_Project/Data/
-Current task: Issue #262 WorldMap presentation metadata
-Base: cargo-v2
-Rule: presentation metadata only; SO_GameBalance remains authoritative for mission/economy values.
+Status: RELEASED
+Former owner: DATA_TEAM
+Former scope: /Assets/_Project/Data/
+Former task: Issue #262 WorldMap presentation metadata (closed 2026-09-07)
+Former branch: cargo-v2-data-team @ feaaebcd77576addc46b100a60957c6fcb1405fc
+Reconciliation: former branch is fully contained in cargo-v2-autonomous-closure (0 commits ahead at release check).
+Rule: this file no longer establishes an active DATA_TEAM claim. A future worker must create a fresh live claim before taking exclusive ownership of this scope.
