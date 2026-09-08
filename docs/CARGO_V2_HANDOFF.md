@@ -1,77 +1,83 @@
 # CARGO V2 AUTONOMOUS CLOSURE HANDOFF
 
-Updated: 2026-09-07 (Kuwait)
+Updated: 2026-09-08 (Kuwait)
 
 ## Authority
 
-- Authoritative integration/closure line: PR #297, branch `cargo-v2-autonomous-closure`, targeting `cargo-v2`.
-- PR #298, branch `cargo-v2-unity-runtime-ci`, is the Unity runtime/build support gate for PR #297. It is not a second closure candidate.
-- `main` remains outside the CARGO V2 integration step until the governed `cargo-v2` acceptance path is complete.
-- Live GitHub refs, exact-head CI, artifacts, and executed runtime evidence override stale prose or historical PR descriptions.
+- Single authoritative integration/closure line: PR #297, branch `cargo-v2-autonomous-closure`, targeting `cargo-v2`.
+- Exact authoritative head at this reconciliation: `ae395b1e271cd1795cdece521a9ff1013fe4c77d`.
+- `main` is not the CARGO V2 integration target at this stage.
+- PR #298 / `cargo-v2-unity-runtime-ci` is the only active Unity runtime/build support PR. It targets #297 and is not a second closure candidate.
+- Live GitHub refs, ancestry, exact-head CI, artifacts, and executed runtime evidence override historical prose and stale claim text.
 
-## Reconciliation completed on 2026-09-07
+## Live concurrency/recovery sweep
 
-The historical stacked CARGO V2 PRs #256, #257, #259, #265, #267, #268, #269, #271, #273, #275, #277, #279, #281, #283, #285, and #287 were individually compared against the PR #297 integration head. Each compared head was an exact ancestor of the closure line (`behind_by=0` with its own head as merge base), so those stale Draft PRs were closed as contained/superseded without creating duplicate merges or discarding commits.
+The 2026-09-08 branch/claim sweep found no unintegrated current CARGO V2 implementation worker that should be merged before further closure work.
 
-PR #300 (`cargo-v2-company-transaction-recovery`) was reviewed on exact head `cf727f9b826f5a9b7af5e9a3cb11c4a3888ef2a6`, had all three applicable checks green, and was normal-merged into PR #297. The resulting pre-documentation reconciliation head was `7aa3e0642d645d257b1c1539442bc4d73aea0562`.
+The previously advertised production-visual, gameplay-state-recovery, player-experience, hostile-state, delivery-recovery, Android-smoke, company-transaction, contract-capacity, mission/data/logic/world-map/runtime-asset and team branches are all exact ancestors of the authoritative line (`ahead_by=0`). Their work is already contained and must not be duplicated.
 
-## Exact executed evidence at the pre-documentation reconciliation head
+Legacy diverged branches were reviewed semantically rather than merged blindly:
 
-On `7aa3e0642d645d257b1c1539442bc4d73aea0562`:
+- `cargo-v2-artpass-runtime-apply` and `cargo-v2-artpass-runtime-apply-v2` are identical. Their `SCR_ArtPassRuntimeDirector` and `SCR_PremiumTruck3D` blobs are exact-preserved in #297; the current `SCR_UIManager` is a later evolved implementation. The remaining editor-only auto-open preview helper is developer convenience, not product/runtime closure.
+- `cargo-v2-paused-qa-sprint1` contains an old standalone FPS logger and a basic smoke component. It supplies no executed current-candidate performance evidence and is superseded by the current QA/runtime-contract infrastructure.
+- `cargo-v2-ui-pre-override` contains primitive cube/cylinder intro presentation and synthetic loading progress and is superseded by the integrated premium art/runtime path.
+- `cargo-v2-ui-team` is an older UI/scenes line; the authority contains later integrated UI and premium presentation work.
 
-- `CARGO V2 Unity Scaffold` run #28 / `34159261431`: SUCCESS.
-- `Flutter CI` run #1232 / `34159261418`: SUCCESS.
-- The scaffold workflow verifies the source-controlled Unity project/build scaffold and source-side recovery/verifier contracts. It does not constitute Unity Editor execution, Play Mode, Android build, install, launch, device smoke, FPS, or visual acceptance.
+PR #298 remains the one legitimate unintegrated support exception. Its changed-file set is exactly `.github/workflows/cargo_v2_unity_runtime.yml` and its support head is 0 commits behind the authority.
 
-## Unity runtime/build support gate
+## Current exact-head source/scaffold evidence
 
-PR #298 exact support head `080673f6b90b66a5cba2eafbb81709dddcd8db37` executed `CARGO V2 Unity Runtime Build` run #3 / `34157646725`.
+On authoritative head `ae395b1e271cd1795cdece521a9ff1013fe4c77d`:
 
-The run failed closed during activation preflight before Unity started because all repository activation inputs observed by the job were absent:
+- `CARGO V2 Player Experience Guard` #9 / run `34188393674`: SUCCESS.
+- `CARGO V2 Hostile State Guard` #14 / run `34188393882`: SUCCESS.
+- `CARGO V2 Unity Scaffold` #95 / run `34188393720`: SUCCESS.
+- `Flutter CI` #1301 / run `34188393792`: SUCCESS.
 
-- `UNITY_LICENSE`: not configured;
-- `UNITY_SERIAL`: not configured;
-- `UNITY_EMAIL`: not configured;
-- `UNITY_PASSWORD`: not configured.
+These checks prove their stated source/scaffold contracts only. The Flutter debug APK produced by the repository-wide Flutter CI is not the final CARGO V2 Unity APK and cannot be used as Unity runtime evidence.
 
-Therefore that run provides no Unity compile/import, Play Mode, APK, install/launch, device, FPS, or visual evidence. No credentials are invented or committed.
+## Current Unity runtime/build evidence
 
-Diagnostic artifact from that execution:
+PR #298 support head: `982cd09bce61d22507e6b36205c9276792dde0ca`.
 
-- artifact id: `10031509477`;
-- name: `CARGO-V2-Unity-diagnostics-5decf061b0402971a87cc32c140b4f6ae619c05d`;
-- digest: `sha256:c0e862aa1669dc388223c11e6f6dd29e86da90f25ac5fc4dac6da4fd4610f493`.
+`CARGO V2 Unity Runtime Build` #6 / run `34188431147` executed against PR merge candidate `889bedd426eac185eb55e9e28bdac21b8dc28364` and failed closed before Unity started:
 
-## Integrated product scope already present on PR #297
+- checkout exact candidate: PASS;
+- Unity activation preflight: FAIL-CLOSED;
+- Unity import/build step: SKIPPED;
+- APK verification/evidence: SKIPPED;
+- APK/build-evidence upload: SKIPPED;
+- diagnostics upload: PASS.
 
-The authoritative line contains the assembled CARGO V2 source chain for:
+Diagnostic artifact:
 
-- Unity 2022.3.75f1 project scaffold and Android ARM64/IL2CPP build tooling;
-- Splash and Loading presentation;
-- 20-mission Cairo/Dubai WorldMap, selection, locking, persistence, touch input, and deploy flow;
-- source-controlled 3D truck, Mission, and WorldMap OBJ/MTL assets with runtime `Resources` paths and fallbacks;
-- playable truck driving, cargo pickup, ordered checkpoints, delivery, timer, damage, recovery, retry, pause, and abandon;
-- active-delivery crash/restart recovery with run identity and corrupt-state quarantine;
-- mission completion handoff, idempotent reward settlement, company progression, fleet purchase/selection, and upgrades;
-- deterministic Android APK verifier and SHA-256 evidence contract.
+- id `10041326602`;
+- name `CARGO-V2-Unity-diagnostics-889bedd426eac185eb55e9e28bdac21b8dc28364`;
+- digest `sha256:ffe9f5b395c03c44dd867ae53c9fbb89e5bafe3b762b748c83912ae5cbdee912`.
 
-## Remaining gates before final owner test
+No Unity import/C# compile, Play Mode, Unity Android APK, install/launch, device, visual, or FPS PASS is claimed from this run. No activation secret is invented or committed.
 
-All of the following require genuine executed evidence on the final exact candidate; none may be inferred from source or scaffold CI:
+## Integrated product scope on PR #297
+
+The authority currently composes the CARGO V2 Unity 2022.3.75f1 project/build scaffold; premium truck, Mission cargo/depot and WorldMap runtime 3D assets; Splash/Loading presentation; 20 Cairo/Dubai missions; selection/locking/progression/persistence/touch deploy; playable truck delivery loop; ordered pickup/checkpoints/delivery; pause/retry/recovery/abandon; active-delivery autosave/resume; corrupt-state quarantine; completion handoff and idempotent reward settlement; company Coins/XP/rank; fleet purchase/selection/upgrades; crash-consistent transaction recovery; capacity-safe truck recommendations; and deterministic Android APK verification/smoke tooling.
+
+## Remaining hard gates before the final owner test
+
+All must execute genuinely on the exact final candidate:
 
 1. Unity 2022.3.75f1 import and C# compilation.
-2. Unity validation commands and Play Mode startup/navigation.
-3. Full gameplay loop: WorldMap -> deploy -> pickup -> checkpoints 1/2/3 -> delivery -> settlement -> next unlock.
-4. Persistence/restart/crash recovery and replay/idempotency regressions.
-5. Fleet purchase/upgrade runtime behavior and non-negative economy invariants.
-6. Real 3D Resources import, scale, orientation, materials, fallback behavior, and visual acceptance.
-7. Android ARM64/IL2CPP APK build on the exact candidate with recorded SHA-256.
-8. APK install and launch smoke, then device/emulator runtime smoke where available.
-9. Performance/FPS evidence measured from an executed current candidate.
-10. Repository convergence: all required checks green on the exact target head before governed integration.
+2. Unity validation and Play Mode startup/navigation.
+3. Splash -> Loading -> WorldMap -> deploy -> pickup -> ordered checkpoints -> delivery -> settlement -> next unlock.
+4. Pause/retry/recovery/abandon plus restart/crash-resume and replay/idempotency regressions.
+5. Fleet purchase/upgrade runtime acceptance and non-negative economy invariants.
+6. Real 3D asset import, scale/orientation/material/fallback and visual acceptance.
+7. Measured current-candidate performance/FPS.
+8. ARM64/IL2CPP CARGO V2 Unity APK build with SHA-256 evidence.
+9. APK install/launch and available device/emulator smoke.
+10. Final repository convergence and exact-target CI.
 
-Only after every automated/source/runtime/build gate above is green and an installable final 3D test APK exists may the project enter `FINAL_OWNER_3D_TEST_REQUIRED`.
+Only after every source/runtime/build/smoke gate above is green and an installable final 3D test APK exists may state become `FINAL_OWNER_3D_TEST_REQUIRED`.
 
 ## Pick-next rule
 
-Before each new unit, re-read live PRs/branches/checks and recover legitimate existing work first. Do not duplicate PR #298 while it remains the active Unity-runtime support line. If activation remains unavailable, continue independent source-controlled verification, regression hardening, Android smoke automation, evidence reconciliation, and convergence work that does not require secrets; then re-check the runtime gate.
+Re-read live state before every unit. Recover legitimate existing work first, preserve unrelated work, do not duplicate PR #298, and continue independent source-controlled automation/regression/evidence work while activation is unavailable. Re-check the Unity runtime gate whenever the authoritative candidate moves.
