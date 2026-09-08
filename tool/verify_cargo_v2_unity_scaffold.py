@@ -122,6 +122,17 @@ def main() -> None:
     require_tokens("Assets/_Project/Scripts/Logic/SCR_CompanyProgressStore.cs", (
         "SalvageCurrentPayload", "TryReadSpendCommit", "if (!paymentCommitted)", "CompanyBackupKey"))
 
+    assets_root = ROOT / "Assets"
+    missing_meta: list[str] = []
+    for asset in sorted(assets_root.rglob("*")):
+        if asset.name.endswith(".meta"):
+            continue
+        meta = Path(str(asset) + ".meta")
+        if not meta.is_file():
+            missing_meta.append(asset.relative_to(ROOT).as_posix())
+    if missing_meta:
+        fail("missing Unity .meta sidecars: " + ", ".join(missing_meta))
+
     guid_to_path: dict[str, Path] = {}
     duplicate_guids: list[str] = []
     for base in (ROOT / "Assets/_Project", ROOT / "Assets/Resources/CargoV2"):
