@@ -1,0 +1,39 @@
+name: CARGO V2 Player Experience Guard
+
+on:
+  pull_request:
+    branches:
+      - cargo-v2-autonomous-closure
+      - cargo-v2
+    paths:
+      - 'Assets/_Project/Data/CargoV2PlayerSettings.cs'
+      - 'Assets/_Project/Data/SCR_LocalizationManager.cs'
+      - 'Assets/_Project/Data/CargoV2LocalizationTerms.cs'
+      - 'Assets/_Project/UI/CargoV2UiLayout.cs'
+      - 'Assets/_Project/UI/SCR_PlayerFeedback.cs'
+      - 'Assets/_Project/UI/SCR_PlayerExperienceRuntime.cs'
+      - 'Assets/_Project/UI/SCR_LogisticsBusinessRuntime.cs'
+      - 'Assets/_Project/UI/SCR_WorldMapTouchInputBridge.cs'
+      - 'Assets/_Project/UI/SCR_MissionRuntimeDirector*.cs'
+      - 'Assets/_Project/UI/Editor/SCR_CargoV2Build.cs'
+      - 'Assets/_Project/QA/Editor/SCR_CargoV2PlayerExperienceRegression.cs'
+      - 'tool/verify_cargo_v2_player_experience.py'
+      - '.github/workflows/cargo_v2_player_experience.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify player experience closure contract
+        run: python tool/verify_cargo_v2_player_experience.py

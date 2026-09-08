@@ -369,12 +369,18 @@ namespace CargoV2.UI
                 try
                 {
                     object result = trySelectMission.Invoke(routeController, new object[] { missionId });
-                    if (result is bool accepted && !accepted) return;
+                    if (result is bool accepted && !accepted)
+                    {
+                        SCR_PlayerFeedback.Play(SCR_PlayerFeedback.Cue.Error);
+                        return;
+                    }
+                    SCR_PlayerFeedback.Play(SCR_PlayerFeedback.Cue.Ui);
                     RefreshStates(true);
                 }
                 catch (Exception e)
                 {
                     Debug.LogWarning($"[CARGO V2][UI_TEAM] Mission {missionId} selection failed safely: {e.Message}");
+                    SCR_PlayerFeedback.Play(SCR_PlayerFeedback.Cue.Error);
                 }
                 return;
             }
@@ -382,11 +388,13 @@ namespace CargoV2.UI
             if (missionId != 1)
             {
                 Debug.Log($"[CARGO V2][UI_TEAM] Mission {missionId} is locked in visual-preview mode; progression controller is not present.");
+                SCR_PlayerFeedback.Play(SCR_PlayerFeedback.Cue.Error);
                 return;
             }
 
             previewSelectedMissionId = missionId;
             Debug.Log($"[CARGO V2][UI_TEAM] Mission {missionId} selected in visual-preview mode; progression controller not present on this branch.");
+            SCR_PlayerFeedback.Play(SCR_PlayerFeedback.Cue.Ui);
             RefreshStates(true);
         }
 
@@ -407,8 +415,8 @@ namespace CargoV2.UI
                     if (node.Label != null)
                     {
                         SO_GameBalance.MissionBalance mission = gameBalance.GetMission(node.MissionId);
-                        string city = mission == null ? "MISSION" : mission.city;
-                        node.Label.text = $"{node.MissionId:00}  {city}\n{StateCue(state, selected)}";
+                        string city = mission == null ? L("mission") : Term(mission.city);
+                        node.Label.text = $"{Two(node.MissionId)}  {city}\n{StateCue(state, selected)}";
                     }
                     node.LastState = state;
                     node.LastSelected = selected;
@@ -455,12 +463,13 @@ namespace CargoV2.UI
             SO_GameBalance.MissionBalance mission = gameBalance.GetMission(missionId);
             if (mission == null)
             {
-                detailText.text = $"MISSION {missionId:00}\nDATA UNAVAILABLE";
+                detailText.text = $"{L("mission")} {Two(missionId)}\n{L("world.dataUnavailable")}";
             }
             else
             {
-                detailText.text = $"{mission.city.ToUpperInvariant()} | MISSION {missionId:00} | {StateCue(state, true)}\n" +
-                                  $"ENERGY {mission.energyCost}   TIME {mission.timeSeconds}s   1 STAR {mission.coin1Star:N0}   3 STAR {mission.coin3Star:N0}   XP {mission.xp}";
+                detailText.text = $"{Term(mission.city)} | {L("mission")} {Two(missionId)} | {StateCue(state, true)}\n" +
+                                  $"{L("world.energy")} {Num(mission.energyCost)}   {L("world.time")} {Num(mission.timeSeconds)}s   " +
+                                  $"{L("world.star1")} {Num(mission.coin1Star)}   {L("world.star3")} {Num(mission.coin3Star)}   XP {Num(mission.xp)}";
             }
 
             lastDetailMissionId = missionId;
@@ -477,10 +486,34 @@ namespace CargoV2.UI
 
         private static string StateCue(string state, bool selected)
         {
-            if (selected) return "[SELECTED]";
-            if (string.Equals(state, "Completed", StringComparison.OrdinalIgnoreCase)) return "[DONE] COMPLETED";
-            if (string.Equals(state, "Available", StringComparison.OrdinalIgnoreCase)) return "[READY] AVAILABLE";
-            return "[LOCKED]";
+            if (selected) return $"[✓] {L("state.selected")}";
+            if (string.Equals(state, "Completed", StringComparison.OrdinalIgnoreCase)) return $"[✓] {L("state.completed")}";
+            if (string.Equals(state, "Available", StringComparison.OrdinalIgnoreCase)) return $"[▶] {L("state.available")}";
+            return $"[🔒] {L("state.locked")}";
+        }
+
+        private static string L(string key)
+        {
+            SCR_LocalizationManager manager = SCR_LocalizationManager.Instance;
+            return manager != null ? manager.Get(key) : key;
+        }
+
+        private static string Num(long value)
+        {
+            SCR_LocalizationManager manager = SCR_LocalizationManager.Instance;
+            return manager != null ? manager.FormatInteger(value) : value.ToString("N0");
+        }
+
+        private static string Two(int value)
+        {
+            string raw = Mathf.Clamp(value, 0, 99).ToString("00");
+            SCR_LocalizationManager manager = SCR_LocalizationManager.Instance;
+            return manager != null ? manager.LocalizeDigits(raw) : raw;
+        }
+
+        private static string Term(string value)
+        {
+            return CargoV2LocalizationTerms.Term(value);
         }
 
         private static Material MakeMaterial(Color color)

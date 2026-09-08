@@ -45,6 +45,7 @@ namespace CargoV2.UI
                     AttachCargoToTruck();
                     if (pickupCargoVisual != null) pickupCargoVisual.SetActive(false);
                     SaveActiveDelivery();
+                    SCR_PlayerFeedback.Play(SCR_PlayerFeedback.Cue.Pickup, 1f, true);
                 }
                 return;
             }
@@ -58,6 +59,7 @@ namespace CargoV2.UI
 
                 checkpointIndex = checkpoint;
                 SaveActiveDelivery();
+                SCR_PlayerFeedback.Play(SCR_PlayerFeedback.Cue.Checkpoint, 1f, true);
                 return;
             }
 
@@ -85,15 +87,20 @@ namespace CargoV2.UI
             PlayerPrefs.SetString(CompletionDeliveryRunKey, deliveryRunId);
             PlayerPrefs.Save();
             SCR_ActiveDeliveryStore.Clear();
+            SCR_PlayerFeedback.StopEngine();
+            SCR_PlayerFeedback.Play(SCR_PlayerFeedback.Cue.Delivery, 1f, true);
         }
 
         private void FailMission(string reason)
         {
+            if (terminal) return;
             terminal = true;
             succeeded = false;
             completionStars = 0;
             statusReason = reason;
             SCR_ActiveDeliveryStore.Clear();
+            SCR_PlayerFeedback.StopEngine();
+            SCR_PlayerFeedback.Play(SCR_PlayerFeedback.Cue.Error, 1f, true);
         }
 
         internal void ReportCollision(float relativeSpeed)
@@ -106,7 +113,10 @@ namespace CargoV2.UI
                 0f,
                 100f);
 
-            if (damage >= 100f) FailMission("TRUCK DISABLED");
+            float impact = Mathf.Clamp01((relativeSpeed - 3f) / 12f);
+            SCR_PlayerFeedback.Play(SCR_PlayerFeedback.Cue.Impact, impact, relativeSpeed >= 8f);
+
+            if (damage >= 100f) FailMission("hud.truckDisabled");
             else SaveActiveDelivery();
         }
 
@@ -118,6 +128,7 @@ namespace CargoV2.UI
             remainingSeconds = Mathf.Max(1f, remainingSeconds - 5f);
             ResetTruckToCheckpoint(checkpointIndex, true);
             SaveActiveDelivery();
+            SCR_PlayerFeedback.Play(SCR_PlayerFeedback.Cue.Ui);
         }
 
         private void ResetTruckToCheckpoint(int index, bool keepCargo)
@@ -185,6 +196,8 @@ namespace CargoV2.UI
             ResetTruckToCheckpoint(0, false);
             SaveActiveDelivery();
             Time.timeScale = 1f;
+            SCR_PlayerFeedback.StartEngine();
+            SCR_PlayerFeedback.Play(SCR_PlayerFeedback.Cue.Ui);
         }
 
         private void AbandonMission()
@@ -195,6 +208,25 @@ namespace CargoV2.UI
             PlayerPrefs.DeleteKey(ActiveDeliveryRunKey);
             PlayerPrefs.Save();
             Time.timeScale = 1f;
+            SCR_PlayerFeedback.StopEngine();
+            SCR_PlayerFeedback.Play(SCR_PlayerFeedback.Cue.Ui);
+            Destroy(gameObject);
+        }
+
+        private void ReturnToWorldMapFromResult()
+        {
+            if (!terminal) return;
+            if (!succeeded)
+            {
+                AbandonMission();
+                return;
+            }
+
+            PlayerPrefs.DeleteKey(PendingMissionKey);
+            PlayerPrefs.Save();
+            Time.timeScale = 1f;
+            SCR_PlayerFeedback.StopEngine();
+            SCR_PlayerFeedback.Play(SCR_PlayerFeedback.Cue.Ui);
             Destroy(gameObject);
         }
 
@@ -203,7 +235,16 @@ namespace CargoV2.UI
             if (terminal) return;
             paused = !paused;
             Time.timeScale = paused ? 0f : 1f;
-            if (paused) SaveActiveDelivery();
+            if (paused)
+            {
+                SaveActiveDelivery();
+                SCR_PlayerFeedback.StopEngine();
+            }
+            else
+            {
+                SCR_PlayerFeedback.StartEngine();
+            }
+            SCR_PlayerFeedback.Play(SCR_PlayerFeedback.Cue.Ui);
         }
 
         private void SaveActiveDelivery()
