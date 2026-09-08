@@ -158,11 +158,11 @@ namespace CargoV2.UI
             return null;
         }
 
-        private void TryAttachMissionMarker(GameObject nodeObject, int missionId)
+        private bool TryAttachMissionMarker(GameObject nodeObject, int missionId)
         {
-            if (nodeObject == null) return;
+            if (nodeObject == null) return false;
             EnsureMarkerPack();
-            if (markerPackPrefab == null) return;
+            if (markerPackPrefab == null) return false;
 
             try
             {
@@ -188,11 +188,15 @@ namespace CargoV2.UI
                 {
                     Destroy(markerInstance);
                     LogMarkerFallbackOnce("Resources marker pack contained no renderable MissionMarker geometry; primitive node fallback remains active.");
+                    return false;
                 }
+
+                return true;
             }
             catch (Exception e)
             {
                 LogMarkerFallbackOnce($"Resources marker instantiation failed safely: {e.Message}");
+                return false;
             }
         }
 
@@ -276,9 +280,11 @@ namespace CargoV2.UI
                 nodeObject.transform.SetParent(transform, false);
                 nodeObject.transform.position = position;
                 nodeObject.transform.localScale = new Vector3(0.72f, 0.18f, 0.72f);
+                Renderer fallbackRenderer = nodeObject.GetComponent<Renderer>();
                 WorldMapNodeClick fallbackClick = nodeObject.AddComponent<WorldMapNodeClick>();
                 fallbackClick.Configure(this, missionId);
-                TryAttachMissionMarker(nodeObject, missionId);
+                bool hasRealMarker = TryAttachMissionMarker(nodeObject, missionId);
+                if (fallbackRenderer != null) fallbackRenderer.enabled = !hasRealMarker;
 
                 GameObject labelObject = new GameObject("Label");
                 labelObject.transform.SetParent(nodeObject.transform, false);
@@ -295,7 +301,7 @@ namespace CargoV2.UI
                 {
                     MissionId = missionId,
                     Root = nodeObject,
-                    Renderer = nodeObject.GetComponent<Renderer>(),
+                    Renderer = fallbackRenderer,
                     Label = label,
                     FallbackClick = fallbackClick,
                 };

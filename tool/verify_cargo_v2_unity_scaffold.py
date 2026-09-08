@@ -75,6 +75,9 @@ def main() -> None:
     require_tokens("Assets/_Project/UI/SCR_WorldMapSceneBootstrap.cs", (
         "SCR_WorldMapRouteController", "SCR_WorldMapPersistenceBridge", "SCR_MissionCompletionHandoffBridge",
         'new GameObject("Main Camera")', 'new GameObject("CARGO_V2_WorldMapKeyLight")', "Application.targetFrameRate = 60"))
+    require_tokens("Assets/_Project/UI/SCR_WorldMapRuntimeDirector.cs", (
+        "private bool TryAttachMissionMarker", "bool hasRealMarker = TryAttachMissionMarker(nodeObject, missionId);",
+        "fallbackRenderer.enabled = !hasRealMarker", "return true;"))
     require_tokens("Assets/_Project/UI/Editor/SCR_CargoV2Build.cs", (
         "BuildAndroidBatch", "ValidateBatch", 'CargoV2/Mission/MOD_Mission_CargoDepot', 'CargoV2/WorldMap/MOD_WorldMap_MarkerPack',
         'CargoV2/Truck/MOD_Truck_Premium', 'com.walka.cargov2', "UIOrientation.LandscapeLeft", "AndroidArchitecture.ARM64",
@@ -118,6 +121,17 @@ def main() -> None:
         "SCR_ActiveDeliveryStore.Clear();"))
     require_tokens("Assets/_Project/Scripts/Logic/SCR_CompanyProgressStore.cs", (
         "SalvageCurrentPayload", "TryReadSpendCommit", "if (!paymentCommitted)", "CompanyBackupKey"))
+
+    assets_root = ROOT / "Assets"
+    missing_meta: list[str] = []
+    for asset in sorted(assets_root.rglob("*")):
+        if asset.name.endswith(".meta"):
+            continue
+        meta = Path(str(asset) + ".meta")
+        if not meta.is_file():
+            missing_meta.append(asset.relative_to(ROOT).as_posix())
+    if missing_meta:
+        fail("missing Unity .meta sidecars: " + ", ".join(missing_meta))
 
     guid_to_path: dict[str, Path] = {}
     duplicate_guids: list[str] = []
