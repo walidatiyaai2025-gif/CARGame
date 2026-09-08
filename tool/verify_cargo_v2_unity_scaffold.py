@@ -14,28 +14,16 @@ SCENES = [
     ("Assets/_Project/Scenes/04_WorldMap.unity", "70e8e61f984d4f92aa1c2e1fb230ef04"),
 ]
 REQUIRED_FILES = [
-    ".gitignore",
-    "ProjectSettings/ProjectVersion.txt",
-    "ProjectSettings/EditorBuildSettings.asset",
-    "Packages/manifest.json",
-    "BUILD_CARGO_V2_UNITY.ps1",
-    "BUILD_CARGO_V2_UNITY.bat",
-    "docs/CARGO_V2_BUILD_EVIDENCE.md",
-    "Assets/_Project/UI/SCR_WorldMapSceneBootstrap.cs",
-    "Assets/_Project/UI/Editor/SCR_CargoV2Build.cs",
-    "Assets/_Project/UI/SCR_MissionRuntimeDirector.cs",
-    "Assets/_Project/UI/SCR_MissionRuntimeDirector.Driving.cs",
-    "Assets/_Project/UI/SCR_MissionRuntimeDirector.World.cs",
-    "Assets/_Project/UI/SCR_MissionRuntimeDirector.Hud.cs",
-    "Assets/_Project/Scripts/Logic/SCR_WorldMapRouteController.cs",
-    "Assets/_Project/Scripts/Logic/SCR_WorldMapPersistenceBridge.cs",
-    "Assets/_Project/Scripts/Logic/SCR_MissionCompletionHandoffBridge.cs",
-    "Assets/_Project/Scripts/Logic/SCR_MissionRewardStore.cs",
-    "Assets/_Project/Scripts/Logic/SCR_ActiveDeliveryStore.cs",
-    "Assets/_Project/Scripts/Logic/SCR_CompanyProgressStore.cs",
-    "Assets/Resources/CargoV2/Mission/MOD_Mission_CargoDepot.obj",
-    "Assets/Resources/CargoV2/WorldMap/MOD_WorldMap_MarkerPack.obj",
-    "Assets/Resources/CargoV2/Truck/MOD_Truck_Premium.obj",
+    ".gitignore", "ProjectSettings/ProjectVersion.txt", "ProjectSettings/EditorBuildSettings.asset",
+    "Packages/manifest.json", "BUILD_CARGO_V2_UNITY.ps1", "BUILD_CARGO_V2_UNITY.bat",
+    "docs/CARGO_V2_BUILD_EVIDENCE.md", "Assets/_Project/UI/SCR_WorldMapSceneBootstrap.cs",
+    "Assets/_Project/UI/Editor/SCR_CargoV2Build.cs", "Assets/_Project/UI/SCR_MissionRuntimeDirector.cs",
+    "Assets/_Project/UI/SCR_MissionRuntimeDirector.Driving.cs", "Assets/_Project/UI/SCR_MissionRuntimeDirector.World.cs",
+    "Assets/_Project/UI/SCR_MissionRuntimeDirector.Hud.cs", "Assets/_Project/Scripts/Logic/SCR_WorldMapRouteController.cs",
+    "Assets/_Project/Scripts/Logic/SCR_WorldMapPersistenceBridge.cs", "Assets/_Project/Scripts/Logic/SCR_MissionCompletionHandoffBridge.cs",
+    "Assets/_Project/Scripts/Logic/SCR_MissionRewardStore.cs", "Assets/_Project/Scripts/Logic/SCR_ActiveDeliveryStore.cs",
+    "Assets/_Project/Scripts/Logic/SCR_CompanyProgressStore.cs", "Assets/Resources/CargoV2/Mission/MOD_Mission_CargoDepot.obj",
+    "Assets/Resources/CargoV2/WorldMap/MOD_WorldMap_MarkerPack.obj", "Assets/Resources/CargoV2/Truck/MOD_Truck_Premium.obj",
 ]
 
 
@@ -59,226 +47,97 @@ def require_tokens(path: str, tokens: tuple[str, ...]) -> None:
 
 def main() -> None:
     for path in REQUIRED_FILES:
-        if not (ROOT / path).is_file():
-            fail(f"missing required file: {path}")
+        if not (ROOT / path).is_file(): fail(f"missing required file: {path}")
 
-    require_tokens(
-        ".gitignore",
-        (
-            "[Ll]ibrary/",
-            "[Tt]emp/",
-            "[Oo]bj/",
-            "[Ll]ogs/",
-            "[Uu]ser[Ss]ettings/",
-            "[Bb]uilds/",
-            "BuildLogs/",
-        ),
-    )
+    require_tokens(".gitignore", ("[Ll]ibrary/", "[Tt]emp/", "[Oo]bj/", "[Ll]ogs/", "[Uu]ser[Ss]ettings/", "[Bb]uilds/", "BuildLogs/"))
 
     version = read("ProjectSettings/ProjectVersion.txt")
-    if f"m_EditorVersion: {EXPECTED_VERSION}" not in version:
-        fail(f"Unity editor is not pinned to {EXPECTED_VERSION}")
-    if EXPECTED_REVISION not in version:
-        fail(f"Unity revision is not pinned to {EXPECTED_REVISION}")
+    if f"m_EditorVersion: {EXPECTED_VERSION}" not in version: fail(f"Unity editor is not pinned to {EXPECTED_VERSION}")
+    if EXPECTED_REVISION not in version: fail(f"Unity revision is not pinned to {EXPECTED_REVISION}")
 
-    manifest = json.loads(read("Packages/manifest.json"))
-    dependencies = manifest.get("dependencies")
-    if not isinstance(dependencies, dict):
-        fail("Packages/manifest.json has no dependencies object")
-    for package in (
-        "com.unity.modules.androidjni",
-        "com.unity.modules.audio",
-        "com.unity.modules.jsonserialize",
-        "com.unity.modules.physics",
-        "com.unity.modules.ui",
-    ):
-        if dependencies.get(package) != "1.0.0":
-            fail(f"required built-in module missing or unpinned: {package}")
+    dependencies = json.loads(read("Packages/manifest.json")).get("dependencies")
+    if not isinstance(dependencies, dict): fail("Packages/manifest.json has no dependencies object")
+    for package in ("com.unity.modules.androidjni", "com.unity.modules.audio", "com.unity.modules.jsonserialize", "com.unity.modules.physics", "com.unity.modules.ui"):
+        if dependencies.get(package) != "1.0.0": fail(f"required built-in module missing or unpinned: {package}")
 
     build_settings = read("ProjectSettings/EditorBuildSettings.asset")
     last_index = -1
     for path, guid in SCENES:
-        if not (ROOT / path).is_file():
-            fail(f"build scene missing: {path}")
+        if not (ROOT / path).is_file(): fail(f"build scene missing: {path}")
         index = build_settings.find(f"path: {path}")
-        if index <= last_index:
-            fail(f"build scene missing or out of order: {path}")
-        if guid not in build_settings[index:index + 220]:
-            fail(f"build scene GUID mismatch: {path}")
+        if index <= last_index: fail(f"build scene missing or out of order: {path}")
+        if guid not in build_settings[index:index + 220]: fail(f"build scene GUID mismatch: {path}")
         last_index = index
 
-    world_meta = read("Assets/_Project/Scenes/04_WorldMap.unity.meta")
-    if "guid: 70e8e61f984d4f92aa1c2e1fb230ef04" not in world_meta:
+    if "guid: 70e8e61f984d4f92aa1c2e1fb230ef04" not in read("Assets/_Project/Scenes/04_WorldMap.unity.meta"):
         fail("04_WorldMap scene GUID mismatch")
 
-    require_tokens(
-        "Assets/_Project/UI/SCR_WorldMapSceneBootstrap.cs",
-        (
-            "SCR_WorldMapRouteController",
-            "SCR_WorldMapPersistenceBridge",
-            "SCR_MissionCompletionHandoffBridge",
-            'new GameObject("Main Camera")',
-            'new GameObject("CARGO_V2_WorldMapKeyLight")',
-            "Application.targetFrameRate = 60",
-        ),
-    )
-
-    require_tokens(
-        "Assets/_Project/UI/Editor/SCR_CargoV2Build.cs",
-        (
-            "BuildAndroidBatch",
-            "ValidateBatch",
-            'CargoV2/Mission/MOD_Mission_CargoDepot',
-            'CargoV2/WorldMap/MOD_WorldMap_MarkerPack',
-            'CargoV2/Truck/MOD_Truck_Premium',
-            'com.walka.cargov2',
-            "UIOrientation.LandscapeLeft",
-            "AndroidArchitecture.ARM64",
-            "ScriptingImplementation.IL2CPP",
-            "EditorUserBuildSettings.buildAppBundle = false",
-        ),
-    )
-
-    require_tokens(
-        "BUILD_CARGO_V2_UNITY.ps1",
-        (
-            "2022.3.75f1",
-            "SCR_CargoV2Build.ValidateBatch",
-            "SCR_CargoV2Build.BuildAndroidBatch",
-            "CARGO_V2_ANDROID_OUTPUT",
-            "VerifyApkOnly",
-            "System.IO.Compression.ZipFile",
-            "assets/bin/Data/globalgamemanagers",
-            "lib/arm64-v8a/libmain.so",
-            "lib/arm64-v8a/libunity.so",
-            "lib/arm64-v8a/libil2cpp.so",
-            "apk-archive-contract",
-            "nativeArchitectures",
-            "runtimeInstallExecuted",
-            "CARGO-V2-build-evidence.json",
-            "Get-FileHash",
-            "SHA256",
-        ),
-    )
-    require_tokens(
-        "BUILD_CARGO_V2_UNITY.bat",
-        (
-            "BUILD_CARGO_V2_UNITY.ps1",
-            "ExecutionPolicy Bypass",
-            "exit /b %EXIT_CODE%",
-        ),
-    )
-    require_tokens(
-        ".github/workflows/cargo_v2_unity_scaffold.yml",
-        (
-            "Exercise APK artifact verifier contract",
-            "New-CargoV2ApkFixture",
-            "IncludeWrongArchitecture",
-            "lib/x86_64/libunity.so",
-            "synthetic archives only; no Unity/runtime claim",
-        ),
-    )
-    require_tokens(
-        "docs/CARGO_V2_BUILD_EVIDENCE.md",
-        (
-            "CARGO V2 Android Build Evidence Contract",
-            "ARM64 only",
-            "IL2CPP",
-            "CARGO-V2-build-evidence.json",
-            "runtimeInstallExecuted=false",
-            "x86_64",
-            "not Unity build or gameplay evidence",
-        ),
-    )
+    require_tokens("Assets/_Project/UI/SCR_WorldMapSceneBootstrap.cs", (
+        "SCR_WorldMapRouteController", "SCR_WorldMapPersistenceBridge", "SCR_MissionCompletionHandoffBridge",
+        'new GameObject("Main Camera")', 'new GameObject("CARGO_V2_WorldMapKeyLight")', "Application.targetFrameRate = 60"))
+    require_tokens("Assets/_Project/UI/Editor/SCR_CargoV2Build.cs", (
+        "BuildAndroidBatch", "ValidateBatch", 'CargoV2/Mission/MOD_Mission_CargoDepot', 'CargoV2/WorldMap/MOD_WorldMap_MarkerPack',
+        'CargoV2/Truck/MOD_Truck_Premium', 'com.walka.cargov2', "UIOrientation.LandscapeLeft", "AndroidArchitecture.ARM64",
+        "ScriptingImplementation.IL2CPP", "EditorUserBuildSettings.buildAppBundle = false"))
+    require_tokens("BUILD_CARGO_V2_UNITY.ps1", (
+        "2022.3.75f1", "SCR_CargoV2Build.ValidateBatch", "SCR_CargoV2Build.BuildAndroidBatch", "CARGO_V2_ANDROID_OUTPUT",
+        "VerifyApkOnly", "System.IO.Compression.ZipFile", "assets/bin/Data/globalgamemanagers", "lib/arm64-v8a/libmain.so",
+        "lib/arm64-v8a/libunity.so", "lib/arm64-v8a/libil2cpp.so", "apk-archive-contract", "nativeArchitectures",
+        "runtimeInstallExecuted", "CARGO-V2-build-evidence.json", "Get-FileHash", "SHA256"))
+    require_tokens("BUILD_CARGO_V2_UNITY.bat", ("BUILD_CARGO_V2_UNITY.ps1", "ExecutionPolicy Bypass", "exit /b %EXIT_CODE%"))
+    require_tokens(".github/workflows/cargo_v2_unity_scaffold.yml", (
+        "Exercise APK artifact verifier contract", "New-CargoV2ApkFixture", "IncludeWrongArchitecture", "lib/x86_64/libunity.so",
+        "synthetic archives only; no Unity/runtime claim"))
+    require_tokens("docs/CARGO_V2_BUILD_EVIDENCE.md", (
+        "CARGO V2 Android Build Evidence Contract", "ARM64 only", "IL2CPP", "CARGO-V2-build-evidence.json",
+        "runtimeInstallExecuted=false", "x86_64", "not Unity build or gameplay evidence"))
 
     mission_core = read("Assets/_Project/UI/SCR_MissionRuntimeDirector.cs")
-    if "partial class SCR_MissionRuntimeDirector" not in mission_core:
-        fail("Mission runtime is not the composed partial trucking runtime")
-    for sibling in (
-        "Assets/_Project/UI/SCR_MissionRuntimeDirector.Driving.cs",
-        "Assets/_Project/UI/SCR_MissionRuntimeDirector.World.cs",
-        "Assets/_Project/UI/SCR_MissionRuntimeDirector.Hud.cs",
-    ):
-        if "partial class SCR_MissionRuntimeDirector" not in read(sibling):
-            fail(f"Mission runtime partial contract missing: {sibling}")
+    if "partial class SCR_MissionRuntimeDirector" not in mission_core: fail("Mission runtime is not the composed partial trucking runtime")
+    for sibling in ("Assets/_Project/UI/SCR_MissionRuntimeDirector.Driving.cs", "Assets/_Project/UI/SCR_MissionRuntimeDirector.World.cs", "Assets/_Project/UI/SCR_MissionRuntimeDirector.Hud.cs"):
+        if "partial class SCR_MissionRuntimeDirector" not in read(sibling): fail(f"Mission runtime partial contract missing: {sibling}")
 
-    require_tokens(
-        "Assets/_Project/UI/SCR_MissionRuntimeDirector.cs",
-        (
-            "ActiveDeliveryRunKey",
-            "CompletionDeliveryRunKey",
-            'Guid.NewGuid().ToString("N")',
-            "Rigidbody",
-            "FixedUpdate()",
-        ),
-    )
-    require_tokens(
-        "Assets/_Project/UI/SCR_MissionRuntimeDirector.Driving.cs",
-        (
-            "if (!cargoLoaded) return;",
-            "int expectedCheckpoint = checkpointIndex + 1;",
-            "checkpoint != expectedCheckpoint",
-            "checkpointIndex < CheckpointPositions.Length - 1",
-            "PlayerPrefs.SetString(CompletionDeliveryRunKey, deliveryRunId)",
-        ),
-    )
-    require_tokens(
-        "Assets/_Project/Scripts/Logic/SCR_ActiveDeliveryStore.cs",
-        (
-            "MaxCheckpointIndex = 3",
-            "(!cargoLoaded && checkpointIndex != 0)",
-            "payload.checkpointIndex > MaxCheckpointIndex",
-        ),
-    )
-    require_tokens(
-        "Assets/_Project/Scripts/Logic/SCR_MissionRewardStore.cs",
-        (
-            "TrySettleDelivery",
-            "settledDeliveryIds",
-            "MaxSettledDeliveryIds = 256",
-            'Guid.TryParseExact(deliveryRunId, "N"',
-            "payload.rewardedMissionIds.Add(mission.missionId)",
-        ),
-    )
-    require_tokens(
-        "Assets/_Project/Scripts/Logic/SCR_MissionCompletionHandoffBridge.cs",
-        (
-            "CompletionDeliveryRunKey",
-            "TrySettleDelivery",
-            "TrySettleMission",
-            "ClearHandoff()",
-        ),
-    )
+    require_tokens("Assets/_Project/UI/SCR_MissionRuntimeDirector.cs", ("ActiveDeliveryRunKey", "CompletionDeliveryRunKey", 'Guid.NewGuid().ToString("N")', "Rigidbody", "FixedUpdate()"))
+    require_tokens("Assets/_Project/UI/SCR_MissionRuntimeDirector.Driving.cs", (
+        "if (!cargoLoaded) return;", "int expectedCheckpoint = checkpointIndex + 1;", "checkpoint != expectedCheckpoint",
+        "checkpointIndex < CheckpointPositions.Length - 1", "PlayerPrefs.SetString(CompletionDeliveryRunKey, deliveryRunId)"))
+    require_tokens("Assets/_Project/Scripts/Logic/SCR_ActiveDeliveryStore.cs", (
+        "MaxCheckpointIndex = 3", "(!cargoLoaded && checkpointIndex != 0)", "payload.checkpointIndex > MaxCheckpointIndex", "UnsupportedBackupKey"))
+
+    reward = read("Assets/_Project/Scripts/Logic/SCR_MissionRewardStore.cs")
+    for token in ("TrySettleDelivery", "settledDeliveryIds", 'Guid.TryParseExact(deliveryRunId, "N"',
+                  "payload.rewardedMissionIds.Add(mission.missionId)", "TryReadSpendCommit",
+                  "payload.settledDeliveryIds.Count >= MaxSettledDeliveryIds",
+                  "payload.spendReceipts.Count >= MaxSpendReceipts"):
+        if token not in reward: fail(f"Assets/_Project/Scripts/Logic/SCR_MissionRewardStore.cs contract missing: {token}")
+    if "RemoveAt(0)" in reward or "RemoveRange(0" in reward:
+        fail("Mission reward idempotency ledgers must not evict old receipts/run ids")
+
+    require_tokens("Assets/_Project/Scripts/Logic/SCR_MissionCompletionHandoffBridge.cs", (
+        "CompletionDeliveryRunKey", "TrySettleDelivery", "TrySettleMission", "ClearCompletionKeysOnly", "ClearSettledDeliveryKeys",
+        "SCR_ActiveDeliveryStore.Clear();"))
+    require_tokens("Assets/_Project/Scripts/Logic/SCR_CompanyProgressStore.cs", (
+        "SalvageCurrentPayload", "TryReadSpendCommit", "if (!paymentCommitted)", "CompanyBackupKey"))
 
     guid_to_path: dict[str, Path] = {}
     duplicate_guids: list[str] = []
     for base in (ROOT / "Assets/_Project", ROOT / "Assets/Resources/CargoV2"):
-        if not base.exists():
-            continue
+        if not base.exists(): continue
         for meta in base.rglob("*.meta"):
             match = re.search(r"(?m)^guid:\s*([0-9a-fA-F]{32})\s*$", meta.read_text(encoding="utf-8", errors="ignore"))
-            if not match:
-                continue
+            if not match: continue
             guid = match.group(1).lower()
-            if guid in guid_to_path and guid_to_path[guid] != meta:
-                duplicate_guids.append(f"{guid}: {guid_to_path[guid]} <> {meta}")
-            else:
-                guid_to_path[guid] = meta
-    if duplicate_guids:
-        fail("duplicate Unity GUIDs: " + "; ".join(duplicate_guids))
+            if guid in guid_to_path and guid_to_path[guid] != meta: duplicate_guids.append(f"{guid}: {guid_to_path[guid]} <> {meta}")
+            else: guid_to_path[guid] = meta
+    if duplicate_guids: fail("duplicate Unity GUIDs: " + "; ".join(duplicate_guids))
 
-    forbidden = [
-        name for name in ("Library", "Temp", "Obj", "Logs", "UserSettings", "Builds", "BuildLogs")
-        if (ROOT / name).exists()
-    ]
-    if forbidden:
-        fail("generated Unity directories are tracked/present: " + ", ".join(forbidden))
+    forbidden = [name for name in ("Library", "Temp", "Obj", "Logs", "UserSettings", "Builds", "BuildLogs") if (ROOT / name).exists()]
+    if forbidden: fail("generated Unity directories are tracked/present: " + ", ".join(forbidden))
 
     print(
         "CARGO V2 UNITY SCAFFOLD PASS: "
-        f"Unity {EXPECTED_VERSION} ({EXPECTED_REVISION}), 3 build scenes, "
-        f"{len(guid_to_path)} unique governed Unity GUIDs, ordered trucking runtime + "
-        "repeatable idempotent delivery economy + ARM64 IL2CPP APK artifact verifier present."
+        f"Unity {EXPECTED_VERSION} ({EXPECTED_REVISION}), 3 build scenes, {len(guid_to_path)} unique governed Unity GUIDs, "
+        "ordered trucking runtime + non-evicting idempotent delivery/company recovery + ARM64 IL2CPP APK artifact verifier present."
     )
 
 
