@@ -4,6 +4,7 @@ on:
   pull_request:
     branches:
       - cargo-v2-autonomous-closure
+      - cargo-v2-unity-runtime-ci
     paths:
       - 'Assets/**'
       - 'Packages/**'
