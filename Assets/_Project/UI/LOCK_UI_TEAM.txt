@@ -1,5 +1,7 @@
-CARGO V2 UI TEAM folder lock.
-Owner: UI_TEAM
-Scope: Assets/_Project/UI/ and approved scenes 01_Splash, 02_Loading, 04_WorldMap.
-Art Pass dependency: ASSET_TEAM premium outputs from Assets/_Project/Generated/.
-Do not modify another team's locked area. CAPTAIN merges only after QA PASS.
+CARGO V2 UI TEAM LOCK
+Status: RELEASED
+Former owner: UI_TEAM
+Former scope: Assets/_Project/UI/ and approved scenes 01_Splash, 02_Loading, 04_WorldMap.
+Former dependency: ASSET_TEAM premium outputs from Assets/_Project/Generated/.
+Reconciled: 2026-09-08 after PR #255 was closed and Issue #264 audited cargo-v2-ui-team as an older/superseded UI line while the authoritative cargo-v2-autonomous-closure carries the evolved integrated UI.
+Rule: no active exclusive UI_TEAM claim remains here. New UI changes must still be claimed against live concurrency state and must not substitute static/source checks for Unity visual/runtime acceptance.

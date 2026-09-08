@@ -1,0 +1,131 @@
+name: CARGO V2 Unity Runtime Build
+
+on:
+  pull_request:
+    branches:
+      - cargo-v2-autonomous-closure
+      - cargo-v2-unity-runtime-ci
+    paths:
+      - 'Assets/**'
+      - 'Packages/**'
+      - 'ProjectSettings/**'
+      - 'BUILD_CARGO_V2_UNITY.ps1'
+      - 'BUILD_CARGO_V2_UNITY.bat'
+      - '.github/workflows/cargo_v2_unity_runtime.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cargo-v2-unity-runtime-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  android-runtime-build:
+    name: Unity 2022.3.75f1 Android APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+      UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+      UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+      UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+    steps:
+      - name: Checkout exact candidate
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify Unity activation contract is configured
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p BuildLogs/CargoV2
+
+          license_configured=false
+          serial_configured=false
+          email_configured=false
+          password_configured=false
+          [[ -n "${UNITY_LICENSE:-}" ]] && license_configured=true
+          [[ -n "${UNITY_SERIAL:-}" ]] && serial_configured=true
+          [[ -n "${UNITY_EMAIL:-}" ]] && email_configured=true
+          [[ -n "${UNITY_PASSWORD:-}" ]] && password_configured=true
+
+          cat > BuildLogs/CargoV2/unity-activation-preflight.json <<EOF
+          {
+            "schemaVersion": 1,
+            "candidateSha": "${GITHUB_SHA}",
+            "observedAtUtc": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "unityVersion": "2022.3.75f1",
+            "licenseConfigured": ${license_configured},
+            "serialConfigured": ${serial_configured},
+            "emailConfigured": ${email_configured},
+            "passwordConfigured": ${password_configured},
+            "secretValuesIncluded": false
+          }
+          EOF
+
+          if [[ "${email_configured}" != true || "${password_configured}" != true ]]; then
+            echo '::error::Unity runtime gate cannot execute: UNITY_EMAIL and UNITY_PASSWORD are not configured for this repository.'
+            exit 20
+          fi
+          if [[ "${license_configured}" != true && "${serial_configured}" != true ]]; then
+            echo '::error::Unity runtime gate cannot execute: configure UNITY_LICENSE or UNITY_SERIAL for GameCI activation.'
+            exit 21
+          fi
+          echo 'Unity activation inputs are present (values intentionally redacted).'
+
+      - name: Build exact CARGO V2 Android candidate in Unity
+        id: unity-build
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: .
+          unityVersion: 2022.3.75f1
+          targetPlatform: Android
+          buildMethod: CargoV2.EditorTools.SCR_CargoV2Build.BuildAndroidBatch
+          allowDirtyBuild: true
+
+      - name: Verify produced APK contract and emit exact-head evidence
+        shell: pwsh
+        run: |
+          ./BUILD_CARGO_V2_UNITY.ps1 `
+            -VerifyApkOnly `
+            -OutputApk 'Builds/CargoV2/CARGO-V2.apk' `
+            -EvidenceJson 'BuildLogs/CargoV2/CARGO-V2-ci-evidence.json'
+          if ($LASTEXITCODE -ne 0) {
+            throw "CARGO V2 produced APK failed artifact verification with exit code $LASTEXITCODE."
+          }
+          $sha = (Get-FileHash -LiteralPath 'Builds/CargoV2/CARGO-V2.apk' -Algorithm SHA256).Hash.ToLowerInvariant()
+          Set-Content -LiteralPath 'BuildLogs/CargoV2/CARGO-V2.apk.sha256' -Value "$sha  CARGO-V2.apk" -Encoding ASCII
+
+      - name: Upload exact-head APK and build evidence
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: CARGO-V2-Unity-Android-${{ github.sha }}
+          if-no-files-found: error
+          retention-days: 14
+          path: |
+            Builds/CargoV2/CARGO-V2.apk
+            BuildLogs/CargoV2/CARGO-V2-ci-evidence.json
+            BuildLogs/CargoV2/CARGO-V2.apk.sha256
+            BuildLogs/CargoV2/unity-activation-preflight.json
+            BuildLogs/CargoV2/unity-validate.log
+            BuildLogs/CargoV2/unity-android-build.log
+
+      - name: Upload Unity diagnostics on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: CARGO-V2-Unity-diagnostics-${{ github.sha }}
+          if-no-files-found: error
+          retention-days: 7
+          path: |
+            BuildLogs/CargoV2/**
+            Logs/**
