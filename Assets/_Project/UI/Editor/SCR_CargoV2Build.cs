@@ -47,6 +47,13 @@ namespace CargoV2.EditorTools
                 if (!File.Exists(scene)) throw new InvalidOperationException($"Missing required scene: {scene}");
             }
 
+            EditorBuildSettings.scenes = new[]
+            {
+                new EditorBuildSettingsScene(Scenes[0], true),
+                new EditorBuildSettingsScene(Scenes[1], true),
+                new EditorBuildSettingsScene(Scenes[2], true),
+            };
+
             if (typeof(SCR_WorldMapRouteController) == null ||
                 typeof(SCR_WorldMapRuntimeDirector) == null ||
                 typeof(SCR_WorldMapMissionDeploy) == null ||
@@ -67,13 +74,7 @@ namespace CargoV2.EditorTools
             CargoV2.QA.EditorTools.SCR_CargoV2HostileStateRegression.ValidateOrThrow();
             CargoV2.QA.EditorTools.SCR_CargoV2TransactionCrashRegression.ValidateOrThrow();
             CargoV2.QA.EditorTools.SCR_CargoV2ActiveDeliveryLifecycleRegression.ValidateOrThrow();
-
-            EditorBuildSettings.scenes = new[]
-            {
-                new EditorBuildSettingsScene(Scenes[0], true),
-                new EditorBuildSettingsScene(Scenes[1], true),
-                new EditorBuildSettingsScene(Scenes[2], true),
-            };
+            CargoV2.QA.Editor.SCR_CargoV2IntegrationPreviewReadiness.ValidateOrThrow();
         }
 
         private static void RequireResource(string path)

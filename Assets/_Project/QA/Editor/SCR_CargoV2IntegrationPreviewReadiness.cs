@@ -27,8 +27,28 @@ namespace CargoV2.QA.Editor
         [MenuItem("CARGO V2/QA/Report Integration Preview Readiness")]
         public static void Report()
         {
-            int pass = 0;
-            int hold = 0;
+            Evaluate(out int pass, out int hold);
+            string verdict = hold == 0 ? "STRUCTURAL READY" : "HOLD";
+            Debug.Log($"[CARGO V2][QA] INTEGRATION PREVIEW READINESS — {verdict}; PASS={pass}, HOLD={hold}. This report is read-only and is NOT Unity Play Mode, visual, FPS, gameplay, or release QA PASS.");
+        }
+
+        public static void ValidateOrThrow()
+        {
+            Evaluate(out int pass, out int hold);
+            if (hold > 0)
+            {
+                string message = $"CARGO V2 integration preview readiness failed closed: PASS={pass}, HOLD={hold}.";
+                Debug.LogError($"[CARGO V2][QA][HOLD] {message}");
+                throw new InvalidOperationException(message);
+            }
+
+            Debug.Log($"[CARGO V2][QA] INTEGRATION PREVIEW READINESS — STRUCTURAL READY; PASS={pass}, HOLD=0. This is structural Unity validation only; it is NOT Play Mode, visual, FPS, gameplay, device, or release QA PASS.");
+        }
+
+        private static void Evaluate(out int pass, out int hold)
+        {
+            pass = 0;
+            hold = 0;
 
             foreach (string token in RequiredSceneTokens)
             {
@@ -46,9 +66,6 @@ namespace CargoV2.QA.Editor
                 $"WorldMap Resources asset resolves: {WorldMapResourcePath}", ref pass, ref hold);
             Record(Resources.Load<GameObject>(MissionResourcePath) != null,
                 $"Mission Resources asset resolves: {MissionResourcePath}", ref pass, ref hold);
-
-            string verdict = hold == 0 ? "STRUCTURAL READY" : "HOLD";
-            Debug.Log($"[CARGO V2][QA] INTEGRATION PREVIEW READINESS — {verdict}; PASS={pass}, HOLD={hold}. This report is read-only and is NOT Unity Play Mode, visual, FPS, gameplay, or release QA PASS.");
         }
 
         private static void Record(bool ok, string message, ref int pass, ref int hold)

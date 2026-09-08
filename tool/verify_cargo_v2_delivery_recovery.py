@@ -93,7 +93,7 @@ def main() -> int:
     if not re.search(r"Active delivery checkpoint has no valid delivery run id.*duplicate settlement", run_id_method, re.I | re.S):
         fail("orphaned-resume duplicate-settlement warning is missing")
 
-    # New commit-before-pay invariant.
+    # Commit-before-pay invariant.
     ensure = extract_method(bridge, "private bool EnsurePersistenceReady()")
     consume = extract_method(bridge, "internal bool ConsumePendingHandoff()")
     initialize = extract_method(persistence, "public bool Initialize()")
@@ -115,6 +115,7 @@ def main() -> int:
         initialize,
         (
             "saveManager.LoadProgress(routeController.MissionCount)",
+            "saveManager.CanPersistLoadedState",
             "routeController.SetProgress(payload.highestCompletedMissionId)",
             "initialized = true;",
             "Subscribe();",
@@ -128,12 +129,16 @@ def main() -> int:
         "PersistCurrentState",
         persist,
         (
-            "if (!initialized || routeController == null || saveManager == null) return false;",
             "return saveManager.SaveProgress(",
             "routeController.HighestCompletedMissionId",
             "routeController.SelectedMissionId",
         ),
     )
+    if not re.search(
+        r"if\s*\(\s*!initialized\s*\|\|\s*routeController\s*==\s*null\s*\|\|\s*saveManager\s*==\s*null\s*\|\|\s*!saveManager\.CanPersistLoadedState\s*\)\s*return\s+false\s*;",
+        persist,
+    ):
+        fail("PersistCurrentState must fail closed unless initialized, wired, and allowed to persist the loaded save state")
 
     ensure_pos = consume.find("EnsurePersistenceReady()")
     complete_pos = consume.find("routeController.TryCompleteMission(missionId)")
@@ -195,7 +200,7 @@ def main() -> int:
     if "PlayerPrefs.DeleteKey(ActiveDeliveryRunKey);" not in bridge or "TrySettleDelivery(" not in bridge:
         fail("delivery settlement identity lifecycle is missing")
 
-    print("[CARGO V2][DELIVERY RECOVERY][PASS] run identity and commit-before-pay ordering are structurally guarded")
+    print("[CARGO V2][DELIVERY RECOVERY][PASS] run identity, save-state persistability, and commit-before-pay ordering are structurally guarded")
     print("[CARGO V2][DELIVERY RECOVERY] unit/source evidence only; EditMode/PlayMode execution still requires Unity")
     return 0
 
