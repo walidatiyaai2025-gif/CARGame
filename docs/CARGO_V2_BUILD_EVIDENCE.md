@@ -34,7 +34,7 @@ The PowerShell launcher:
 6. verifies required Unity/IL2CPP archive entries;
 7. rejects any native ABI other than `arm64-v8a`;
 8. computes SHA-256;
-9. writes machine-readable evidence.
+9. writes machine-readable evidence to `BuildLogs/CargoV2/CARGO-V2-build-evidence.json` by default.
 
 The Unity build method performs fail-closed scene/type/resource and CARGO V2 regression validation before building, then writes the PlayerSettings contract above and uses APK output rather than an app bundle.
 
@@ -49,15 +49,15 @@ A verified CARGO V2 APK must contain at least:
 - `lib/arm64-v8a/libunity.so`
 - `lib/arm64-v8a/libil2cpp.so`
 
-Every native `.so` under `lib/<abi>/` must resolve to `arm64-v8a`.
+Every native `.so` under `lib/<abi>/` must resolve to `arm64-v8a`; an `x86_64` or other additional ABI is rejected.
 
-The build evidence JSON includes artifact kind, Unity/package contract, APK path and size, lowercase SHA-256, required entries, observed native architectures, source SHA when available, UTC verification time, and explicit install/launch truth fields. Archive verification never implies install, launch, gameplay, FPS, signing identity or device stability.
+The build evidence JSON includes artifact kind, Unity/package contract, APK path and size, lowercase SHA-256, required entries, observed native architectures, source SHA when available, UTC verification time, and explicit `runtimeInstallExecuted=false` / `runtimeLaunchExecuted=false` truth fields. Archive verification never implies install, launch, gameplay, FPS, signing identity or device stability.
 
 ## Android install/launch smoke path
 
 `SMOKE_CARGO_V2_ANDROID.ps1` re-verifies the APK contract, discovers authorized ADB targets dynamically, installs with `adb install -r`, validates the package/process/resumed activity, captures package-correlated logcat, fails on fatal/ANR/process-death markers, and writes machine-readable smoke evidence.
 
-Synthetic APK/fake-ADB CI tests validate orchestration only. They are never real Unity APK or device evidence.
+Synthetic APK/fake-ADB CI checks are orchestration evidence only: they are not Unity build or gameplay evidence, and they never substitute for real APK/device execution.
 
 ## Latest exact runtime-support execution
 
