@@ -1,0 +1,34 @@
+name: CARGO V2 Contract Capacity Guard
+
+on:
+  pull_request:
+    branches:
+      - cargo-v2-autonomous-closure
+    paths:
+      - 'Assets/_Project/Data/CargoV2LogisticsCatalog.cs'
+      - 'tool/verify_cargo_v2_contract_capacity.py'
+      - '.github/workflows/cargo_v2_contract_capacity.yml'
+  push:
+    branches:
+      - cargo-v2-autonomous-closure
+    paths:
+      - 'Assets/_Project/Data/CargoV2LogisticsCatalog.cs'
+      - 'tool/verify_cargo_v2_contract_capacity.py'
+      - '.github/workflows/cargo_v2_contract_capacity.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-contract-capacity:
+    name: Verify contract truck capacity
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout exact candidate
+        uses: actions/checkout@v4
+
+      - name: Run deterministic capacity regression
+        shell: bash
+        run: python3 tool/verify_cargo_v2_contract_capacity.py
