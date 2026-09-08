@@ -2,11 +2,16 @@
 
 This document defines the machine-verifiable evidence emitted by the governed CARGO V2 Android build/runtime-support paths. It does not itself declare runtime acceptance.
 
-## Authoritative contract
+## Live-state rule
 
-- Integration branch: `cargo-v2-autonomous-closure`
-- Pull request: #297
-- Runtime/build support: PR #298 / `cargo-v2-unity-runtime-ci`
+- Integration authority: PR #297 / `cargo-v2-autonomous-closure`.
+- Runtime/build support: PR #298 / `cargo-v2-unity-runtime-ci`.
+- Mutable current runtime state is recorded in live PR #298 and Issue #264.
+- Execution records below are dated snapshots. A later exact-head run supersedes an older snapshot without making this contract false.
+- Static/source/scaffold/Flutter evidence cannot substitute for Unity build, Play Mode, APK, device, visual, gameplay, or measured-performance evidence.
+
+## Authoritative Android contract
+
 - Unity editor: `2022.3.75f1`
 - Android package: `com.walka.cargov2`
 - Version: `2.0.0` (`versionCode=20000`)
@@ -25,7 +30,6 @@ These values are set by the governed live build method, not assumed from an untr
 `BUILD_CARGO_V2_UNITY.bat` invokes `BUILD_CARGO_V2_UNITY.ps1`.
 
 The PowerShell launcher:
-
 1. verifies `ProjectSettings/ProjectVersion.txt` pins Unity `2022.3.75f1`;
 2. discovers or consumes the configured Unity executable;
 3. executes `CargoV2.EditorTools.SCR_CargoV2Build.ValidateBatch`;
@@ -36,12 +40,11 @@ The PowerShell launcher:
 8. computes SHA-256;
 9. writes machine-readable evidence to `BuildLogs/CargoV2/CARGO-V2-build-evidence.json` by default.
 
-The Unity build method performs fail-closed scene/type/resource and CARGO V2 regression validation before building, then writes the PlayerSettings contract above and uses APK output rather than an app bundle.
+The Unity build method performs fail-closed scene/type/resource and CARGO V2 regression validation before building, writes the PlayerSettings contract above, uses APK output, and does not enable a Unity development build.
 
 ## APK archive contract
 
 A verified CARGO V2 APK must contain at least:
-
 - `AndroidManifest.xml`
 - `classes.dex`
 - `assets/bin/Data/globalgamemanagers`
@@ -51,7 +54,7 @@ A verified CARGO V2 APK must contain at least:
 
 Every native `.so` under `lib/<abi>/` must resolve to `arm64-v8a`; an `x86_64` or other additional ABI is rejected.
 
-The build evidence JSON includes artifact kind, Unity/package contract, APK path and size, lowercase SHA-256, required entries, observed native architectures, source SHA when available, UTC verification time, and explicit `runtimeInstallExecuted=false` / `runtimeLaunchExecuted=false` truth fields. Archive verification never implies install, launch, gameplay, FPS, signing identity or device stability.
+The build evidence JSON includes artifact kind, Unity/package contract, APK path and size, lowercase SHA-256, required entries, observed native architectures, source SHA when available, UTC verification time, and explicit `runtimeInstallExecuted=false` / `runtimeLaunchExecuted=false` truth fields. Archive verification never implies install, launch, gameplay, FPS, signing identity, or device stability.
 
 ## Android install/launch smoke path
 
@@ -59,35 +62,32 @@ The build evidence JSON includes artifact kind, Unity/package contract, APK path
 
 Synthetic APK/fake-ADB CI checks are orchestration evidence only: they are not Unity build or gameplay evidence, and they never substitute for real APK/device execution.
 
-## Latest exact runtime-support execution
+## Recorded runtime-support execution snapshot
 
-Implementation authority basis before this documentation reconciliation: `cc7cd79b174511b59232d7b4bf8b898dfa5bd9fa`.
+Snapshot authority basis: `f74d7764323e81d2b57fdd0bb7a69c83d6115b10`.
 
-Support branch was reconciled to head `7aeff619f1421c1b4d1c1acc481867855d8d1e79`; compare showed merge-base exactly the authority basis, behind 0, and one changed support file only.
+At the snapshot, support head `3ec9a55720c29d28b7994a5657c169d5a7b10a66` had merge-base exactly that authority basis, was behind 0, and differed by exactly `.github/workflows/cargo_v2_unity_runtime.yml`.
 
-Unity Runtime Build #9 / run `34191746281` executed against PR merge candidate `c6fe90150313f9a609db8928d48cab38d46fbd2a`.
+Unity Runtime Build #11 / `34192397025` executed against PR merge candidate `de30b0ca99847b8a79e85f491ed9b0eb0191738d`.
 
-Observed result:
-
+Observed:
 - checkout exact candidate: PASS;
-- activation preflight: FAIL-CLOSED;
+- activation preflight: FAIL-CLOSED, exit 20;
 - `UNITY_LICENSE`: not configured;
 - `UNITY_SERIAL`: not configured;
 - `UNITY_EMAIL`: not configured;
 - `UNITY_PASSWORD`: not configured;
 - secret values included in diagnostic: false;
-- Unity import/build: SKIPPED;
-- APK verification/evidence: SKIPPED;
-- APK upload: SKIPPED;
+- Unity import/C# compilation/build: SKIPPED;
+- APK verification/evidence/upload: SKIPPED;
 - diagnostics upload: PASS.
 
 Diagnostic artifact:
+- id `10042660895`;
+- name `CARGO-V2-Unity-diagnostics-de30b0ca99847b8a79e85f491ed9b0eb0191738d`;
+- artifact ZIP SHA-256 `b18ecd4053c7c9ad2ef43d1b97dd802216ad3bb68728593a36c1012584f686d5`.
 
-- id: `10042441917`;
-- name: `CARGO-V2-Unity-diagnostics-c6fe90150313f9a609db8928d48cab38d46fbd2a`;
-- digest: `sha256:070e8c1ce015a24ca7e843d10a4ce15d2198c2350ee60de65bfab70fe397a430`.
-
-Classification: external Unity activation configuration blocker. This is not a CARGO V2 code regression and the evidence does not support classifying it as transient infrastructure. An unchanged rerun cannot advance acceptance.
+Classification: external Unity activation configuration blocker. It is not a CARGO V2 code regression and the evidence does not support classifying it as transient infrastructure. An unchanged rerun cannot advance acceptance. Read live PR #298 / Issue #264 for any newer exact-head run.
 
 ## Evidence still required
 

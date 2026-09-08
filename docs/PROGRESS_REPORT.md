@@ -2,82 +2,64 @@
 
 Updated: 2026-09-08 (Kuwait)
 
-## Current authority
+## Live-state policy
 
-PR #297 / `cargo-v2-autonomous-closure` remains the single CARGO V2 integration/closure line and targets `cargo-v2`. The implementation/evidence basis immediately before this documentation-only reconciliation is `cc7cd79b174511b59232d7b4bf8b898dfa5bd9fa`; the exact live PR head is always authoritative.
+PR #297 / `cargo-v2-autonomous-closure` is the single CARGO V2 closure authority and targets `cargo-v2`. PR #298 is its sole Unity runtime/build support dependency. PR #309 is the recovered WorldMap CTA source unit. PR #249 is unrelated Flutter AST work.
 
-PR #298 / `cargo-v2-unity-runtime-ci` remains the dedicated draft runtime/build support gate. PR #309 / `cargo-v2-worldmap-deploy-cta-polish` is the current draft UI source unit and is not eligible for integration while required runtime/visual evidence is absent. PR #249 is unrelated Flutter AST work and is outside this closure effort.
+This file is intentionally a dated progress snapshot, not a self-updating SHA ledger. For the exact current head, support merge candidate, CI conclusion, activation state, and artifact ids, read the live PR #297 / PR #298 metadata and Issue #264. Live GitHub state supersedes an older snapshot here.
 
-## Convergence performed
+## Convergence snapshot
 
-- PR #308 was normal-merged as authority commit `cc7cd79b174511b59232d7b4bf8b898dfa5bd9fa`, adding fail-closed integration readiness to the governed Unity validation path.
-- PR #298 was reconciled without force-push to support head `7aeff619f1421c1b4d1c1acc481867855d8d1e79`.
-- Compare after reconciliation proved merge-base exactly `cc7cd79b174511b59232d7b4bf8b898dfa5bd9fa`, 0 commits behind, and exactly one support delta: `.github/workflows/cargo_v2_unity_runtime.yml`.
-- Open review-thread checks for PRs #297, #298 and #309 returned no unresolved inline review threads at the evidence read.
-- Historical CARGO V2 gameplay/visual/persistence/reliability/smoke/economy/team branches remain contained or superseded according to the prior ancestry/semantic sweep; no duplicate implementation was started and no branch was deleted without explicit governance authorization.
+Evidence basis before this document revision: PR #297 head `f74d7764323e81d2b57fdd0bb7a69c83d6115b10`.
 
-## Exact source/scaffold evidence
+Completed convergence through that basis:
+- PR #308 was normal-merged as `cc7cd79b174511b59232d7b4bf8b898dfa5bd9fa`, adding fail-closed Integration Preview readiness to the governed Unity validation path.
+- Canonical CARGO V2 evidence documents were reconciled, then exact-head Scaffold #104 / `34192205305` found a real documentation-contract regression.
+- The exact log identified missing `CARGO-V2-build-evidence.json` contract text; the root cause was fixed in `f74d7764323e81d2b57fdd0bb7a69c83d6115b10` without weakening the validator.
+- Corrected exact-head Unity Scaffold #105 / `34192351058`: SUCCESS.
+- Corrected exact-head Player Experience Guard #16 / `34192351053`: SUCCESS.
+- Corrected exact-head Hostile State Guard #21 / `34192351028`: SUCCESS.
+- Flutter CI #1317 / `34192351031` was still executing at snapshot time and must be checked live for its final conclusion.
 
-Authority basis `cc7cd79b174511b59232d7b4bf8b898dfa5bd9fa`:
+PR #309 source head `17302145f153f7a5b99dd60bf6da9c07fe1a20ab` had source/scaffold CI green at the latest read: WorldMap CTA Guard #2, Runtime Contract Name Guard #7, Unity Scaffold #103, and Flutter CI #1313 all succeeded. It remained draft, stale relative to the moving authority, and without Unity visual/runtime acceptance.
 
-- Hostile State Guard #19 / `34191496613`: SUCCESS.
-- Player Experience Guard #14 / `34191496585`: SUCCESS.
-- Unity Scaffold #102 / `34191496579`: SUCCESS.
-- Flutter CI #1312 / `34191496576`: still executing at the evidence read; full suite and coverage had passed before the job entered debug-APK build.
+Historical CARGO V2 implementation branches already established as contained/superseded remain non-authoritative. No duplicate implementation was started and no branch was deleted without explicit governance authorization.
 
-PR #309 head `17302145f153f7a5b99dd60bf6da9c07fe1a20ab`:
+## Android PlayerSettings contract
 
-- WorldMap Deploy CTA Guard #2 / `34191576245`: SUCCESS.
-- Runtime Contract Name Guard #7 / `34191576251`: SUCCESS.
-- Unity Scaffold #103 / `34191576239`: SUCCESS.
-- Flutter CI #1313 / `34191576249`: still executing at the evidence read.
-
-Source/scaffold green is not Unity Play Mode, device, visual or FPS evidence.
-
-## Android PlayerSettings contract in live governed source
-
-The live build method explicitly sets:
-
+The governed Unity build method sets:
 - `com.walka.cargov2`;
-- version `2.0.0`, version code `20000`;
+- `2.0.0`, version code `20000`;
 - minimum Android SDK 23;
 - Landscape Left;
 - ARM64 only;
 - IL2CPP;
 - Linear color space;
-- APK rather than AAB;
-- no Unity development-build flag.
+- APK output;
+- no Unity development-build flag (`BuildOptions.None`).
 
-The PowerShell launcher pins Unity `2022.3.75f1`, executes validation then Android build, validates the Unity/IL2CPP ARM64 APK archive contract and computes SHA-256 only for a produced artifact.
+The launcher pins Unity `2022.3.75f1`, validates before building, verifies the Unity/IL2CPP ARM64 APK archive contract, and computes SHA-256 only for a produced artifact.
 
-## Latest real Unity runtime/build result
+## Recorded runtime-support snapshot
 
-Support head `7aeff619f1421c1b4d1c1acc481867855d8d1e79` triggered Unity Runtime Build #9 / `34191746281` against merge candidate `c6fe90150313f9a609db8928d48cab38d46fbd2a`.
+At this snapshot PR #298 support head was `3ec9a55720c29d28b7994a5657c169d5a7b10a66`, merge-base exactly the authority basis, behind 0, and one changed support file only.
 
-Result: FAIL-CLOSED before Unity launched.
+Unity Runtime Build #11 / `34192397025` against merge candidate `de30b0ca99847b8a79e85f491ed9b0eb0191738d` failed closed before Unity launched:
+- checkout PASS;
+- activation preflight FAIL, exit 20;
+- `UNITY_LICENSE`, `UNITY_SERIAL`, `UNITY_EMAIL`, `UNITY_PASSWORD` all unconfigured;
+- Unity import/build and APK verification/upload SKIPPED;
+- diagnostics upload PASS.
 
-- checkout: PASS;
-- activation preflight: FAIL;
-- Unity import/build: SKIPPED;
-- APK verification/upload: SKIPPED;
-- diagnostics upload: PASS.
+Diagnostic artifact id `10042660895`; artifact ZIP SHA-256 `b18ecd4053c7c9ad2ef43d1b97dd802216ad3bb68728593a36c1012584f686d5`.
 
-The diagnostic preflight recorded all four supported activation inputs as not configured: `UNITY_LICENSE`, `UNITY_SERIAL`, `UNITY_EMAIL`, and `UNITY_PASSWORD`. No secret values were logged.
+Classification: repeated external Unity activation configuration blocker, not a source/code regression and not a transient runner/network failure. An unchanged rerun cannot advance runtime acceptance. PR #298 / Issue #264 contain the mutable current runtime record after this snapshot.
 
-Artifact id `10042441917`, digest `sha256:070e8c1ce015a24ca7e843d10a4ce15d2198c2350ee60de65bfab70fe397a430`.
+## Remaining closure gates
 
-This failure is classified as an external Unity activation-configuration blocker. It is not a code failure and not a transient runner/network failure, so an unchanged retry is not used to manufacture another result.
-
-## Product implementation already integrated on PR #297
-
-The authority composes the Unity 2022.3.75f1 project/build scaffold; premium truck, Mission cargo/depot and WorldMap runtime 3D assets; Splash/Loading; 20 Cairo/Dubai missions; selection/locking/progression/persistence/touch deploy; playable truck delivery loop; pickup/checkpoints/delivery; pause/retry/recovery/abandon; active-delivery autosave/resume; corrupt-state quarantine; completion handoff and idempotent rewards; company Coins/XP/rank; fleet ownership/purchase/selection/upgrades; crash-consistent company transactions; capacity-safe truck recommendations; player-experience hardening; hostile-state recovery; Android APK structure/ABI verification; and fail-closed ADB smoke orchestration.
-
-## Remaining blockers and merge discipline
-
-No merge to `cargo-v2` is permitted while the exact final Unity/runtime/Android evidence is missing. No merge to `main` is permitted before the repository-defined staging/release gates are satisfied.
+No merge to `cargo-v2` is permitted while exact final Unity/runtime/Android evidence is missing. No merge to `main` is permitted before the staging/release governance says so.
 
 Still required on the exact final candidate:
-
 1. Unity import/C# compilation and governed validation.
 2. Play Mode startup and complete gameplay/settlement/unlock loop.
 3. Restart/crash-resume/replay/idempotency and fleet/economy runtime checks.
