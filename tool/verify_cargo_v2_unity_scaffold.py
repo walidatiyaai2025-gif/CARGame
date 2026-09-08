@@ -75,6 +75,9 @@ def main() -> None:
     require_tokens("Assets/_Project/UI/SCR_WorldMapSceneBootstrap.cs", (
         "SCR_WorldMapRouteController", "SCR_WorldMapPersistenceBridge", "SCR_MissionCompletionHandoffBridge",
         'new GameObject("Main Camera")', 'new GameObject("CARGO_V2_WorldMapKeyLight")', "Application.targetFrameRate = 60"))
+    require_tokens("Assets/_Project/UI/SCR_WorldMapRuntimeDirector.cs", (
+        "private bool TryAttachMissionMarker", "bool hasRealMarker = TryAttachMissionMarker(nodeObject, missionId);",
+        "fallbackRenderer.enabled = !hasRealMarker", "return true;"))
     require_tokens("Assets/_Project/UI/Editor/SCR_CargoV2Build.cs", (
         "BuildAndroidBatch", "ValidateBatch", 'CargoV2/Mission/MOD_Mission_CargoDepot', 'CargoV2/WorldMap/MOD_WorldMap_MarkerPack',
         'CargoV2/Truck/MOD_Truck_Premium', 'com.walka.cargov2', "UIOrientation.LandscapeLeft", "AndroidArchitecture.ARM64",
