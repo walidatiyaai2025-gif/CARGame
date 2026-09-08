@@ -1,37 +1,42 @@
 # CARGO V2 Android Build Evidence Contract
 
-This document defines the machine-verifiable evidence emitted by the autonomous CARGO V2 Android build and smoke paths. It does not, by itself, declare the game runtime accepted.
+This document defines the machine-verifiable evidence emitted by the governed CARGO V2 Android build/runtime-support paths. It does not itself declare runtime acceptance.
 
-## Authoritative closure line
+## Authoritative contract
 
 - Integration branch: `cargo-v2-autonomous-closure`
 - Pull request: #297
-- Unity editor contract: `2022.3.75f1`
-- Android package contract: `com.walka.cargov2`
-- Android architecture contract: ARM64 only
-- Scripting backend contract: IL2CPP
+- Runtime/build support: PR #298 / `cargo-v2-unity-runtime-ci`
+- Unity editor: `2022.3.75f1`
+- Android package: `com.walka.cargov2`
+- Version: `2.0.0` (`versionCode=20000`)
+- Minimum SDK: 23
+- Orientation: Landscape Left
+- Architecture: ARM64 only
+- Scripting backend: IL2CPP
+- Color space: Linear
 - Artifact format: APK
+- Unity build options: `BuildOptions.None`
 
-## Real build path
+These values are set by the governed live build method, not assumed from an untracked `ProjectSettings.asset`.
+
+## Governed build path
 
 `BUILD_CARGO_V2_UNITY.bat` invokes `BUILD_CARGO_V2_UNITY.ps1`.
 
 The PowerShell launcher:
 
-1. verifies the pinned Unity project version;
-2. discovers or consumes the configured Unity editor executable;
+1. verifies `ProjectSettings/ProjectVersion.txt` pins Unity `2022.3.75f1`;
+2. discovers or consumes the configured Unity executable;
 3. executes `CargoV2.EditorTools.SCR_CargoV2Build.ValidateBatch`;
 4. executes `CargoV2.EditorTools.SCR_CargoV2Build.BuildAndroidBatch`;
 5. requires a non-empty APK;
-6. opens the APK as a ZIP archive and verifies the Unity/IL2CPP ARM64 payload contract;
-7. computes SHA-256;
-8. writes machine-readable build evidence.
+6. verifies required Unity/IL2CPP archive entries;
+7. rejects any native ABI other than `arm64-v8a`;
+8. computes SHA-256;
+9. writes machine-readable evidence.
 
-The default evidence path is:
-
-`BuildLogs/CargoV2/CARGO-V2-build-evidence.json`
-
-`BuildLogs/` and `Builds/` are intentionally ignored repository outputs.
+The Unity build method performs fail-closed scene/type/resource and CARGO V2 regression validation before building, then writes the PlayerSettings contract above and uses APK output rather than an app bundle.
 
 ## APK archive contract
 
@@ -44,60 +49,48 @@ A verified CARGO V2 APK must contain at least:
 - `lib/arm64-v8a/libunity.so`
 - `lib/arm64-v8a/libil2cpp.so`
 
-Every native `.so` entry under `lib/<abi>/` must resolve to `arm64-v8a`; an APK that also contains x86, x86_64, armeabi-v7a, or another ABI is rejected.
+Every native `.so` under `lib/<abi>/` must resolve to `arm64-v8a`.
 
-## Build evidence JSON semantics
-
-The build JSON record includes:
-
-- schema version;
-- artifact kind and verification mode;
-- expected Unity version and package identifier contract;
-- absolute APK path on the machine that performed verification;
-- APK size;
-- lowercase SHA-256 digest;
-- required archive entries;
-- observed native architectures;
-- source SHA when `GITHUB_SHA` is available;
-- UTC verification timestamp;
-- explicit `runtimeInstallExecuted=false` and `runtimeLaunchExecuted=false`.
-
-Archive verification is intentionally narrower than runtime acceptance. It must never be interpreted as proof of APK installation, application launch, Play Mode behavior, visual quality, signing identity, device FPS, or device stability.
+The build evidence JSON includes artifact kind, Unity/package contract, APK path and size, lowercase SHA-256, required entries, observed native architectures, source SHA when available, UTC verification time, and explicit install/launch truth fields. Archive verification never implies install, launch, gameplay, FPS, signing identity or device stability.
 
 ## Android install/launch smoke path
 
-`SMOKE_CARGO_V2_ANDROID.ps1` is the fail-closed ADB smoke harness for a real APK after the archive/ABI contract passes.
+`SMOKE_CARGO_V2_ANDROID.ps1` re-verifies the APK contract, discovers authorized ADB targets dynamically, installs with `adb install -r`, validates the package/process/resumed activity, captures package-correlated logcat, fails on fatal/ANR/process-death markers, and writes machine-readable smoke evidence.
 
-It:
+Synthetic APK/fake-ADB CI tests validate orchestration only. They are never real Unity APK or device evidence.
 
-1. reruns `BUILD_CARGO_V2_UNITY.ps1 -VerifyApkOnly` before touching a device;
-2. discovers authorized ADB targets dynamically;
-3. automatically selects only when exactly one authorized target exists, or validates an explicitly supplied `-Serial` when several are connected;
-4. installs with `adb install -r` so the smoke path does not destructively uninstall saved state;
-5. verifies `com.walka.cargov2` exists after installation;
-6. clears pre-launch logcat, force-stops the package, and sends one bounded launcher intent;
-7. verifies the package process is present and the package appears in resumed activity state;
-8. captures package-correlated logcat and fails on observed fatal-exception, ANR, fatal-signal, or process-died markers;
-9. writes machine-readable smoke evidence including APK SHA-256 and dynamically observed device metadata.
+## Latest exact runtime-support execution
 
-The default smoke evidence path is:
+Implementation authority basis before this documentation reconciliation: `cc7cd79b174511b59232d7b4bf8b898dfa5bd9fa`.
 
-`BuildLogs/CargoV2/CARGO-V2-android-smoke-evidence.json`
+Support branch was reconciled to head `7aeff619f1421c1b4d1c1acc481867855d8d1e79`; compare showed merge-base exactly the authority basis, behind 0, and one changed support file only.
 
-A smoke PASS is scoped only to the APK archive contract plus the observed install and initial launch on that exact ADB target. It does **not** prove gameplay completion, control quality, visual quality, sustained FPS, thermal behavior, long-run stability, or production signing.
+Unity Runtime Build #9 / run `34191746281` executed against PR merge candidate `c6fe90150313f9a609db8928d48cab38d46fbd2a`.
 
-## CI contract tests
+Observed result:
 
-`CARGO V2 Unity Scaffold` exercises fail-closed build/smoke automation without fabricating Unity or device evidence:
+- checkout exact candidate: PASS;
+- activation preflight: FAIL-CLOSED;
+- `UNITY_LICENSE`: not configured;
+- `UNITY_SERIAL`: not configured;
+- `UNITY_EMAIL`: not configured;
+- `UNITY_PASSWORD`: not configured;
+- secret values included in diagnostic: false;
+- Unity import/build: SKIPPED;
+- APK verification/evidence: SKIPPED;
+- APK upload: SKIPPED;
+- diagnostics upload: PASS.
 
-- a valid synthetic ARM64-only APK-shaped fixture must pass the archive verifier;
-- a fixture containing an extra x86_64 native library must fail;
-- the Android smoke source contract verifier rejects hard-coded emulator serials, destructive uninstall, and widened PASS claims;
-- a fake-ADB single-device scenario must exercise the install/launch orchestration and emit all expected truth fields;
-- a fake-ADB multi-device scenario must fail before installation unless an explicit serial is supplied.
+Diagnostic artifact:
 
-Synthetic fixture/fake-ADB checks prove the automation logic is executable and fail-closed. They are not Unity build or gameplay evidence. Their output is not a real APK build, real device run, gameplay test, or FPS measurement.
+- id: `10042441917`;
+- name: `CARGO-V2-Unity-diagnostics-c6fe90150313f9a609db8928d48cab38d46fbd2a`;
+- digest: `sha256:070e8c1ce015a24ca7e843d10a4ce15d2198c2350ee60de65bfab70fe397a430`.
 
-## Remaining runtime evidence categories
+Classification: external Unity activation configuration blocker. This is not a CARGO V2 code regression and the evidence does not support classifying it as transient infrastructure. An unchanged rerun cannot advance acceptance.
 
-Final product closure still requires evidence produced by actual execution on the exact candidate for the relevant gate, including Unity compile/import, gameplay/Play Mode, Android build, install/launch on a real device/emulator, device smoke, and performance/visual acceptance. No CI fixture or static check substitutes for those runtime results.
+## Evidence still required
+
+A final accepted candidate still requires genuine execution evidence for Unity compile/import, Play Mode/gameplay, persistence/recovery/economy, real 3D visual import, measured performance/memory, Unity ARM64/IL2CPP APK build plus SHA-256, and available real device/emulator install/launch smoke.
+
+No source/static/scaffold/Flutter result may be substituted for these runtime categories.
