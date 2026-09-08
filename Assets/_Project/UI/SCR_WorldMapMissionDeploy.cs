@@ -17,7 +17,12 @@ namespace CargoV2.UI
         private PropertyInfo selectedMissionIdProperty;
         private MethodInfo getNodeStateMethod;
         private TextMesh statusText;
-        private Material deployMaterial;
+        private Material deployActiveMaterial;
+        private Material deployLockedMaterial;
+        private Material deployBusyMaterial;
+        private Material deployFrameMaterial;
+        private Renderer deploySurfaceRenderer;
+        private Renderer deployAccentRenderer;
         private bool transitionBusy;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
@@ -61,8 +66,19 @@ namespace CargoV2.UI
 
         private void OnDestroy()
         {
-            if (deployMaterial != null) Destroy(deployMaterial);
-            deployMaterial = null;
+            DestroyMaterial(deployActiveMaterial);
+            DestroyMaterial(deployLockedMaterial);
+            DestroyMaterial(deployBusyMaterial);
+            DestroyMaterial(deployFrameMaterial);
+            deployActiveMaterial = null;
+            deployLockedMaterial = null;
+            deployBusyMaterial = null;
+            deployFrameMaterial = null;
+        }
+
+        private static void DestroyMaterial(Material material)
+        {
+            if (material != null) Destroy(material);
         }
 
         private void DiscoverRouteController()
@@ -78,36 +94,82 @@ namespace CargoV2.UI
 
         private void BuildDeployControl()
         {
-            // Geometry remains owned by the production-visual branch. This component
-            // only owns deploy behavior, state copy and localized feedback.
-            GameObject button = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            button.name = "DeployMissionButton";
+            Shader shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
+            if (shader != null)
+            {
+                deployActiveMaterial = new Material(shader) { color = new Color(0.96f, 0.60f, 0.06f) };
+                deployLockedMaterial = new Material(shader) { color = new Color(0.18f, 0.23f, 0.31f) };
+                deployBusyMaterial = new Material(shader) { color = new Color(0.05f, 0.70f, 0.92f) };
+                deployFrameMaterial = new Material(shader) { color = new Color(0.018f, 0.045f, 0.105f) };
+            }
+
+            GameObject button = new GameObject("DeployMissionButton");
             button.transform.SetParent(transform, false);
             button.transform.position = new Vector3(0f, 0.45f, -7.15f);
-            button.transform.localScale = new Vector3(4.8f, 0.22f, 1.05f);
 
-            Shader shader = Shader.Find("Standard") ?? Shader.Find("Universal Render Pipeline/Lit");
-            Renderer renderer = button.GetComponent<Renderer>();
-            if (renderer != null && shader != null)
-            {
-                deployMaterial = new Material(shader) { color = new Color(0.88f, 0.66f, 0.16f) };
-                renderer.sharedMaterial = deployMaterial;
-            }
+            BoxCollider hitTarget = button.AddComponent<BoxCollider>();
+            hitTarget.center = Vector3.zero;
+            hitTarget.size = new Vector3(5.8f, 0.7f, 1.45f);
 
             DeployClick click = button.AddComponent<DeployClick>();
             click.Owner = this;
 
+            Renderer frame = CreateVisualLayer(
+                button.transform,
+                "DeployFrame",
+                new Vector3(0f, -0.08f, 0f),
+                new Vector3(5.8f, 0.28f, 1.45f),
+                deployFrameMaterial);
+
+            deploySurfaceRenderer = CreateVisualLayer(
+                button.transform,
+                "DeploySurface",
+                new Vector3(0f, 0.13f, 0f),
+                new Vector3(5.4f, 0.22f, 1.18f),
+                deployActiveMaterial);
+
+            deployAccentRenderer = CreateVisualLayer(
+                button.transform,
+                "DeployAccent",
+                new Vector3(-2.46f, 0.31f, 0f),
+                new Vector3(0.18f, 0.12f, 0.90f),
+                deployBusyMaterial);
+
+            if (frame != null) frame.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
+
             GameObject label = new GameObject("DeployLabel");
             label.transform.SetParent(button.transform, false);
-            label.transform.localPosition = new Vector3(0f, 0.72f, 0f);
+            label.transform.localPosition = new Vector3(0f, 0.43f, 0f);
             label.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
             statusText = label.AddComponent<TextMesh>();
             statusText.anchor = TextAnchor.MiddleCenter;
             statusText.alignment = TextAlignment.Center;
-            statusText.fontSize = 44;
-            statusText.characterSize = 0.065f;
+            statusText.fontSize = 46;
+            statusText.characterSize = 0.064f;
             statusText.color = Color.white;
             RefreshStatus();
+        }
+
+        private static Renderer CreateVisualLayer(
+            Transform parent,
+            string name,
+            Vector3 localPosition,
+            Vector3 localScale,
+            Material material)
+        {
+            GameObject layer = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            layer.name = name;
+            layer.transform.SetParent(parent, false);
+            layer.transform.localPosition = localPosition;
+            layer.transform.localRotation = Quaternion.identity;
+            layer.transform.localScale = localScale;
+
+            Collider collider = layer.GetComponent<Collider>();
+            if (collider != null) Destroy(collider);
+
+            Renderer renderer = layer.GetComponent<Renderer>();
+            if (renderer != null && material != null) renderer.sharedMaterial = material;
+            return renderer;
         }
 
         private int ResolveSelectedMissionId()
@@ -210,18 +272,32 @@ namespace CargoV2.UI
         private void RefreshStatus(string overrideText = null)
         {
             if (statusText == null) return;
+
+            int missionId = ResolveSelectedMissionId();
+            bool missionRunning = SCR_MissionRuntimeDirector.IsRunning;
+            bool deployable = !missionRunning && IsDeployable(missionId);
+            Material stateMaterial = transitionBusy || missionRunning
+                ? deployBusyMaterial
+                : deployable ? deployActiveMaterial : deployLockedMaterial;
+
+            if (deploySurfaceRenderer != null && stateMaterial != null)
+                deploySurfaceRenderer.sharedMaterial = stateMaterial;
+            if (deployAccentRenderer != null && deployBusyMaterial != null)
+                deployAccentRenderer.sharedMaterial = transitionBusy || missionRunning
+                    ? deployActiveMaterial ?? deployBusyMaterial
+                    : deployBusyMaterial;
+
             if (!string.IsNullOrWhiteSpace(overrideText))
             {
                 statusText.text = overrideText;
                 return;
             }
 
-            int missionId = ResolveSelectedMissionId();
             statusText.text = transitionBusy
                 ? F("deploy.starting", Two(missionId))
-                : SCR_MissionRuntimeDirector.IsRunning
+                : missionRunning
                     ? L("deploy.active")
-                    : IsDeployable(missionId) ? F("deploy.action", Two(missionId)) : L("deploy.locked");
+                    : deployable ? F("deploy.action", Two(missionId)) : L("deploy.locked");
         }
 
         private static string L(string key)

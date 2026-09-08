@@ -1,0 +1,38 @@
+name: CARGO V2 WorldMap Deploy CTA Guard
+
+on:
+  pull_request:
+    branches:
+      - cargo-v2-autonomous-closure
+    paths:
+      - 'Assets/_Project/UI/SCR_WorldMapMissionDeploy.cs'
+      - 'Assets/_Project/UI/SCR_WorldMapTouchInputBridge.cs'
+      - 'Assets/_Project/UI/LOCK_UI_TEAM.txt'
+      - 'tool/verify_cargo_v2_worldmap_deploy_cta.py'
+      - '.github/workflows/cargo_v2_worldmap_deploy_cta.yml'
+  push:
+    branches:
+      - cargo-v2-autonomous-closure
+    paths:
+      - 'Assets/_Project/UI/SCR_WorldMapMissionDeploy.cs'
+      - 'Assets/_Project/UI/SCR_WorldMapTouchInputBridge.cs'
+      - 'Assets/_Project/UI/LOCK_UI_TEAM.txt'
+      - 'tool/verify_cargo_v2_worldmap_deploy_cta.py'
+      - '.github/workflows/cargo_v2_worldmap_deploy_cta.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-worldmap-deploy-cta:
+    name: Verify WorldMap deploy CTA contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout exact candidate
+        uses: actions/checkout@v4
+
+      - name: Verify layered deploy CTA and touch contract
+        shell: bash
+        run: python3 tool/verify_cargo_v2_worldmap_deploy_cta.py
