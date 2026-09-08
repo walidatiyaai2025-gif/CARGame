@@ -6,8 +6,12 @@ on:
       - cargo-v2-autonomous-closure
     paths:
       - 'Assets/_Project/UI/SCR_MissionRuntimeDirector.cs'
+      - 'Assets/_Project/UI/Editor/SCR_CargoV2Build.cs'
       - 'Assets/_Project/Scripts/Logic/SCR_MissionCompletionHandoffBridge.cs'
+      - 'Assets/_Project/Scripts/Logic/SCR_WorldMapPersistenceBridge.cs'
       - 'Assets/_Project/Scripts/Logic/SCR_ActiveDeliveryStore.cs'
+      - 'Assets/_Project/QA/Editor/SCR_CargoV2CompletionRecoveryRegression.cs'
+      - 'Assets/_Project/QA/SCR_CargoV2CompletionRecoveryPlayModeProbe.cs'
       - 'tool/verify_cargo_v2_delivery_recovery.py'
       - '.github/workflows/cargo_v2_delivery_recovery.yml'
   workflow_dispatch:
@@ -24,5 +28,5 @@ jobs:
       - name: Checkout exact candidate
         uses: actions/checkout@v4
 
-      - name: Verify resume identity safety
+      - name: Verify resume identity and commit-before-pay safety
         run: python3 tool/verify_cargo_v2_delivery_recovery.py

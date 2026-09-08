@@ -36,20 +36,12 @@ namespace CargoV2.EditorTools
         }
 
         [MenuItem("CARGO V2/Build/Build Android APK")]
-        public static void BuildAndroidMenu()
-        {
-            BuildAndroid();
-        }
-
-        public static void BuildAndroidBatch()
-        {
-            BuildAndroid();
-        }
+        public static void BuildAndroidMenu() => BuildAndroid();
+        public static void BuildAndroidBatch() => BuildAndroid();
 
         private static void ValidateOrThrow()
         {
             AssetDatabase.Refresh();
-
             foreach (string scene in Scenes)
             {
                 if (!File.Exists(scene)) throw new InvalidOperationException($"Missing required scene: {scene}");
@@ -59,7 +51,9 @@ namespace CargoV2.EditorTools
                 typeof(SCR_WorldMapRuntimeDirector) == null ||
                 typeof(SCR_WorldMapMissionDeploy) == null ||
                 typeof(SCR_MissionRuntimeDirector) == null ||
-                typeof(SCR_LogisticsBusinessRuntime) == null)
+                typeof(SCR_LogisticsBusinessRuntime) == null ||
+                typeof(SCR_PlayerExperienceRuntime) == null ||
+                typeof(SCR_PlayerFeedback) == null)
             {
                 throw new InvalidOperationException("Required CARGO V2 runtime contract failed to compile.");
             }
@@ -67,6 +61,12 @@ namespace CargoV2.EditorTools
             RequireResource(MissionResourcePath);
             RequireResource(WorldMapResourcePath);
             RequireResource(TruckResourcePath);
+
+            CargoV2.QA.EditorTools.SCR_CargoV2CompletionRecoveryRegression.ValidateOrThrow();
+            CargoV2.QA.EditorTools.SCR_CargoV2PlayerExperienceRegression.ValidateOrThrow();
+            CargoV2.QA.EditorTools.SCR_CargoV2HostileStateRegression.ValidateOrThrow();
+            CargoV2.QA.EditorTools.SCR_CargoV2TransactionCrashRegression.ValidateOrThrow();
+            CargoV2.QA.EditorTools.SCR_CargoV2ActiveDeliveryLifecycleRegression.ValidateOrThrow();
 
             EditorBuildSettings.scenes = new[]
             {
@@ -87,7 +87,6 @@ namespace CargoV2.EditorTools
         private static void BuildAndroid()
         {
             ValidateOrThrow();
-
             if (!EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTargetGroup.Android, BuildTarget.Android))
             {
                 throw new InvalidOperationException("Unable to switch Unity build target to Android. Install Android Build Support for Unity 2022.3.75f1.");

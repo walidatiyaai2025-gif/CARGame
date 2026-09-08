@@ -6,11 +6,18 @@ namespace CargoV2.Logic
 {
     public static class SCR_ActiveDeliveryStore
     {
-        private const string ActiveDeliveryKey = "cargo_v2_active_delivery_v1";
-        private const string CorruptBackupKey = "cargo_v2_active_delivery_corrupt_v1";
-        private const int SchemaVersion = 1;
+        public const string ActiveDeliveryKey = "cargo_v2_active_delivery_v1";
+        public const string CorruptBackupKey = "cargo_v2_active_delivery_corrupt_v1";
+        public const string UnsupportedBackupKey = "cargo_v2_active_delivery_unsupported_v1";
+        public const int SchemaVersion = 1;
         private const int MaxCheckpointIndex = 3;
         private static readonly Vector3 MissionOrigin = new Vector3(1000f, 0f, 1000f);
+
+        [Serializable]
+        private sealed class SchemaProbe
+        {
+            public int schemaVersion;
+        }
 
         [Serializable]
         private sealed class Payload
@@ -88,8 +95,11 @@ namespace CargoV2.Logic
         {
             if (missionId < 1 || missionId > 20 || CargoV2LogisticsCatalog.GetTruck(truckId) == null ||
                 !Finite(position.x) || !Finite(position.y) || !Finite(position.z) || !Finite(yaw) ||
-                !Finite(remainingSeconds) || !Finite(damage) || checkpointIndex < 0 || checkpointIndex > MaxCheckpointIndex ||
-                (!cargoLoaded && checkpointIndex != 0))
+                !Finite(remainingSeconds) || !Finite(damage) ||
+                remainingSeconds < 0f || remainingSeconds > 3600f || damage < 0f || damage > 100f ||
+                checkpointIndex < 0 || checkpointIndex > MaxCheckpointIndex ||
+                (!cargoLoaded && checkpointIndex != 0) ||
+                Vector3.Distance(position, MissionOrigin) > 650f)
             {
                 return false;
             }
@@ -102,9 +112,9 @@ namespace CargoV2.Logic
                 x = position.x,
                 y = position.y,
                 z = position.z,
-                yaw = yaw,
-                remainingSeconds = Mathf.Clamp(remainingSeconds, 0f, 3600f),
-                damage = Mathf.Clamp(damage, 0f, 100f),
+                yaw = NormalizeYaw(yaw),
+                remainingSeconds = remainingSeconds,
+                damage = damage,
                 cargoLoaded = cargoLoaded,
                 checkpointIndex = checkpointIndex,
                 savedUtcTicks = DateTime.UtcNow.Ticks,
@@ -147,10 +157,22 @@ namespace CargoV2.Logic
             try
             {
                 json = PlayerPrefs.GetString(ActiveDeliveryKey, string.Empty);
-                Payload payload = string.IsNullOrWhiteSpace(json) ? null : JsonUtility.FromJson<Payload>(json);
+                if (!TryReadSchema(json, out int schemaVersion))
+                {
+                    QuarantineAndClear(json, CorruptBackupKey, "malformed");
+                    return false;
+                }
+
+                if (schemaVersion != SchemaVersion)
+                {
+                    QuarantineAndClear(json, UnsupportedBackupKey, $"unsupported schema {schemaVersion}");
+                    return false;
+                }
+
+                Payload payload = JsonUtility.FromJson<Payload>(json);
                 if (!Validate(payload))
                 {
-                    BackupAndClear(json);
+                    QuarantineAndClear(json, CorruptBackupKey, "impossible current-schema state");
                     return false;
                 }
 
@@ -159,7 +181,7 @@ namespace CargoV2.Logic
                     payload.missionId,
                     payload.truckId,
                     new Vector3(payload.x, payload.y, payload.z),
-                    payload.yaw,
+                    NormalizeYaw(payload.yaw),
                     payload.remainingSeconds,
                     payload.damage,
                     payload.cargoLoaded,
@@ -170,7 +192,7 @@ namespace CargoV2.Logic
             catch (Exception exception)
             {
                 Debug.LogWarning($"[CARGO V2][LOGIC] Active delivery read failed safely: {exception.Message}");
-                BackupAndClear(json);
+                QuarantineAndClear(json, CorruptBackupKey, "read failure");
                 return false;
             }
         }
@@ -187,8 +209,31 @@ namespace CargoV2.Logic
 
             Vector3 position = new Vector3(payload.x, payload.y, payload.z);
             if (Vector3.Distance(position, MissionOrigin) > 650f) return false;
-            if (payload.savedUtcTicks <= 0) return false;
+            if (payload.savedUtcTicks <= 0 || payload.savedUtcTicks > DateTime.MaxValue.Ticks) return false;
             return true;
+        }
+
+        private static bool TryReadSchema(string raw, out int schemaVersion)
+        {
+            schemaVersion = 0;
+            if (string.IsNullOrWhiteSpace(raw)) return false;
+            try
+            {
+                SchemaProbe probe = JsonUtility.FromJson<SchemaProbe>(raw);
+                if (probe == null) return false;
+                schemaVersion = probe.schemaVersion;
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        private static float NormalizeYaw(float value)
+        {
+            float yaw = value % 360f;
+            return yaw < 0f ? yaw + 360f : yaw;
         }
 
         private static bool Finite(float value)
@@ -196,14 +241,14 @@ namespace CargoV2.Logic
             return !float.IsNaN(value) && !float.IsInfinity(value);
         }
 
-        private static void BackupAndClear(string json)
+        private static void QuarantineAndClear(string json, string backupKey, string reason)
         {
             try
             {
-                if (!string.IsNullOrWhiteSpace(json)) PlayerPrefs.SetString(CorruptBackupKey, json);
+                if (!string.IsNullOrWhiteSpace(json)) PlayerPrefs.SetString(backupKey, json);
                 PlayerPrefs.DeleteKey(ActiveDeliveryKey);
                 PlayerPrefs.Save();
-                Debug.LogWarning("[CARGO V2][LOGIC] Invalid active delivery was quarantined to prevent a resume softlock.");
+                Debug.LogWarning($"[CARGO V2][LOGIC] Active delivery quarantined ({reason}); progression/economy remain untouched and the impossible run cannot resume.");
             }
             catch (Exception exception)
             {

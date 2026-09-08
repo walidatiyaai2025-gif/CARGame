@@ -11,6 +11,8 @@ namespace CargoV2.Logic
 
         private bool initialized;
 
+        public bool IsInitialized => initialized;
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void RegisterSceneInstall()
         {
@@ -40,12 +42,13 @@ namespace CargoV2.Logic
         {
             if (routeController == null)
             {
-                routeController = FindObjectOfType<SCR_WorldMapRouteController>();
+                routeController = GetComponent<SCR_WorldMapRouteController>() ??
+                                  FindObjectOfType<SCR_WorldMapRouteController>();
             }
 
             if (saveManager == null)
             {
-                saveManager = FindObjectOfType<SCR_SaveManager>();
+                saveManager = GetComponent<SCR_SaveManager>() ?? FindObjectOfType<SCR_SaveManager>();
             }
 
             if (saveManager == null)
@@ -71,19 +74,27 @@ namespace CargoV2.Logic
 
         private void OnApplicationPause(bool paused)
         {
-            if (paused) Persist();
+            if (paused) PersistCurrentState();
         }
 
         private void OnApplicationQuit()
         {
-            Persist();
+            PersistCurrentState();
         }
 
-        public void Initialize()
+        public bool Initialize()
         {
-            if (initialized || routeController == null || saveManager == null) return;
+            if (initialized) return true;
+            if (routeController == null || saveManager == null) return false;
 
             SCR_SaveManager.ProgressPayload payload = saveManager.LoadProgress(routeController.MissionCount);
+            if (!saveManager.CanPersistLoadedState)
+            {
+                Debug.LogWarning(
+                    $"[CARGO V2][LOGIC] WorldMap persistence blocked for {saveManager.LastLoadState}; unsupported progress data is preserved untouched.");
+                return false;
+            }
+
             routeController.SetProgress(payload.highestCompletedMissionId);
             if (payload.selectedMissionId > 0)
             {
@@ -92,7 +103,24 @@ namespace CargoV2.Logic
 
             initialized = true;
             Subscribe();
-            Persist();
+            if (PersistCurrentState()) return true;
+
+            // Never advertise durable readiness when the canonical progress snapshot
+            // could not be written. A completion handoff must remain pending instead
+            // of paying against progression that may roll back after a crash.
+            initialized = false;
+            Unsubscribe();
+            Debug.LogWarning("[CARGO V2][LOGIC] WorldMap persistence initialization could not durably save the normalized progress snapshot.");
+            return false;
+        }
+
+        public bool PersistCurrentState()
+        {
+            if (!initialized || routeController == null || saveManager == null || !saveManager.CanPersistLoadedState) return false;
+            return saveManager.SaveProgress(
+                routeController.HighestCompletedMissionId,
+                routeController.SelectedMissionId,
+                routeController.MissionCount);
         }
 
         private void Subscribe()
@@ -113,21 +141,12 @@ namespace CargoV2.Logic
 
         private void HandleProgressChanged(int _)
         {
-            Persist();
+            PersistCurrentState();
         }
 
         private void HandleSelectionChanged(int _)
         {
-            Persist();
-        }
-
-        private void Persist()
-        {
-            if (!initialized || routeController == null || saveManager == null) return;
-            saveManager.SaveProgress(
-                routeController.HighestCompletedMissionId,
-                routeController.SelectedMissionId,
-                routeController.MissionCount);
+            PersistCurrentState();
         }
     }
 }
