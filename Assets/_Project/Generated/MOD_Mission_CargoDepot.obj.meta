@@ -1,0 +1,22 @@
+fileFormatVersion: 2
+guid: b6a4e5c6d7f841789c8b72f76a4a1d21
+ModelImporter:
+  serializedVersion: 22200
+  globalScale: 1
+  useFileScale: 1
+  meshCompression: 0
+  addCollider: 0
+  importBlendShapes: 0
+  importVisibility: 1
+  importCameras: 0
+  importLights: 0
+  generateSecondaryUV: 0
+  isReadable: 0
+  optimizeMeshPolygons: 1
+  optimizeMeshVertices: 1
+  materialImportMode: 1
+  animationType: 0
+  humanoidOversampling: 1
+  userData: CARGO_V2_MISSION_ASSET_272
+  assetBundleName:
+  assetBundleVariant:

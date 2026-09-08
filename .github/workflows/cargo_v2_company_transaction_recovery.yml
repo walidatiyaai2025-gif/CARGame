@@ -1,0 +1,27 @@
+name: CARGO V2 Company Transaction Recovery
+
+on:
+  pull_request:
+    branches:
+      - cargo-v2-autonomous-closure
+    paths:
+      - 'Assets/_Project/Scripts/Logic/SCR_MissionRewardStore.cs'
+      - 'Assets/_Project/Scripts/Logic/SCR_CompanyProgressStore.cs'
+      - 'tool/verify_cargo_v2_company_transactions.py'
+      - '.github/workflows/cargo_v2_company_transaction_recovery.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  company-transaction-recovery:
+    name: company-transaction-recovery
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout exact candidate
+        uses: actions/checkout@v4
+
+      - name: Verify crash-safe purchase and upgrade protocol
+        run: python3 tool/verify_cargo_v2_company_transactions.py

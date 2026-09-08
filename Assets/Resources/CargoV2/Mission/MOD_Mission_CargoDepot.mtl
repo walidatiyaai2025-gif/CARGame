@@ -1,0 +1,28 @@
+# CARGO V2 mission cargo/depot materials — runtime Resources admission
+newmtl NavyBody
+Ka 0.015 0.025 0.060
+Kd 0.020 0.070 0.170
+Ks 0.180 0.220 0.280
+Ns 72.0
+illum 2
+
+newmtl CargoGold
+Ka 0.080 0.055 0.010
+Kd 0.760 0.510 0.080
+Ks 0.950 0.800 0.300
+Ns 120.0
+illum 2
+
+newmtl ChromeTrim
+Ka 0.080 0.080 0.090
+Kd 0.420 0.440 0.480
+Ks 0.950 0.950 0.980
+Ns 180.0
+illum 2
+
+newmtl BeaconEmissive
+Ka 0.220 0.100 0.010
+Kd 1.000 0.420 0.050
+Ks 1.000 0.700 0.200
+Ns 96.0
+illum 2

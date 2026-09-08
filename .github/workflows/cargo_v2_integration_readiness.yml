@@ -1,0 +1,36 @@
+name: CARGO V2 Integration Readiness Guard
+
+on:
+  pull_request:
+    branches:
+      - cargo-v2-autonomous-closure
+    paths:
+      - 'Assets/_Project/QA/Editor/SCR_CargoV2IntegrationPreviewReadiness.cs'
+      - 'Assets/_Project/UI/Editor/SCR_CargoV2Build.cs'
+      - 'tool/verify_cargo_v2_integration_readiness.py'
+      - '.github/workflows/cargo_v2_integration_readiness.yml'
+  push:
+    branches:
+      - cargo-v2-autonomous-closure
+    paths:
+      - 'Assets/_Project/QA/Editor/SCR_CargoV2IntegrationPreviewReadiness.cs'
+      - 'Assets/_Project/UI/Editor/SCR_CargoV2Build.cs'
+      - 'tool/verify_cargo_v2_integration_readiness.py'
+      - '.github/workflows/cargo_v2_integration_readiness.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify fail-closed integration readiness
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout exact candidate
+        uses: actions/checkout@v4
+
+      - name: Run integration readiness regression
+        shell: bash
+        run: python3 tool/verify_cargo_v2_integration_readiness.py
