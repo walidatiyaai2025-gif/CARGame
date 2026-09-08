@@ -1,0 +1,38 @@
+name: CARGO V2 Runtime Contract Name Guard
+
+on:
+  pull_request:
+    branches:
+      - cargo-v2-autonomous-closure
+    paths:
+      - 'Assets/_Project/UI/SCR_WorldMapMissionDeploy.cs'
+      - 'Assets/_Project/QA/SCR_CargoV2RuntimeContractProbe.cs'
+      - 'Assets/_Project/QA/Editor/SCR_CargoV2IntegrationPreviewReadiness.cs'
+      - 'tool/verify_cargo_v2_runtime_contract_names.py'
+      - '.github/workflows/cargo_v2_runtime_contract_names.yml'
+  push:
+    branches:
+      - cargo-v2-autonomous-closure
+    paths:
+      - 'Assets/_Project/UI/SCR_WorldMapMissionDeploy.cs'
+      - 'Assets/_Project/QA/SCR_CargoV2RuntimeContractProbe.cs'
+      - 'Assets/_Project/QA/Editor/SCR_CargoV2IntegrationPreviewReadiness.cs'
+      - 'tool/verify_cargo_v2_runtime_contract_names.py'
+      - '.github/workflows/cargo_v2_runtime_contract_names.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-runtime-contract-names:
+    name: Verify runtime contract type names
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout exact candidate
+        uses: actions/checkout@v4
+
+      - name: Run deploy type drift regression
+        shell: bash
+        run: python3 tool/verify_cargo_v2_runtime_contract_names.py
